@@ -1,9 +1,12 @@
-import { MockServerClient } from "@lib"
+import { MockServerClient } from "@neoma/mockserver"
 
 /**
- * End-to-end check of @neoma/mockserver against a real container: the
- * container is started by the built `setup` drop-in (globalSetup, via
- * dist/setup.js) and the public `MockServerClient` is driven against it.
+ * End-to-end check against a real container, consuming the package the
+ * way an installer would: imports resolve to the built `dist` at runtime
+ * (see e2e/jest-e2e.json), and the container is started by the built
+ * `setup` drop-in (globalSetup, via dist/setup.js). Types still resolve
+ * to `src` (tsconfig paths) so goto-definition and debugging stay on
+ * source.
  */
 describe("@neoma/mockserver (e2e)", () => {
   // globalSetup (@neoma/mockserver/setup) sets MOCKSERVER_URL.

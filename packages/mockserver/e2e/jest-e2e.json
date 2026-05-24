@@ -10,7 +10,7 @@
     "^.+\\.(t|j)s$": "ts-jest"
   },
   "moduleNameMapper": {
-    "@lib/(.*)$": "<rootDir>/../src/$1",
-    "@lib": "<rootDir>/../src"
+    "^@neoma/mockserver$": "<rootDir>/../dist/index.js",
+    "^@neoma/mockserver/(.*)$": "<rootDir>/../dist/$1"
   }
 }
