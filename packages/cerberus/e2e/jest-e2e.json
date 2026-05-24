@@ -13,6 +13,7 @@
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
+  "transformIgnorePatterns": ["/node_modules/", "/dist/"],
   "moduleNameMapper": {
     "fixtures/(.*)$": "<rootDir>/../fixtures/$1",
     "@lib/(.*)$": "<rootDir>/../src/$1",

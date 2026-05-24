@@ -10,6 +10,7 @@
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
+  "transformIgnorePatterns": ["/node_modules/", "/dist/"],
   "moduleNameMapper": {
     "^@neoma/mockserver$": "<rootDir>/../dist/index.js",
     "^@neoma/mockserver/(.*)$": "<rootDir>/../dist/$1"
