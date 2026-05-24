@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.0
+
+### Minor Changes
+
+- 1fff501: **Breaking:** remove the Mailpit surface. `@neoma/fixtures` no longer exports `./mailpit`, `./setup/mailpit`, `./teardown/mailpit`, or the `startMailpit` / `stopMailpit` / `Mailpit*` symbols from `./docker`. Use the standalone [`@neoma/mailpit`](https://github.com/neomaventures/pack/tree/main/packages/mailpit) package instead.
+
+### Patch Changes
+
+- 1fff501: Source the Docker container helpers (`waitForHttp` / `waitForTcp` / `stopContainer` + option types) from the new `@neoma/docker` package instead of a bundled copy. No public API change — `@neoma/fixtures/docker` still re-exports the same helpers.
+- Updated dependencies [1fff501]
+  - @neoma/docker@0.1.0
+
 ## 0.4.0
 
 ### Minor Changes

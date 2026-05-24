@@ -1,6 +1,6 @@
 {
   "name": "@neoma/docker",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Docker test-container helpers for @neoma/* — HTTP/TCP health polling and container teardown.",
   "author": "Shipdventures",
   "repository": {
@@ -12,7 +12,11 @@
     "url": "https://github.com/neomaventures/pack/issues"
   },
   "homepage": "https://github.com/neomaventures/pack/tree/main/packages/docker#readme",
-  "keywords": ["neoma", "testing", "docker"],
+  "keywords": [
+    "neoma",
+    "testing",
+    "docker"
+  ],
   "private": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -22,7 +26,13 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": ["dist", "README.md", "LICENSE", "!**/*.json", "!**/*.tsbuildinfo"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "!**/*.json",
+    "!**/*.tsbuildinfo"
+  ],
   "license": "MIT",
   "scripts": {
     "build": "tsc -p ./tsconfig.lib.json",
