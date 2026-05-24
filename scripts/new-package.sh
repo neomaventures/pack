@@ -151,7 +151,7 @@ EOF
 
 # --- src/<name>.spec.ts -----------------------------------------------------
 cat > "$PKG_DIR/src/$NAME.spec.ts" <<EOF
-import { packageName } from "@lib"
+import { packageName } from "./index"
 
 describe("@neoma/$NAME", () => {
   it("exposes the package name", () => {

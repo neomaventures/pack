@@ -5,6 +5,7 @@
   "testRegex": ".e2e-spec.ts$",
   "globalSetup": "@neoma/minio/setup",
   "globalTeardown": "@neoma/minio/teardown",
+  "setupFiles": ["<rootDir>/build.setup.ts"],
   "setupFilesAfterEnv": [
     "jest-extended/all",
     "<rootDir>/../fixtures/matchers/index.js",
@@ -15,7 +16,7 @@
   },
   "moduleNameMapper": {
     "fixtures/(.*)$": "<rootDir>/../fixtures/$1",
-    "@lib/(.*)$": "<rootDir>/../src/$1",
-    "@lib": "<rootDir>/../src"
+    "^@neoma/cerberus$": "<rootDir>/../dist/index.js",
+    "^@neoma/cerberus/(.*)$": "<rootDir>/../dist/$1"
   }
 }

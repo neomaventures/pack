@@ -2,8 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "paths": {
-      "@lib": ["${configDir}/src"],
-      "@lib/*": ["${configDir}/src/*"],
+      "@neoma/managed-app": ["${configDir}/src"],
+      "@neoma/managed-app/*": ["${configDir}/src/*"],
       "src/*": ["${configDir}/src/*"]
     }
   },

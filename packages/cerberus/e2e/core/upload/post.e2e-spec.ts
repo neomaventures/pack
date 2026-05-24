@@ -1,11 +1,10 @@
 import { faker } from "@faker-js/faker"
+import { UlidIdGenerator } from "@neoma/cerberus/services/ulid-id-generator.service"
 import { managedAppInstance } from "@neoma/managed-app"
 import { HttpStatus } from "@nestjs/common"
 import { TestIdGenerator } from "fixtures/services/test-id-generator"
 import { MinioClient } from "fixtures/storage/minio"
 import request from "supertest"
-
-import { UlidIdGenerator } from "@lib/services/ulid-id-generator.service"
 
 const {
   CREATED,

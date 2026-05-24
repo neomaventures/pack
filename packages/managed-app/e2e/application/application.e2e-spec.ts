@@ -1,10 +1,9 @@
 import { resolve } from "path"
 
+import { managedAppInstance } from "@neoma/managed-app"
 import { HttpStatus, type INestApplication } from "@nestjs/common"
 import request from "supertest"
 import { type App } from "supertest/types"
-
-import { managedAppInstance } from "@lib"
 
 import {
   createSandbox,

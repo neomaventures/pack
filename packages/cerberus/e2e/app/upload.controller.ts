@@ -1,4 +1,9 @@
 import {
+  StoredFile,
+  TemporaryLink,
+  Upload as UploadDecorator,
+} from "@neoma/cerberus"
+import {
   Controller,
   Get,
   HttpCode,
@@ -8,8 +13,6 @@ import {
 } from "@nestjs/common"
 import { TestKeyResolver } from "fixtures/resolvers/test-key-resolver"
 import { DataSource } from "typeorm"
-
-import { StoredFile, TemporaryLink, Upload as UploadDecorator } from "@lib"
 
 import { Upload } from "./upload.entity"
 

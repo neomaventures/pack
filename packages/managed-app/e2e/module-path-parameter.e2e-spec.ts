@@ -1,9 +1,8 @@
 import { resolve } from "path"
 
+import { managedAppInstance } from "@neoma/managed-app"
 import { HttpStatus } from "@nestjs/common"
 import request from "supertest"
-
-import { managedAppInstance } from "@lib"
 
 const LOCATION = "src/parameter/parameter.module.ts"
 const MODULE = "ParameterModule"

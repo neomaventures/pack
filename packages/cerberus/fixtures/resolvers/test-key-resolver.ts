@@ -1,11 +1,10 @@
+import {
+  type CerberusIdGenerator,
+  type CerberusKeyResolver,
+  type OriginalFileInfo,
+} from "@neoma/cerberus"
 import { Injectable } from "@nestjs/common"
 import { type Request } from "express"
-
-import { type CerberusIdGenerator } from "@lib/interfaces/id-generator.interface"
-import {
-  type OriginalFileInfo,
-  type CerberusKeyResolver,
-} from "@lib/interfaces/key-resolver.interface"
 
 /**
  * A test implementation of the CerberusKeyResolver interface that generates a

@@ -1,4 +1,4 @@
-import { managedAppInstance } from "@lib"
+import { managedAppInstance } from "@neoma/managed-app"
 
 const LOCATION = "src/path-alias/path-alias.module.ts"
 const MODULE = "PathAliasModule"
