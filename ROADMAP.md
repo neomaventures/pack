@@ -38,31 +38,34 @@ Express/NestJS mocks + matchers only, no Docker.
   that depend on a base package. Base packages expose a reusable API (client +
   start/stop), not just a Jest drop-in, precisely so these can be layered on.
 
-### 2. Move `garmr` in
-Same flatten pattern as cerberus / managed-app.
+### ~~2. Move `garmr` in~~ ✅ done
+Flattened from `neoma-garmr` v0.10.0 (cloned fresh): lib → `packages/garmr/src`, e2e
+harness → `packages/garmr/e2e/app`, e2e specs → `packages/garmr/e2e`, package fixtures →
+`packages/garmr/fixtures`. Brought in at 0.10.0 (already on npm) — no changeset.
+Builds + lints; **330 unit + 208 e2e green**.
 
-- **Clone fresh** from the remote at its latest published tag (the on-disk copy at
-  `~/Dropbox/shipd/neoma/neoma-garmr` is stale).
-- Flatten: lib → `packages/garmr/src`, e2e harness + specs → `packages/garmr/e2e`,
-  package-specific fixtures → `packages/garmr/fixtures`.
-- Write `package.json` (publishable manifest + scripts + jest config), `tsconfig.json`
-  (+ `@lib`/`src/*` paths if used), `tsconfig.lib.json` (build the lib only),
-  `jest.config.js` + `e2e/jest-e2e.json`.
-- Bring in at its current published version (no bump unless you change it).
-
-### 3. Update garmr to consume the in-repo packages
-- Switch garmr's email testing to `@neoma/mailpit` (new base package) via `workspace:*`;
-  same for `@neoma/managed-app` / `@neoma/managed-database` if used.
-- Delete garmr's local copies of anything now shared: its express/nestjs fakes →
-  `@neoma/fixtures`; its mailpit client + docker setup → `@neoma/mailpit`; its matchers
-  → `@neoma/fixtures/matchers`.
+### ~~3. Update garmr to consume the in-repo packages~~ ✅ done
+Rewired off the deleted `@neoma/fixtures/docker` + `/mailpit` + `/mockserver` surfaces:
+- email/SMTP → `@neoma/mailpit` (`startContainer` + `MailpitClient`),
+- Google OAuth mock → `@neoma/mockserver` (`startContainer` + `MockServerClient`),
+- app boot → `@neoma/managed-app`, matchers → `@neoma/fixtures/matchers`.
+`@neoma/managed-database` isn't used (harness uses an inline in-memory sqlite datasource).
+e2e follows the dist-fidelity convention (harness imports `@neoma/garmr` → built `dist`).
 
 ### 4. Promote sensible fixtures from garmr → fixtures
-Apply the boundary rule:
+Garmr's fixtures currently stay local. Apply the boundary rule:
 - **→ `@neoma/fixtures`** — pure, generic mocks/matchers not already there.
 - **→ its own package** — anything needing a heavy peer.
 - **stays local in garmr** — domain-specific: `credentials` (password/email policy),
-  `magic-link` auth-flow helper, the htpasswd asset.
+  `magic-link` auth-flow helper, the `google`/`oauth-api` fakes, the htpasswd asset.
+
+### 5. Standardise e2e imports — remove `@lib`
+Make import resolution consistent across packages: **e2e (harness + specs) imports the
+package by name (`@neoma/<pkg>`)** → jest maps to `dist`, tsconfig maps to `src`;
+**unit specs import relative** to the file under test; lib source stays relative. Drop
+`@lib` from `tsconfig.base.json` + `jest.config.base.js` and the scaffold placeholder,
+and migrate the stragglers (`cerberus` e2e+fixtures, `managed-app` e2e, one `managed-database`
+unit spec). garmr already follows this. (Do as its own PR after the garmr bring-in lands.)
 
 ---
 
