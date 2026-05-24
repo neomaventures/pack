@@ -1,0 +1,82 @@
+{
+  "name": "@neoma/garmr",
+  "version": "0.10.0",
+  "description": "Authentication and authorization for NestJS. Magic links, Google OAuth, cookie/bearer sessions, and wildcard permissions.",
+  "author": "Shipdventures",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neomaventures/pack",
+    "directory": "packages/garmr"
+  },
+  "bugs": {
+    "url": "https://github.com/neomaventures/pack/issues"
+  },
+  "homepage": "https://github.com/neomaventures/pack/tree/main/packages/garmr#readme",
+  "keywords": [
+    "nestjs",
+    "garmr",
+    "auth",
+    "passwordless",
+    "magic-link",
+    "google-oauth",
+    "oauth",
+    "permissions",
+    "neoma"
+  ],
+  "private": false,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "!**/*.json",
+    "!**/*.tsbuildinfo"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc -p ./tsconfig.lib.json",
+    "test": "NODE_ENV=specs jest --runInBand --passWithNoTests",
+    "pretest:e2e": "pnpm build",
+    "test:e2e": "NODE_ENV=e2e NEOMA_MANAGED_APP_MODULE_PATH=e2e/app/app.module.ts#AppModule WEBHOOK_SECRET=whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw NODE_OPTIONS=--experimental-vm-modules jest --config ./e2e/jest-e2e.json --runInBand",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "cookie": "^1.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "ms": "^2.1.3",
+    "nodemailer": "^8.0.4"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "11.x",
+    "@nestjs/core": "11.x",
+    "@nestjs/event-emitter": "3.x",
+    "@nestjs/platform-express": "11.x",
+    "@nestjs/typeorm": "11.x",
+    "class-validator": ">=0.14",
+    "reflect-metadata": ">=0.2",
+    "rxjs": ">=7",
+    "typeorm": ">=0.3"
+  },
+  "devDependencies": {
+    "@neoma/fixtures": "workspace:*",
+    "@neoma/mailpit": "workspace:*",
+    "@neoma/managed-app": "workspace:*",
+    "@neoma/mockserver": "workspace:*",
+    "@nestjs/core": "^11.1.18",
+    "@nestjs/event-emitter": "^3.1.0",
+    "@nestjs/platform-express": "^11.1.18",
+    "@nestjs/testing": "^11.1.18",
+    "@nestjs/typeorm": "^11.0.0",
+    "@types/cookie": "^0.6.0",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/ms": "^2.1.0",
+    "@types/supertest": "^6.0.2",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "sqlite3": "^5.1.7",
+    "supertest": "^7.0.0",
+    "typeorm": "^0.3.20",
+    "uuid": "^11.0.0"
+  }
+}
