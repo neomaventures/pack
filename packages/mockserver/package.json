@@ -1,6 +1,6 @@
 {
   "name": "@neoma/mockserver",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "MockServer test fixture for @neoma/* — a reusable client plus Docker container lifecycle and Jest setup/teardown drop-ins.",
   "author": "Shipdventures",
   "repository": {
@@ -12,7 +12,13 @@
     "url": "https://github.com/neomaventures/pack/issues"
   },
   "homepage": "https://github.com/neomaventures/pack/tree/main/packages/mockserver#readme",
-  "keywords": ["neoma", "testing", "mockserver", "docker", "jest"],
+  "keywords": [
+    "neoma",
+    "testing",
+    "mockserver",
+    "docker",
+    "jest"
+  ],
   "private": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -30,7 +36,13 @@
       "types": "./dist/teardown.d.ts"
     }
   },
-  "files": ["dist", "README.md", "LICENSE", "!**/*.json", "!**/*.tsbuildinfo"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "!**/*.json",
+    "!**/*.tsbuildinfo"
+  ],
   "license": "MIT",
   "scripts": {
     "build": "tsc -p ./tsconfig.lib.json",
