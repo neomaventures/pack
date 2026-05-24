@@ -9,7 +9,8 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
-    "release": "pnpm -r build && changeset publish"
+    "release": "pnpm -r build && changeset publish",
+    "new-package": "bash scripts/new-package.sh"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0",
