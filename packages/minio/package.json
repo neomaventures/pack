@@ -1,6 +1,6 @@
 {
   "name": "@neoma/minio",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "MinIO test fixture for @neoma/* — S3-compatible object storage via a Docker container, with a bucket created on start and Jest setup/teardown drop-ins.",
   "author": "Shipdventures",
   "repository": {
