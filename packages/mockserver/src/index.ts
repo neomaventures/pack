@@ -1,7 +1,7 @@
 // MockServer client
 export { MockServerClient } from "./client"
 
-// MockServer types
+// MockServer protocol types
 export { MockserverBodyTypes, MockserverMatchTypes } from "./types"
 export type {
   MockserverExpectation,
@@ -11,3 +11,7 @@ export type {
   MockserverSpecificTimes,
   MockserverUnlimitedTimes,
 } from "./types"
+
+// Container lifecycle
+export { startContainer, stopContainer } from "./docker/container"
+export type { MockServerConfig, MockServerOptions } from "./docker/container"

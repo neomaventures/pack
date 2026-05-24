@@ -6,6 +6,9 @@ module.exports = {
   transform: {
     "^.+\\.(t|j)s$": ["ts-jest", { tsconfig: "<rootDir>/tsconfig.json" }],
   },
+  // Don't run ts-jest over already-compiled workspace deps (e.g. @neoma/fixtures):
+  // pnpm symlinks resolve them to packages/*/dist, outside node_modules.
+  transformIgnorePatterns: ["/node_modules/", "/dist/"],
   testEnvironment: "node",
   globalSetup: "@neoma/fixtures/setup/minio",
   globalTeardown: "@neoma/fixtures/teardown/minio",

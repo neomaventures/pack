@@ -6,7 +6,8 @@ The monorepo for the **`@neoma/*`** family — a pack of NestJS building blocks,
 
 | Package | Description |
 |---------|-------------|
-| [`@neoma/fixtures`](packages/fixtures) | Test fixtures for `@neoma/*` packages — Express/NestJS mocks, Jest matchers, and Docker helpers (MinIO / Mailpit / MockServer). |
+| [`@neoma/fixtures`](packages/fixtures) | Test fixtures for `@neoma/*` packages — Express/NestJS mocks, Jest matchers, and Docker helpers (MinIO / Mailpit). |
+| [`@neoma/mockserver`](packages/mockserver) | MockServer test fixture — a reusable client plus Docker container lifecycle and Jest setup/teardown drop-ins. |
 | [`@neoma/cerberus`](packages/cerberus) | NestJS-idiomatic file storage for S3-compatible backends — upload, persist, presigned download. |
 | [`@neoma/managed-app`](packages/managed-app) | Boots a NestJS app from a module path — an e2e harness for the `@neoma/*` packages. |
 | [`@neoma/managed-database`](packages/managed-database) | In-memory SQLite `datasource` fixture for tests. |
@@ -43,6 +44,23 @@ Editing a package **and** its consumer together? The consumer resolves the depen
 ```bash
 pnpm --filter @neoma/fixtures exec tsc -p tsconfig.lib.json --watch
 ```
+
+## Creating a package
+
+Scaffold a new `@neoma/*` package in the canonical flattened layout:
+
+```bash
+pnpm new-package <name> ["description"]   # e.g. pnpm new-package minio
+```
+
+This writes `packages/<name>/` — lib in `src/`, a per-package `jest.config.js` and tsconfigs that extend the root configs, a publishable `package.json`, plus `README.md` and `LICENSE` — with a passing placeholder spec so the workspace stays green. Then:
+
+```bash
+corepack pnpm install        # register it in the workspace + update the lockfile
+pnpm changeset               # record the new package for its first release
+```
+
+Replace `src/index.ts` with the real API and add specs alongside it. e2e (a `packages/<name>/e2e/` suite + `test:e2e` script) is added per package when needed — see [`packages/cerberus`](packages/cerberus) for the pattern.
 
 ## Releasing
 

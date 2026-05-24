@@ -1,13 +1,13 @@
-import { stopMockServer } from "../docker"
+import { stopContainer } from "./docker/container"
 
 /**
  * Jest `globalTeardown` drop-in that stops the MockServer Docker container.
  *
- * Usage in `jest.config.json`:
+ * Usage in `jest-e2e.json`:
  * ```json
- * { "globalTeardown": "@neoma/fixtures/teardown/mockserver" }
+ * { "globalTeardown": "@neoma/mockserver/teardown" }
  * ```
  */
 export default async function teardown(): Promise<void> {
-  await stopMockServer()
+  await stopContainer()
 }

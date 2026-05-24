@@ -1,13 +1,13 @@
-import { startMockServer } from "../docker"
+import { startContainer } from "./docker/container"
 
 /**
  * Jest `globalSetup` drop-in that starts a MockServer Docker container.
  *
- * Usage in `jest.config.json`:
+ * Usage in `jest-e2e.json`:
  * ```json
- * { "globalSetup": "@neoma/fixtures/setup/mockserver" }
+ * { "globalSetup": "@neoma/mockserver/setup" }
  * ```
  */
 export default async function setup(): Promise<void> {
-  await startMockServer()
+  await startContainer()
 }

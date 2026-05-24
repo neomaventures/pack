@@ -9,14 +9,6 @@ export {
   stopContainer as stopMinIO,
 } from "./containers/minio"
 export type { MinIOConfig, MinIOOptions } from "./containers/minio"
-export {
-  startContainer as startMockServer,
-  stopContainer as stopMockServer,
-} from "./containers/mockserver"
-export type {
-  MockServerConfig,
-  MockServerOptions,
-} from "./containers/mockserver"
 
 // Shared utilities
 export { waitForHttp, waitForTcp } from "./health"
