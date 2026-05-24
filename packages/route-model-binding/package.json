@@ -32,6 +32,8 @@
     "typeorm": ">=0.3"
   },
   "devDependencies": {
+    "@neoma/fixtures": "workspace:*",
+    "@neoma/managed-database": "workspace:*",
     "@nestjs/core": "^11.1.18",
     "@nestjs/platform-express": "^11.1.18",
     "@nestjs/testing": "^11.1.18",

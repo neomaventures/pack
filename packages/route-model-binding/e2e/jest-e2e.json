@@ -6,7 +6,7 @@
   "setupFiles": ["<rootDir>/build.setup.ts"],
   "setupFilesAfterEnv": [
     "jest-extended/all",
-    "<rootDir>/../fixtures/matchers/index.js"
+    "@neoma/fixtures/matchers"
   ],
   "transform": {
     "^.+\\.tsx?$": "ts-jest"

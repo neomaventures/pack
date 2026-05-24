@@ -1,6 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "types": ["node", "jest", "@neoma/fixtures/matchers"],
     "paths": {
       "@neoma/route-model-binding": ["./src"],
       "@neoma/route-model-binding/*": ["./src/*"],

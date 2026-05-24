@@ -1,10 +1,8 @@
+import { express, executionContext } from "@neoma/fixtures"
 import { ExecutionContext } from "@nestjs/common"
 import { ROUTE_ARGS_METADATA } from "@nestjs/common/constants"
-import { Request } from "express"
-import { express } from "fixtures/express"
 import { post as postEntity } from "fixtures/models/post"
 import { user as userEntity } from "fixtures/models/user"
-import { executionContext } from "fixtures/nestjs"
 
 import { RouteModel } from "./route-model.decorator"
 
@@ -48,7 +46,7 @@ describe("RouteModel", () => {
         const context = <ExecutionContext>executionContext(
           express.request({
             routeModels: { user, post },
-          } as Partial<Request>),
+          }),
         )
         expect(userDecorator("user", context)).toEqual(user)
       })
@@ -61,7 +59,7 @@ describe("RouteModel", () => {
         const context = <ExecutionContext>executionContext(
           express.request({
             routeModels: { user, post },
-          } as Partial<Request>),
+          }),
         )
         expect(postDecorator("post", context)).toEqual(post)
       })
