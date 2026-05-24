@@ -1,6 +1,6 @@
 import { INTERCEPTORS_METADATA } from "@nestjs/common/constants"
-
 import { TestKeyResolver } from "fixtures/resolvers/test-key-resolver"
+
 import { UploadInterceptor } from "../interceptors/upload.interceptor"
 
 import { Upload, UPLOAD_METADATA_KEY } from "./upload.decorator"

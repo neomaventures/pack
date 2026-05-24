@@ -1,9 +1,8 @@
 import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
+import { TestKeyResolver } from "fixtures/resolvers/test-key-resolver"
 
 import { CerberusModule } from "@lib"
-
-import { TestKeyResolver } from "fixtures/resolvers/test-key-resolver"
 
 import { UploadController } from "./upload.controller"
 import { Upload } from "./upload.entity"

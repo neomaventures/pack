@@ -1,7 +1,7 @@
 import { execFileSync } from "child_process"
 import { existsSync, statSync } from "fs"
 
-import { waitForTcp } from "../health"
+import { waitForHttp, waitForTcp } from "../health"
 import { stopContainer as stop } from "../stop"
 import { type BaseOptions } from "../types"
 
@@ -115,6 +115,13 @@ export async function startContainer(
   execFileSync("docker", args, { stdio: "ignore" })
 
   await waitForTcp("localhost", smtpPort, {
+    timeoutMs: 30_000,
+  })
+
+  // Also wait for the HTTP API to accept requests — TCP-up on SMTP does not
+  // mean the API server is ready, and clients that hit it immediately
+  // otherwise race into ECONNRESET.
+  await waitForHttp(`http://localhost:${apiPort}/api/v1/messages`, {
     timeoutMs: 30_000,
   })
 

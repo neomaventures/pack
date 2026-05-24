@@ -6,11 +6,10 @@ import {
   Param,
   Post,
 } from "@nestjs/common"
+import { TestKeyResolver } from "fixtures/resolvers/test-key-resolver"
 import { DataSource } from "typeorm"
 
 import { StoredFile, TemporaryLink, Upload as UploadDecorator } from "@lib"
-
-import { TestKeyResolver } from "fixtures/resolvers/test-key-resolver"
 
 import { Upload } from "./upload.entity"
 
