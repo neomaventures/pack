@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "paths": {
+      "@lib": ["${configDir}/src"],
+      "@lib/*": ["${configDir}/src/*"],
+      "src/*": ["${configDir}/src/*"]
+    }
+  },
+  "include": ["src/**/*", "e2e/**/*"]
+}

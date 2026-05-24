@@ -55,7 +55,7 @@
   },
   "devDependencies": {
     "@neoma/fixtures": "workspace:*",
-    "@neoma/managed-app": "^0.5.0",
+    "@neoma/managed-app": "workspace:*",
     "@nestjs/core": "^11.1.18",
     "@nestjs/event-emitter": "^3.1.0",
     "@nestjs/platform-express": "^11.1.18",

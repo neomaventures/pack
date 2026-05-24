@@ -1,0 +1,36 @@
+{
+  "name": "@neoma/managed-app",
+  "version": "0.6.0",
+  "description": "A package for creating a managed NestJS application in tests.",
+  "author": "Shipdventures",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neomaventures/pack",
+    "directory": "packages/managed-app"
+  },
+  "bugs": {
+    "url": "https://github.com/neomaventures/pack/issues"
+  },
+  "homepage": "https://github.com/neomaventures/pack/tree/main/packages/managed-app#readme",
+  "keywords": ["nestjs", "testing", "e2e", "neoma"],
+  "private": false,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist", "README.md", "LICENSE", "!**/*.json", "!**/*.tsbuildinfo"],
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc -p ./tsconfig.lib.json",
+    "test:e2e": "NODE_OPTIONS=--experimental-vm-modules jest --config ./e2e/jest-e2e.json --runInBand",
+    "lint": "eslint ."
+  },
+  "peerDependencies": {
+    "@nestjs/common": "11.x",
+    "@nestjs/core": "11.x"
+  },
+  "devDependencies": {
+    "@nestjs/platform-express": "^11.1.18",
+    "@nestjs/testing": "^11.1.18",
+    "@types/supertest": "^6.0.2",
+    "supertest": "^7.0.0"
+  }
+}
