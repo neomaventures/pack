@@ -15,10 +15,8 @@ import { MinioClient } from "fixtures/storage/minio"
 import { lastValueFrom, type Observable, of, throwError } from "rxjs"
 import { Column, DataSource, Entity, PrimaryGeneratedColumn } from "typeorm"
 
-import { CerberusOptions } from "@lib/cerberus.options"
-import { UlidIdGenerator } from "@lib/services/ulid-id-generator.service"
-
 import { CerberusModule } from "../"
+import { CerberusOptions } from "../cerberus.options"
 import { Upload } from "../decorators/upload.decorator"
 import { FileCreatedEvent } from "../events/file-created.event"
 import { FileStoreUnreachableException } from "../exceptions/file-store-unreachable.exception"
@@ -26,6 +24,7 @@ import { FileTooLargeException } from "../exceptions/file-too-large.exception"
 import { NoFileProvidedException } from "../exceptions/no-file-provided.exception"
 import { UnsupportedFileTypeException } from "../exceptions/unsupported-file-type.exception"
 import { type Storable } from "../interfaces/storable.interface"
+import { UlidIdGenerator } from "../services/ulid-id-generator.service"
 
 import { UploadInterceptor } from "./upload.interceptor"
 

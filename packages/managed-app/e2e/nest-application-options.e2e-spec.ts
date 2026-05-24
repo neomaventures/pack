@@ -1,4 +1,4 @@
-import { managedAppInstance } from "@lib"
+import { managedAppInstance } from "@neoma/managed-app"
 
 const PARAMETER = "src/parameter/parameter.module.ts#ParameterModule"
 

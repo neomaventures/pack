@@ -1,7 +1,6 @@
+import { type CerberusIdGenerator } from "@neoma/cerberus"
 import { Injectable } from "@nestjs/common"
 import { ulid } from "ulid"
-
-import { type CerberusIdGenerator } from "@lib/interfaces/id-generator.interface"
 
 /**
  * Test ID generator that produces ULID-based identifiers

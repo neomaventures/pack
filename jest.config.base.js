@@ -30,8 +30,7 @@ module.exports = {
   roots: ["<rootDir>/src/"],
   setupFiles: ["reflect-metadata"],
   setupFilesAfterEnv: ["jest-extended/all"],
-  moduleNameMapper: {
-    "@lib/(.*)$": "<rootDir>/src/$1",
-    "@lib": "<rootDir>/src",
-  },
+  // No shared module mappers: unit specs import relative to source, and any
+  // package-specific aliases (fixtures/, @neoma/<pkg>) are added per package.
+  moduleNameMapper: {},
 }

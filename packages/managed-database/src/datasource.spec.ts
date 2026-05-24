@@ -1,7 +1,7 @@
-import { managedDatasourceInstance } from "@lib"
-
 import { Post } from "./post.entity"
 import { User } from "./user.entity"
+
+import { managedDatasourceInstance } from "./index"
 
 describe("managedDatasourceInstance", () => {
   it("it should return a Datasource instance with all the project's entities loaded", async () => {

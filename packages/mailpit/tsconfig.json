@@ -2,8 +2,6 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "paths": {
-      "@lib": ["./src"],
-      "@lib/*": ["./src/*"],
       "@neoma/mailpit": ["./src"],
       "@neoma/mailpit/*": ["./src/*"]
     }

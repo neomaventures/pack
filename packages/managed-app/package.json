@@ -20,6 +20,7 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc -p ./tsconfig.lib.json",
+    "pretest:e2e": "pnpm build",
     "test:e2e": "NODE_OPTIONS=--experimental-vm-modules jest --config ./e2e/jest-e2e.json --runInBand",
     "lint": "eslint ."
   },

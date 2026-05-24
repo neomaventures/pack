@@ -1,8 +1,7 @@
+import { managedAppInstance, type ManagedAppOptions } from "@neoma/managed-app"
 import { HttpStatus } from "@nestjs/common"
 import { CONTROLLER_MESSAGE } from "src/controllers/message.controller"
 import request from "supertest"
-
-import { managedAppInstance, type ManagedAppOptions } from "@lib"
 
 const PARAMETER = "src/parameter/parameter.module.ts#ParameterModule"
 const ENV = "src/env/env.module.ts#EnvModule"

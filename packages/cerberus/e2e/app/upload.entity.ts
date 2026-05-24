@@ -1,6 +1,5 @@
+import { type Storable } from "@neoma/cerberus"
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
-
-import { type Storable } from "@lib"
 
 /**
  * Demo entity implementing Storable for e2e testing.

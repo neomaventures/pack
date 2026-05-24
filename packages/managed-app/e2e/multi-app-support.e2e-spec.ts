@@ -1,7 +1,6 @@
+import { managedAppInstance } from "@neoma/managed-app"
 import { HttpStatus } from "@nestjs/common"
 import request from "supertest"
-
-import { managedAppInstance } from "@lib"
 
 import {
   createSandbox,

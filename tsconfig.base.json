@@ -15,9 +15,7 @@
     "esModuleInterop": true,
     "types": ["node", "jest"],
     "paths": {
-      "fixtures/*": ["${configDir}/fixtures/*"],
-      "@lib": ["${configDir}/src"],
-      "@lib/*": ["${configDir}/src/*"]
+      "fixtures/*": ["${configDir}/fixtures/*"]
     }
   }
 }
