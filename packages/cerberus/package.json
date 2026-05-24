@@ -56,6 +56,7 @@
   "devDependencies": {
     "@neoma/fixtures": "workspace:*",
     "@neoma/managed-app": "workspace:*",
+    "@neoma/minio": "workspace:*",
     "@nestjs/core": "^11.1.18",
     "@nestjs/event-emitter": "^3.1.0",
     "@nestjs/platform-express": "^11.1.18",

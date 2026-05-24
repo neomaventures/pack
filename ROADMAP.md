@@ -5,39 +5,38 @@ Working plan for the `@neoma/*` monorepo consolidation. Jump to **Next steps**; 
 
 ## Where things stand
 
-Four packages, all green (build + lint + unit/e2e), with CI + a Changesets release
+Eight packages, all green (build + lint + unit/e2e), with CI + a Changesets release
 pipeline + supply-chain policy in place.
 
-| Package | Version | Role | Tests |
-|---|---|---|---|
-| `@neoma/fixtures` | 0.3.0 | Express/NestJS mocks + matchers **(+ infra helpers, to be split out)** | 104 |
-| `@neoma/cerberus` | 0.2.0 | S3-compatible file storage | 80 + 29 e2e |
-| `@neoma/managed-app` | 0.6.0 | boots a NestJS app from a module path for e2e | 30 e2e |
-| `@neoma/managed-database` | 0.1.0 | in-memory SQLite `datasource` fixture | 2 |
+| Package | Role |
+|---|---|
+| `@neoma/fixtures` | Express/NestJS mocks + Jest matchers + mock logger (featherweight — no Docker) |
+| `@neoma/docker` | Docker container helpers — HTTP/TCP health polling + teardown; shared base for the service fixtures |
+| `@neoma/minio` | MinIO S3-compatible storage container + bucket + Jest drop-ins |
+| `@neoma/mockserver` | MockServer container + client + Jest drop-ins |
+| `@neoma/mailpit` | Mailpit email container + client + Jest drop-ins |
+| `@neoma/cerberus` | S3-compatible file storage |
+| `@neoma/managed-app` | boots a NestJS app from a module path for e2e |
+| `@neoma/managed-database` | in-memory SQLite `datasource` fixture |
 
 ---
 
 ## Next steps
 
-### 1. Split base infra out of `@neoma/fixtures`
-Move `minio`, `mockserver`, `mailpit` (container lifecycle + clients + the `setup/`
-and `teardown/` Jest drop-ins) out of fixtures into their own packages. Leave
-`@neoma/fixtures` featherweight: Express/NestJS mocks + matchers only.
+### ~~1. Split base infra out of `@neoma/fixtures`~~ ✅ done
+`@neoma/minio`, `@neoma/mockserver`, and `@neoma/mailpit` are now standalone packages
+(container lifecycle + client where applicable + the `setup`/`teardown` Jest drop-ins),
+on top of the shared `@neoma/docker` base. `@neoma/fixtures` is featherweight:
+Express/NestJS mocks + matchers only, no Docker.
 
-- **Boundary rule:** package boundaries follow *peer-dependency* boundaries. Anything
-  that drags a heavy/specific peer (typeorm/sqlite, `aws-sdk` for a MinIO S3 client,
-  nestjs-core) gets its own package so featherweight consumers don't inherit it.
-- **Two tiers:** base infra (`@neoma/minio`, `@neoma/mockserver`, `@neoma/mailpit` —
-  `start`/`stop` + a reusable client) and, on top, **domain mocks** (e.g.
+- **Boundary rule (kept for future bring-ins):** package boundaries follow
+  *peer-dependency* boundaries. Anything that drags a heavy/specific peer
+  (typeorm/sqlite, `aws-sdk` for an S3 client, nestjs-core) gets its own package so
+  featherweight consumers don't inherit it.
+- **Still to come — domain mocks:** on top of the base infra, **domain mocks** (e.g.
   `@neoma/mockserver-gmail` — pre-canned Gmail expectations; **does not exist yet**)
-  that depend on the base. So base packages must expose a reusable API (client +
-  start/stop), not just a Jest drop-in.
-- **This is a breaking change to fixtures** — removes the `@neoma/fixtures/docker`,
-  `/mailpit`, `/setup/*`, `/teardown/*` subpaths → version bump + a changeset + rewire
-  every consumer (cerberus imports `@neoma/fixtures/setup/minio` + `/matchers`, and its
-  jest `globalSetup` references them too).
-- **Names:** these are test-infra packages, so they get plain descriptive names
-  (`@neoma/minio` etc.), not mythic ones — see **Naming** under Conventions.
+  that depend on a base package. Base packages expose a reusable API (client +
+  start/stop), not just a Jest drop-in, precisely so these can be layered on.
 
 ### 2. Move `garmr` in
 Same flatten pattern as cerberus / managed-app.

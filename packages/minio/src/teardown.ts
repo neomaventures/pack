@@ -1,13 +1,13 @@
-import { stopMinIO } from "../docker"
+import { stopContainer } from "./docker/container"
 
 /**
  * Jest `globalTeardown` drop-in that stops the MinIO Docker container.
  *
- * Usage in `jest.config.json`:
+ * Usage in `jest-e2e.json`:
  * ```json
- * { "globalTeardown": "@neoma/fixtures/teardown/minio" }
+ * { "globalTeardown": "@neoma/minio/teardown" }
  * ```
  */
 export default async function teardown(): Promise<void> {
-  await stopMinIO()
+  await stopContainer()
 }

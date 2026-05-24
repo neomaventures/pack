@@ -2,7 +2,7 @@ import { execFileSync, execSync } from "child_process"
 
 import { faker } from "@faker-js/faker"
 
-import { type MinIOConfig, startContainer, stopContainer } from "./minio"
+import { type MinIOConfig, startContainer, stopContainer } from "./container"
 
 describe("startContainer (MinIO)", () => {
   const prefix = `neoma-test-mio-${faker.string.alphanumeric(4)}`

@@ -9,7 +9,7 @@ export { multerFile } from "./express/multer-file"
 export { executionContext } from "./nestjs"
 
 // Logger mock — implements LoggerService with jest.fn() methods
-export { MockLoggerService } from "./loggers"
+export { MockLoggerService } from "./nestjs/logger"
 
 // Custom matchers are loaded separately via Jest setupFilesAfterEnv:
 //   import '@neoma/fixtures/matchers'

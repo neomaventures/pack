@@ -3,8 +3,8 @@ const base = require("../../jest.config.base.js")
 /** @type {import('jest').Config} */
 module.exports = {
   ...base,
-  globalSetup: "@neoma/fixtures/setup/minio",
-  globalTeardown: "@neoma/fixtures/teardown/minio",
+  globalSetup: "@neoma/minio/setup",
+  globalTeardown: "@neoma/minio/teardown",
   setupFilesAfterEnv: [
     ...base.setupFilesAfterEnv,
     "<rootDir>/fixtures/matchers/index.js",
