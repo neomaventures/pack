@@ -1,5 +1,4 @@
 import { faker } from "@faker-js/faker"
-import "@neoma/fixtures/matchers"
 import { Test } from "@nestjs/testing"
 import { MinioClient } from "fixtures/storage/minio"
 

@@ -1,6 +1,5 @@
 import { faker } from "@faker-js/faker"
 import { executionContext, express } from "@neoma/fixtures"
-import "@neoma/fixtures/matchers"
 import {
   type CallHandler,
   type ExecutionContext,

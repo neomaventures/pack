@@ -1,6 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "types": ["node", "jest", "@neoma/fixtures/matchers"],
     "paths": {
       "@neoma/cerberus": ["./src"],
       "@neoma/cerberus/*": ["./src/*"],

@@ -5,11 +5,7 @@ module.exports = {
   ...base,
   globalSetup: "@neoma/minio/setup",
   globalTeardown: "@neoma/minio/teardown",
-  setupFilesAfterEnv: [
-    ...base.setupFilesAfterEnv,
-    "<rootDir>/fixtures/matchers/index.js",
-    "@neoma/fixtures/matchers",
-  ],
+  setupFilesAfterEnv: [...base.setupFilesAfterEnv, "@neoma/fixtures/matchers"],
   moduleNameMapper: {
     ...base.moduleNameMapper,
     "fixtures/(.*)$": "<rootDir>/fixtures/$1",

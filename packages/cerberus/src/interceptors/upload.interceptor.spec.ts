@@ -4,7 +4,6 @@ import {
   MockRequest,
   multerFile,
 } from "@neoma/fixtures"
-import "@neoma/fixtures/matchers"
 import { type CallHandler, type ExecutionContext } from "@nestjs/common"
 import { EventEmitter2, EventEmitterModule } from "@nestjs/event-emitter"
 import { Test, type TestingModule } from "@nestjs/testing"
