@@ -1,8 +1,8 @@
 import { execFileSync } from "child_process"
 
-import { waitForHttp } from "../health"
-import { stopContainer as stop } from "../stop"
-import { type BaseOptions } from "../types"
+import { waitForHttp } from "./health"
+import { stopContainer as stop } from "./stop"
+import { type BaseOptions } from "./types"
 
 const MOCKSERVER_IMAGE = "mockserver/mockserver:5.15.0"
 const DEFAULT_PORT = 1080

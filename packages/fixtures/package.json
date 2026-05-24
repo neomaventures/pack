@@ -42,10 +42,6 @@
       "require": "./dist/setup/minio.js",
       "types": "./dist/setup/minio.d.ts"
     },
-    "./setup/mockserver": {
-      "require": "./dist/setup/mockserver.js",
-      "types": "./dist/setup/mockserver.d.ts"
-    },
     "./teardown/mailpit": {
       "require": "./dist/teardown/mailpit.js",
       "types": "./dist/teardown/mailpit.d.ts"
@@ -53,14 +49,6 @@
     "./teardown/minio": {
       "require": "./dist/teardown/minio.js",
       "types": "./dist/teardown/minio.d.ts"
-    },
-    "./teardown/mockserver": {
-      "require": "./dist/teardown/mockserver.js",
-      "types": "./dist/teardown/mockserver.d.ts"
-    },
-    "./mockserver": {
-      "require": "./dist/mockserver/index.js",
-      "types": "./dist/mockserver/index.d.ts"
     },
     "./mailpit": {
       "require": "./dist/mailpit/index.js",

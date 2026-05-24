@@ -6,7 +6,7 @@ import {
   type MockServerConfig,
   startContainer,
   stopContainer,
-} from "./mockserver"
+} from "./container"
 
 describe("startContainer (MockServer)", () => {
   const prefix = `neoma-test-ms-${faker.string.alphanumeric(4)}`

@@ -9,8 +9,8 @@ const execFileAsync = promisify(execFile)
  * even if the container does not exist.
  *
  * @internal Used by per-service stop functions. Not exported from the
- * `@neoma/fixtures/docker` barrel — consumers should use `stopMailpit`
- * or `stopMinIO` instead.
+ * `@neoma/fixtures/docker` barrel — consumers should use `stopMockServer`,
+ * `stopMailpit`, or `stopMinIO` instead.
  *
  * @param name - The name of the container to remove
  */

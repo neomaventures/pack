@@ -208,6 +208,12 @@ importers:
         specifier: ^0.3.20
         version: 0.3.29(sqlite3@5.1.7)(ts-node@10.9.2(@types/node@25.8.0)(typescript@6.0.3))
 
+  packages/mockserver:
+    devDependencies:
+      '@faker-js/faker':
+        specifier: ^9.6.0
+        version: 9.9.0
+
 packages:
 
   '@aws-crypto/crc32@5.2.0':

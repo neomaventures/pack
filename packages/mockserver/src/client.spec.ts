@@ -1,12 +1,11 @@
 import { faker } from "@faker-js/faker"
 
+import { MockServerClient } from "./client"
 import {
   type MockServerConfig,
-  startMockServer,
-  stopMockServer,
-} from "../docker"
-
-import { MockServerClient } from "./client"
+  startContainer,
+  stopContainer,
+} from "./docker/container"
 import { type MockserverExpectation } from "./types"
 
 describe("MockServerClient", () => {
@@ -16,12 +15,12 @@ describe("MockServerClient", () => {
   let client: MockServerClient
 
   beforeAll(async () => {
-    config = await startMockServer({ prefix, port })
+    config = await startContainer({ prefix, port })
     client = new MockServerClient(`http://localhost:${config.port}/mockserver`)
   }, 60_000)
 
   afterAll(async () => {
-    await stopMockServer({ prefix })
+    await stopContainer({ prefix })
     delete process.env.MOCKSERVER_URL
   })
 
