@@ -36,4 +36,4 @@ jobs:
         run: pnpm -r test
 
       - name: E2E tests
-        run: pnpm --filter @neoma/cerberus test:e2e
+        run: pnpm -r test:e2e
