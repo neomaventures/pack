@@ -1,0 +1,20 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "setupFiles": ["<rootDir>/build.setup.ts"],
+  "setupFilesAfterEnv": [
+    "jest-extended/all",
+    "<rootDir>/../fixtures/matchers/index.js"
+  ],
+  "transform": {
+    "^.+\\.tsx?$": "ts-jest"
+  },
+  "moduleNameMapper": {
+    "^fixtures/(.*)$": "<rootDir>/../fixtures/$1",
+    "^@neoma/route-model-binding$": "<rootDir>/../dist/index.js",
+    "^@neoma/route-model-binding/(.*)$": "<rootDir>/../dist/$1",
+    "^src/(.*)$": "<rootDir>/../e2e/app/$1"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "paths": {
+      "@neoma/route-model-binding": ["./src"],
+      "@neoma/route-model-binding/*": ["./src/*"],
+      "src/*": ["./e2e/app/*"],
+      "fixtures/*": ["./fixtures/*"]
+    }
+  },
+  "include": ["src/**/*", "fixtures/**/*", "e2e/**/*"]
+}

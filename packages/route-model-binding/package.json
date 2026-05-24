@@ -1,0 +1,44 @@
+{
+  "name": "@neoma/route-model-binding",
+  "version": "0.2.0",
+  "description": "Laravel-inspired route model binding for NestJS — automatically resolve database models from route parameters.",
+  "author": "Shipdventures",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neomaventures/pack",
+    "directory": "packages/route-model-binding"
+  },
+  "bugs": {
+    "url": "https://github.com/neomaventures/pack/issues"
+  },
+  "homepage": "https://github.com/neomaventures/pack/tree/main/packages/route-model-binding#readme",
+  "keywords": ["nestjs", "route-model-binding", "typeorm", "laravel", "neoma"],
+  "private": false,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist", "README.md", "LICENSE", "!**/*.json", "!**/*.tsbuildinfo"],
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc -p ./tsconfig.lib.json",
+    "test": "jest --runInBand --passWithNoTests",
+    "pretest:e2e": "pnpm build",
+    "test:e2e": "NODE_OPTIONS=--experimental-vm-modules jest --config ./e2e/jest-e2e.json --runInBand",
+    "lint": "eslint ."
+  },
+  "peerDependencies": {
+    "@nestjs/common": "11.x",
+    "@nestjs/core": "11.x",
+    "@nestjs/typeorm": "11.x",
+    "typeorm": ">=0.3"
+  },
+  "devDependencies": {
+    "@nestjs/core": "^11.1.18",
+    "@nestjs/platform-express": "^11.1.18",
+    "@nestjs/testing": "^11.1.18",
+    "@nestjs/typeorm": "^11.0.0",
+    "@types/supertest": "^6.0.2",
+    "sqlite3": "^5.1.7",
+    "supertest": "^7.0.0",
+    "typeorm": "^0.3.20"
+  }
+}

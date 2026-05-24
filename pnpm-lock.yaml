@@ -338,6 +338,37 @@ importers:
         specifier: ^9.6.0
         version: 9.9.0
 
+  packages/route-model-binding:
+    dependencies:
+      '@nestjs/common':
+        specifier: 11.x
+        version: 11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+    devDependencies:
+      '@nestjs/core':
+        specifier: ^11.1.18
+        version: 11.1.21(@nestjs/common@11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.21)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/platform-express':
+        specifier: ^11.1.18
+        version: 11.1.21(@nestjs/common@11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.21)
+      '@nestjs/testing':
+        specifier: ^11.1.18
+        version: 11.1.21(@nestjs/common@11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.21)(@nestjs/platform-express@11.1.21)
+      '@nestjs/typeorm':
+        specifier: ^11.0.0
+        version: 11.0.1(@nestjs/common@11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.21)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.29(sqlite3@5.1.7)(ts-node@10.9.2(@types/node@25.8.0)(typescript@6.0.3)))
+      '@types/supertest':
+        specifier: ^6.0.2
+        version: 6.0.3
+      sqlite3:
+        specifier: ^5.1.7
+        version: 5.1.7
+      supertest:
+        specifier: ^7.0.0
+        version: 7.2.2
+      typeorm:
+        specifier: ^0.3.20
+        version: 0.3.29(sqlite3@5.1.7)(ts-node@10.9.2(@types/node@25.8.0)(typescript@6.0.3))
+
 packages:
 
   '@aws-crypto/crc32@5.2.0':
