@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "paths": {
+      "@neoma/features": ["./src"],
+      "@neoma/features/*": ["./src/*"],
+      "fixtures/*": ["./fixtures/*"]
+    }
+  },
+  "include": ["src/**/*", "fixtures/**/*", "e2e/**/*"]
+}

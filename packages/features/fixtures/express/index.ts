@@ -1,0 +1,197 @@
+import crypto from "crypto"
+import type { Socket } from "net"
+
+import { faker } from "@faker-js/faker"
+
+const { helpers, internet, system } = faker
+
+const caseInsensitiveSearch = (
+  obj: Record<string, string | string[] | undefined>,
+  key: string,
+): any => {
+  return obj[key] ?? obj[key.toLowerCase()]
+}
+
+const convertHeadersToLowerCase = (
+  headers: Record<string, any>,
+): Record<string, any> => {
+  const clonedHeaders = { ...headers }
+  Object.keys(clonedHeaders).forEach((key) => {
+    clonedHeaders[key.toLowerCase()] = clonedHeaders[key]
+    delete clonedHeaders[key]
+  })
+  return clonedHeaders
+}
+
+export interface MockRequest {
+  get(name: string): any
+  header(name: string): any
+  body: any
+  headers: Record<string, string | string[] | undefined>
+  method: string
+  url: string
+  res: MockResponse
+  path: string
+  params: Record<string, string>
+  signedCookies: Record<string, string>
+  connection: Socket
+  [key: string]: any
+}
+
+export interface MockResponse {
+  statusCode?: number
+  getHeaders(): Record<string, any>
+  get(name: string): any
+  header(field: string, value?: string | Array<string>): MockResponse
+  removeHeader(name: string): void
+  cookie: jest.Mock
+  clearCookie: jest.Mock
+  end: jest.Mock
+  status(code: number): MockResponse
+  json: jest.Mock
+  render: jest.Mock
+  redirect: jest.Mock
+  send: jest.Mock
+  locals: Record<string, any>
+}
+
+type ExpressFixtures = {
+  /**
+   * Creates a signed cookie string using the provided value and secret according
+   * to how the cookie-parser library would sign a cookie, i.e. HMAC-SHA256.
+   *
+   * @param val The cookie value to sign, if an object it will be JSON.stringified
+   * to create the string that will be signed.
+   * @param secret The secret to use to sign the cookie. If not provided an unsigned
+   * cookie will be returned.
+   *
+   * @returns The signed cookie string in the format of `${prefix}${val}.${signature}; Path=/`
+   * with prefix and signature being encoded with encodeURIComponent.
+   */
+  cookie(val: string | object, secret?: string): string
+
+  /**
+   * Creates a MockResponse with status, json, and header functions that
+   * are instances of a jest.Mock and with a locals property.
+   *
+   * @param options.locals Any locals to populate the response's locals property.
+   * @param options.headers Any headers to set on the response.
+   *
+   * @returns A MockResponse with status, get, getHeaders, removeHeader, json,
+   * header, render, redirect and send functions, and a locals property.
+   */
+  response: (options?: {
+    locals?: Record<string, any>
+    headers?: Record<string, any>
+  }) => MockResponse
+
+  /**
+   * Creates a MockRequest with body, headers, method, url, path, params,
+   * signedCookies, and a MockResponse.
+   *
+   * @param options Partial MockRequest to override defaults.
+   *
+   * @returns A MockRequest with sensible defaults for any properties not provided.
+   */
+  request: (options?: Partial<MockRequest> & Record<string, any>) => MockRequest
+}
+
+export const express: ExpressFixtures = {
+  cookie(val: string | object, secret): string {
+    const cookieValue = typeof val === "string" ? val : JSON.stringify(val)
+    const prefix = typeof val === "string" ? "s:" : "s:j:"
+    if (!secret) {
+      return `${encodeURIComponent(prefix)}${cookieValue}; Path=/`
+    }
+
+    const signature = crypto
+      .createHmac("sha256", secret)
+      .update(cookieValue)
+      .digest("base64")
+      .replace(/=+$/, "")
+
+    return `${encodeURIComponent(prefix)}${cookieValue}.${encodeURIComponent(signature)}; Path=/`
+  },
+
+  response(
+    {
+      locals: customLocals,
+      headers = {},
+    }: { locals?: Record<string, any>; headers?: Record<string, any> } = {
+      headers: {},
+    },
+  ): MockResponse {
+    const clonedHeaders = convertHeadersToLowerCase(headers)
+    const locals = { layout: system.fileName(), ...customLocals }
+    return {
+      getHeaders(): Record<string, any> {
+        return clonedHeaders
+      },
+      get(name: string): any {
+        return caseInsensitiveSearch(clonedHeaders, name)
+      },
+      header(field: string, value?: string | Array<string>): MockResponse {
+        clonedHeaders[field] = value
+        return this
+      },
+      removeHeader(name): void {
+        delete clonedHeaders[name]
+        delete clonedHeaders[name.toLowerCase()]
+      },
+      cookie: jest.fn().mockReturnThis(),
+      clearCookie: jest.fn().mockReturnThis(),
+      end: jest.fn().mockReturnThis(),
+      status(code: number): MockResponse {
+        this.statusCode = code
+        return this
+      },
+      json: jest.fn().mockReturnThis(),
+      render: jest.fn(),
+      redirect: jest.fn().mockReturnThis(),
+      send: jest.fn().mockReturnThis(),
+      locals,
+    }
+  },
+
+  request(
+    {
+      body = {},
+      headers = {},
+      method = helpers.arrayElement(["GET", "POST", "PUT", "DELETE", "PATCH"]),
+      url = internet.url(),
+      res = express.response(),
+      path = system.filePath(),
+      params = {},
+      signedCookies = {},
+    }: Partial<MockRequest> & Record<string, any> = {
+      body: {},
+      headers: {},
+      method: helpers.arrayElement(["GET", "POST", "PUT", "DELETE", "PATCH"]),
+      url: internet.url(),
+      res: express.response(),
+      path: system.filePath(),
+      params: {},
+      signedCookies: {},
+    },
+  ): MockRequest {
+    return {
+      get(name: string): any {
+        return caseInsensitiveSearch(headers, name)
+      },
+      header(name: string): any {
+        return caseInsensitiveSearch(headers, name)
+      },
+      // eslint-disable-next-line prefer-rest-params
+      ...(arguments[0] as Partial<MockRequest>),
+      body,
+      headers,
+      method,
+      url,
+      res,
+      path,
+      params,
+      signedCookies,
+      connection: {} as Socket,
+    }
+  },
+} as const
