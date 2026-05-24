@@ -44,39 +44,72 @@ echo "📦 Scaffolding @neoma/$NAME → packages/$NAME"
 
 mkdir -p "$PKG_DIR/src"
 
-# --- package.json -----------------------------------------------------------
-cat > "$PKG_DIR/package.json" <<EOF
-{
-  "name": "@neoma/$NAME",
-  "version": "0.0.0",
-  "description": "$DESC",
-  "author": "Shipdventures",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/neomaventures/pack",
-    "directory": "packages/$NAME"
+# --- package.json + README.md (generated via Node) -------------------------
+# Routed through Node so the user-supplied description is handled safely:
+# JSON.stringify escapes quotes/backslashes/newlines for package.json, and a
+# template literal keeps it verbatim in the README. A shell heredoc would
+# produce invalid JSON — or shell-interpret backticks/$ — on those characters.
+# NAME is kebab-validated above, so the remaining heredocs interpolate it safely.
+NEOMA_NAME="$NAME" NEOMA_DESC="$DESC" NEOMA_DIR="$PKG_DIR" node <<'NODE'
+const fs = require("fs")
+const { join } = require("path")
+
+const name = process.env.NEOMA_NAME
+const desc = process.env.NEOMA_DESC
+const dir = process.env.NEOMA_DIR
+
+const pkg = {
+  name: `@neoma/${name}`,
+  version: "0.0.0",
+  description: desc,
+  author: "Shipdventures",
+  repository: {
+    type: "git",
+    url: "https://github.com/neomaventures/pack",
+    directory: `packages/${name}`,
   },
-  "bugs": {
-    "url": "https://github.com/neomaventures/pack/issues"
+  bugs: { url: "https://github.com/neomaventures/pack/issues" },
+  homepage: `https://github.com/neomaventures/pack/tree/main/packages/${name}#readme`,
+  keywords: ["nestjs", "neoma", name],
+  private: false,
+  main: "dist/index.js",
+  types: "dist/index.d.ts",
+  files: ["dist", "README.md", "LICENSE", "!**/*.json", "!**/*.tsbuildinfo"],
+  license: "MIT",
+  scripts: {
+    build: "tsc -p ./tsconfig.lib.json",
+    test: "jest --runInBand --passWithNoTests",
+    lint: "eslint .",
   },
-  "homepage": "https://github.com/neomaventures/pack/tree/main/packages/$NAME#readme",
-  "keywords": ["nestjs", "neoma", "$NAME"],
-  "private": false,
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": ["dist", "README.md", "LICENSE", "!**/*.json", "!**/*.tsbuildinfo"],
-  "license": "MIT",
-  "scripts": {
-    "build": "tsc -p ./tsconfig.lib.json",
-    "test": "jest --runInBand --passWithNoTests",
-    "lint": "eslint ."
-  },
-  "peerDependencies": {
+  peerDependencies: {
     "@nestjs/common": "11.x",
-    "@nestjs/core": "11.x"
-  }
+    "@nestjs/core": "11.x",
+  },
 }
-EOF
+fs.writeFileSync(join(dir, "package.json"), JSON.stringify(pkg, null, 2) + "\n")
+
+fs.writeFileSync(
+  join(dir, "README.md"),
+  `# @neoma/${name}
+
+${desc}
+
+## Installation
+
+\`\`\`bash
+pnpm add -D @neoma/${name}
+\`\`\`
+
+## Usage
+
+> TODO: document the public API.
+
+## License
+
+MIT
+`,
+)
+NODE
 
 # --- tsconfig.json (typecheck/test: includes specs) -------------------------
 cat > "$PKG_DIR/tsconfig.json" <<'EOF'
@@ -141,27 +174,6 @@ describe("@neoma/$NAME", () => {
     expect(packageName).toBe("@neoma/$NAME")
   })
 })
-EOF
-
-# --- README.md --------------------------------------------------------------
-cat > "$PKG_DIR/README.md" <<EOF
-# @neoma/$NAME
-
-$DESC
-
-## Installation
-
-\`\`\`bash
-pnpm add -D @neoma/$NAME
-\`\`\`
-
-## Usage
-
-> TODO: document the public API.
-
-## License
-
-MIT
 EOF
 
 # --- LICENSE ----------------------------------------------------------------
