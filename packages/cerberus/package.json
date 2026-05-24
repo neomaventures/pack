@@ -56,6 +56,7 @@
   "devDependencies": {
     "@neoma/fixtures": "workspace:*",
     "@neoma/managed-app": "workspace:*",
+    "@neoma/managed-database": "workspace:*",
     "@neoma/minio": "workspace:*",
     "@nestjs/core": "^11.1.18",
     "@nestjs/event-emitter": "^3.1.0",
@@ -64,10 +65,10 @@
     "@nestjs/typeorm": "^11.0.0",
     "@types/lodash": "^4.17.13",
     "@types/multer": "^2.1.0",
+    "@types/supertest": "^6.0.2",
     "lodash": "^4.17.21",
     "sqlite3": "^5.1.7",
     "supertest": "^7.0.0",
-    "@types/supertest": "^6.0.2",
     "typeorm": "^0.3.20"
   }
 }

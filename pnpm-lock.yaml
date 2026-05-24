@@ -111,6 +111,9 @@ importers:
       '@neoma/managed-app':
         specifier: workspace:*
         version: link:../managed-app
+      '@neoma/managed-database':
+        specifier: workspace:*
+        version: link:../managed-database
       '@neoma/minio':
         specifier: workspace:*
         version: link:../minio
