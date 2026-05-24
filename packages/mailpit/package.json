@@ -1,6 +1,6 @@
 {
   "name": "@neoma/mailpit",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Mailpit test fixture for @neoma/* — a reusable client plus Docker container lifecycle and Jest setup/teardown drop-ins for email testing.",
   "author": "Shipdventures",
   "repository": {
@@ -12,7 +12,14 @@
     "url": "https://github.com/neomaventures/pack/issues"
   },
   "homepage": "https://github.com/neomaventures/pack/tree/main/packages/mailpit#readme",
-  "keywords": ["neoma", "testing", "mailpit", "email", "docker", "jest"],
+  "keywords": [
+    "neoma",
+    "testing",
+    "mailpit",
+    "email",
+    "docker",
+    "jest"
+  ],
   "private": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -30,7 +37,13 @@
       "types": "./dist/teardown.d.ts"
     }
   },
-  "files": ["dist", "README.md", "LICENSE", "!**/*.json", "!**/*.tsbuildinfo"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "!**/*.json",
+    "!**/*.tsbuildinfo"
+  ],
   "license": "MIT",
   "scripts": {
     "build": "tsc -p ./tsconfig.lib.json",

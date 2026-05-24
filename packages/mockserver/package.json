@@ -1,6 +1,6 @@
 {
   "name": "@neoma/mockserver",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "MockServer test fixture for @neoma/* — a reusable client plus Docker container lifecycle and Jest setup/teardown drop-ins.",
   "author": "Shipdventures",
   "repository": {
