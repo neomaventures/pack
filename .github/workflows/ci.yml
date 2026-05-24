@@ -26,6 +26,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Check README package list
+        run: node scripts/check-readme-packages.mjs
+
       - name: Build
         run: pnpm -r build
 
