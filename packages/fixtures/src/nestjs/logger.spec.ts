@@ -1,4 +1,4 @@
-import { MockLoggerService } from "./index"
+import { MockLoggerService } from "./logger"
 
 describe("MockLoggerService", () => {
   const expectedMethods = [
