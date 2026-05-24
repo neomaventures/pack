@@ -1,9 +1,12 @@
 import { faker } from "@faker-js/faker"
 import { createTransport, type Transporter } from "nodemailer"
 
-import { startMailpit, stopMailpit, type MailpitConfig } from "../docker"
-
 import { MailpitClient } from "./client"
+import {
+  startContainer,
+  stopContainer,
+  type MailpitConfig,
+} from "./docker/container"
 
 /**
  * Sends a test email via the given nodemailer transport.
@@ -29,7 +32,7 @@ describe("MailpitClient", () => {
   let transport: Transporter
 
   beforeAll(async () => {
-    config = await startMailpit({ prefix, smtpPort, apiPort })
+    config = await startContainer({ prefix, smtpPort, apiPort })
     client = new MailpitClient(`http://localhost:${config.apiPort}/api/v1`)
     transport = createTransport({
       host: "localhost",
@@ -39,7 +42,7 @@ describe("MailpitClient", () => {
   }, 60_000)
 
   afterAll(async () => {
-    await stopMailpit({ prefix })
+    await stopContainer({ prefix })
     delete process.env.SMTP_HOST
     delete process.env.SMTP_PORT
     delete process.env.MAILPIT_API

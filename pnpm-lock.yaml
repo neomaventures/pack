@@ -167,6 +167,18 @@ importers:
         specifier: ^2.1.0
         version: 2.1.0
 
+  packages/mailpit:
+    devDependencies:
+      '@faker-js/faker':
+        specifier: ^9.6.0
+        version: 9.9.0
+      '@types/nodemailer':
+        specifier: ^8.0.0
+        version: 8.0.0
+      nodemailer:
+        specifier: ^8.0.7
+        version: 8.0.7
+
   packages/managed-app:
     dependencies:
       '@nestjs/common':
