@@ -8,6 +8,8 @@ The monorepo for the **`@neoma/*`** family — a pack of NestJS building blocks,
 |---------|-------------|
 | [`@neoma/fixtures`](packages/fixtures) | Test fixtures for `@neoma/*` packages — Express/NestJS mocks, Jest matchers, and Docker helpers (MinIO / Mailpit / MockServer). |
 | [`@neoma/cerberus`](packages/cerberus) | NestJS-idiomatic file storage for S3-compatible backends — upload, persist, presigned download. |
+| [`@neoma/managed-app`](packages/managed-app) | Boots a NestJS app from a module path — an e2e harness for the `@neoma/*` packages. |
+| [`@neoma/managed-database`](packages/managed-database) | In-memory SQLite `datasource` fixture for tests. |
 
 Each package is versioned, changelogged, and published on its own cadence.
 
