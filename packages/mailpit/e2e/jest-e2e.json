@@ -8,9 +8,8 @@
   "setupFiles": ["<rootDir>/build.setup.ts"],
   "setupFilesAfterEnv": ["jest-extended/all"],
   "transform": {
-    "^.+\\.(t|j)s$": "ts-jest"
+    "^.+\\.tsx?$": "ts-jest"
   },
-  "transformIgnorePatterns": ["/node_modules/", "/dist/"],
   "moduleNameMapper": {
     "^@neoma/mailpit$": "<rootDir>/../dist/index.js",
     "^@neoma/mailpit/(.*)$": "<rootDir>/../dist/$1"

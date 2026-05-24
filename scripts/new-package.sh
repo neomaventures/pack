@@ -134,25 +134,9 @@ cat > "$PKG_DIR/tsconfig.lib.json" <<'EOF'
 }
 EOF
 
-# --- jest.config.js ---------------------------------------------------------
+# --- jest.config.js (extends the shared root base) --------------------------
 cat > "$PKG_DIR/jest.config.js" <<'EOF'
-/** @type {import('jest').Config} */
-module.exports = {
-  moduleFileExtensions: ["js", "json", "ts"],
-  rootDir: ".",
-  testRegex: ".*\\.spec\\.ts$",
-  transform: {
-    "^.+\\.(t|j)s$": ["ts-jest", { tsconfig: "<rootDir>/tsconfig.json" }],
-  },
-  testEnvironment: "node",
-  roots: ["<rootDir>/src/"],
-  setupFiles: ["reflect-metadata"],
-  setupFilesAfterEnv: ["jest-extended/all"],
-  moduleNameMapper: {
-    "@lib/(.*)$": "<rootDir>/src/$1",
-    "@lib": "<rootDir>/src",
-  },
-}
+module.exports = require("../../jest.config.base.js")
 EOF
 
 # --- src/index.ts -----------------------------------------------------------
