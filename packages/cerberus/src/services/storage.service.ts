@@ -1,0 +1,99 @@
+import {
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3"
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
+import { Inject, Injectable } from "@nestjs/common"
+
+import { type CerberusOptions, CERBERUS_OPTIONS } from "../cerberus.options"
+import {
+  InvalidStorageKeyException,
+  MAX_KEY_BYTES,
+} from "../exceptions/invalid-storage-key.exception"
+
+/**
+ * Thin wrapper around the AWS S3 client for storing objects and generating
+ * presigned URLs. Key resolution is performed upstream by a
+ * {@link CerberusKeyResolver}; this service is responsible only for the
+ * persistence boundary.
+ *
+ * @example
+ * ```typescript
+ * await storageService.store("01HXYZ-photo.jpg", buffer, "image/jpeg")
+ * const url = await storageService.getSignedUrl("01HXYZ-photo.jpg")
+ * ```
+ */
+@Injectable()
+export class StorageService {
+  private readonly client: S3Client
+
+  public constructor(
+    @Inject(CERBERUS_OPTIONS) private readonly options: CerberusOptions,
+  ) {
+    this.client = new S3Client({
+      endpoint: options.endpoint,
+      region: options.region,
+      credentials: {
+        accessKeyId: options.accessKeyId,
+        secretAccessKey: options.secretAccessKey,
+      },
+      forcePathStyle: options.forcePathStyle ?? true,
+      // Suppress default SDK v3 checksum computation which can fail on some S3-compatible backends
+      requestChecksumCalculation: "WHEN_REQUIRED",
+      responseChecksumValidation: "WHEN_REQUIRED",
+    })
+  }
+
+  /**
+   * Stores a file in S3 at the given key.
+   *
+   * The key is validated for S3 compatibility before the network call:
+   * non-empty and ≤ 1024 bytes when UTF-8 encoded. Other characters (slashes,
+   * dots, traversal sequences) are S3-valid and pass through unchanged —
+   * any policy on those belongs in the key resolver.
+   *
+   * @param key - The S3 object key, produced by a key resolver
+   * @param body - The file content as a Buffer
+   * @param contentType - The MIME type of the file
+   * @throws {InvalidStorageKeyException} if the key is empty or exceeds 1024 bytes
+   */
+  public async store(
+    key: string,
+    body: Buffer,
+    contentType: string,
+  ): Promise<void> {
+    if (!key) {
+      throw new InvalidStorageKeyException(key, "empty")
+    }
+    if (Buffer.byteLength(key, "utf8") > MAX_KEY_BYTES) {
+      throw new InvalidStorageKeyException(key, "too-long")
+    }
+
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: this.options.bucket,
+        Key: key,
+        Body: body,
+        ContentType: contentType,
+      }),
+    )
+  }
+
+  /**
+   * Generates a presigned URL for downloading a file from S3.
+   *
+   * @param key - The S3 object key
+   * @param expiresIn - URL expiration time in seconds (defaults to options.linkExpiresIn or 3600)
+   * @returns A presigned download URL
+   */
+  public async getSignedUrl(key: string, expiresIn?: number): Promise<string> {
+    const command = new GetObjectCommand({
+      Bucket: this.options.bucket,
+      Key: key,
+    })
+    return getSignedUrl(this.client, command, {
+      expiresIn: expiresIn ?? this.options.linkExpiresIn ?? 3600,
+    })
+  }
+}

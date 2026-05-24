@@ -1,0 +1,8 @@
+packages:
+  - "packages/*"
+
+onlyBuiltDependencies:
+  - sqlite3
+  - "@nestjs/core"
+  - "@swc/core"
+  - unrs-resolver
