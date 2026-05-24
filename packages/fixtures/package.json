@@ -58,6 +58,7 @@
   },
   "peerDependencies": {
     "@nestjs/common": "11.x",
+    "@types/express": ">=4",
     "@types/jest": ">=29.0.0",
     "jest": ">=29.0.0"
   },
@@ -66,6 +67,7 @@
     "@neoma/docker": "workspace:*"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "@types/multer": "^2.1.0"
   }
 }

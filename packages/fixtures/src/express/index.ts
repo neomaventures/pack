@@ -1,12 +1,9 @@
 import crypto from "crypto"
-import {
-  type IncomingHttpHeaders,
-  type OutgoingHttpHeader,
-  type OutgoingHttpHeaders,
-} from "http"
+import { type OutgoingHttpHeader, type OutgoingHttpHeaders } from "http"
 import { type Socket } from "net"
 
 import { faker } from "@faker-js/faker"
+import { type Request } from "express"
 
 const { helpers, internet, system } = faker
 
@@ -50,17 +47,23 @@ export interface MockResponse {
   locals: Record<string, any>
 }
 
-export interface MockRequest {
+/**
+ * A mock Express `Request` for unit tests.
+ *
+ * The named fields are the real `express.Request` properties that
+ * {@link ExpressFixtures.request} fills with faker-generated defaults.
+ * `express.request(overrides)` spreads whatever you pass on top — including
+ * arbitrary extra keys (the `[key: string]: any` index signature) — so nothing
+ * you set is typed away. `get`/`header` are overridden to give case-insensitive
+ * header access, and `res` is a {@link MockResponse} rather than a real one.
+ */
+export type MockRequest = Pick<
+  Request,
+  "body" | "method" | "url" | "path" | "params" | "signedCookies" | "headers"
+> & {
   get(name: string): any
   header(name: string): any
-  body: any
-  headers: IncomingHttpHeaders
-  method: string
-  url: string
   res: MockResponse
-  path: string
-  params: Record<string, string>
-  signedCookies: Record<string, string>
   connection: Socket
   [key: string]: any
 }
