@@ -10,6 +10,8 @@ export default tseslint.config(
     ignores: [
       // This file.
       "eslint.config.mjs",
+      // Jest config files — not part of the typed TS project.
+      "**/jest.config.js",
       // Any build output
       "**/dist",
       // Ambient type declarations
