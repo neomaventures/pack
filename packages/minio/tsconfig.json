@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "paths": {
+      "@lib": ["./src"],
+      "@lib/*": ["./src/*"],
+      "@neoma/minio": ["./src"],
+      "@neoma/minio/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*", "e2e/**/*"]
+}

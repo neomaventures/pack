@@ -6,10 +6,11 @@ The monorepo for the **`@neoma/*`** family — a pack of NestJS building blocks,
 
 | Package | Description |
 |---------|-------------|
-| [`@neoma/fixtures`](packages/fixtures) | Test fixtures for `@neoma/*` packages — Express/NestJS mocks, Jest matchers, and MinIO Docker helpers. |
+| [`@neoma/fixtures`](packages/fixtures) | Test fixtures for `@neoma/*` packages — Express/NestJS mocks, Jest matchers, and a mock logger. |
 | [`@neoma/docker`](packages/docker) | Docker test-container helpers — HTTP/TCP health polling and container teardown; the shared base for the service fixtures. |
 | [`@neoma/mockserver`](packages/mockserver) | MockServer test fixture — a reusable client plus Docker container lifecycle and Jest setup/teardown drop-ins. |
 | [`@neoma/mailpit`](packages/mailpit) | Mailpit test fixture for email testing — a reusable client plus Docker container lifecycle and Jest setup/teardown drop-ins. |
+| [`@neoma/minio`](packages/minio) | MinIO test fixture — an S3-compatible object-storage container with a bucket created on start and Jest setup/teardown drop-ins. |
 | [`@neoma/cerberus`](packages/cerberus) | NestJS-idiomatic file storage for S3-compatible backends — upload, persist, presigned download. |
 | [`@neoma/managed-app`](packages/managed-app) | Boots a NestJS app from a module path — an e2e harness for the `@neoma/*` packages. |
 | [`@neoma/managed-database`](packages/managed-database) | In-memory SQLite `datasource` fixture for tests. |

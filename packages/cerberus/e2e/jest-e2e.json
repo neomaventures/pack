@@ -3,8 +3,8 @@
   "rootDir": ".",
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
-  "globalSetup": "@neoma/fixtures/setup/minio",
-  "globalTeardown": "@neoma/fixtures/teardown/minio",
+  "globalSetup": "@neoma/minio/setup",
+  "globalTeardown": "@neoma/minio/teardown",
   "setupFilesAfterEnv": [
     "jest-extended/all",
     "<rootDir>/../fixtures/matchers/index.js",

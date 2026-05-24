@@ -1,0 +1,17 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "globalSetup": "<rootDir>/../dist/setup.js",
+  "globalTeardown": "<rootDir>/../dist/teardown.js",
+  "setupFiles": ["<rootDir>/build.setup.ts"],
+  "setupFilesAfterEnv": ["jest-extended/all"],
+  "transform": {
+    "^.+\\.tsx?$": "ts-jest"
+  },
+  "moduleNameMapper": {
+    "^@neoma/minio$": "<rootDir>/../dist/index.js",
+    "^@neoma/minio/(.*)$": "<rootDir>/../dist/$1"
+  }
+}
