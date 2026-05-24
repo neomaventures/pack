@@ -1,6 +1,6 @@
 {
   "name": "@neoma/fixtures",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Test fixtures for @neoma/* NestJS packages",
   "author": "Shipdventures",
   "repository": {
@@ -12,7 +12,12 @@
     "url": "https://github.com/neomaventures/pack/issues"
   },
   "homepage": "https://github.com/neomaventures/pack/tree/main/packages/fixtures#readme",
-  "keywords": ["nestjs", "fixtures", "testing", "neoma"],
+  "keywords": [
+    "nestjs",
+    "fixtures",
+    "testing",
+    "neoma"
+  ],
   "private": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -62,7 +67,13 @@
       "types": "./dist/mailpit/index.d.ts"
     }
   },
-  "files": ["dist", "README.md", "LICENSE", "!**/*.json", "!**/*.tsbuildinfo"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "!**/*.json",
+    "!**/*.tsbuildinfo"
+  ],
   "license": "MIT",
   "scripts": {
     "build": "tsc -p ./tsconfig.lib.json",

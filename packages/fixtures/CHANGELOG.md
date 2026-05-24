@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- ac5ecb1: Add `multerFile()` — a faker-populated `Express.Multer.File` mock for file-upload tests. Top-level export, re-exported from the package root. (Promoted from `@neoma/cerberus`'s local fixtures.)
+
+### Patch Changes
+
+- ac5ecb1: `startMailpit` now waits for the HTTP API to be ready (not just the SMTP port) before resolving — fixing an `ECONNRESET` race for clients that call the API immediately after startup.
+
 ## [0.2.2] - 2026-04-29
 
 ### Fixed
