@@ -97,7 +97,7 @@ ${desc}
 ## Installation
 
 \`\`\`bash
-pnpm add -D @neoma/${name}
+npm install @neoma/${name}
 \`\`\`
 
 ## Usage

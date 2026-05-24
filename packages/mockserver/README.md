@@ -12,7 +12,7 @@ MockServer test fixture for `@neoma/*` — a reusable client plus Docker contain
 ## Installation
 
 ```bash
-pnpm add -D @neoma/mockserver
+npm install --save-dev @neoma/mockserver
 ```
 
 ## Quick start
