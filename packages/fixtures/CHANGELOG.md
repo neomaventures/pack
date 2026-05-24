@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0
+
+### Minor Changes
+
+- d5e76e8: **Breaking:** remove the MockServer surface. `@neoma/fixtures` no longer exports `./mockserver`, `./setup/mockserver`, `./teardown/mockserver`, or the `startMockServer` / `stopMockServer` / `MockServer*` symbols from `./docker`. Use the standalone [`@neoma/mockserver`](https://github.com/neomaventures/pack/tree/main/packages/mockserver) package instead.
+
 ## 0.3.0
 
 ### Minor Changes
