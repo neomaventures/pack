@@ -1,6 +1,6 @@
 {
   "name": "@neoma/fixtures",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Test fixtures for @neoma/* NestJS packages",
   "author": "Shipdventures",
   "repository": {
