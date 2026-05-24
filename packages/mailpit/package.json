@@ -1,24 +1,18 @@
 {
-  "name": "@neoma/mockserver",
-  "version": "0.1.0",
-  "description": "MockServer test fixture for @neoma/* — a reusable client plus Docker container lifecycle and Jest setup/teardown drop-ins.",
+  "name": "@neoma/mailpit",
+  "version": "0.0.0",
+  "description": "Mailpit test fixture for @neoma/* — a reusable client plus Docker container lifecycle and Jest setup/teardown drop-ins for email testing.",
   "author": "Shipdventures",
   "repository": {
     "type": "git",
     "url": "https://github.com/neomaventures/pack",
-    "directory": "packages/mockserver"
+    "directory": "packages/mailpit"
   },
   "bugs": {
     "url": "https://github.com/neomaventures/pack/issues"
   },
-  "homepage": "https://github.com/neomaventures/pack/tree/main/packages/mockserver#readme",
-  "keywords": [
-    "neoma",
-    "testing",
-    "mockserver",
-    "docker",
-    "jest"
-  ],
+  "homepage": "https://github.com/neomaventures/pack/tree/main/packages/mailpit#readme",
+  "keywords": ["neoma", "testing", "mailpit", "email", "docker", "jest"],
   "private": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -36,25 +30,21 @@
       "types": "./dist/teardown.d.ts"
     }
   },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE",
-    "!**/*.json",
-    "!**/*.tsbuildinfo"
-  ],
+  "files": ["dist", "README.md", "LICENSE", "!**/*.json", "!**/*.tsbuildinfo"],
   "license": "MIT",
   "scripts": {
     "build": "tsc -p ./tsconfig.lib.json",
     "test": "jest --runInBand --passWithNoTests",
     "pretest:e2e": "pnpm build",
-    "test:e2e": "NEOMA_TEST_PREFIX=mockserver-e2e MOCKSERVER_PORT=10180 jest --config ./e2e/jest-e2e.json --runInBand",
+    "test:e2e": "NEOMA_TEST_PREFIX=mailpit-e2e MAILPIT_SMTP_PORT=10125 MAILPIT_API_PORT=10825 jest --config ./e2e/jest-e2e.json --runInBand",
     "lint": "eslint ."
   },
   "dependencies": {
     "@neoma/docker": "workspace:*"
   },
   "devDependencies": {
-    "@faker-js/faker": "^9.6.0"
+    "@faker-js/faker": "^9.6.0",
+    "@types/nodemailer": "^8.0.0",
+    "nodemailer": "^8.0.7"
   }
 }

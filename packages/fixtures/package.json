@@ -34,25 +34,13 @@
       "require": "./dist/docker/index.js",
       "types": "./dist/docker/index.d.ts"
     },
-    "./setup/mailpit": {
-      "require": "./dist/setup/mailpit.js",
-      "types": "./dist/setup/mailpit.d.ts"
-    },
     "./setup/minio": {
       "require": "./dist/setup/minio.js",
       "types": "./dist/setup/minio.d.ts"
     },
-    "./teardown/mailpit": {
-      "require": "./dist/teardown/mailpit.js",
-      "types": "./dist/teardown/mailpit.d.ts"
-    },
     "./teardown/minio": {
       "require": "./dist/teardown/minio.js",
       "types": "./dist/teardown/minio.d.ts"
-    },
-    "./mailpit": {
-      "require": "./dist/mailpit/index.js",
-      "types": "./dist/mailpit/index.d.ts"
     }
   },
   "files": [
@@ -74,7 +62,8 @@
     "jest": ">=29.0.0"
   },
   "dependencies": {
-    "@faker-js/faker": "^9.0.0"
+    "@faker-js/faker": "^9.0.0",
+    "@neoma/docker": "workspace:*"
   },
   "devDependencies": {
     "@types/multer": "^2.1.0"

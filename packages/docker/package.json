@@ -1,0 +1,35 @@
+{
+  "name": "@neoma/docker",
+  "version": "0.0.0",
+  "description": "Docker test-container helpers for @neoma/* — HTTP/TCP health polling and container teardown.",
+  "author": "Shipdventures",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neomaventures/pack",
+    "directory": "packages/docker"
+  },
+  "bugs": {
+    "url": "https://github.com/neomaventures/pack/issues"
+  },
+  "homepage": "https://github.com/neomaventures/pack/tree/main/packages/docker#readme",
+  "keywords": ["neoma", "testing", "docker"],
+  "private": false,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE", "!**/*.json", "!**/*.tsbuildinfo"],
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc -p ./tsconfig.lib.json",
+    "test": "jest --runInBand --passWithNoTests",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^9.6.0"
+  }
+}

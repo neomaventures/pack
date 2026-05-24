@@ -1,8 +1,10 @@
 import { execFileSync } from "child_process"
 
-import { waitForHttp } from "./health"
-import { stopContainer as stop } from "./stop"
-import { type BaseOptions } from "./types"
+import {
+  stopContainer as stop,
+  waitForHttp,
+  type BaseOptions,
+} from "@neoma/docker"
 
 const MOCKSERVER_IMAGE = "mockserver/mockserver:5.15.0"
 const DEFAULT_PORT = 1080

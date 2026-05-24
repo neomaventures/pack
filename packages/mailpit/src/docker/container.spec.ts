@@ -3,7 +3,7 @@ import { join } from "path"
 
 import { faker } from "@faker-js/faker"
 
-import { type MailpitConfig, startContainer, stopContainer } from "./mailpit"
+import { type MailpitConfig, startContainer, stopContainer } from "./container"
 
 describe("startContainer (Mailpit)", () => {
   const prefix = `neoma-test-mp-${faker.string.alphanumeric(4)}`
@@ -186,7 +186,6 @@ describe("startContainer (Mailpit)", () => {
     beforeAll(async () => {
       const htpasswdPath = join(
         __dirname,
-        "..",
         "..",
         "..",
         "test",

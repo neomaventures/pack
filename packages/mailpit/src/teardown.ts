@@ -1,13 +1,13 @@
-import { stopMailpit } from "../docker"
+import { stopContainer } from "./docker/container"
 
 /**
  * Jest `globalTeardown` drop-in that stops the Mailpit Docker container.
  *
- * Usage in `jest.config.json`:
+ * Usage in `jest-e2e.json`:
  * ```json
- * { "globalTeardown": "@neoma/fixtures/teardown/mailpit" }
+ * { "globalTeardown": "@neoma/mailpit/teardown" }
  * ```
  */
 export default async function teardown(): Promise<void> {
-  await stopMailpit()
+  await stopContainer()
 }
