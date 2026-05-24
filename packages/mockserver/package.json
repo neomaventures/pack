@@ -51,6 +51,9 @@
     "test:e2e": "NEOMA_TEST_PREFIX=mockserver-e2e MOCKSERVER_PORT=10180 jest --config ./e2e/jest-e2e.json --runInBand",
     "lint": "eslint ."
   },
+  "dependencies": {
+    "@neoma/docker": "workspace:*"
+  },
   "devDependencies": {
     "@faker-js/faker": "^9.6.0"
   }

@@ -39,6 +39,9 @@
     "test:e2e": "NEOMA_TEST_PREFIX=mailpit-e2e MAILPIT_SMTP_PORT=10125 MAILPIT_API_PORT=10825 jest --config ./e2e/jest-e2e.json --runInBand",
     "lint": "eslint ."
   },
+  "dependencies": {
+    "@neoma/docker": "workspace:*"
+  },
   "devDependencies": {
     "@faker-js/faker": "^9.6.0",
     "@types/nodemailer": "^8.0.0",

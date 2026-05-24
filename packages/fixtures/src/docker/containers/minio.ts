@@ -1,8 +1,10 @@
 import { execFileSync } from "child_process"
 
-import { waitForHttp } from "../health"
-import { stopContainer as stop } from "../stop"
-import { type BaseOptions } from "../types"
+import {
+  stopContainer as stop,
+  waitForHttp,
+  type BaseOptions,
+} from "@neoma/docker"
 
 const MINIO_IMAGE = "minio/minio:RELEASE.2025-09-07T16-13-09Z"
 const DEFAULT_API_PORT = 9000

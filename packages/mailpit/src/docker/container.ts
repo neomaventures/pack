@@ -1,9 +1,12 @@
 import { execFileSync } from "child_process"
 import { existsSync, statSync } from "fs"
 
-import { waitForHttp, waitForTcp } from "./health"
-import { stopContainer as stop } from "./stop"
-import { type BaseOptions } from "./types"
+import {
+  stopContainer as stop,
+  waitForHttp,
+  waitForTcp,
+  type BaseOptions,
+} from "@neoma/docker"
 
 const MAILPIT_IMAGE = "axllent/mailpit:v1.21"
 const DEFAULT_SMTP_PORT = 1025

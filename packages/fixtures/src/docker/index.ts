@@ -5,8 +5,6 @@ export {
 } from "./containers/minio"
 export type { MinIOConfig, MinIOOptions } from "./containers/minio"
 
-// Shared utilities
-export { waitForHttp, waitForTcp } from "./health"
-
-// Shared types
-export type { BaseOptions, HealthCheckOptions } from "./types"
+// Shared utilities + types — re-exported from @neoma/docker
+export { waitForHttp, waitForTcp } from "@neoma/docker"
+export type { BaseOptions, HealthCheckOptions } from "@neoma/docker"
