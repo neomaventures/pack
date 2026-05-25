@@ -67,24 +67,11 @@ export default tseslint.config(
       "@typescript-eslint/prefer-nullish-coalescing": "error",
       // Prefer `a?.b` over `a && a.b` — cleaner and less error-prone.
       "@typescript-eslint/prefer-optional-chain": "error",
-      // Import sorting and organization. @lib is internal (maps to libs/<name>/src).
+      // Import sorting and organization.
       "import-x/order": [
         "error",
         {
           groups: ["builtin", "external", "internal", "parent", "sibling", "index"],
-          pathGroups: [
-            {
-              pattern: "@lib",
-              group: "internal",
-              position: "before",
-            },
-            {
-              pattern: "@lib/**",
-              group: "internal",
-              position: "before",
-            },
-          ],
-          pathGroupsExcludedImportTypes: ["builtin"],
           "newlines-between": "always",
           alphabetize: { order: "asc" },
         },
