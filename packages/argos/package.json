@@ -1,6 +1,6 @@
 {
   "name": "@neoma/argos",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "NestJS-idiomatic audit trails — track who created and updated your TypeORM entities via @CreatedBy / @UpdatedBy decorators.",
   "author": "Daniel Bruce",
   "repository": {
