@@ -5,8 +5,12 @@ Working plan for the `@neoma/*` monorepo consolidation. Jump to **Next steps**; 
 
 ## Where things stand
 
-Eight packages, all green (build + lint + unit/e2e), with CI + a Changesets release
-pipeline + supply-chain policy in place.
+The bring-in epic is essentially complete — the standalone `@neoma/*` repos have been
+consolidated here, all green (build + lint + unit/e2e), with CI + a Changesets release
+pipeline + supply-chain policy in place. `argos` is in review (#44); `anubis` is the only
+package not yet brought in (a currency-conversion feature still under development upstream).
+
+**Test & dev infrastructure**
 
 | Package | Role |
 |---|---|
@@ -15,9 +19,21 @@ pipeline + supply-chain policy in place.
 | `@neoma/minio` | MinIO S3-compatible storage container + bucket + Jest drop-ins |
 | `@neoma/mockserver` | MockServer container + client + Jest drop-ins |
 | `@neoma/mailpit` | Mailpit email container + client + Jest drop-ins |
-| `@neoma/cerberus` | S3-compatible file storage |
 | `@neoma/managed-app` | boots a NestJS app from a module path for e2e |
 | `@neoma/managed-database` | in-memory SQLite `datasource` fixture |
+
+**Product / feature packages**
+
+| Package | Role |
+|---|---|
+| `@neoma/config` | type-safe environment configuration |
+| `@neoma/logging` | Pino-backed application + request-scoped loggers |
+| `@neoma/exception-handling` | automatic, content-negotiated exception handling |
+| `@neoma/garmr` | authn + authz — magic links, Google OAuth, sessions, wildcard permissions |
+| `@neoma/features` | feature flags — gate routes behind on/off flags |
+| `@neoma/route-model-binding` | Laravel-style route → model resolution |
+| `@neoma/cerberus` | S3-compatible file storage (upload / persist / download) |
+| `@neoma/argos` | audit trails — `@CreatedBy`/`@UpdatedBy` via ALS actor tracking |
 
 ---
 
@@ -113,3 +129,59 @@ unit spec). garmr already follows this. (Do as its own PR after the garmr bring-
 - **e2e fidelity** — consume the built `dist` via the public entry (`@neoma/<pkg>`)
   instead of `@lib` source, add a `publint`/pack check, and speed up (swc transpile,
   boot-once-per-suite + DB reset).
+
+---
+
+## Next wave — SaaS platform packages
+
+With consolidation done, the next wave fills the cross-cutting gaps a general-purpose
+SaaS needs. The lens is **Laravel-for-NestJS**: what Laravel's first-party kit gives a
+SaaS that we don't have yet. Each candidate below has a **stub issue** — full TPO-style
+scoping (mission, API sketch, acceptance criteria) happens when one is picked up, not now.
+
+### Near-term sequence
+
+1. **`request-context` (#51)** — the foundation: a thin `AsyncLocalStorage` primitive
+   holding per-request context (tenant + actor + trace-id). Resolves #25 (ALS vs request
+   scope). Everything request-aware sits on it.
+2. **Port `@neoma/logging` onto request-context, drop request scope** — proves the
+   primitive on a real consumer and removes `RequestLoggerService`'s costly (contagious)
+   request scope, turning it into a plain singleton that reads context at log time.
+3. **Billing / subscriptions (#47)** — the headline capability.
+
+### Tier 1 — almost every SaaS needs these
+
+| Capability | Issue | Notes |
+|---|---|---|
+| Billing / subscriptions (Stripe) | #47 | plans, subs, proration, inbound webhooks; entitlements feed `features` |
+| Multi-tenancy / orgs & teams | #48 | own package, co-exists with garmr via a `Principal` contract; tenant-scoped authz |
+| Background jobs (over BullMQ) | #49 | dispatchable Jobs + request-context propagation across the async boundary |
+| Transactional mailer | #50 | provider abstraction + templating + queued send; mailpit for tests |
+| **`request-context`** (foundational) | #51 | the ALS keystone above; underpins tenancy, jobs, logging/features |
+| Collection-query DX (pagination / filter / sort) | #52 | `@Pagination()` + `paginate(qb)`; offset vs cursor + filter DSL to design |
+
+### Tier 2 — common, high value
+
+| Capability | Issue | Notes |
+|---|---|---|
+| Notifications (multi-channel) | #53 | email / in-app / SMS / Slack; builds on mailer + jobs |
+| Customer API keys / PATs | #54 | scoped, revocable machine credentials for customers |
+| Outbound webhooks | #55 | customer event subscriptions; signing, retries, delivery logs |
+| Rate limiting / quotas | #56 | per-tenant / plan; ties to billing entitlements |
+| Caching (Redis cache-aside) | #57 | tags + TTL |
+| Real-time / broadcasting | #58 | websocket push for live UI |
+
+### Tier 3 — backlog (no issues yet; some may be served by raw NestJS modules)
+
+Health/readiness (`@nestjs/terminus`), idempotency keys, metrics/tracing (OpenTelemetry),
+search (Meilisearch/Elastic), i18n, GDPR data-lifecycle (soft-delete / export / erase),
+user-org settings, CSV import/export, PDF/invoice generation.
+
+### Dependency notes
+
+- **`request-context` (#51)** underpins tenancy (#48), jobs (#49), and de-request-scoping
+  `logging` + `features`.
+- **jobs (#49)** underpins mailer async send (#50), outbound webhooks (#55), notifications (#53).
+- **mailer (#50)** underpins notifications (#53).
+- **billing (#47)** entitlements feed `features`; plan limits feed rate-limiting (#56).
+- **caching (#57)** underpins rate-limiting (#56) counters.
