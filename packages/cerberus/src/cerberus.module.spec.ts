@@ -37,8 +37,7 @@ class TestFile implements Storable {
 /**
  * Exposes a managed (cached, auto-torn-down) test DataSource globally so the
  * interceptors inside the global CerberusModule can inject it — a root-level
- * provider can't cross that boundary. TODO: promote to a
- * `ManagedDatabaseModule` exported from @neoma/managed-database.
+ * provider can't cross that boundary.
  */
 @Global()
 @Module({

@@ -51,7 +51,7 @@ This library requires the following peer dependencies:
 - `@nestjs/common` (^11.x)
 - `@nestjs/core` (^11.x)
 - `@nestjs/typeorm` (^11.x)
-- `typeorm` (^0.3.27)
+- `typeorm` (>=0.3)
 
 ## Quick Start
 
@@ -87,7 +87,7 @@ export class AppModule implements NestModule {
 
 ### 2. Name your route parameters to match your entity names
 
-The middleware automatically maps route parameters to TypeORM entities. The parameter name must match your entity name (case-sensitive).
+The middleware automatically maps route parameters to TypeORM entities. The parameter name is matched to your entity name **case-insensitively** — it is lowercased before the repository lookup, so `:user`, `:User`, and `:USER` all resolve the `User` entity. Per-parameter overrides supplied via `paramResolvers` are keyed the same (lowercased) way.
 
 ```typescript
 // If you have a User entity and a Post entity

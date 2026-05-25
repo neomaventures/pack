@@ -9,7 +9,7 @@ export const post = {
    * @param [params.id] - Unique identifier for the post.
    * @param [params.content] - The post's content.
    *
-   * @return A new instance of a User with the provided or default values.
+   * @return A new instance of a Post with the provided or default values.
    */
   entity(
     {

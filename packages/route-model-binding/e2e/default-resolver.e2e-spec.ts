@@ -34,7 +34,7 @@ describe("Route Model Binding", () => {
   })
 
   describe("GET /users/:user/posts/:post", () => {
-    describe(`Given a user exists with the id ${user.id} and a post exits with the id ${post.id}`, () => {
+    describe(`Given a user exists with the id ${user.id} and a post exists with the id ${post.id}`, () => {
       describe(`When a request is made to /users/${user.id}/${post.id}`, () => {
         it(`it should respond with a ${HttpStatus.OK} and the user model with the id ${user.id} and post model with the id ${post.id}`, () => {
           return request(app.getHttpServer())
