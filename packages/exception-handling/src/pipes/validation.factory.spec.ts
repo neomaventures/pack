@@ -1,8 +1,7 @@
 import { faker } from "@faker-js/faker"
+import { validationFactory } from "@neoma/exception-handling"
 import { BadRequestException } from "@nestjs/common"
 import { IsEmail, MinLength, ValidateNested, validate } from "class-validator"
-
-import { validationFactory } from "./validation.factory"
 
 const { hacker, internet, string } = faker
 const nameMessage = hacker.phrase()
