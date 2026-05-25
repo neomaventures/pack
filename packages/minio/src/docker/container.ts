@@ -87,12 +87,7 @@ export async function startContainer(
     consolePort = Number(process.env.MINIO_CONSOLE_PORT) ||
       DEFAULT_CONSOLE_PORT,
     bucket = DEFAULT_BUCKET,
-  }: MinIOOptions = {
-    prefix: process.env.NEOMA_TEST_PREFIX ?? DEFAULT_PREFIX,
-    apiPort: Number(process.env.MINIO_PORT) || DEFAULT_API_PORT,
-    consolePort: Number(process.env.MINIO_CONSOLE_PORT) || DEFAULT_CONSOLE_PORT,
-    bucket: DEFAULT_BUCKET,
-  },
+  }: MinIOOptions = {},
 ): Promise<MinIOConfig> {
   const container = `${prefix}-minio`
 
@@ -180,9 +175,7 @@ export async function startContainer(
 export async function stopContainer(
   {
     prefix = process.env.NEOMA_TEST_PREFIX ?? DEFAULT_PREFIX,
-  }: Pick<MinIOOptions, "prefix"> = {
-    prefix: process.env.NEOMA_TEST_PREFIX ?? DEFAULT_PREFIX,
-  },
+  }: Pick<MinIOOptions, "prefix"> = {},
 ): Promise<void> {
   await stop(`${prefix}-minio`)
 }
