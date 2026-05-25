@@ -353,7 +353,7 @@ import { Request, Response, NextFunction } from 'express'
 
 // In middleware
 export function customMiddleware(req: Request, res: Response, next: NextFunction) {
-  req.logger.log('Custom middleware executed', { path: req.path })
+  req.logger?.log('Custom middleware executed', { path: req.path })
   next()
 }
 
@@ -362,7 +362,7 @@ export function customMiddleware(req: Request, res: Response, next: NextFunction
 export class UserController {
   @Get(':id')
   getUser(@Req() req: Request, @Param('id') id: string) {
-    req.logger.log('Fetching user', { userId: id })
+    req.logger?.log('Fetching user', { userId: id })
     // This logger includes request context automatically
   }
 }

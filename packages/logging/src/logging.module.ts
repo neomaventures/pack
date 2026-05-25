@@ -1,19 +1,32 @@
 import {
-  DynamicModule,
-  MiddlewareConsumer,
+  type DynamicModule,
+  type MiddlewareConsumer,
   Module,
-  NestModule,
+  type NestModule,
+  type Provider,
 } from "@nestjs/common"
 import { APP_INTERCEPTOR } from "@nestjs/core"
 
 import { RequestLoggerInterceptor } from "./interceptors/request-logger.interceptor"
-import { LoggingConfiguration } from "./interfaces"
+import {
+  type LoggingConfiguration,
+  type LoggingModuleAsyncOptions,
+} from "./interfaces"
 import { RequestLoggerMiddleware } from "./middlewares/request-logger.middleware"
 import { ApplicationLoggerService, RequestLoggerService } from "./services"
 import { LOGGING_MODULE_OPTIONS } from "./symbols"
 
+// Shared by forRoot/forRootAsync; the options provider is prepended per-method.
+const PROVIDERS: Provider[] = [
+  ApplicationLoggerService,
+  RequestLoggerService,
+  RequestLoggerMiddleware,
+  { provide: APP_INTERCEPTOR, useClass: RequestLoggerInterceptor },
+]
+const EXPORTS = [ApplicationLoggerService, RequestLoggerService]
+
 /**
- * NestJS module providing structured logging capabilities with automatic request tracing.
+ * NestJS module providing structured logging with automatic request tracing.
  *
  * Features:
  * - **Two logger services**: ApplicationLoggerService (app-scoped) and RequestLoggerService (request-scoped)
@@ -25,44 +38,24 @@ import { LOGGING_MODULE_OPTIONS } from "./symbols"
  * - **Context injection**: Merge custom metadata into all log entries
  * - **Performance optimized**: Uses Pino logger internally for high throughput
  *
- * Must be registered via `forRoot()` which makes the module global.
- * A plain `LoggingModule` import is a no-op and does not register any providers.
+ * Register via `forRoot()` or `forRootAsync()` (both make the module global).
+ * The module is not designed to be imported bare.
  *
  * @example
- * // Register once at the app root — available everywhere
- * imports: [LoggingModule.forRoot()]
+ * // Static registration at the app root — available everywhere
+ * imports: [LoggingModule.forRoot({ logLevel: 'debug' })]
  *
  * @example
- * // With full configuration
+ * // Async registration — resolve options from DI (e.g. ConfigService)
  * imports: [
- *   LoggingModule.forRoot({
- *     logLevel: 'debug',
- *     logContext: { service: 'user-api' },
- *     logRedact: ['password', '*.secret'],
- *     logRequestTraceIdHeader: 'x-trace-id',
- *     logErrors: true
- *   })
+ *   LoggingModule.forRootAsync({
+ *     inject: [ConfigService],
+ *     useFactory: (config: ConfigService) => ({
+ *       logLevel: config.get('LOG_LEVEL'),
+ *       logRedact: ['password', '*.secret'],
+ *     }),
+ *   }),
  * ]
- *
- * @example
- * **Using the loggers:**
- * ```typescript
- * @Injectable()
- * export class UserService {
- *   constructor(
- *     private appLogger: ApplicationLoggerService,    // App-scoped
- *     private reqLogger: RequestLoggerService         // Request-scoped
- *   ) {}
- *
- *   async createUser(data: CreateUserDto) {
- *     // App logger - no request context
- *     this.appLogger.log('Creating new user')
- *
- *     // Request logger - includes request context + trace ID
- *     this.reqLogger.log('User creation started', { email: data.email })
- *   }
- * }
- * ```
  *
  * @example
  * **Using req.logger (middleware approach):**
@@ -71,9 +64,8 @@ import { LOGGING_MODULE_OPTIONS } from "./symbols"
  * export class UserController {
  *   @Get(':id')
  *   getUser(@Req() req: Request, @Param('id') id: string) {
- *     // RequestLoggerService automatically available on req.logger
- *     req.logger.log('Fetching user', { userId: id })
- *     return this.userService.findById(id)
+ *     // RequestLoggerService is attached to req.logger by the middleware
+ *     req.logger?.log('Fetching user', { userId: id })
  *   }
  * }
  * ```
@@ -81,65 +73,40 @@ import { LOGGING_MODULE_OPTIONS } from "./symbols"
 @Module({})
 export class LoggingModule implements NestModule {
   /**
-   * Configure and register the LoggingModule globally.
-   *
-   * This is the only way to register logging providers. Call once in the root module —
-   * services are available everywhere via `global: true`. All options are optional and
-   * have sensible defaults.
-   *
-   * @param options - Logging configuration options (see LoggingConfiguration interface)
-   * @returns Configured DynamicModule for use in module imports
-   *
-   * @example
-   * **Production setup:**
-   * ```typescript
-   * LoggingModule.forRoot({
-   *   logLevel: 'log',                        // Standard production level
-   *   logContext: {
-   *     service: 'user-service',
-   *     version: process.env.APP_VERSION,
-   *     environment: process.env.NODE_ENV
-   *   },
-   *   logRedact: ['password', '*.secret', 'authorization'],
-   *   logRequestTraceIdHeader: 'x-correlation-id'
-   * })
-   * ```
-   *
-   * @example
-   * **Development setup:**
-   * ```typescript
-   * LoggingModule.forRoot({
-   *   logLevel: 'debug',                      // Enable request logging
-   *   logContext: { service: 'api-dev' },
-   *   logErrors: true                         // Log intercepted errors
-   * })
-   * ```
-   *
-   * **Behavior:**
-   * - ApplicationLoggerService: Application-scoped, includes `logContext`
-   * - RequestLoggerService: Request-scoped, includes `logContext` + request details + trace ID
-   * - RequestLoggerMiddleware: Attaches RequestLoggerService to `req.logger` for all routes
-   * - RequestLoggerInterceptor: Automatically logs requests/responses when `logLevel: 'debug'`
-   * - Error logging: Configurable via `logErrors` option for intercepted errors
+   * Register the module with static options. All options are optional, so
+   * `forRoot()` is valid and uses defaults.
    */
   public static forRoot(options: LoggingConfiguration = {}): DynamicModule {
     return {
       global: true,
       module: LoggingModule,
       providers: [
-        ApplicationLoggerService,
-        RequestLoggerService,
+        { provide: LOGGING_MODULE_OPTIONS, useValue: options },
+        ...PROVIDERS,
+      ],
+      exports: EXPORTS,
+    }
+  }
+
+  /**
+   * Register the module with options resolved asynchronously from DI.
+   */
+  public static forRootAsync(
+    options: LoggingModuleAsyncOptions,
+  ): DynamicModule {
+    return {
+      global: true,
+      module: LoggingModule,
+      imports: options.imports ?? [],
+      providers: [
         {
           provide: LOGGING_MODULE_OPTIONS,
-          useValue: options,
+          useFactory: options.useFactory,
+          inject: options.inject ?? [],
         },
-        RequestLoggerMiddleware,
-        {
-          provide: APP_INTERCEPTOR,
-          useClass: RequestLoggerInterceptor,
-        },
+        ...PROVIDERS,
       ],
-      exports: [ApplicationLoggerService, RequestLoggerService],
+      exports: EXPORTS,
     }
   }
 

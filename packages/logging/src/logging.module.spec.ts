@@ -5,6 +5,7 @@ import {
 } from "@neoma/logging"
 import { Inject, Injectable, Module } from "@nestjs/common"
 import { Test, TestingModule } from "@nestjs/testing"
+import { ArrayStream } from "fixtures/logging"
 
 @Injectable()
 class TestService {
@@ -68,6 +69,31 @@ describe("LoggingModule", () => {
       const app = m.createNestApplication()
       await expect(app.init()).resolves.toBeDefined()
       await app.close()
+    })
+  })
+
+  describe("forRootAsync", () => {
+    it("It should provide the loggers and apply options resolved by the factory", async () => {
+      const logs: any[] = []
+
+      const m = await Test.createTestingModule({
+        imports: [
+          LoggingModule.forRootAsync({
+            useFactory: () => ({
+              logDestination: new ArrayStream(logs),
+              logContext: { service: "async-api" },
+            }),
+          }),
+        ],
+        providers: [TestService],
+      }).compile()
+
+      const { logger, reqLogger } = await m.resolve(TestService)
+      expect(logger).toBeInstanceOf(ApplicationLoggerService)
+      expect(reqLogger).toBeInstanceOf(RequestLoggerService)
+
+      logger.log("async boot")
+      expect(logs[0]).toMatchObject({ msg: "async boot", service: "async-api" })
     })
   })
 })

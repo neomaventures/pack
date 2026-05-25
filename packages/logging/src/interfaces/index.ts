@@ -1,1 +1,4 @@
-export { LoggingConfiguration } from "./logging-configuration.interface"
+export {
+  LoggingConfiguration,
+  LoggingModuleAsyncOptions,
+} from "./logging-configuration.interface"

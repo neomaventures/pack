@@ -1,4 +1,4 @@
-import { type LogLevel } from "@nestjs/common"
+import { type LogLevel, type ModuleMetadata } from "@nestjs/common"
 
 /**
  * Configuration options for the LoggingModule.
@@ -93,4 +93,19 @@ export interface LoggingConfiguration {
    * @default false
    */
   logErrors?: boolean
+}
+
+/**
+ * Options for `LoggingModule.forRootAsync()` — resolve the
+ * {@link LoggingConfiguration} from DI (e.g. a `ConfigService`).
+ */
+export interface LoggingModuleAsyncOptions {
+  /** Modules to import so the factory's injected dependencies are available. */
+  imports?: ModuleMetadata["imports"]
+  /** Providers to inject into `useFactory`. */
+  inject?: any[]
+  /** Factory that returns the logging configuration. */
+  useFactory: (
+    ...args: any[]
+  ) => LoggingConfiguration | Promise<LoggingConfiguration>
 }
