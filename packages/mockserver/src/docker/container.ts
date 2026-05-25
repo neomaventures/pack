@@ -48,12 +48,10 @@ export interface MockServerConfig {
  * // process.env.MOCKSERVER_URL === "http://localhost:1080/mockserver"
  * ```
  */
-export async function startContainer(
-  {
-    prefix = process.env.NEOMA_TEST_PREFIX ?? DEFAULT_PREFIX,
-    port = Number(process.env.MOCKSERVER_PORT) || DEFAULT_PORT,
-  }: MockServerOptions = {},
-): Promise<MockServerConfig> {
+export async function startContainer({
+  prefix = process.env.NEOMA_TEST_PREFIX ?? DEFAULT_PREFIX,
+  port = Number(process.env.MOCKSERVER_PORT) || DEFAULT_PORT,
+}: MockServerOptions = {}): Promise<MockServerConfig> {
   const container = `${prefix}-mockserver`
 
   // Remove any stale container with the same name
@@ -95,10 +93,8 @@ export async function startContainer(
  * stopContainer()
  * ```
  */
-export async function stopContainer(
-  {
-    prefix = process.env.NEOMA_TEST_PREFIX ?? DEFAULT_PREFIX,
-  }: Pick<MockServerOptions, "prefix"> = {},
-): Promise<void> {
+export async function stopContainer({
+  prefix = process.env.NEOMA_TEST_PREFIX ?? DEFAULT_PREFIX,
+}: Pick<MockServerOptions, "prefix"> = {}): Promise<void> {
   await stop(`${prefix}-mockserver`)
 }

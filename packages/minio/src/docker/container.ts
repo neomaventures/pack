@@ -80,15 +80,12 @@ export interface MinIOConfig {
  * // process.env.STORAGE_FORCE_PATH_STYLE === "true"
  * ```
  */
-export async function startContainer(
-  {
-    prefix = process.env.NEOMA_TEST_PREFIX ?? DEFAULT_PREFIX,
-    apiPort = Number(process.env.MINIO_PORT) || DEFAULT_API_PORT,
-    consolePort = Number(process.env.MINIO_CONSOLE_PORT) ||
-      DEFAULT_CONSOLE_PORT,
-    bucket = DEFAULT_BUCKET,
-  }: MinIOOptions = {},
-): Promise<MinIOConfig> {
+export async function startContainer({
+  prefix = process.env.NEOMA_TEST_PREFIX ?? DEFAULT_PREFIX,
+  apiPort = Number(process.env.MINIO_PORT) || DEFAULT_API_PORT,
+  consolePort = Number(process.env.MINIO_CONSOLE_PORT) || DEFAULT_CONSOLE_PORT,
+  bucket = DEFAULT_BUCKET,
+}: MinIOOptions = {}): Promise<MinIOConfig> {
   const container = `${prefix}-minio`
 
   // Remove any stale container with the same name
@@ -172,10 +169,8 @@ export async function startContainer(
  * await stopContainer()
  * ```
  */
-export async function stopContainer(
-  {
-    prefix = process.env.NEOMA_TEST_PREFIX ?? DEFAULT_PREFIX,
-  }: Pick<MinIOOptions, "prefix"> = {},
-): Promise<void> {
+export async function stopContainer({
+  prefix = process.env.NEOMA_TEST_PREFIX ?? DEFAULT_PREFIX,
+}: Pick<MinIOOptions, "prefix"> = {}): Promise<void> {
   await stop(`${prefix}-minio`)
 }
