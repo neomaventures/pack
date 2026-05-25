@@ -1,0 +1,47 @@
+{
+  "name": "@neoma/logging",
+  "version": "0.5.0",
+  "description": "Great logging for NestJS — Pino-backed application + request-scoped loggers.",
+  "author": "Shipdventures",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neomaventures/pack",
+    "directory": "packages/logging"
+  },
+  "bugs": {
+    "url": "https://github.com/neomaventures/pack/issues"
+  },
+  "homepage": "https://github.com/neomaventures/pack/tree/main/packages/logging#readme",
+  "keywords": ["nestjs", "logging", "pino", "laravel", "neoma"],
+  "private": false,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist", "README.md", "LICENSE", "!**/*.json", "!**/*.tsbuildinfo"],
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc -p ./tsconfig.lib.json",
+    "test": "jest --runInBand --passWithNoTests",
+    "pretest:e2e": "pnpm build",
+    "test:e2e": "NEOMA_MANAGED_APP_MODULE_PATH=e2e/app/application.module.ts#ApplicationModule NODE_OPTIONS=--experimental-vm-modules jest --config ./e2e/jest-e2e.json --runInBand",
+    "lint": "eslint ."
+  },
+  "peerDependencies": {
+    "@nestjs/common": "11.x",
+    "@nestjs/core": "11.x",
+    "express": ">=4"
+  },
+  "dependencies": {
+    "pino": "^10.1.0",
+    "ulid": "^3.0.1"
+  },
+  "devDependencies": {
+    "@neoma/fixtures": "workspace:*",
+    "@neoma/managed-app": "workspace:*",
+    "@nestjs/core": "^11.1.18",
+    "@nestjs/platform-express": "^11.1.18",
+    "@nestjs/testing": "^11.1.18",
+    "@types/express": "^5.0.0",
+    "@types/supertest": "^6.0.2",
+    "supertest": "^7.0.0"
+  }
+}
