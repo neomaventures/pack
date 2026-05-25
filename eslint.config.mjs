@@ -2,6 +2,7 @@
 import eslint from "@eslint/js"
 import importX from "eslint-plugin-import-x"
 import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended"
+import yml from "eslint-plugin-yml"
 import globals from "globals"
 import tseslint from "typescript-eslint"
 
@@ -16,6 +17,8 @@ export default tseslint.config(
       "**/dist",
       // Ambient type declarations
       "**/*.d.ts",
+      // Generated lockfile — pnpm-managed, not ours to lint/format.
+      "**/pnpm-lock.yaml",
     ],
   },
   eslint.configs.recommended,
@@ -82,4 +85,9 @@ export default tseslint.config(
       "import-x/no-duplicates": ["error", { "prefer-inline": true }],
     },
   },
+  // YAML — parses + validates .yml/.yaml (workflows, pnpm-workspace) so a
+  // malformed file fails `pnpm lint` locally, before it's pushed. `flat/prettier`
+  // defers formatting to prettier (which already runs via the plugin above).
+  ...yml.configs["flat/recommended"],
+  ...yml.configs["flat/prettier"],
 )

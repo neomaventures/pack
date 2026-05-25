@@ -7,7 +7,7 @@ on:
   # pull_request gives them pre-merge CI — with no access to secrets and a
   # read-only token (unlike pull_request_target). The `ci` job below runs this
   # only for forks; internal-branch PRs are already covered by their push run.
-  pull_request:
+  pull_request: {}
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -47,7 +47,7 @@ jobs:
         run: pnpm -r build
 
       - name: Lint
-        run: pnpm -r lint
+        run: pnpm lint
 
       - name: Unit tests
         run: pnpm -r test
