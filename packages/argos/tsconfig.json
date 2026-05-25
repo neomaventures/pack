@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "paths": {
+      "@neoma/argos": ["./src"],
+      "@neoma/argos/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*", "e2e/**/*"]
+}
