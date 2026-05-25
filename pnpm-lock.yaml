@@ -172,6 +172,9 @@ importers:
         specifier: '>=7'
         version: 7.8.2
     devDependencies:
+      '@neoma/fixtures':
+        specifier: workspace:*
+        version: link:../fixtures
       '@neoma/managed-app':
         specifier: workspace:*
         version: link:../managed-app

@@ -1,8 +1,8 @@
 import { faker } from "@faker-js/faker"
+import { express } from "@neoma/fixtures"
 import { ContextIdFactory } from "@nestjs/core"
 import { Test } from "@nestjs/testing"
 import type { Request } from "express"
-import { express } from "fixtures/express"
 
 import {
   FEATURES_OPTIONS,

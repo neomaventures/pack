@@ -1,3 +1,4 @@
+import { executionContext, express } from "@neoma/fixtures"
 import {
   ConflictException,
   type ExecutionContext,
@@ -5,8 +6,6 @@ import {
   NotFoundException,
 } from "@nestjs/common"
 import { Test } from "@nestjs/testing"
-import { express } from "fixtures/express"
-import { executionContext } from "fixtures/nestjs"
 
 import { Feature } from "../decorators/feature.decorator"
 import { type FeatureOnDeny } from "../features.options"
