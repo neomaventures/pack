@@ -1,6 +1,6 @@
 {
   "name": "@neoma/config",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Simple, type-safe environment configuration for NestJS applications",
   "author": "Shipdventures",
   "repository": {
@@ -12,11 +12,25 @@
     "url": "https://github.com/neomaventures/pack/issues"
   },
   "homepage": "https://github.com/neomaventures/pack/tree/main/packages/config#readme",
-  "keywords": ["nestjs", "config", "environment", "env", "typescript", "laravel", "neoma"],
+  "keywords": [
+    "nestjs",
+    "config",
+    "environment",
+    "env",
+    "typescript",
+    "laravel",
+    "neoma"
+  ],
   "private": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist", "README.md", "LICENSE", "!**/*.json", "!**/*.tsbuildinfo"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "!**/*.json",
+    "!**/*.tsbuildinfo"
+  ],
   "license": "MIT",
   "scripts": {
     "build": "tsc -p ./tsconfig.lib.json",
