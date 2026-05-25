@@ -1,7 +1,14 @@
 import { faker } from "@faker-js/faker"
+import { managedDatasourceInstance } from "@neoma/managed-database"
+import { Global, Module } from "@nestjs/common"
 import { Test } from "@nestjs/testing"
-import { TypeOrmModule } from "@nestjs/typeorm"
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
+import { getDataSourceToken } from "@nestjs/typeorm"
+import {
+  Column,
+  type DataSource,
+  Entity,
+  PrimaryGeneratedColumn,
+} from "typeorm"
 
 import { CerberusModule } from "./cerberus.module"
 import { type Storable } from "./interfaces/storable.interface"
@@ -27,6 +34,24 @@ class TestFile implements Storable {
   public bucket!: string
 }
 
+/**
+ * Exposes a managed (cached, auto-torn-down) test DataSource globally so the
+ * interceptors inside the global CerberusModule can inject it — a root-level
+ * provider can't cross that boundary.
+ */
+@Global()
+@Module({
+  providers: [
+    {
+      provide: getDataSourceToken(),
+      useFactory: (): Promise<DataSource> =>
+        managedDatasourceInstance([TestFile]),
+    },
+  ],
+  exports: [getDataSourceToken()],
+})
+class GlobalTestDbModule {}
+
 describe("CerberusModule", () => {
   const options = {
     endpoint: faker.internet.url(),
@@ -40,15 +65,7 @@ describe("CerberusModule", () => {
   describe("forRoot", () => {
     it("should compile the module", async () => {
       const module = await Test.createTestingModule({
-        imports: [
-          TypeOrmModule.forRoot({
-            type: "sqlite",
-            database: ":memory:",
-            entities: [TestFile],
-            synchronize: true,
-          }),
-          CerberusModule.forRoot(options),
-        ],
+        imports: [GlobalTestDbModule, CerberusModule.forRoot(options)],
       }).compile()
 
       expect(module).toBeDefined()
@@ -59,12 +76,7 @@ describe("CerberusModule", () => {
     it("should compile the module", async () => {
       const module = await Test.createTestingModule({
         imports: [
-          TypeOrmModule.forRoot({
-            type: "sqlite",
-            database: ":memory:",
-            entities: [TestFile],
-            synchronize: true,
-          }),
+          GlobalTestDbModule,
           CerberusModule.forRootAsync({
             useFactory: () => options,
           }),
