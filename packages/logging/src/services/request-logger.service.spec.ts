@@ -394,6 +394,32 @@ describe("RequestLoggerService", () => {
       expect(traceId1).not.toBe(traceId2)
     })
 
+    it("It should not let a configured logContext.requestTraceId override the per-request id", async () => {
+      const logs2: any[] = []
+      const perRequestTraceId = "per-request-id-wins"
+      const req = express.request({
+        headers: { "x-trace-id": perRequestTraceId },
+      })
+      const module2: TestingModule = await Test.createTestingModule({
+        imports: [
+          LoggingModule.forRoot({
+            logDestination: new ArrayStream(logs2),
+            logLevel: "verbose",
+            logRequestTraceIdHeader: "x-trace-id",
+            logContext: { requestTraceId: "static-should-not-win" },
+          }),
+        ],
+      })
+        .overrideProvider(REQUEST)
+        .useValue(req)
+        .compile()
+
+      const scopedService = await module2.resolve(RequestLoggerService)
+      scopedService.log("traced")
+
+      expect(logs2[0].requestTraceId).toBe(perRequestTraceId)
+    })
+
     it("It should include the same ULID for each request scoped log message", async () => {
       service.verbose!("Verbose log")
       service.debug!("Debug log")

@@ -1,7 +1,7 @@
 import { type LogLevel } from "@nestjs/common"
 
 /**
- * Complete mapping of NestJS log levels to their numberic equivelants.
+ * Complete mapping of NestJS log levels to their numeric equivalents.
  */
 export enum LogLevelNumber {
   verbose = 10,
@@ -13,7 +13,7 @@ export enum LogLevelNumber {
 }
 
 /**
- * Comp.lete list of log methods and their corresponding log levels.
+ * Complete list of log methods and their corresponding log levels.
  */
 export const LogMethodTests: Array<{
   method: LogLevel

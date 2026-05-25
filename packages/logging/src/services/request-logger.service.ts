@@ -61,8 +61,10 @@ export class RequestLoggerService extends ApplicationLoggerService {
     super({
       ...options,
       logContext: {
-        requestTraceId: traceId,
         ...options.logContext,
+        // The per-request trace id (from the header or generated) must win over
+        // any static requestTraceId in the configured logContext.
+        requestTraceId: traceId,
         req,
       },
     })

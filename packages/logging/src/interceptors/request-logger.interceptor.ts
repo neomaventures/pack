@@ -29,7 +29,7 @@ export class RequestLoggerInterceptor implements NestInterceptor {
   ) {}
 
   /**
-   * Intercepts the request and logs informtion about the route handler that the request
+   * Intercepts the request and logs information about the route handler that the request
    * will be dispatched to and the result of processing once route handler has handled
    * the request.
    *

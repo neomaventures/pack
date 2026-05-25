@@ -15,7 +15,7 @@ High-performance, production-ready logging for NestJS applications powered by Pi
 ## Installation
 
 ```bash
-npm install @neoma/logging pino
+npm install @neoma/logging
 ```
 
 ## Basic Usage
@@ -518,9 +518,9 @@ describe('MyService', () => {
 
 ## Requirements
 
-- Node.js >= 14
-- NestJS >= 8
-- TypeScript >= 4.5
+- Node.js >= 22
+- NestJS 11.x
+- Express >= 4
 
 ## License
 

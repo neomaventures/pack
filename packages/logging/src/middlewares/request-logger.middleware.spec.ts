@@ -1,9 +1,10 @@
 import { express } from "@neoma/fixtures"
 import { LoggingModule, RequestLoggerService } from "@neoma/logging"
-import { RequestLoggerMiddleware } from "@neoma/logging/middlewares/request-logger.middleware"
 import { REQUEST } from "@nestjs/core"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { type Request, type Response } from "express"
+
+import { RequestLoggerMiddleware } from "./request-logger.middleware"
 
 describe("RequestLoggerMiddleware", () => {
   let req: Partial<Request>
