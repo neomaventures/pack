@@ -1,6 +1,6 @@
 {
   "name": "@neoma/logging",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Great logging for NestJS — Pino-backed application + request-scoped loggers.",
   "author": "Shipdventures",
   "repository": {
@@ -12,11 +12,23 @@
     "url": "https://github.com/neomaventures/pack/issues"
   },
   "homepage": "https://github.com/neomaventures/pack/tree/main/packages/logging#readme",
-  "keywords": ["nestjs", "logging", "pino", "laravel", "neoma"],
+  "keywords": [
+    "nestjs",
+    "logging",
+    "pino",
+    "laravel",
+    "neoma"
+  ],
   "private": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist", "README.md", "LICENSE", "!**/*.json", "!**/*.tsbuildinfo"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "!**/*.json",
+    "!**/*.tsbuildinfo"
+  ],
   "license": "MIT",
   "scripts": {
     "build": "tsc -p ./tsconfig.lib.json",

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.0
+
+### Minor Changes
+
+- 8ae1512: Add `LoggingModule.forRootAsync()` to resolve logging options from DI (e.g. a `ConfigService`), alongside the existing `forRoot()`. Also: the per-request trace id (header-provided or generated) now wins over a static `requestTraceId` in `logContext`, and the unused `LOGGING_MODULE_CONTEXT` export was removed.
+
+### Patch Changes
+
+- 8ae1512: Broaden the `express` peer dependency from `^4` to `>=4`. The middleware uses only the stable `Request`/`Response`/`NextFunction` surface and the package builds and tests cleanly against Express 5, so it now declares support for both Express 4 and 5.
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
@@ -88,10 +98,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ```typescript
 // Enable automatic request/response logging
 LoggingModule.forRoot({
-  logLevel: 'debug',          // Enables RequestLoggerInterceptor
-  logErrors: true,            // Also log intercepted errors
-  logContext: { service: 'api' },
-  logRedact: ['password', '*.secret']
+  logLevel: "debug", // Enables RequestLoggerInterceptor
+  logErrors: true, // Also log intercepted errors
+  logContext: { service: "api" },
+  logRedact: ["password", "*.secret"],
 })
 ```
 
@@ -99,22 +109,22 @@ LoggingModule.forRoot({
 
 ```typescript
 // Dependency injection approach
-@Controller('users')
+@Controller("users")
 export class UserController {
   constructor(private logger: RequestLoggerService) {}
-  
+
   @Post()
   createUser(@Body() data: CreateUserDto) {
-    this.logger.log('Creating user', { userId: data.id })
+    this.logger.log("Creating user", { userId: data.id })
   }
 }
 
 // Middleware approach (no injection needed)
-@Controller('users')  
+@Controller("users")
 export class UserController {
-  @Get(':id')
-  getUser(@Req() req: Request, @Param('id') id: string) {
-    req.logger.log('Fetching user', { userId: id })
+  @Get(":id")
+  getUser(@Req() req: Request, @Param("id") id: string) {
+    req.logger.log("Fetching user", { userId: id })
   }
 }
 ```
@@ -175,23 +185,23 @@ export class UserController {
 ```typescript
 // Configure header extraction
 LoggingModule.forRoot({
-  logRequestTraceIdHeader: 'x-correlation-id',
-  logContext: { service: 'user-api' }
+  logRequestTraceIdHeader: "x-correlation-id",
+  logContext: { service: "user-api" },
 })
 
 // With header present
 // Request: curl -H "x-correlation-id: abc123" POST /users
 // Logs: { requestTraceId: 'abc123', service: 'user-api', ... }
 
-// With header missing  
+// With header missing
 // Request: curl POST /users
 // Warning: Request Trace Header 'x-correlation-id' not found, auto-generating trace ID: 01HKQJ...
 // Logs: { requestTraceId: '01HKQJ...', service: 'user-api', ... }
 
 // All logs in the same request share the same trace ID
-this.logger.log('Processing user creation')    // requestTraceId: '01HKQJ...'  
-this.logger.log('Validating user data')       // requestTraceId: '01HKQJ...'
-this.logger.log('User created successfully')  // requestTraceId: '01HKQJ...'
+this.logger.log("Processing user creation") // requestTraceId: '01HKQJ...'
+this.logger.log("Validating user data") // requestTraceId: '01HKQJ...'
+this.logger.log("User created successfully") // requestTraceId: '01HKQJ...'
 ```
 
 ## [0.2.0] - 2024-11-08
@@ -212,7 +222,7 @@ this.logger.log('User created successfully')  // requestTraceId: '01HKQJ...'
 
 - **Enhanced Architecture** - Clean separation of concerns
   - ApplicationLoggerService: Application-scoped for general logging
-  - RequestLoggerService: Request-scoped for HTTP request-specific logging  
+  - RequestLoggerService: Request-scoped for HTTP request-specific logging
   - Context merging: Global logContext + request details automatically combined
   - No breaking changes to existing ApplicationLoggerService usage
 
@@ -226,7 +236,7 @@ this.logger.log('User created successfully')  // requestTraceId: '01HKQJ...'
 
 - **Complete Test Coverage** - Extensive testing for new features
   - RequestLoggerService test suite covering all logging patterns
-  - Log context configuration testing for both services  
+  - Log context configuration testing for both services
   - Memory buffer testing approach for request-scoped scenarios
   - Integration testing with express request mocking
 
@@ -242,20 +252,20 @@ this.logger.log('User created successfully')  // requestTraceId: '01HKQJ...'
 ```typescript
 // Global context configuration
 LoggingModule.forRoot({
-  logContext: { 
-    service: 'user-api', 
-    version: '1.0.0', 
-    environment: 'production' 
-  }
+  logContext: {
+    service: "user-api",
+    version: "1.0.0",
+    environment: "production",
+  },
 })
 
 // ApplicationLoggerService usage (application-scoped)
 @Injectable()
 export class UserService {
   constructor(private logger: ApplicationLoggerService) {}
-  
+
   processUsers() {
-    this.logger.log('Processing batch')
+    this.logger.log("Processing batch")
     // Logs: { msg: 'Processing batch', service: 'user-api', version: '1.0.0' }
   }
 }
@@ -264,11 +274,11 @@ export class UserService {
 @Controller()
 export class UserController {
   constructor(private logger: RequestLoggerService) {}
-  
+
   @Post()
   createUser(@Body() data: any) {
-    this.logger.log('Creating user', { userId: data.id })
-    // Logs: { 
+    this.logger.log("Creating user", { userId: data.id })
+    // Logs: {
     //   msg: 'Creating user', userId: data.id,
     //   service: 'user-api', version: '1.0.0',
     //   req: { method: 'POST', url: '/users', headers: {...} }
@@ -349,7 +359,7 @@ import { LoggingModule, ApplicationLoggerService } from '@neoma/logging'
 // Structured logging
 logger.log('User created', { userId: '123', email: 'user@example.com' })
 
-// Printf-style interpolation  
+// Printf-style interpolation
 logger.log('Processing payment for %s: %d USD', username, amount)
 
 // Automatic redaction
