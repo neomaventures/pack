@@ -15,6 +15,7 @@ The monorepo for the **`@neoma/*`** family — a pack of NestJS building blocks,
 | [`@neoma/garmr`](packages/garmr) | Authentication & authorization for NestJS — magic links, Google OAuth, cookie/bearer sessions, and wildcard permissions. |
 | [`@neoma/features`](packages/features) | Feature flagging for NestJS controllers — gate routes behind binary on/off flags. |
 | [`@neoma/route-model-binding`](packages/route-model-binding) | Laravel-inspired route model binding for NestJS — resolve database models from route parameters automatically. |
+| [`@neoma/config`](packages/config) | Simple, type-safe environment configuration for NestJS — typed access to env vars with camelCase↔SCREAMING_SNAKE mapping and `.env` precedence loading. |
 | [`@neoma/managed-app`](packages/managed-app) | Boots a NestJS app from a module path — an e2e harness for the `@neoma/*` packages. |
 | [`@neoma/managed-database`](packages/managed-database) | In-memory SQLite `datasource` fixture for tests. |
 

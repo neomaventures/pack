@@ -1,0 +1,8 @@
+# The repo-root .gitignore ignores all `.env*`. These specific files are
+# committed *test fixtures* (dummy values) the env-loading specs rely on.
+# The runtime-generated `.env.<NODE_ENV>[.local]` files the env fixture writes
+# at test time are NOT negated here, so they stay ignored.
+!.env
+!.env.local
+!fixtures/env/.env.{node_env}
+!fixtures/env/.env.{node_env}.local
