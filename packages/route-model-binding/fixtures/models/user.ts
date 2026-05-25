@@ -11,17 +11,11 @@ export const user = {
    *
    * @return A new instance of a User with the provided or default values.
    */
-  entity(
-    {
-      id = crypto.randomUUID(),
-      username = faker.internet.email(),
-      deletedAt = null,
-    }: Partial<User> = {
-      id: crypto.randomUUID(),
-      username: faker.internet.email(),
-      deletedAt: null,
-    },
-  ): User {
+  entity({
+    id = crypto.randomUUID(),
+    username = faker.internet.email(),
+    deletedAt = null,
+  }: Partial<User> = {}): User {
     return Object.assign(new User(), {
       id,
       username,

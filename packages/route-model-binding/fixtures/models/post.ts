@@ -11,17 +11,11 @@ export const post = {
    *
    * @return A new instance of a Post with the provided or default values.
    */
-  entity(
-    {
-      id = crypto.randomUUID(),
-      content = faker.hacker.phrase(),
-      deletedAt = null,
-    }: Partial<Post> = {
-      id: crypto.randomUUID(),
-      content: faker.hacker.phrase(),
-      deletedAt: null,
-    },
-  ): Post {
+  entity({
+    id = crypto.randomUUID(),
+    content = faker.hacker.phrase(),
+    deletedAt = null,
+  }: Partial<Post> = {}): Post {
     return Object.assign(new Post(), {
       id,
       content,
