@@ -1,6 +1,6 @@
 {
   "name": "@neoma/managed-database",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A managed in-memory database fixture for Jest testing (unit, integration).",
   "author": "Shipdventures",
   "repository": {
@@ -12,11 +12,23 @@
     "url": "https://github.com/neomaventures/pack/issues"
   },
   "homepage": "https://github.com/neomaventures/pack/tree/main/packages/managed-database#readme",
-  "keywords": ["nestjs", "testing", "database", "typeorm", "neoma"],
+  "keywords": [
+    "nestjs",
+    "testing",
+    "database",
+    "typeorm",
+    "neoma"
+  ],
   "private": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist", "README.md", "LICENSE", "!**/*.json", "!**/*.tsbuildinfo"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "!**/*.json",
+    "!**/*.tsbuildinfo"
+  ],
   "license": "MIT",
   "scripts": {
     "build": "tsc -p ./tsconfig.lib.json",
