@@ -129,7 +129,7 @@ describe("RouteModelBindingMiddleware", () => {
 
     describe("And req.params.user has the value ''", () => {
       it("should throw an error", () => {
-        return expect(() =>
+        return expect(
           middleware.use(
             express.request({ params: { user: "" } }) as unknown as Request,
             express.response() as unknown as Response,
@@ -141,7 +141,7 @@ describe("RouteModelBindingMiddleware", () => {
 
     describe("And req.params.user has the value null", () => {
       it("should throw an error", () => {
-        return expect(() =>
+        return expect(
           middleware.use(
             express.request({
               params: { user: null as unknown as string },
@@ -171,7 +171,7 @@ describe("RouteModelBindingMiddleware", () => {
 
     describe(`And req.params.user has the value ${user.id} and req.params.post has the value ''`, () => {
       it("should throw an error", () => {
-        return expect(() =>
+        return expect(
           middleware.use(
             express.request({
               params: { user: user.id, post: "" },
@@ -185,7 +185,7 @@ describe("RouteModelBindingMiddleware", () => {
 
     describe(`And req.params.user has the value ${user.id} and req.params.post has the value null`, () => {
       it("should throw an error", () => {
-        return expect(() =>
+        return expect(
           middleware.use(
             express.request({
               params: { user: user.id, post: null as unknown as string },
