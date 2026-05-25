@@ -19,8 +19,11 @@ export class ActorMiddleware implements NestMiddleware {
       ? await this.options.resolveActor(req)
       : undefined
 
-    auditStore.run({ actor: resolved ?? this.options.defaultActor! }, () => {
-      next()
-    })
+    auditStore.run(
+      { actor: resolved ?? this.options.defaultActor ?? "system" },
+      () => {
+        next()
+      },
+    )
   }
 }

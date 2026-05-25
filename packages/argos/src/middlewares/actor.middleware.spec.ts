@@ -160,4 +160,21 @@ describe("ActorMiddleware", () => {
       expect(storedActor).toBe(defaultActor)
     })
   })
+
+  describe("Given neither resolveActor nor defaultActor is defined", () => {
+    let middleware: ActorMiddleware
+
+    beforeAll(async () => {
+      middleware = await buildMiddleware({})
+    })
+
+    it("should fall back to 'system' rather than store undefined", async () => {
+      let storedActor: string | undefined
+      await middleware.use(mockRequest(), mockResponse(), () => {
+        storedActor = auditStore.getStore()?.actor
+      })
+
+      expect(storedActor).toBe("system")
+    })
+  })
 })

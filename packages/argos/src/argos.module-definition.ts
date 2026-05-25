@@ -17,8 +17,8 @@ export const { ConfigurableModuleClass } =
         {
           provide: ARGOS_OPTIONS,
           useFactory: (raw: ArgosOptions): ArgosOptions => ({
-            defaultActor: "system",
             ...raw,
+            defaultActor: raw.defaultActor ?? "system",
           }),
           inject: [ARGOS_RAW_OPTIONS],
         },
