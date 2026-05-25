@@ -35,19 +35,19 @@
 
 - ac5ecb1: `startMailpit` now waits for the HTTP API to be ready (not just the SMTP port) before resolving — fixing an `ECONNRESET` race for clients that call the API immediately after startup.
 
-## [0.2.2] - 2026-04-29
+## 0.2.2 - 2026-04-29
 
 ### Fixed
 
 - Tightened `executionContext()` route handler type safety — the `method` parameter is now typed as `keyof T & string` instead of `string`, providing compile-time assurance that the method exists on the controller class
 
-## [0.2.1] - 2026-04-29
+## 0.2.1 - 2026-04-29
 
 ### Fixed
 
 - Corrected repository URLs from `shipdventures/neoma-fixtures` to `neomaventures/fixtures` in package.json and changelog
 
-## [0.2.0] - 2026-04-29
+## 0.2.0 - 2026-04-29
 
 ### Added
 
@@ -71,7 +71,7 @@
 - `@neoma/fixtures/teardown/mockserver` — Jest `globalTeardown` drop-in for MockServer
 - `@neoma/fixtures/docker` — new sub-path export for Docker container utilities
 
-## [0.1.0] - 2026-04-13
+## 0.1.0 - 2026-04-13
 
 ### Added
 
@@ -81,9 +81,3 @@
 - `executionContext()` — partial NestJS ExecutionContext supporting both bare handler functions and typed route objects
 - `MockLoggerService` — implements `LoggerService` with all methods as `jest.fn()`
 - `toThrowMatching` / `toMatchError` — custom Jest matchers for error class and property assertions
-
-[Unreleased]: https://github.com/neomaventures/fixtures/compare/v0.2.2...HEAD
-[0.2.2]: https://github.com/neomaventures/fixtures/compare/v0.2.1...v0.2.2
-[0.2.1]: https://github.com/neomaventures/fixtures/compare/v0.2.0...v0.2.1
-[0.2.0]: https://github.com/neomaventures/fixtures/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/neomaventures/fixtures/releases/tag/v0.1.0

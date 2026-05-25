@@ -2,7 +2,7 @@
   "name": "@neoma/mailpit",
   "version": "0.1.0",
   "description": "Mailpit test fixture for @neoma/* — a reusable client plus Docker container lifecycle and Jest setup/teardown drop-ins for email testing.",
-  "author": "Shipdventures",
+  "author": "Daniel Bruce",
   "repository": {
     "type": "git",
     "url": "https://github.com/neomaventures/pack",

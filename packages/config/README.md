@@ -402,9 +402,9 @@ Decorator for injecting the ConfigService into your services and controllers.
 
 ## Links
 
-- [GitHub Repository](https://github.com/shipdventures/neoma-config)
+- [GitHub Repository](https://github.com/neomaventures/pack/tree/main/packages/config)
 - [NPM Package](https://www.npmjs.com/package/@neoma/config)
-- [Neoma Ecosystem](https://github.com/shipdventures/neoma)
+- [Neoma Ecosystem](https://github.com/neomaventures)
 
 ## License
 

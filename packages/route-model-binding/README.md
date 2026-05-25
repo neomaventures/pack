@@ -404,4 +404,4 @@ Inspired by [Laravel's Route Model Binding](https://laravel.com/docs/routing#rou
 
 If you find this library helpful, please consider giving it a star on GitHub!
 
-Found a bug or have a feature request? [Open an issue](https://github.com/shipdventures/neoma-route-model-binding/issues)
+Found a bug or have a feature request? [Open an issue](https://github.com/neomaventures/pack/issues)

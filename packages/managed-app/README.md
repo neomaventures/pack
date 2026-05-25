@@ -588,7 +588,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Support
 
-If you encounter any issues or have questions, please file an issue on [GitHub](https://github.com/shipdventures/neoma-managed-app/issues).
+If you encounter any issues or have questions, please file an issue on [GitHub](https://github.com/neomaventures/pack/issues).
 
 ## Related Packages
 

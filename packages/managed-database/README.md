@@ -246,8 +246,8 @@ Testing with SQLite in-memory provides several advantages:
 ## Links
 
 - [npm package](https://www.npmjs.com/package/@neoma/managed-database)
-- [GitHub repository](https://github.com/shipdventures/neoma-managed-database)
-- [Report Issues](https://github.com/shipdventures/neoma-managed-database/issues)
+- [GitHub repository](https://github.com/neomaventures/pack/tree/main/packages/managed-database)
+- [Report Issues](https://github.com/neomaventures/pack/issues)
 
 ## Related Packages
 
@@ -259,4 +259,4 @@ MIT
 
 ---
 
-Built with love by [Shipdventures](https://github.com/shipdventures) for the NestJS community.
+Built with love by [neomaventures](https://github.com/neomaventures) for the NestJS community.

@@ -2,7 +2,7 @@
   "name": "@neoma/managed-database",
   "version": "0.2.0",
   "description": "A managed in-memory database fixture for Jest testing (unit, integration).",
-  "author": "Shipdventures",
+  "author": "Daniel Bruce",
   "repository": {
     "type": "git",
     "url": "https://github.com/neomaventures/pack",
