@@ -3,8 +3,9 @@
   "compilerOptions": {
     "types": ["node", "jest", "@neoma/fixtures/matchers"],
     "paths": {
-      "@neoma/cerberus": ["./src"],
-      "@neoma/cerberus/*": ["./src/*"],
+      "@neoma/route-model-binding": ["./src"],
+      "@neoma/route-model-binding/*": ["./src/*"],
+      "src/*": ["./e2e/app/*"],
       "fixtures/*": ["./fixtures/*"]
     }
   },

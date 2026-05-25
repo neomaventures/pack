@@ -4,11 +4,16 @@ import {
   MockRequest,
   multerFile,
 } from "@neoma/fixtures"
-import "@neoma/fixtures/matchers"
-import { type CallHandler, type ExecutionContext } from "@nestjs/common"
+import { managedDatasourceInstance } from "@neoma/managed-database"
+import {
+  type CallHandler,
+  type ExecutionContext,
+  Global,
+  Module,
+} from "@nestjs/common"
 import { EventEmitter2, EventEmitterModule } from "@nestjs/event-emitter"
 import { Test, type TestingModule } from "@nestjs/testing"
-import { TypeOrmModule } from "@nestjs/typeorm"
+import { getDataSourceToken } from "@nestjs/typeorm"
 import { TestKeyResolver } from "fixtures/resolvers/test-key-resolver"
 import { TestIdGenerator } from "fixtures/services/test-id-generator"
 import { MinioClient } from "fixtures/storage/minio"
@@ -51,6 +56,25 @@ class TestUpload implements Storable {
   @Column()
   public bucket!: string
 }
+
+/**
+ * Exposes a managed (cached, auto-torn-down) test DataSource globally so the
+ * UploadInterceptor inside the global CerberusModule can inject it — a
+ * root-level provider can't cross that boundary. TODO: promote to a
+ * `ManagedDatabaseModule` exported from @neoma/managed-database.
+ */
+@Global()
+@Module({
+  providers: [
+    {
+      provide: getDataSourceToken(),
+      useFactory: (): Promise<DataSource> =>
+        managedDatasourceInstance([TestUpload]),
+    },
+  ],
+  exports: [getDataSourceToken()],
+})
+class GlobalTestDbModule {}
 
 const options: CerberusOptions = {
   endpoint: process.env.STORAGE_ENDPOINT!,
@@ -101,12 +125,7 @@ describe("UploadInterceptor", () => {
   beforeEach(async () => {
     module = await Test.createTestingModule({
       imports: [
-        TypeOrmModule.forRoot({
-          type: "sqlite",
-          database: ":memory:",
-          entities: [TestUpload],
-          synchronize: true,
-        }),
+        GlobalTestDbModule,
         EventEmitterModule.forRoot(),
         CerberusModule.forRoot({
           ...options,
@@ -121,7 +140,7 @@ describe("UploadInterceptor", () => {
       .compile()
 
     interceptor = module.get(UploadInterceptor)
-    dataSource = module.get(DataSource)
+    dataSource = module.get<DataSource>(getDataSourceToken())
     eventEmitter = module.get(EventEmitter2)
     keyGenerator = module.get<TestIdGenerator>(UlidIdGenerator)
     minio = new MinioClient()
@@ -456,12 +475,7 @@ describe("UploadInterceptor", () => {
         await module.close()
         module = await Test.createTestingModule({
           imports: [
-            TypeOrmModule.forRoot({
-              type: "sqlite",
-              database: ":memory:",
-              entities: [TestUpload],
-              synchronize: true,
-            }),
+            GlobalTestDbModule,
             EventEmitterModule.forRoot(),
             CerberusModule.forRoot({
               ...options,

@@ -6,11 +6,7 @@
   "globalSetup": "@neoma/minio/setup",
   "globalTeardown": "@neoma/minio/teardown",
   "setupFiles": ["<rootDir>/build.setup.ts"],
-  "setupFilesAfterEnv": [
-    "jest-extended/all",
-    "<rootDir>/../fixtures/matchers/index.js",
-    "@neoma/fixtures/matchers"
-  ],
+  "setupFilesAfterEnv": ["jest-extended/all", "@neoma/fixtures/matchers"],
   "transform": {
     "^.+\\.tsx?$": "ts-jest"
   },
