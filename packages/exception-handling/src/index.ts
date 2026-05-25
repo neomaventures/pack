@@ -7,8 +7,13 @@ export * from "./filters/exception.filter"
 // Guards
 export * from "./guards/error-template-metadata-bridge.guard"
 
-// Decorators
-export * from "./decorators/error-template.decorator"
+// Decorators (ErrorTemplateMetadata is the internal stored shape — kept out of
+// the public surface; the decorator + bridge guard import it directly)
+export {
+  ErrorTemplate,
+  ERROR_TEMPLATE_KEY,
+  type ErrorTemplateOptions,
+} from "./decorators/error-template.decorator"
 
 // Interfaces
 export * from "./interfaces/neoma-exception.interface"
