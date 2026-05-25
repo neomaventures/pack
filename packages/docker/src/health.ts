@@ -35,11 +35,7 @@ export async function waitForTcp(
     retries = DEFAULT_RETRIES,
     intervalMs = DEFAULT_INTERVAL_MS,
     timeoutMs = DEFAULT_TIMEOUT_MS,
-  }: Omit<HealthCheckOptions, "method"> = {
-    retries: DEFAULT_RETRIES,
-    intervalMs: DEFAULT_INTERVAL_MS,
-    timeoutMs: DEFAULT_TIMEOUT_MS,
-  },
+  }: Omit<HealthCheckOptions, "method"> = {},
 ): Promise<void> {
   const deadline = Date.now() + timeoutMs
 
@@ -105,12 +101,7 @@ export async function waitForHttp(
     intervalMs = DEFAULT_INTERVAL_MS,
     timeoutMs = DEFAULT_TIMEOUT_MS,
     method = DEFAULT_METHOD,
-  }: HealthCheckOptions = {
-    retries: DEFAULT_RETRIES,
-    intervalMs: DEFAULT_INTERVAL_MS,
-    timeoutMs: DEFAULT_TIMEOUT_MS,
-    method: DEFAULT_METHOD,
-  },
+  }: HealthCheckOptions = {},
 ): Promise<void> {
   const deadline = Date.now() + timeoutMs
 

@@ -52,10 +52,7 @@ export async function startContainer(
   {
     prefix = process.env.NEOMA_TEST_PREFIX ?? DEFAULT_PREFIX,
     port = Number(process.env.MOCKSERVER_PORT) || DEFAULT_PORT,
-  }: MockServerOptions = {
-    prefix: process.env.NEOMA_TEST_PREFIX ?? DEFAULT_PREFIX,
-    port: Number(process.env.MOCKSERVER_PORT) || DEFAULT_PORT,
-  },
+  }: MockServerOptions = {},
 ): Promise<MockServerConfig> {
   const container = `${prefix}-mockserver`
 
@@ -101,9 +98,7 @@ export async function startContainer(
 export async function stopContainer(
   {
     prefix = process.env.NEOMA_TEST_PREFIX ?? DEFAULT_PREFIX,
-  }: Pick<MockServerOptions, "prefix"> = {
-    prefix: process.env.NEOMA_TEST_PREFIX ?? DEFAULT_PREFIX,
-  },
+  }: Pick<MockServerOptions, "prefix"> = {},
 ): Promise<void> {
   await stop(`${prefix}-mockserver`)
 }

@@ -74,11 +74,7 @@ export async function startContainer(
     smtpPort = Number(process.env.MAILPIT_SMTP_PORT) || DEFAULT_SMTP_PORT,
     apiPort = Number(process.env.MAILPIT_API_PORT) || DEFAULT_API_PORT,
     htpasswd,
-  }: MailpitOptions = {
-    prefix: process.env.NEOMA_TEST_PREFIX ?? DEFAULT_PREFIX,
-    smtpPort: Number(process.env.MAILPIT_SMTP_PORT) || DEFAULT_SMTP_PORT,
-    apiPort: Number(process.env.MAILPIT_API_PORT) || DEFAULT_API_PORT,
-  },
+  }: MailpitOptions = {},
 ): Promise<MailpitConfig> {
   const container = `${prefix}-mailpit`
 
@@ -149,9 +145,7 @@ export async function startContainer(
 export async function stopContainer(
   {
     prefix = process.env.NEOMA_TEST_PREFIX ?? DEFAULT_PREFIX,
-  }: Pick<MailpitOptions, "prefix"> = {
-    prefix: process.env.NEOMA_TEST_PREFIX ?? DEFAULT_PREFIX,
-  },
+  }: Pick<MailpitOptions, "prefix"> = {},
 ): Promise<void> {
   await stop(`${prefix}-mailpit`)
 }

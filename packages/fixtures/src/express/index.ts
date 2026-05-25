@@ -134,10 +134,7 @@ export const express: ExpressFixtures = {
     {
       locals = {},
       headers = {},
-    }: { locals?: Record<string, any>; headers?: OutgoingHttpHeaders } = {
-      locals: {},
-      headers: {},
-    },
+    }: { locals?: Record<string, any>; headers?: OutgoingHttpHeaders } = {},
   ): MockResponse {
     const clonedHeaders = convertHeadersToLowerCase(headers)
     return {
@@ -191,16 +188,7 @@ export const express: ExpressFixtures = {
       path = system.filePath(),
       params = {},
       signedCookies = {},
-    }: Partial<MockRequest> = {
-      body: {},
-      headers: {},
-      method: helpers.arrayElement(["GET", "POST", "PUT", "DELETE", "PATCH"]),
-      url: internet.url(),
-      res: express.response(),
-      path: system.filePath(),
-      params: {},
-      signedCookies: {},
-    },
+    }: Partial<MockRequest> = {},
   ): MockRequest {
     // Build the base object with the arguments spread, then normalize headers
     // afterward so that the spread cannot re-add un-normalized keys.
