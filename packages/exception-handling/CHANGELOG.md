@@ -15,7 +15,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## Unreleased
 
 ### Added
 
@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-## [0.8.0] - 2026-04-13
+## 0.8.0 - 2026-04-13
 
 ### Added
 
@@ -39,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `ErrorTemplateInterceptor` — replaced by `ErrorTemplateMetadataBridge` (auto-registered via `APP_GUARD`)
 
-## [0.7.0] - 2026-04-05
+## 0.7.0 - 2026-04-05
 
 ### Added
 
@@ -53,19 +53,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Node engine requirement bumped to `>=22.13.0`
 - Updated major dependencies: TypeScript 5→6, ESLint 9→10, Jest 29→30
 
-## [0.6.0] - 2026-04-02
+## 0.6.0 - 2026-04-02
 
 ### Added
 
 - Redirect support in `@ErrorTemplate` — template values starting with `/` trigger a `303 See Other` redirect instead of rendering
 
-## [0.5.0] - 2026-04-01
+## 0.5.0 - 2026-04-01
 
 ### Added
 
 - Optional `locals` parameter on `@ErrorTemplate` for passing static, per-route variables to templates (available as `errorTemplateLocals` in the render context)
 
-## [0.4.0] - 2026-03-31
+## 0.4.0 - 2026-03-31
 
 ### Added
 
@@ -83,7 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ExceptionHandlerModule` now registers `APP_PIPE` (ValidationPipe) and `APP_INTERCEPTOR` (ErrorTemplateInterceptor) in addition to `APP_FILTER`
 - Express response fixture now merges custom locals with defaults instead of replacing them
 
-## [0.3.0] - 2025-12-03
+## 0.3.0 - 2025-12-03
 
 ### Added
 
@@ -91,7 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `log(logger)` method support for custom logging behavior
 - Ability to disable logging entirely via empty `log()` implementation
 
-## [0.2.0] - 2025-12-03
+## 0.2.0 - 2025-12-03
 
 ### Added
 
@@ -102,7 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MockLoggerService fixture for testing
 - Express fixture updated to support arbitrary request properties
 
-## [0.1.0] - 2025-12-03
+## 0.1.0 - 2025-12-03
 
 ### Added
 
@@ -114,13 +114,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Unhandled exceptions logged at ERROR level
 - Consistent JSON error responses for all exceptions
 - Duck-typed exception support - any object implementing `getStatus()` and `getResponse()` methods is handled automatically
-
-[Unreleased]: https://github.com/shipdventures/neoma-exception-handling/compare/v0.8.0...HEAD
-[0.8.0]: https://github.com/shipdventures/neoma-exception-handling/compare/v0.7.0...v0.8.0
-[0.7.0]: https://github.com/shipdventures/neoma-exception-handling/compare/v0.6.0...v0.7.0
-[0.6.0]: https://github.com/shipdventures/neoma-exception-handling/compare/v0.5.0...v0.6.0
-[0.5.0]: https://github.com/shipdventures/neoma-exception-handling/compare/v0.4.0...v0.5.0
-[0.4.0]: https://github.com/shipdventures/neoma-exception-handling/compare/v0.3.0...v0.4.0
-[0.3.0]: https://github.com/shipdventures/neoma-exception-handling/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/shipdventures/neoma-exception-handling/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/shipdventures/neoma-exception-handling/releases/tag/v0.1.0

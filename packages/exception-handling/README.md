@@ -391,7 +391,7 @@ When a `req.logger` is available, all exception logs will include request contex
 
 ### Recommended: @neoma/logger
 
-This package works best with [@neoma/logger](https://github.com/shipdventures/neoma-logger) for rich, structured error logging with full request context and production-grade features.
+This package works best with [@neoma/logger](https://github.com/neomaventures/pack/tree/main/packages/logging) for rich, structured error logging with full request context and production-grade features.
 
 ```typescript
 import { Module } from '@nestjs/common'
@@ -677,16 +677,16 @@ MIT
 ## Links
 
 - [npm package](https://www.npmjs.com/package/@neoma/exception-handling)
-- [GitHub repository](https://github.com/shipdventures/neoma-exception-handling)
-- [Issue tracker](https://github.com/shipdventures/neoma-exception-handling/issues)
-- [Neoma ecosystem](https://github.com/shipdventures/neoma)
+- [GitHub repository](https://github.com/neomaventures/pack/tree/main/packages/exception-handling)
+- [Issue tracker](https://github.com/neomaventures/pack/issues)
+- [Neoma ecosystem](https://github.com/neomaventures)
 
 ## Part of the Neoma Ecosystem
 
 This package is part of the Neoma ecosystem of Laravel-inspired NestJS packages:
 
-- [@neoma/config](https://github.com/shipdventures/neoma-config) - Type-safe environment configuration
-- [@neoma/logger](https://github.com/shipdventures/neoma-logger) - Request and application logging
+- [@neoma/config](https://github.com/neomaventures/pack/tree/main/packages/config) - Type-safe environment configuration
+- [@neoma/logger](https://github.com/neomaventures/pack/tree/main/packages/logging) - Request and application logging
 - **@neoma/exception-handling** - Global exception handling (you are here)
 - More coming soon...
 

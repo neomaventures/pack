@@ -529,6 +529,6 @@ MIT License - see [LICENSE](./LICENSE) for details.
 ## Links
 
 - [npm package](https://www.npmjs.com/package/@neoma/logging)
-- [GitHub repository](https://github.com/shipdventures/neoma-logging)
+- [GitHub repository](https://github.com/neomaventures/pack/tree/main/packages/logging)
 - [Pino documentation](https://getpino.io/)
 - [NestJS documentation](https://docs.nestjs.com/)

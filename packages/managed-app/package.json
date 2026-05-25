@@ -2,7 +2,7 @@
   "name": "@neoma/managed-app",
   "version": "0.6.0",
   "description": "A package for creating a managed NestJS application in tests.",
-  "author": "Shipdventures",
+  "author": "Daniel Bruce",
   "repository": {
     "type": "git",
     "url": "https://github.com/neomaventures/pack",

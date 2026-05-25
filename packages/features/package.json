@@ -2,7 +2,7 @@
   "name": "@neoma/features",
   "version": "0.4.0",
   "description": "Feature flagging for NestJS controllers — gate routes behind binary on/off flags.",
-  "author": "Shipdventures",
+  "author": "Daniel Bruce",
   "repository": {
     "type": "git",
     "url": "https://github.com/neomaventures/pack",

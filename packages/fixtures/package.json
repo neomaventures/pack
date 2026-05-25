@@ -2,7 +2,7 @@
   "name": "@neoma/fixtures",
   "version": "0.6.0",
   "description": "Test fixtures for @neoma/* NestJS packages",
-  "author": "Shipdventures",
+  "author": "Daniel Bruce",
   "repository": {
     "type": "git",
     "url": "https://github.com/neomaventures/pack",

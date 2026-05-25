@@ -2,7 +2,7 @@
   "name": "@neoma/cerberus",
   "version": "0.2.0",
   "description": "NestJS-idiomatic file storage — upload, persist, download — for S3-compatible backends.",
-  "author": "Shipdventures",
+  "author": "Daniel Bruce",
   "repository": {
     "type": "git",
     "url": "https://github.com/neomaventures/pack",

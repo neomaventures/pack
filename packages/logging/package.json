@@ -2,7 +2,7 @@
   "name": "@neoma/logging",
   "version": "0.6.0",
   "description": "Great logging for NestJS — Pino-backed application + request-scoped loggers.",
-  "author": "Shipdventures",
+  "author": "Daniel Bruce",
   "repository": {
     "type": "git",
     "url": "https://github.com/neomaventures/pack",

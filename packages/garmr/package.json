@@ -2,7 +2,7 @@
   "name": "@neoma/garmr",
   "version": "0.10.0",
   "description": "Authentication and authorization for NestJS. Magic links, Google OAuth, cookie/bearer sessions, and wildcard permissions.",
-  "author": "Shipdventures",
+  "author": "Daniel Bruce",
   "repository": {
     "type": "git",
     "url": "https://github.com/neomaventures/pack",

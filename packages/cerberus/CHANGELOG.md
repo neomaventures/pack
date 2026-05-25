@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.2.0] - 2026-05-23
+## 0.2.0 - 2026-05-23
 
 ### Added
 
@@ -22,7 +22,7 @@
 - `field` option from `@Upload()` — multer field name was unused
 - `prefix` option from `CerberusOptions` — replaced by custom key resolvers
 
-## [0.1.0] - 2026-04-30
+## 0.1.0 - 2026-04-30
 
 ### Added
 
@@ -54,6 +54,3 @@
 - `FileTooLargeException` (413) — `fileSize: number | null`, `maxSize: number`
 - `UnsupportedFileTypeException` (415) — `mimeType`, `allowedTypes`
 - `FileStoreUnreachableException` (503) — `endpoint`, `bucket`, `cause`
-
-[0.2.0]: https://github.com/neomaventures/cerberus/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/neomaventures/cerberus/releases/tag/v0.1.0
