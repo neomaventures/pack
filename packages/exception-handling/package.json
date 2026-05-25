@@ -1,6 +1,6 @@
 {
   "name": "@neoma/exception-handling",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Effective and automatic exception handling for NestJS.",
   "author": "Daniel Bruce",
   "repository": {
@@ -12,11 +12,22 @@
     "url": "https://github.com/neomaventures/pack/issues"
   },
   "homepage": "https://github.com/neomaventures/pack/tree/main/packages/exception-handling#readme",
-  "keywords": ["nestjs", "exception-handling", "laravel", "neoma"],
+  "keywords": [
+    "nestjs",
+    "exception-handling",
+    "laravel",
+    "neoma"
+  ],
   "private": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist", "README.md", "LICENSE", "!**/*.json", "!**/*.tsbuildinfo"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "!**/*.json",
+    "!**/*.tsbuildinfo"
+  ],
   "license": "MIT",
   "scripts": {
     "build": "tsc -p ./tsconfig.lib.json",
