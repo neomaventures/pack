@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.2
+
+### Patch Changes
+
+- edbbdba: Fix `coerce: true` turning whitespace-only env vars into `0`. `isCleanNumber` only rejected empty strings, but `Number("   ")` is `0` (not `NaN`), so a blank value like `"   "` was coerced to `0`. It now rejects whitespace-only strings (a number padded with whitespace like `" 123 "` still coerces, as documented).
+- edbbdba: Declare the previously-missing `dotenv` runtime dependency. `ConfigModule.forRoot({ loadEnv: true })` loads `.env` files via `dotenv`, but `0.4.1` shipped with no declared dependencies — so `loadEnv: true` threw `Cannot find module 'dotenv'` unless a consumer happened to have dotenv hoisted. `dotenv` is now a direct dependency.
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
