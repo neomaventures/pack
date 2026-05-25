@@ -1,12 +1,12 @@
 import { faker } from "@faker-js/faker"
+import { validationFactory } from "@neoma/exception-handling"
 import { BadRequestException } from "@nestjs/common"
-import { IsEmail, MinLength, validate } from "class-validator"
-
-import { validationFactory } from "./validation.factory"
+import { IsEmail, MinLength, ValidateNested, validate } from "class-validator"
 
 const { hacker, internet, string } = faker
 const nameMessage = hacker.phrase()
 const emailMessage = hacker.phrase()
+const streetMessage = hacker.phrase()
 
 class TestDto {
   @MinLength(5, { message: nameMessage })
@@ -14,6 +14,16 @@ class TestDto {
 
   @IsEmail({}, { message: emailMessage })
   public email!: string
+}
+
+class AddressDto {
+  @MinLength(5, { message: streetMessage })
+  public street!: string
+}
+
+class OrderDto {
+  @ValidateNested()
+  public address!: AddressDto
 }
 
 describe("validationFactory", () => {
@@ -59,6 +69,25 @@ describe("validationFactory", () => {
         email: {
           value: invalidEmail,
           error: emailMessage,
+        },
+      })
+    })
+  })
+
+  describe("When it is called with a nested validation error", () => {
+    it("should recurse into children instead of throwing", async () => {
+      const invalidStreet = string.alphanumeric(4)
+      const dto = Object.assign(new OrderDto(), {
+        address: Object.assign(new AddressDto(), { street: invalidStreet }),
+      })
+
+      const errors = await validate(dto)
+
+      const error = validationFactory(errors)
+      expect(error).toBeInstanceOf(BadRequestException)
+      expect(error.getResponse()).toMatchObject({
+        address: {
+          street: { value: invalidStreet, error: streetMessage },
         },
       })
     })

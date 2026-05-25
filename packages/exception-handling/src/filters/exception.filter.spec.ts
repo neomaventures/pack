@@ -64,6 +64,14 @@ describe("new NeomaExceptionFilter()", () => {
     }
   })
 
+  afterEach(() => {
+    // These specs spy on the process-global static Logger.{error,warn,debug}.
+    // Restore them after every test so calls don't bleed across the
+    // forEach-generated cases (this is what a package-level resetMocks was
+    // previously masking).
+    jest.restoreAllMocks()
+  })
+
   describe("Response", () => {
     httpExceptions.forEach((exception: HttpException) => {
       it(`should handle ${exception.name} by responding with a HTTP ${exception.getStatus()} and the exception response`, () => {
