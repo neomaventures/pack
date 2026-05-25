@@ -68,14 +68,12 @@ export interface MailpitConfig {
  * // process.env.MAILPIT_API === "http://localhost:8025/api/v1"
  * ```
  */
-export async function startContainer(
-  {
-    prefix = process.env.NEOMA_TEST_PREFIX ?? DEFAULT_PREFIX,
-    smtpPort = Number(process.env.MAILPIT_SMTP_PORT) || DEFAULT_SMTP_PORT,
-    apiPort = Number(process.env.MAILPIT_API_PORT) || DEFAULT_API_PORT,
-    htpasswd,
-  }: MailpitOptions = {},
-): Promise<MailpitConfig> {
+export async function startContainer({
+  prefix = process.env.NEOMA_TEST_PREFIX ?? DEFAULT_PREFIX,
+  smtpPort = Number(process.env.MAILPIT_SMTP_PORT) || DEFAULT_SMTP_PORT,
+  apiPort = Number(process.env.MAILPIT_API_PORT) || DEFAULT_API_PORT,
+  htpasswd,
+}: MailpitOptions = {}): Promise<MailpitConfig> {
   const container = `${prefix}-mailpit`
 
   // Remove any stale container with the same name
@@ -142,10 +140,8 @@ export async function startContainer(
  * await stopContainer()
  * ```
  */
-export async function stopContainer(
-  {
-    prefix = process.env.NEOMA_TEST_PREFIX ?? DEFAULT_PREFIX,
-  }: Pick<MailpitOptions, "prefix"> = {},
-): Promise<void> {
+export async function stopContainer({
+  prefix = process.env.NEOMA_TEST_PREFIX ?? DEFAULT_PREFIX,
+}: Pick<MailpitOptions, "prefix"> = {}): Promise<void> {
   await stop(`${prefix}-mailpit`)
 }

@@ -130,12 +130,13 @@ export const express: ExpressFixtures = {
     return `${encodeURIComponent(prefix)}${cookieValue}.${encodeURIComponent(signature)}`
   },
 
-  response(
-    {
-      locals = {},
-      headers = {},
-    }: { locals?: Record<string, any>; headers?: OutgoingHttpHeaders } = {},
-  ): MockResponse {
+  response({
+    locals = {},
+    headers = {},
+  }: {
+    locals?: Record<string, any>
+    headers?: OutgoingHttpHeaders
+  } = {}): MockResponse {
     const clonedHeaders = convertHeadersToLowerCase(headers)
     return {
       getHeaders(): OutgoingHttpHeaders {
@@ -178,18 +179,16 @@ export const express: ExpressFixtures = {
     }
   },
 
-  request(
-    {
-      body = {},
-      headers = {},
-      method = helpers.arrayElement(["GET", "POST", "PUT", "DELETE", "PATCH"]),
-      url = internet.url(),
-      res = express.response(),
-      path = system.filePath(),
-      params = {},
-      signedCookies = {},
-    }: Partial<MockRequest> = {},
-  ): MockRequest {
+  request({
+    body = {},
+    headers = {},
+    method = helpers.arrayElement(["GET", "POST", "PUT", "DELETE", "PATCH"]),
+    url = internet.url(),
+    res = express.response(),
+    path = system.filePath(),
+    params = {},
+    signedCookies = {},
+  }: Partial<MockRequest> = {}): MockRequest {
     // Build the base object with the arguments spread, then normalize headers
     // afterward so that the spread cannot re-add un-normalized keys.
     const base = {
