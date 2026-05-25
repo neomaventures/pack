@@ -7,8 +7,11 @@ import { type MinIOConfig, startContainer, stopContainer } from "./container"
 describe("startContainer (MinIO)", () => {
   const prefix = `neoma-test-mio-${faker.string.alphanumeric(4)}`
   const expectedContainer = `${prefix}-minio`
-  const apiPort = 19_000 + faker.number.int({ min: 0, max: 999 })
-  const consolePort = 19_001 + faker.number.int({ min: 0, max: 999 })
+  // API and Console ports come from disjoint 1000-port bands so the two random
+  // draws can never collide (a clash binds the same host port twice in
+  // `docker run -p`, which fails).
+  const apiPort = faker.number.int({ min: 19_000, max: 19_999 })
+  const consolePort = faker.number.int({ min: 22_000, max: 22_999 })
   let config: MinIOConfig
 
   beforeAll(async () => {
@@ -125,8 +128,8 @@ describe("startContainer (MinIO)", () => {
   describe("Given an explicit prefix option", () => {
     const explicitPrefix = `explicit-mio-${faker.string.alphanumeric(4)}`
     const explicitContainer = `${explicitPrefix}-minio`
-    const explicitApiPort = 20_000 + faker.number.int({ min: 0, max: 999 })
-    const explicitConsolePort = 20_001 + faker.number.int({ min: 0, max: 999 })
+    const explicitApiPort = faker.number.int({ min: 20_000, max: 20_999 })
+    const explicitConsolePort = faker.number.int({ min: 23_000, max: 23_999 })
     let explicitConfig: MinIOConfig
 
     beforeAll(async () => {
@@ -170,8 +173,8 @@ describe("startContainer (MinIO)", () => {
 
   describe("Given explicit prefix, apiPort, consolePort, and bucket options", () => {
     const bothPrefix = `both-mio-${faker.string.alphanumeric(4)}`
-    const bothApiPort = 21_000 + faker.number.int({ min: 0, max: 999 })
-    const bothConsolePort = 21_001 + faker.number.int({ min: 0, max: 999 })
+    const bothApiPort = faker.number.int({ min: 21_000, max: 21_999 })
+    const bothConsolePort = faker.number.int({ min: 24_000, max: 24_999 })
     const bothBucket = `custom-bucket-${faker.string.alphanumeric(6).toLowerCase()}`
     const bothContainer = `${bothPrefix}-minio`
     let bothConfig: MinIOConfig
