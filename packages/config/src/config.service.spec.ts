@@ -22,6 +22,7 @@ const envNan = "NaN"
 const envInfinity = "Infinity"
 const envLeadingZero = "007"
 const envLeadingTrailingWhitespace = " 123 "
+const envWhitespaceOnly = "   "
 const envEmpty = ""
 const envDecimal = "0.123"
 
@@ -77,6 +78,7 @@ describe("ConfigService", () => {
     process.env.ENV_INFINITY = envInfinity
     process.env.ENV_LEADING_ZERO = envLeadingZero
     process.env.ENV_LEADING_TRAILING_WHITESPACE = envLeadingTrailingWhitespace
+    process.env.ENV_WHITESPACE_ONLY = envWhitespaceOnly
     process.env.ENV_EMPTY = envEmpty
     process.env.ENV_DECIMAL = envDecimal
     process.env[snakeCaseKey] = snakeCaseValue
@@ -104,7 +106,7 @@ describe("ConfigService", () => {
             expect(config.variable).toBe(value)
           })
 
-          it(`Checking for the existence of 'variable' should return true when process.env.VARIABLE is  set`, () => {
+          it(`Checking for the existence of 'variable' should return true when process.env.VARIABLE is set`, () => {
             expect("variable" in config).toBeTrue()
           })
 
@@ -255,7 +257,7 @@ describe("ConfigService", () => {
         )
       })
 
-      it(`Checking for the existence of'${notDefinedKey}' should return false when process.env.${notDefinedKey.toUpperCase()} is not set`, () => {
+      it(`Checking for the existence of '${notDefinedKey}' should return false when process.env.${notDefinedKey.toUpperCase()} is not set`, () => {
         expect(notDefinedKey in config).toBeFalse()
       })
 
@@ -361,11 +363,11 @@ describe("ConfigService", () => {
       expect(config.envScientific).toEqual(Number(envScientific))
     })
 
-    it("it should coeerce 'NaN' to NaN", () => {
+    it("it should coerce 'NaN' to NaN", () => {
       expect(config.envNan).toBeNaN()
     })
 
-    it("it should coeerce 'Infinity' to Infinity", () => {
+    it("it should coerce 'Infinity' to Infinity", () => {
       expect(config.envInfinity).toBe(Infinity)
     })
 
@@ -384,6 +386,11 @@ describe("ConfigService", () => {
     it("it should NOT coerce empty string and keep it as string", () => {
       expect(config.envEmpty).toBeString()
       expect(config.envEmpty).toBe("")
+    })
+
+    it("it should NOT coerce a whitespace-only string to 0 and keep it as string", () => {
+      expect(config.envWhitespaceOnly).toBeString()
+      expect(config.envWhitespaceOnly).toBe(envWhitespaceOnly)
     })
 
     it(`it should coerce '${envDecimal}' to ${Number(envDecimal)} (valid decimal)`, () => {

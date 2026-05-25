@@ -31,11 +31,13 @@ export const CONFIG_OPTIONS = Symbol("CONFIG_OPTIONS")
  * isCleanNumber("0x1F")    // true - valid hex
  * isCleanNumber("007")     // false - decimal leading zero
  * isCleanNumber("")        // false - empty string
- * isCleanNumber(" 123 ")   // true - whitespace allowed
+ * isCleanNumber("   ")     // false - whitespace only
+ * isCleanNumber(" 123 ")   // true - whitespace around a number is allowed
  */
 function isCleanNumber(str: string | undefined): boolean {
-  // No undefined, null, or empty strings
-  if (!str) return false
+  // No undefined, null, empty, or whitespace-only strings. (Without the
+  // trim check, `Number("   ")` is 0, which would wrongly coerce blanks.)
+  if (!str?.trim()) return false
 
   // Block decimal leading zeros (but allow hex/octal/binary)
   if (/^0[0-9]/.test(str.trim())) return false
