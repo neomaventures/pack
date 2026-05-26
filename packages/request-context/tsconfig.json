@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node", "jest", "jest-extended"],
+    "paths": {
+      "@neoma/request-context": ["./src"]
+    }
+  },
+  "include": ["src/**/*", "e2e/**/*"]
+}
