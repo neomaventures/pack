@@ -1,6 +1,3 @@
-// Ship the Express `Request.logger` augmentation with the package.
-import "./types/express"
-
 // Export all public APIs here
 export * from "./logging.module"
 

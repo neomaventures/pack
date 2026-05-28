@@ -1,14 +1,15 @@
 import {
-  CallHandler,
-  ExecutionContext,
+  type CallHandler,
+  type ExecutionContext,
   Inject,
   Injectable,
-  NestInterceptor,
+  type NestInterceptor,
 } from "@nestjs/common"
 import { PATH_METADATA } from "@nestjs/common/constants"
-import { Observable, tap } from "rxjs"
+import { type Observable, tap } from "rxjs"
 
-import { LoggingConfiguration } from "../interfaces"
+import { type LoggingConfiguration } from "../interfaces"
+import { ApplicationLoggerService } from "../services"
 import { LOGGING_MODULE_OPTIONS } from "../symbols"
 
 /**
@@ -19,23 +20,20 @@ export class RequestLoggerInterceptor implements NestInterceptor {
   /**
    * Creates an instance of RequestLoggerInterceptor.
    *
-   * @param config The logging configuration - the only property used is `logErrors`
-   * which determines whether errors caught during request processing should be logged
-   * automatically.
+   * @param config - Logging configuration options injected from the module LoggingConfiguration
+   * @param config.logErrors - Whether to log errors that occur in route handlers (default: false)
+   * @param config.logLevel - The log level to use for logging requests (default: 'log')
+   * @param config.logRedact - An array of paths to redact from logs (default: [])
+   * @param config.logContext - Additional context to include in all log messages (default: {})
+   *
+   * @param logger - The ApplicationLoggerService instance used for logging
    */
   public constructor(
     @Inject(LOGGING_MODULE_OPTIONS)
-    private readonly config: LoggingConfiguration,
+    private readonly config: Pick<LoggingConfiguration, "logErrors">,
+    private readonly logger: ApplicationLoggerService,
   ) {}
 
-  /**
-   * Intercepts the request and logs information about the route handler that the request
-   * will be dispatched to and the result of processing once route handler has handled
-   * the request.
-   *
-   * @param context Provides access to route handling information.
-   * @param next used to continue processing the request.
-   */
   public intercept(
     context: ExecutionContext,
     next: CallHandler,
@@ -46,46 +44,37 @@ export class RequestLoggerInterceptor implements NestInterceptor {
       PATH_METADATA,
       context.getClass(),
     )
-
     const handlerPath = Reflect.getMetadata(PATH_METADATA, context.getHandler())
-    const request = context.switchToHttp().getRequest()
-    request.logger.debug(
-      {
-        controller: { name: context.getClass().name, path: controllerPath },
-        handler: { name: context.getHandler().name, path: handlerPath },
-      },
+    const route = {
+      controller: { name: context.getClass().name, path: controllerPath },
+      handler: { name: context.getHandler().name, path: handlerPath },
+    }
+
+    this.logger.debug(
       "Processing an incoming request and dispatching it to a route handler.",
+      route,
     )
 
     return next.handle().pipe(
       tap({
         next: () => {
           const response = context.switchToHttp().getResponse()
-          request.logger.debug(
+          this.logger.debug(
+            "Processed an incoming request that was successfully handled by a route handler.",
             {
-              controller: {
-                name: context.getClass().name,
-                path: controllerPath,
-              },
-              handler: { name: context.getHandler().name, path: handlerPath },
+              ...route,
               res: response,
               duration: `${Date.now() - start}ms`,
             },
-            "Processed an incoming request that was successfully handled by a route handler.",
           )
         },
         error: (error) => {
           if (this.config.logErrors) {
-            const duration = Date.now() - start
-            request.logger.error(
+            this.logger.error(
               "Error processing an incoming request in the route handler.",
               {
-                controller: {
-                  name: context.getClass().name,
-                  path: controllerPath,
-                },
-                handler: { name: context.getHandler().name, path: handlerPath },
-                duration: `${duration}ms`,
+                ...route,
+                duration: `${Date.now() - start}ms`,
                 err: error,
               },
             )

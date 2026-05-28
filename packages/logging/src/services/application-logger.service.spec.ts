@@ -1,12 +1,21 @@
 import { faker } from "@faker-js/faker"
+import { express } from "@neoma/fixtures"
 import {
   ApplicationLoggerService,
   LOGGING_MODULE_OPTIONS,
   type LoggingConfiguration,
   LoggingModule,
 } from "@neoma/logging"
+import { getRequest } from "@neoma/request-context"
 import { Test, type TestingModule } from "@nestjs/testing"
+import { type Request } from "express"
 import { LogLevelNumber, LogMethodTests, ArrayStream } from "fixtures/logging"
+
+jest.mock("@neoma/request-context", () => ({
+  getRequest: jest.fn(),
+}))
+
+const mockedGetRequest = jest.mocked(getRequest)
 
 const username = faker.internet.username()
 const attempts = 3
@@ -29,6 +38,12 @@ describe("ApplicationLoggerService", () => {
 
     service = module.get(ApplicationLoggerService)
     logOptions = module.get(LOGGING_MODULE_OPTIONS)
+
+    mockedGetRequest.mockReturnValue(undefined)
+  })
+
+  afterEach(() => {
+    mockedGetRequest.mockReset()
   })
 
   describe("Default Configuration", () => {
@@ -109,52 +124,126 @@ describe("ApplicationLoggerService", () => {
   describe("Logging Methods", () => {
     LogMethodTests.forEach(({ method, level }) => {
       describe(method, () => {
-        describe("When it's called with just a message", () => {
-          it(`It should log the message at the ${method} level`, () => {
-            service[method](message)
-            expect(logOptions.logDestination.logs).toContainEqual(
-              expect.objectContaining({
-                level,
-                msg: message,
-              }),
-            )
+        describe("When it's called outside a request context", () => {
+          describe("When it's called with just a message", () => {
+            it(`It should log the message at the ${method} level`, () => {
+              service[method](message)
+              expect(logOptions.logDestination.logs).toContainEqual(
+                expect.objectContaining({
+                  level,
+                  msg: message,
+                }),
+              )
+            })
+          })
+
+          describe("When it's called with a message and a single context parameter that is an object", () => {
+            it(`It should log the message and merge the context's properties into the log entry at the ${method} level`, () => {
+              service[method](message, context)
+              expect(logOptions.logDestination.logs).toContainEqual(
+                expect.objectContaining({
+                  level,
+                  msg: message,
+                  ...context,
+                }),
+              )
+            })
+          })
+
+          describe("When it's called with a message and a single context parameter that is a primitive (e.g. string)", () => {
+            it(`It should interpolate the message with the primitive parameter at the ${method} level`, () => {
+              service[method]("User %s logged in", username)
+              expect(logOptions.logDestination.logs).toContainEqual(
+                expect.objectContaining({
+                  level,
+                  msg: `User ${username} logged in`,
+                }),
+              )
+            })
+          })
+
+          describe("When it's called with printf-style interpolation", () => {
+            it(`It should interpolate the message with the provided parameters at the ${method} level`, () => {
+              service[method](template, username, attempts)
+              expect(logOptions.logDestination.logs).toContainEqual(
+                expect.objectContaining({
+                  level,
+                  msg: `User ${username} logged in with 3 attempts`,
+                }),
+              )
+            })
           })
         })
 
-        describe("When it's called with a message and a single context parameter that is an object", () => {
-          it(`It should log the message and merge the context's properties into the log entry at the ${method} level`, () => {
-            service[method](message, context)
-            expect(logOptions.logDestination.logs).toContainEqual(
-              expect.objectContaining({
-                level,
-                msg: message,
-                ...context,
-              }),
-            )
+        describe("When it's called inside a request context", () => {
+          const request = express.request()
+          beforeEach(() => {
+            mockedGetRequest.mockReturnValue(request as unknown as Request)
           })
-        })
 
-        describe("When it's called with a message and a single context parameter that is a primitive (e.g. string)", () => {
-          it(`It should interpolate the message with the primitive parameter at the ${method} level`, () => {
-            service[method]("User %s logged in", username)
-            expect(logOptions.logDestination.logs).toContainEqual(
-              expect.objectContaining({
-                level,
-                msg: `User ${username} logged in`,
-              }),
-            )
+          describe("When it's called with just a message", () => {
+            it(`It should log the message and the request at the ${method} level`, () => {
+              service[method](message)
+              expect(logOptions.logDestination.logs).toContainEqual(
+                expect.objectContaining({
+                  level,
+                  msg: message,
+                  req: expect.objectContaining({
+                    method: request.method,
+                    url: request.url,
+                  }),
+                }),
+              )
+            })
           })
-        })
 
-        describe("When it's called with printf-style interpolation", () => {
-          it(`It should interpolate the message with the provided parameters at the ${method} level`, () => {
-            service[method](template, username, attempts)
-            expect(logOptions.logDestination.logs).toContainEqual(
-              expect.objectContaining({
-                level,
-                msg: `User ${username} logged in with 3 attempts`,
-              }),
-            )
+          describe("When it's called with a message and a single context parameter that is an object", () => {
+            it(`It should log the message and merge the context's properties into the log entry at the ${method} level`, () => {
+              service[method](message, context)
+              expect(logOptions.logDestination.logs).toContainEqual(
+                expect.objectContaining({
+                  level,
+                  msg: message,
+                  req: expect.objectContaining({
+                    method: request.method,
+                    url: request.url,
+                  }),
+                  ...context,
+                }),
+              )
+            })
+          })
+
+          describe("When it's called with a message and a single context parameter that is a primitive (e.g. string)", () => {
+            it(`It should interpolate the message with the primitive parameter at the ${method} level`, () => {
+              service[method]("User %s logged in", username)
+              expect(logOptions.logDestination.logs).toContainEqual(
+                expect.objectContaining({
+                  level,
+                  msg: `User ${username} logged in`,
+                  req: expect.objectContaining({
+                    method: request.method,
+                    url: request.url,
+                  }),
+                }),
+              )
+            })
+          })
+
+          describe("When it's called with printf-style interpolation", () => {
+            it(`It should interpolate the message with the provided parameters at the ${method} level`, () => {
+              service[method](template, username, attempts)
+              expect(logOptions.logDestination.logs).toContainEqual(
+                expect.objectContaining({
+                  level,
+                  msg: `User ${username} logged in with 3 attempts`,
+                  req: expect.objectContaining({
+                    method: request.method,
+                    url: request.url,
+                  }),
+                }),
+              )
+            })
           })
         })
       })
