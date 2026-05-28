@@ -1,4 +1,4 @@
-import { Injectable, NestMiddleware } from "@nestjs/common"
+import { Injectable, Logger, NestMiddleware } from "@nestjs/common"
 import { Request, NextFunction } from "express"
 
 import { InvalidCredentialsException } from "../exceptions/invalid-credentials.exception"
@@ -57,9 +57,11 @@ export class BearerAuthenticationMiddleware implements NestMiddleware {
     try {
       req.principal = await this.service.authenticate(token)
     } catch (err) {
-      req.logger?.warn?.("Authentication via authorization header failed", {
-        err,
-      })
+      Logger.warn(
+        "Authentication via authorization header failed",
+        { err },
+        BearerAuthenticationMiddleware.name,
+      )
     }
     next()
   }

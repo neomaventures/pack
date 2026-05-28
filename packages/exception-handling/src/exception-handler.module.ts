@@ -14,7 +14,6 @@ import { validationFactory } from "./pipes/validation.factory"
  * - Consistent JSON error responses
  * - Content negotiation for HTML error rendering via {@link ErrorTemplate}
  * - Automatic handling of all exceptions (HTTP and unhandled)
- * - Support for request-scoped loggers via `req.logger`
  * - Custom exception behavior via the {@link NeomaException} interface
  * - Global validation pipe with field-keyed error responses
  *
@@ -40,10 +39,10 @@ import { validationFactory } from "./pipes/validation.factory"
  *
  * ## Logger Selection
  *
- * The filter uses the first available logger:
- * 1. `req.logger` - Request-scoped logger (if attached to the request)
- * 2. Overridden NestJS Logger - Via `Logger.overrideLogger()`
- * 3. Default NestJS ConsoleLogger
+ * The filter uses the NestJS Logger. Install your preferred logger via
+ * `Logger.overrideLogger(...)` or `app.useLogger(...)` and all exception
+ * logs will route through it; otherwise the default NestJS ConsoleLogger
+ * is used.
  *
  * ## Custom Exceptions
  *

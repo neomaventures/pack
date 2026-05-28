@@ -122,19 +122,17 @@ class LoggerWrapper {
  * ## Custom Logging
  *
  * Implement the `log(logger)` method to override default logging behavior.
- * The logger passed will be either `req.logger` (if available) or the
- * NestJS Logger. Implementing an empty `log()` method disables logging
- * for that exception entirely.
+ * The logger passed is the NestJS Logger. Implementing an empty `log()`
+ * method disables logging for that exception entirely.
  *
  * ## Logger Selection
  *
- * The filter selects a logger in the following priority order:
+ * The filter always uses the NestJS Logger. To route through a custom
+ * implementation:
  *
- * 1. **Request logger (`req.logger`)** - If the request has a `logger` property,
- *    it will be used. This enables request-scoped logging with correlation IDs.
- * 2. **Overridden NestJS Logger** - If `Logger.overrideLogger()` was called with
- *    a custom implementation, that logger is used.
- * 3. **Default NestJS Logger** - Falls back to the built-in ConsoleLogger.
+ * 1. **Overridden NestJS Logger** - Call `Logger.overrideLogger()` (or
+ *    `app.useLogger(...)`) with your logger implementation.
+ * 2. **Default NestJS Logger** - Falls back to the built-in ConsoleLogger.
  *
  * For structured loggers (Pino, Winston, Bunyan), logs are formatted as:
  * ```typescript
@@ -261,8 +259,7 @@ export class NeomaExceptionFilter implements ExceptionFilter {
   ): void {
     const request = host.switchToHttp().getRequest()
     const response = host.switchToHttp().getResponse()
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const logger = new LoggerWrapper(request.logger ?? Logger)
+    const logger = new LoggerWrapper(Logger)
 
     if ("getStatus" in err === false) {
       err["getStatus"] = (): HttpStatus.INTERNAL_SERVER_ERROR =>
@@ -278,7 +275,7 @@ export class NeomaExceptionFilter implements ExceptionFilter {
     }
 
     if ("log" in err === true && typeof err.log === "function") {
-      err.log(request.logger ?? Logger)
+      err.log(Logger)
     } else if (err.getStatus!() === HttpStatus.NOT_FOUND) {
       logger.debug(
         err,

@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker"
-import { express } from "@neoma/fixtures"
-import { type LoggerService } from "@nestjs/common"
+import { MockLoggerService, express } from "@neoma/fixtures"
+import { Logger } from "@nestjs/common"
 import { type TestingModule, Test } from "@nestjs/testing"
 import { type Request, type Response } from "express"
 import * as jwt from "jsonwebtoken"
@@ -144,13 +144,13 @@ describe("BearerAuthenticationMiddleware", () => {
       )
     })
 
-    it("should log a warning if req.logger is present", (done) => {
-      const logger = { warn: jest.fn() }
+    it("should log a warning via the static Nest Logger", (done) => {
+      const logger = new MockLoggerService()
+      Logger.overrideLogger(logger)
       const req = express.request({
         headers: {
           authorization: bearer,
         },
-        logger: logger as unknown as LoggerService,
       })
 
       void middleware.use(
@@ -159,9 +159,8 @@ describe("BearerAuthenticationMiddleware", () => {
         () => {
           expect(logger.warn).toHaveBeenCalledWith(
             "Authentication via authorization header failed",
-            {
-              err: error,
-            },
+            { err: error },
+            "BearerAuthenticationMiddleware",
           )
           done()
         },

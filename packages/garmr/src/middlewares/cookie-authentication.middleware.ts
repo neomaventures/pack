@@ -1,4 +1,4 @@
-import { Inject, Injectable, NestMiddleware } from "@nestjs/common"
+import { Inject, Injectable, Logger, NestMiddleware } from "@nestjs/common"
 import * as cookie from "cookie"
 import { Request, NextFunction } from "express"
 
@@ -53,9 +53,11 @@ export class CookieAuthenticationMiddleware implements NestMiddleware {
     try {
       req.principal = await this.service.authenticate(sid)
     } catch (err) {
-      req.logger?.warn?.("Authentication via cookie failed", {
-        err,
-      })
+      Logger.warn(
+        "Authentication via cookie failed",
+        { err },
+        CookieAuthenticationMiddleware.name,
+      )
     }
     next()
   }

@@ -56,6 +56,10 @@ export interface MockResponse {
  * arbitrary extra keys (the `[key: string]: any` index signature) — so nothing
  * you set is typed away. `get`/`header` are overridden to give case-insensitive
  * header access, and `res` is a {@link MockResponse} rather than a real one.
+ *
+ * `logger` is intentionally typed as `never` — loggers are no longer attached
+ * to requests in the Neoma ecosystem. Use `Logger.overrideLogger(...)` with
+ * {@link MockLoggerService} in tests instead.
  */
 export type MockRequest = Pick<
   Request,
@@ -65,6 +69,7 @@ export type MockRequest = Pick<
   header(name: string): any
   res: MockResponse
   connection: Socket
+  logger?: never
   [key: string]: any
 }
 

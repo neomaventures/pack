@@ -103,7 +103,7 @@ export interface NeomaException {
    * - 5xx: ERROR level
    *
    * Implementing this method overrides that behavior entirely. The logger
-   * will be either `req.logger` (if available) or the NestJS Logger.
+   * passed is the NestJS Logger.
    *
    * To disable logging for an exception, implement this method with an
    * empty body.
