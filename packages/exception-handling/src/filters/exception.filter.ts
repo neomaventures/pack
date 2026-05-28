@@ -1,64 +1,10 @@
+import { ApplicationLoggerService } from "@neoma/logging"
 import {
   ArgumentsHost,
   Catch,
-  ConsoleLogger,
   ExceptionFilter,
   HttpStatus,
-  Logger,
-  LoggerService,
 } from "@nestjs/common"
-
-class LoggerWrapper {
-  public constructor(private readonly logger: LoggerService) {}
-
-  public error(err: Error, message: string): void {
-    if (this.usesDefaultConsoleLogger) {
-      this.logger.error!(err, message, "NeomaExceptionFilter")
-    } else {
-      this.logger.error!(message, {
-        err,
-      })
-    }
-  }
-
-  public warn(err: Error, message: string): void {
-    if (this.usesDefaultConsoleLogger) {
-      this.logger.warn!(err, message, "NeomaExceptionFilter")
-    } else {
-      this.logger.warn!(message, {
-        err,
-      })
-    }
-  }
-
-  public debug(err: Error, message: string): void {
-    if (this.usesDefaultConsoleLogger) {
-      this.logger.debug!(err, message, "NeomaExceptionFilter")
-    } else {
-      this.logger.debug!(message, {
-        err,
-      })
-    }
-  }
-
-  /**
-   * Whether the wrapped logger is NestJS's built-in default `ConsoleLogger`.
-   *
-   * The default console logger takes a non-standard `(message, stack, context)`
-   * signature, whereas a structured `LoggerService` wants `(message, { err })` —
-   * hence the branch in each method above.
-   *
-   * NestJS exposes no public API for "what is the active logger / was it
-   * overridden", so we read the framework's private `staticInstanceRef`
-   * back-reference. This is brittle (private internals aren't part of the semver
-   * contract); a more robust approach is tracked in #38.
-   */
-  private get usesDefaultConsoleLogger(): boolean {
-    const staticRef = (this.logger as { staticInstanceRef?: unknown })
-      .staticInstanceRef
-    return staticRef instanceof ConsoleLogger
-  }
-}
 
 /**
  * Global exception filter that catches all exceptions and provides
@@ -233,6 +179,8 @@ class LoggerWrapper {
  */
 @Catch()
 export class NeomaExceptionFilter implements ExceptionFilter {
+  public constructor(private readonly logger: ApplicationLoggerService) {}
+
   /**
    * Catches and handles all exceptions thrown in the application.
    *
@@ -259,7 +207,6 @@ export class NeomaExceptionFilter implements ExceptionFilter {
   ): void {
     const request = host.switchToHttp().getRequest()
     const response = host.switchToHttp().getResponse()
-    const logger = new LoggerWrapper(Logger)
 
     if ("getStatus" in err === false) {
       err["getStatus"] = (): HttpStatus.INTERNAL_SERVER_ERROR =>
@@ -275,16 +222,22 @@ export class NeomaExceptionFilter implements ExceptionFilter {
     }
 
     if ("log" in err === true && typeof err.log === "function") {
-      err.log(Logger)
+      err.log(this.logger)
     } else if (err.getStatus!() === HttpStatus.NOT_FOUND) {
-      logger.debug(
-        err,
+      this.logger.debug(
         `[${err.getStatus!()}] Resource not found - ${err.name}`,
+        { err },
       )
     } else if (err.getStatus!() < HttpStatus.INTERNAL_SERVER_ERROR) {
-      logger.warn(err, `[${err.getStatus!()}] Request rejected - ${err.name}`)
+      this.logger.warn(
+        `[${err.getStatus!()}] Request rejected - ${err.name}`,
+        { err },
+      )
     } else {
-      logger.error(err, `[${err.getStatus!()}] Request failed - ${err.name}`)
+      this.logger.error(
+        `[${err.getStatus!()}] Request failed - ${err.name}`,
+        { err },
+      )
     }
 
     const acceptsHtml = request.headers?.accept?.includes("text/html")
@@ -293,16 +246,16 @@ export class NeomaExceptionFilter implements ExceptionFilter {
     if (acceptsHtml && typeof err.getRedirect === "function") {
       const redirect = err.getRedirect()
       if (redirect?.url && redirect?.status) {
-        logger.debug(
-          err,
+        this.logger.debug(
           `Redirecting [${err.getStatus!()}] to "${redirect.url}" with ${redirect.status}`,
+          { err },
         )
         response.redirect(redirect.status, redirect.url)
         return
       }
-      logger.warn(
-        err,
+      this.logger.warn(
         `getRedirect() returned an invalid value — falling through to default handling`,
+        { err },
       )
     }
 
@@ -313,15 +266,15 @@ export class NeomaExceptionFilter implements ExceptionFilter {
       const templateName = errorTemplate[err.name] || errorTemplate.default
 
       if (templateName.startsWith("/")) {
-        logger.debug(
-          err,
+        this.logger.debug(
           `Redirecting to "${templateName}" for [${err.getStatus!()}]`,
+          { err },
         )
         response.redirect(HttpStatus.SEE_OTHER, templateName)
       } else {
-        logger.debug(
-          err,
+        this.logger.debug(
           `Rendering error template "${templateName}" for [${err.getStatus!()}]`,
+          { err },
         )
         response.status(err.getStatus!()).render(templateName, {
           ...response.locals,

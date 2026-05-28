@@ -37,6 +37,7 @@
     "lint": "eslint ."
   },
   "peerDependencies": {
+    "@neoma/logging": "workspace:^",
     "@nestjs/common": "11.x",
     "@nestjs/core": "11.x",
     "class-transformer": "0.x",
@@ -45,6 +46,7 @@
   "devDependencies": {
     "@faker-js/faker": "^9.6.0",
     "@neoma/fixtures": "workspace:*",
+    "@neoma/logging": "workspace:*",
     "@neoma/managed-app": "workspace:*",
     "@nestjs/core": "^11.1.18",
     "@nestjs/platform-express": "^11.1.18",

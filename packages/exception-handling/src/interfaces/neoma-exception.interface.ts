@@ -1,4 +1,4 @@
-import { type LoggerService } from "@nestjs/common"
+import { type ApplicationLoggerService } from "@neoma/logging"
 
 /**
  * Interface for exceptions handled by NeomaExceptionFilter.
@@ -16,7 +16,8 @@ import { type LoggerService } from "@nestjs/common"
  *
  * @example
  * ```typescript
- * import { HttpStatus, LoggerService } from '@nestjs/common'
+ * import { HttpStatus } from '@nestjs/common'
+ * import { ApplicationLoggerService } from '@neoma/logging'
  * import { NeomaException } from '@neoma/exception-handling'
  *
  * export class PaymentFailedException extends Error implements NeomaException {
@@ -40,8 +41,8 @@ import { type LoggerService } from "@nestjs/common"
  *     }
  *   }
  *
- *   public log(logger: LoggerService): void {
- *     logger.error?.(`Payment failed for transaction ${this.transactionId}`, {
+ *   public log(logger: ApplicationLoggerService): void {
+ *     logger.error(`Payment failed for transaction ${this.transactionId}`, {
  *       transactionId: this.transactionId,
  *       reason: this.reason,
  *     })
@@ -103,14 +104,14 @@ export interface NeomaException {
    * - 5xx: ERROR level
    *
    * Implementing this method overrides that behavior entirely. The logger
-   * passed is the NestJS Logger.
+   * passed is the injected `ApplicationLoggerService` from `@neoma/logging`.
    *
    * To disable logging for an exception, implement this method with an
    * empty body.
    *
-   * @param logger - The LoggerService to use for logging
+   * @param logger - The ApplicationLoggerService to use for logging
    */
-  log?(logger: LoggerService): void
+  log?(logger: ApplicationLoggerService): void
 
   /**
    * Returns a redirect instruction for the exception filter.

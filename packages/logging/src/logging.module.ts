@@ -31,13 +31,46 @@ const EXPORTS = [ApplicationLoggerService]
  * Register via `forRoot()` or `forRootAsync()` (both make the module global).
  * The module is not designed to be imported bare.
  *
+ * ## Required companion: `@neoma/request-context`
+ *
+ * `ApplicationLoggerService` reads the active request via `getRequest()` from
+ * `@neoma/request-context`. For the `req` field to appear on log entries the
+ * consumer app **must** also install the request-context boundary:
+ *
+ * ```typescript
+ * imports: [
+ *   RequestContextModule.forRoot(),  // <-- required for getRequest() to work
+ *   LoggingModule.forRoot({ logLevel: 'debug' }),
+ * ]
+ * ```
+ *
+ * Without `RequestContextModule.forRoot()`, log entries still emit but `req`
+ * will always be absent.
+ *
+ * ## Convention for `@neoma/*` packages
+ *
+ * Inside other Neoma packages, **inject `ApplicationLoggerService`** rather
+ * than using `Logger` from `@nestjs/common`. Every Neoma package that logs
+ * declares `@neoma/logging` as a peerDependency. Consumers install
+ * `LoggingModule.forRoot()` once at the root; the singleton is available to
+ * every package below.
+ *
+ * Nest's own internal logs (RouterExplorer, etc.) still flow through Nest's
+ * `Logger`. Use `app.useLogger(app.get(ApplicationLoggerService))` with
+ * `NestFactory.create(AppModule, { bufferLogs: true })` to capture those
+ * through the structured logger.
+ *
  * @example
  * // Static registration at the app root — available everywhere
- * imports: [LoggingModule.forRoot({ logLevel: 'debug' })]
+ * imports: [
+ *   RequestContextModule.forRoot(),
+ *   LoggingModule.forRoot({ logLevel: 'debug' }),
+ * ]
  *
  * @example
  * // Async registration — resolve options from DI (e.g. ConfigService)
  * imports: [
+ *   RequestContextModule.forRoot(),
  *   LoggingModule.forRootAsync({
  *     inject: [ConfigService],
  *     useFactory: (config: ConfigService) => ({

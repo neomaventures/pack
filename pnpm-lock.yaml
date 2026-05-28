@@ -228,6 +228,9 @@ importers:
       '@neoma/fixtures':
         specifier: workspace:*
         version: link:../fixtures
+      '@neoma/logging':
+        specifier: workspace:*
+        version: link:../logging
       '@neoma/managed-app':
         specifier: workspace:*
         version: link:../managed-app
@@ -354,6 +357,9 @@ importers:
       '@neoma/fixtures':
         specifier: workspace:*
         version: link:../fixtures
+      '@neoma/logging':
+        specifier: workspace:*
+        version: link:../logging
       '@neoma/mailpit':
         specifier: workspace:*
         version: link:../mailpit

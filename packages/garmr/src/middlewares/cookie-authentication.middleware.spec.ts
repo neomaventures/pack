@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker"
 import { MockLoggerService, express } from "@neoma/fixtures"
-import { ConsoleLogger, Logger } from "@nestjs/common"
+import { ApplicationLoggerService } from "@neoma/logging"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { type Request, type Response } from "express"
 import * as jwt from "jsonwebtoken"
@@ -14,16 +14,19 @@ import { CookieAuthenticationMiddleware } from "./cookie-authentication.middlewa
 describe("CookieAuthenticationMiddleware", () => {
   let service: any
   let middleware: CookieAuthenticationMiddleware
+  let logger: MockLoggerService
 
   const buildModule = async (cookieOptions?: {
     name?: string
   }): Promise<void> => {
     service = { authenticate: jest.fn() }
+    logger = new MockLoggerService()
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CookieAuthenticationMiddleware,
         { provide: AuthenticationService, useValue: service },
+        { provide: ApplicationLoggerService, useValue: logger },
         {
           provide: GARMR_OPTIONS,
           useValue: { cookie: cookieOptions },
@@ -36,10 +39,6 @@ describe("CookieAuthenticationMiddleware", () => {
 
   beforeEach(async () => {
     await buildModule()
-  })
-
-  afterEach(() => {
-    Logger.overrideLogger(new ConsoleLogger())
   })
 
   describe("When req.principal is already set", () => {
@@ -151,9 +150,7 @@ describe("CookieAuthenticationMiddleware", () => {
       )
     })
 
-    it("should log a warning via the static Nest Logger", (done) => {
-      const logger = new MockLoggerService()
-      Logger.overrideLogger(logger)
+    it("should log a warning via the injected ApplicationLoggerService", (done) => {
       const req = express.request({
         headers: {
           cookie: "garmr.sid=" + encodeURIComponent(sid),
@@ -167,7 +164,6 @@ describe("CookieAuthenticationMiddleware", () => {
           expect(logger.warn).toHaveBeenCalledWith(
             "Authentication via cookie failed",
             { err: error },
-            "CookieAuthenticationMiddleware",
           )
           done()
         },

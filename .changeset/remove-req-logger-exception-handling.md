@@ -1,9 +1,25 @@
 ---
-"@neoma/exception-handling": patch
+"@neoma/exception-handling": minor
 ---
 
-Dropped the dead `request.logger ??` fallback in `NeomaExceptionFilter`. In practice this branch was always unreachable in real consumer apps since `req.logger` was never populated outside of `@neoma/logging`'s middleware (now removed). The filter now uses `Logger` from `@nestjs/common` directly; route through your own implementation via `Logger.overrideLogger(...)` or `app.useLogger(...)`.
+`NeomaExceptionFilter` now **injects `ApplicationLoggerService` from `@neoma/logging`** instead of using `Logger` from `@nestjs/common` statically. The internal `LoggerWrapper` and its `ConsoleLogger` detection are gone — the filter calls structured methods (`logger.warn(message, { err })`) directly. The unreachable `req.logger ??` branch and its corresponding spec describe block are removed.
 
-Documentation cleaned up across `ExceptionHandlerModule`, `NeomaExceptionFilter`, and the `NeomaException` interface to remove `req.logger` references.
+**Breaking change to the `NeomaException` interface:** the `log` callback signature narrows from `LoggerService` to `ApplicationLoggerService`:
 
-No consumer-facing behaviour change.
+```ts
+// Before
+log?(logger: LoggerService): void
+
+// After
+log?(logger: ApplicationLoggerService): void
+```
+
+This gives consumers writing custom `NeomaException` implementations the full structured API (typed `req` field, typed structured methods). The runtime receives the same instance — only the type narrows.
+
+Adds `@neoma/logging` as a **peerDependency**. Any app using `@neoma/exception-handling` must also install `@neoma/logging` (and `RequestContextModule.forRoot()` if it wants the `req` field on exception logs). This matches the broader Neoma ecosystem convention.
+
+**Migration:**
+
+- Add `@neoma/logging` to your application dependencies (it's now a peer of `@neoma/exception-handling`).
+- Install `LoggingModule.forRoot()` + `RequestContextModule.forRoot()` in your root module.
+- If you implement `NeomaException.log(logger)`, update the parameter type from `LoggerService` to `ApplicationLoggerService` (import from `@neoma/logging`).

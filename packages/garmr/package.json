@@ -48,6 +48,7 @@
     "nodemailer": "^8.0.4"
   },
   "peerDependencies": {
+    "@neoma/logging": "workspace:^",
     "@nestjs/common": "11.x",
     "@nestjs/core": "11.x",
     "@nestjs/event-emitter": "3.x",
@@ -60,6 +61,7 @@
   },
   "devDependencies": {
     "@neoma/fixtures": "workspace:*",
+    "@neoma/logging": "workspace:*",
     "@neoma/mailpit": "workspace:*",
     "@neoma/managed-app": "workspace:*",
     "@neoma/mockserver": "workspace:*",

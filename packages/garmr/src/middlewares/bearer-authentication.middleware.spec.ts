@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker"
 import { MockLoggerService, express } from "@neoma/fixtures"
-import { ConsoleLogger, Logger } from "@nestjs/common"
+import { ApplicationLoggerService } from "@neoma/logging"
 import { type TestingModule, Test } from "@nestjs/testing"
 import { type Request, type Response } from "express"
 import * as jwt from "jsonwebtoken"
@@ -39,21 +39,20 @@ const MALFORMED_BEARER_TOKENS = [
 describe("BearerAuthenticationMiddleware", () => {
   let service: any
   let middleware: BearerAuthenticationMiddleware
+  let logger: MockLoggerService
   beforeEach(async () => {
     service = { authenticate: jest.fn() }
+    logger = new MockLoggerService()
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BearerAuthenticationMiddleware,
         { provide: AuthenticationService, useValue: service },
+        { provide: ApplicationLoggerService, useValue: logger },
       ],
     }).compile()
 
     middleware = module.get(BearerAuthenticationMiddleware)
-  })
-
-  afterEach(() => {
-    Logger.overrideLogger(new ConsoleLogger())
   })
 
   describe("When req.principal is already set", () => {
@@ -148,9 +147,7 @@ describe("BearerAuthenticationMiddleware", () => {
       )
     })
 
-    it("should log a warning via the static Nest Logger", (done) => {
-      const logger = new MockLoggerService()
-      Logger.overrideLogger(logger)
+    it("should log a warning via the injected ApplicationLoggerService", (done) => {
       const req = express.request({
         headers: {
           authorization: bearer,
@@ -164,7 +161,6 @@ describe("BearerAuthenticationMiddleware", () => {
           expect(logger.warn).toHaveBeenCalledWith(
             "Authentication via authorization header failed",
             { err: error },
-            "BearerAuthenticationMiddleware",
           )
           done()
         },
