@@ -235,11 +235,16 @@ export class ApplicationLoggerService implements LoggerService {
     ...optionalParams: any[]
   ): void {
     const request = getRequest()
+    const reqField = request ? { req: request } : {}
 
-    if (optionalParams.length === 1 && typeof optionalParams[0] === "object") {
-      this.pino[level]({ ...optionalParams[0], req: request }, message)
+    if (
+      optionalParams.length === 1 &&
+      optionalParams[0] !== null &&
+      typeof optionalParams[0] === "object"
+    ) {
+      this.pino[level]({ ...optionalParams[0], ...reqField }, message)
     } else {
-      this.pino[level]({ req: request }, message, ...optionalParams)
+      this.pino[level](reqField, message, ...optionalParams)
     }
   }
 }

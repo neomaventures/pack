@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker"
 import { MockLoggerService, express } from "@neoma/fixtures"
-import { Logger } from "@nestjs/common"
+import { ConsoleLogger, Logger } from "@nestjs/common"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { type Request, type Response } from "express"
 import * as jwt from "jsonwebtoken"
@@ -36,6 +36,10 @@ describe("CookieAuthenticationMiddleware", () => {
 
   beforeEach(async () => {
     await buildModule()
+  })
+
+  afterEach(() => {
+    Logger.overrideLogger(new ConsoleLogger())
   })
 
   describe("When req.principal is already set", () => {

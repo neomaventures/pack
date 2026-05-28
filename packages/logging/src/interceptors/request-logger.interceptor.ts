@@ -20,13 +20,9 @@ export class RequestLoggerInterceptor implements NestInterceptor {
   /**
    * Creates an instance of RequestLoggerInterceptor.
    *
-   * @param config - Logging configuration options injected from the module LoggingConfiguration
-   * @param config.logErrors - Whether to log errors that occur in route handlers (default: false)
-   * @param config.logLevel - The log level to use for logging requests (default: 'log')
-   * @param config.logRedact - An array of paths to redact from logs (default: [])
-   * @param config.logContext - Additional context to include in all log messages (default: {})
-   *
-   * @param logger - The ApplicationLoggerService instance used for logging
+   * @param config - Subset of the module's LoggingConfiguration consumed by this interceptor.
+   * @param config.logErrors - Whether to log errors that occur in route handlers (default: false).
+   * @param logger - The ApplicationLoggerService instance used for logging.
    */
   public constructor(
     @Inject(LOGGING_MODULE_OPTIONS)

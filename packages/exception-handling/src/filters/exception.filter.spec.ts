@@ -3,6 +3,7 @@ import { MockLoggerService, executionContext, express } from "@neoma/fixtures"
 import {
   type ArgumentsHost,
   BadRequestException,
+  ConsoleLogger,
   type HttpException,
   HttpStatus,
   InternalServerErrorException,
@@ -297,6 +298,10 @@ describe("new NeomaExceptionFilter()", () => {
     beforeEach(() => {
       Logger.overrideLogger(new MockLoggerService())
       host = executionContext() as ArgumentsHost
+    })
+
+    afterEach(() => {
+      Logger.overrideLogger(new ConsoleLogger())
     })
 
     warnExceptions.forEach((err: HttpException) => {
