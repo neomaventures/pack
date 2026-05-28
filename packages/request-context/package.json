@@ -2,7 +2,7 @@
   "name": "@neoma/request-context",
   "version": "0.0.0",
   "description": "Per-request context (AsyncLocalStorage) for NestJS — read the current request anywhere, no request scope.",
-  "author": "Shipdventures",
+  "author": "Daniel Bruce",
   "repository": {
     "type": "git",
     "url": "https://github.com/neomaventures/pack",
@@ -22,8 +22,8 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js"
     }
   },
   "files": [
