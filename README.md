@@ -19,6 +19,7 @@ The monorepo for the **`@neoma/*`** family — a pack of NestJS building blocks,
 | [`@neoma/config`](packages/config) | Simple, type-safe environment configuration for NestJS — typed access to env vars with camelCase↔SCREAMING_SNAKE mapping and `.env` precedence loading. |
 | [`@neoma/logging`](packages/logging) | Great logging for NestJS — Pino-backed application + request-scoped loggers, with per-request trace IDs and field redaction. |
 | [`@neoma/exception-handling`](packages/exception-handling) | Automatic, Laravel-inspired exception handling for NestJS — consistent error responses, status-aware logging, and HTML content negotiation. |
+| [`@neoma/request-context`](packages/request-context) | Per-request context (AsyncLocalStorage) for NestJS — read the current request anywhere, no request scope. |
 | [`@neoma/managed-app`](packages/managed-app) | Boots a NestJS app from a module path — an e2e harness for the `@neoma/*` packages. |
 | [`@neoma/managed-database`](packages/managed-database) | In-memory SQLite `datasource` fixture for tests. |
 

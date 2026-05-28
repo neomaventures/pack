@@ -70,6 +70,23 @@ export default tseslint.config(
       "@typescript-eslint/prefer-nullish-coalescing": "error",
       // Prefer `a?.b` over `a && a.b` — cleaner and less error-prone.
       "@typescript-eslint/prefer-optional-chain": "error",
+      // Barrel-only export tree (#28): forbid deep subpath imports via the
+      // package name. Internals are reached with an explicit relative import,
+      // which is the visible "I reached past the barrel" signal. Scoped to
+      // request-context only — the fixture packages expose legitimate public
+      // subpaths via their export maps.
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@neoma/request-context/*"],
+              message:
+                "Import from the `@neoma/request-context` barrel; reach internals with an explicit relative import.",
+            },
+          ],
+        },
+      ],
       // Import sorting and organization.
       "import-x/order": [
         "error",
