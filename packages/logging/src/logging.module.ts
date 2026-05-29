@@ -16,16 +16,20 @@ const PROVIDERS: Provider[] = [
 const EXPORTS = [ApplicationLoggerService]
 
 /**
- * NestJS module providing structured logging with automatic request tracing.
+ * NestJS module providing structured logging with request-scoped context.
  *
  * Features:
  * - **Structured logging** via `ApplicationLoggerService`, which reads the current
- *   request from `@neoma/request-context` and attaches it to log entries.
+ *   request from `@neoma/request-context` and attaches it to log entries as a
+ *   `req` field.
  * - **Automatic request logging** via `RequestLoggerInterceptor` when
  *   `logLevel: 'debug'`.
  * - **Error interceptor**: Configurable automatic error logging with `logErrors`.
  * - **Field redaction**: Configurable sensitive data masking.
  * - **Context injection**: Merge custom metadata into all log entries.
+ *
+ * Note: per-request trace ID generation (the old `logRequestTraceIdHeader`
+ * feature) is not yet restored — tracked in #69.
  * - **Performance optimized**: Uses Pino logger internally for high throughput.
  *
  * Register via `forRoot()` or `forRootAsync()` (both make the module global).

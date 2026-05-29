@@ -8,8 +8,7 @@ import { validationFactory } from "./pipes/validation.factory"
 /**
  * Global exception handling module for NestJS applications.
  *
- * A drop-in replacement for NestJS's built-in exception handling with
- * zero configuration required. Provides:
+ * A drop-in replacement for NestJS's built-in exception handling. Provides:
  * - Intelligent logging based on HTTP status codes
  * - Consistent JSON error responses
  * - Content negotiation for HTML error rendering via {@link ErrorTemplate}
@@ -17,18 +16,28 @@ import { validationFactory } from "./pipes/validation.factory"
  * - Custom exception behavior via the {@link NeomaException} interface
  * - Global validation pipe with field-keyed error responses
  *
- * @example
- * ```typescript
- * import { Module } from '@nestjs/common'
- * import { ExceptionHandlerModule } from '@neoma/exception-handling'
+ * ## Required companions
  *
+ * `NeomaExceptionFilter` injects `ApplicationLoggerService` from
+ * `@neoma/logging`, so consumers **must** install `LoggingModule.forRoot()`
+ * (typically alongside `RequestContextModule.forRoot()`):
+ *
+ * ```typescript
  * @Module({
- *   imports: [ExceptionHandlerModule],
+ *   imports: [
+ *     RequestContextModule.forRoot(),
+ *     LoggingModule.forRoot(),
+ *     ExceptionHandlerModule,
+ *   ],
  * })
  * export class AppModule {}
  * ```
  *
- * Once imported, all exceptions are automatically caught and handled.
+ * Once these are in place, all exceptions are automatically caught and
+ * routed through `ApplicationLoggerService`. Bootstrap with
+ * `NestFactory.create(AppModule, { bufferLogs: true })` and
+ * `app.useLogger(app.get(ApplicationLoggerService))` to capture Nest's own
+ * internal logs through the same sink.
  *
  * ## Default Logging Levels
  *
@@ -36,13 +45,6 @@ import { validationFactory } from "./pipes/validation.factory"
  * - 4xx errors: WARN level
  * - 5xx errors: ERROR level
  * - Unhandled exceptions: ERROR level
- *
- * ## Logger Selection
- *
- * The filter uses the NestJS Logger. Install your preferred logger via
- * `Logger.overrideLogger(...)` or `app.useLogger(...)` and all exception
- * logs will route through it; otherwise the default NestJS ConsoleLogger
- * is used.
  *
  * ## Custom Exceptions
  *

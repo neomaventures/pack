@@ -59,8 +59,8 @@ import {
  *     }
  *   }
  *
- *   public log(logger: LoggerService): void {
- *     logger.error?.('Payment failed', { transactionId: this.transactionId })
+ *   public log(logger: ApplicationLoggerService): void {
+ *     logger.error('Payment failed', { transactionId: this.transactionId })
  *   }
  * }
  * ```
@@ -68,27 +68,27 @@ import {
  * ## Custom Logging
  *
  * Implement the `log(logger)` method to override default logging behavior.
- * The logger passed is the NestJS Logger. Implementing an empty `log()`
- * method disables logging for that exception entirely.
+ * The logger passed is the injected `ApplicationLoggerService` from
+ * `@neoma/logging`. Implementing an empty `log()` method disables logging
+ * for that exception entirely.
  *
- * ## Logger Selection
+ * ## Logger Setup
  *
- * The filter always uses the NestJS Logger. To route through a custom
- * implementation:
+ * The filter depends on `ApplicationLoggerService` via DI, so consumers
+ * **must** install `LoggingModule.forRoot()` (typically alongside
+ * `RequestContextModule.forRoot()` for request-scoped log fields):
  *
- * 1. **Overridden NestJS Logger** - Call `Logger.overrideLogger()` (or
- *    `app.useLogger(...)`) with your logger implementation.
- * 2. **Default NestJS Logger** - Falls back to the built-in ConsoleLogger.
- *
- * For structured loggers (Pino, Winston, Bunyan), logs are formatted as:
  * ```typescript
- * logger.error(message, { err })
+ * imports: [
+ *   RequestContextModule.forRoot(),
+ *   LoggingModule.forRoot({ logLevel: 'debug' }),
+ *   ExceptionHandlerModule,
+ * ]
  * ```
  *
- * For the default ConsoleLogger, the original NestJS format is preserved:
- * ```typescript
- * Logger.error(err, message, 'NeomaExceptionFilter')
- * ```
+ * All filter logs (and any consumer-implemented `log()` callbacks) flow
+ * through the same `ApplicationLoggerService` — structured `(message, { err })`
+ * calls land as structured log entries.
  *
  * ## Default Logging Strategy
  *
