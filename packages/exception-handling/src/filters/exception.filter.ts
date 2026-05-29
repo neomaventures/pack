@@ -229,15 +229,13 @@ export class NeomaExceptionFilter implements ExceptionFilter {
         { err },
       )
     } else if (err.getStatus!() < HttpStatus.INTERNAL_SERVER_ERROR) {
-      this.logger.warn(
-        `[${err.getStatus!()}] Request rejected - ${err.name}`,
-        { err },
-      )
+      this.logger.warn(`[${err.getStatus!()}] Request rejected - ${err.name}`, {
+        err,
+      })
     } else {
-      this.logger.error(
-        `[${err.getStatus!()}] Request failed - ${err.name}`,
-        { err },
-      )
+      this.logger.error(`[${err.getStatus!()}] Request failed - ${err.name}`, {
+        err,
+      })
     }
 
     const acceptsHtml = request.headers?.accept?.includes("text/html")
