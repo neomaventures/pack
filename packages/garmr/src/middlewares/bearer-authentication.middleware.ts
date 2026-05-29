@@ -1,3 +1,4 @@
+import { ApplicationLoggerService } from "@neoma/logging"
 import { Injectable, NestMiddleware } from "@nestjs/common"
 import { Request, NextFunction } from "express"
 
@@ -24,7 +25,10 @@ import { AuthenticationService } from "../services/authentication.service"
  */
 @Injectable()
 export class BearerAuthenticationMiddleware implements NestMiddleware {
-  public constructor(private readonly service: AuthenticationService) {}
+  public constructor(
+    private readonly service: AuthenticationService,
+    private readonly logger: ApplicationLoggerService,
+  ) {}
 
   public async use(
     req: Request,
@@ -57,7 +61,7 @@ export class BearerAuthenticationMiddleware implements NestMiddleware {
     try {
       req.principal = await this.service.authenticate(token)
     } catch (err) {
-      req.logger?.warn?.("Authentication via authorization header failed", {
+      this.logger.warn("Authentication via authorization header failed", {
         err,
       })
     }

@@ -12,7 +12,6 @@ import { type LogLevel, type ModuleMetadata } from "@nestjs/common"
  *   logLevel: 'debug',
  *   logContext: { service: 'api', version: '1.0.0' },
  *   logRedact: ['password', '*.secret'],
- *   logRequestTraceIdHeader: 'x-trace-id'
  * })
  * ```
  */
@@ -62,8 +61,8 @@ export interface LoggingConfiguration {
    * Additional context object to include with every log entry.
    * Useful for adding service metadata, version info, environment details.
    *
-   * This context is automatically merged into all logs from both
-   * ApplicationLoggerService and RequestLoggerService.
+   * This context is automatically merged into every log entry produced by
+   * ApplicationLoggerService.
    *
    * @example
    * ```typescript
@@ -77,16 +76,6 @@ export interface LoggingConfiguration {
    * @default {}
    */
   logContext?: any
-
-  /**
-   * Optional header name to extract trace ID from incoming requests.
-   * Performs case-insensitive lookup and auto-generates ULID if header is missing.
-   * When configured but header is not found, a warning will be logged.
-   *
-   * @example 'x-correlation-id', 'x-trace-id', 'x-request-id'
-   * @default null
-   */
-  logRequestTraceIdHeader?: string
 
   /**
    * Whether to log errors caught by the RequestLoggerInterceptor

@@ -3,6 +3,8 @@ import {
   ExceptionHandlerModule,
   NeomaException,
 } from "@neoma/exception-handling"
+import { LoggingModule } from "@neoma/logging"
+import { RequestContextModule } from "@neoma/request-context"
 import {
   BadRequestException,
   Body,
@@ -190,7 +192,11 @@ class ContentNegotiationController {
 }
 
 @Module({
-  imports: [ExceptionHandlerModule],
+  imports: [
+    RequestContextModule.forRoot(),
+    LoggingModule.forRoot(),
+    ExceptionHandlerModule,
+  ],
   controllers: [ContentNegotiationController],
 })
 export class ContentNegotiationModule {}

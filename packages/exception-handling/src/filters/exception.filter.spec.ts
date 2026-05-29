@@ -1,12 +1,12 @@
 import { faker } from "@faker-js/faker"
 import { MockLoggerService, executionContext, express } from "@neoma/fixtures"
+import { ApplicationLoggerService } from "@neoma/logging"
 import {
   type ArgumentsHost,
   BadRequestException,
   type HttpException,
   HttpStatus,
   InternalServerErrorException,
-  Logger,
   NotFoundException,
   ServiceUnavailableException,
   UnprocessableEntityException,
@@ -14,12 +14,6 @@ import {
 import { Test } from "@nestjs/testing"
 
 import { NeomaExceptionFilter } from "./exception.filter"
-
-type LoggerSpy = {
-  error: jest.SpyInstance
-  warn: jest.SpyInstance
-  debug: jest.SpyInstance
-}
 
 const httpExceptions = [
   new BadRequestException(faker.hacker.phrase()),
@@ -48,28 +42,18 @@ const unhandledExceptions = [
 
 describe("new NeomaExceptionFilter()", () => {
   let filter: NeomaExceptionFilter
+  let logger: MockLoggerService
 
-  let loggerSpy: LoggerSpy
   beforeEach(async () => {
+    logger = new MockLoggerService()
     const module = await Test.createTestingModule({
-      providers: [NeomaExceptionFilter],
+      providers: [
+        NeomaExceptionFilter,
+        { provide: ApplicationLoggerService, useValue: logger },
+      ],
     }).compile()
 
     filter = module.get(NeomaExceptionFilter)
-
-    loggerSpy = {
-      error: jest.spyOn(Logger, "error").mockImplementation(),
-      warn: jest.spyOn(Logger, "warn").mockImplementation(),
-      debug: jest.spyOn(Logger, "debug").mockImplementation(),
-    }
-  })
-
-  afterEach(() => {
-    // These specs spy on the process-global static Logger.{error,warn,debug}.
-    // Restore them after every test so calls don't bleed across the
-    // forEach-generated cases (this is what a package-level resetMocks was
-    // previously masking).
-    jest.restoreAllMocks()
   })
 
   describe("Response", () => {
@@ -124,348 +108,10 @@ describe("new NeomaExceptionFilter()", () => {
     })
   })
 
-  describe("Using the NestJS default logger", () => {
+  describe("Logging", () => {
     warnExceptions.forEach((err: HttpException) => {
-      it(`should use the default Logger to log a warning for ${err.name}s`, () => {
+      it(`should log a warning via the injected ApplicationLoggerService for ${err.name}s`, () => {
         const host = executionContext() as ArgumentsHost
-        filter.catch(err, host)
-
-        expect(loggerSpy.warn).toHaveBeenCalledWith(
-          err,
-          `[${err.getStatus()}] Request rejected - ${err.name}`,
-          "NeomaExceptionFilter",
-        )
-        expect(loggerSpy.debug).not.toHaveBeenCalled()
-        expect(loggerSpy.error).not.toHaveBeenCalled()
-      })
-    })
-
-    debugExceptions.forEach((err: HttpException) => {
-      it(`should use the default Logger to log a debug message for ${err.name}s`, () => {
-        const host = executionContext() as ArgumentsHost
-        filter.catch(err, host)
-
-        expect(loggerSpy.debug).toHaveBeenCalledWith(
-          err,
-          `[${err.getStatus()}] Resource not found - ${err.name}`,
-          "NeomaExceptionFilter",
-        )
-        expect(loggerSpy.warn).not.toHaveBeenCalled()
-        expect(loggerSpy.error).not.toHaveBeenCalled()
-      })
-    })
-
-    errorExceptions.forEach((err: HttpException) => {
-      it(`should use the default Logger to log an error for ${err.name}s`, () => {
-        const host = executionContext() as ArgumentsHost
-        filter.catch(err, host)
-
-        expect(loggerSpy.error).toHaveBeenCalledWith(
-          err,
-          `[${err.getStatus()}] Request failed - ${err.name}`,
-          "NeomaExceptionFilter",
-        )
-        expect(loggerSpy.warn).not.toHaveBeenCalled()
-        expect(loggerSpy.debug).not.toHaveBeenCalled()
-      })
-    })
-
-    unhandledExceptions.forEach((err: Error) => {
-      it(`should use the default Logger to log an error for uncaught (non-http) exceptions of type ${err.constructor.name}`, () => {
-        const host = executionContext() as ArgumentsHost
-        filter.catch(err, host)
-
-        expect(loggerSpy.error).toHaveBeenCalledWith(
-          err,
-          `[500] Request failed - ${err.name}`,
-          "NeomaExceptionFilter",
-        )
-        expect(loggerSpy.warn).not.toHaveBeenCalled()
-        expect(loggerSpy.debug).not.toHaveBeenCalled()
-      })
-    })
-
-    it("should use the default Logger to log a debug message if a duck typed exception's getStatus function returns a 404", () => {
-      const name = faker.hacker.noun()
-      const statusCode = HttpStatus.NOT_FOUND
-      const customException = {
-        ...new Error(),
-        name,
-        getStatus: (): number => statusCode,
-        getResponse: (): object => ({
-          statusCode,
-          message: faker.hacker.phrase(),
-          error: faker.hacker.phrase(),
-        }),
-      }
-
-      const host = executionContext() as ArgumentsHost
-      filter.catch(customException, host)
-
-      expect(loggerSpy.debug).toHaveBeenCalledWith(
-        customException,
-        `[404] Resource not found - ${name}`,
-        "NeomaExceptionFilter",
-      )
-      expect(loggerSpy.warn).not.toHaveBeenCalled()
-      expect(loggerSpy.error).not.toHaveBeenCalled()
-    })
-
-    it("should use the default Logger to log a warning message if a duck typed exception's getStatus function returns a 4xx (excluding 404)", () => {
-      const name = faker.hacker.noun()
-      let statusCode = faker.number.int({
-        min: HttpStatus.BAD_REQUEST,
-        max: 499,
-      })
-      if (statusCode === HttpStatus.NOT_FOUND) {
-        // Ensure we don't accidentally pick 404
-        statusCode = HttpStatus.BAD_REQUEST
-      }
-      const customException = {
-        ...new Error(),
-        name,
-        getStatus: (): number => statusCode,
-        getResponse: (): object => ({
-          statusCode,
-          message: faker.hacker.phrase(),
-          error: faker.hacker.phrase(),
-        }),
-      }
-
-      const host = executionContext() as ArgumentsHost
-      filter.catch(customException, host)
-
-      expect(loggerSpy.warn).toHaveBeenCalledWith(
-        customException,
-        `[${statusCode}] Request rejected - ${name}`,
-        "NeomaExceptionFilter",
-      )
-      expect(loggerSpy.debug).not.toHaveBeenCalled()
-      expect(loggerSpy.error).not.toHaveBeenCalled()
-    })
-
-    it("should use the default Logger to log an error message if a duck typed exception's getStatus function returns a 5xx", () => {
-      const name = faker.hacker.noun()
-      const statusCode = faker.number.int({
-        min: HttpStatus.INTERNAL_SERVER_ERROR,
-        max: 599,
-      })
-      const customException = {
-        ...new Error(),
-        name,
-        getStatus: (): number => statusCode,
-        getResponse: (): object => ({
-          statusCode,
-          message: faker.hacker.phrase(),
-          error: faker.hacker.phrase(),
-        }),
-      }
-
-      const host = executionContext() as ArgumentsHost
-      filter.catch(customException, host)
-
-      expect(loggerSpy.error).toHaveBeenCalledWith(
-        customException,
-        `[${statusCode}] Request failed - ${name}`,
-        "NeomaExceptionFilter",
-      )
-      expect(loggerSpy.debug).not.toHaveBeenCalled()
-      expect(loggerSpy.warn).not.toHaveBeenCalled()
-    })
-
-    describe("And the exception implements a log method", () => {
-      it("should call the exception's log method with the default Logger", () => {
-        const customException = {
-          ...new Error(),
-          name: faker.hacker.noun(),
-          log: jest.fn(),
-        }
-
-        const host = executionContext() as ArgumentsHost
-        filter.catch(customException, host)
-
-        expect(customException.log).toHaveBeenCalledWith(Logger)
-        expect(loggerSpy.warn).not.toHaveBeenCalled()
-        expect(loggerSpy.debug).not.toHaveBeenCalled()
-        expect(loggerSpy.error).not.toHaveBeenCalled()
-      })
-    })
-  })
-
-  describe("Using an overriden NestJs Logger", () => {
-    let host: ArgumentsHost
-    beforeEach(() => {
-      Logger.overrideLogger(new MockLoggerService())
-      host = executionContext() as ArgumentsHost
-    })
-
-    warnExceptions.forEach((err: HttpException) => {
-      it(`should use the overriden Logger to log a warning for ${err.name}s`, () => {
-        filter.catch(err, host)
-
-        expect(loggerSpy.warn).toHaveBeenCalledWith(
-          `[${err.getStatus()}] Request rejected - ${err.name}`,
-          { err },
-        )
-        expect(loggerSpy.debug).not.toHaveBeenCalled()
-        expect(loggerSpy.error).not.toHaveBeenCalled()
-      })
-    })
-
-    debugExceptions.forEach((err: HttpException) => {
-      it(`should use the overriden Logger to log a debug message for ${err.name}s`, () => {
-        filter.catch(err, host)
-
-        expect(loggerSpy.debug).toHaveBeenCalledWith(
-          `[${err.getStatus()}] Resource not found - ${err.name}`,
-          { err },
-        )
-        expect(loggerSpy.warn).not.toHaveBeenCalled()
-        expect(loggerSpy.error).not.toHaveBeenCalled()
-      })
-    })
-
-    errorExceptions.forEach((err: HttpException) => {
-      it(`should use the overriden Logger to log a error for ${err.name}s`, () => {
-        filter.catch(err, host)
-
-        expect(loggerSpy.error).toHaveBeenCalledWith(
-          `[${err.getStatus()}] Request failed - ${err.name}`,
-          { err },
-        )
-        expect(loggerSpy.warn).not.toHaveBeenCalled()
-        expect(loggerSpy.debug).not.toHaveBeenCalled()
-      })
-    })
-
-    unhandledExceptions.forEach((err: Error) => {
-      it(`should use the overriden Logger to log an error for uncaught (non-http) exceptions of type ${err.constructor.name}`, () => {
-        filter.catch(err, host)
-
-        expect(loggerSpy.error).toHaveBeenCalledWith(
-          `[500] Request failed - ${err.name}`,
-          { err },
-        )
-        expect(loggerSpy.warn).not.toHaveBeenCalled()
-        expect(loggerSpy.debug).not.toHaveBeenCalled()
-      })
-    })
-
-    it("should use the overriden Logger to log a debug message if a duck typed exception's getStatus function returns a 404", () => {
-      const name = faker.hacker.noun()
-      const statusCode = HttpStatus.NOT_FOUND
-      const err = {
-        ...new Error(),
-        name,
-        getStatus: (): number => statusCode,
-        getResponse: (): object => ({
-          statusCode,
-          message: faker.hacker.phrase(),
-          error: faker.hacker.phrase(),
-        }),
-      }
-
-      filter.catch(err, host)
-
-      expect(loggerSpy.debug).toHaveBeenCalledWith(
-        `[404] Resource not found - ${name}`,
-        { err },
-      )
-      expect(loggerSpy.warn).not.toHaveBeenCalled()
-      expect(loggerSpy.error).not.toHaveBeenCalled()
-    })
-
-    it("should use the overriden Logger to log a warning message if a duck typed exception's getStatus function returns a 4xx (excluding 404)", () => {
-      const name = faker.hacker.noun()
-      let statusCode = faker.number.int({
-        min: HttpStatus.BAD_REQUEST,
-        max: 499,
-      })
-      if (statusCode === HttpStatus.NOT_FOUND) {
-        // Ensure we don't accidentally pick 404
-        statusCode = HttpStatus.BAD_REQUEST
-      }
-      const err = {
-        ...new Error(),
-        name,
-        getStatus: (): number => statusCode,
-        getResponse: (): object => ({
-          statusCode,
-          message: faker.hacker.phrase(),
-          error: faker.hacker.phrase(),
-        }),
-      }
-
-      filter.catch(err, host)
-
-      expect(loggerSpy.warn).toHaveBeenCalledWith(
-        `[${statusCode}] Request rejected - ${name}`,
-        { err },
-      )
-      expect(loggerSpy.debug).not.toHaveBeenCalled()
-      expect(loggerSpy.error).not.toHaveBeenCalled()
-    })
-
-    it("should use the overriden Logger to log an error message if a duck typed exception's getStatus function returns a 5xx", () => {
-      const name = faker.hacker.noun()
-      const statusCode = faker.number.int({
-        min: HttpStatus.INTERNAL_SERVER_ERROR,
-        max: 599,
-      })
-      const err = {
-        ...new Error(),
-        name,
-        getStatus: (): number => statusCode,
-        getResponse: (): object => ({
-          statusCode,
-          message: faker.hacker.phrase(),
-          error: faker.hacker.phrase(),
-        }),
-      }
-
-      filter.catch(err, host)
-
-      expect(loggerSpy.error).toHaveBeenCalledWith(
-        `[${statusCode}] Request failed - ${name}`,
-        { err },
-      )
-      expect(loggerSpy.debug).not.toHaveBeenCalled()
-      expect(loggerSpy.warn).not.toHaveBeenCalled()
-    })
-
-    describe("And the exception implements a log method", () => {
-      it("should call the exception's log method with the default Logger", () => {
-        const customException = {
-          ...new Error(),
-          name: faker.hacker.noun(),
-          log: jest.fn(),
-        }
-
-        const host = executionContext() as ArgumentsHost
-        filter.catch(customException, host)
-
-        expect(customException.log).toHaveBeenCalledWith(Logger)
-        expect(loggerSpy.warn).not.toHaveBeenCalled()
-        expect(loggerSpy.debug).not.toHaveBeenCalled()
-        expect(loggerSpy.error).not.toHaveBeenCalled()
-      })
-    })
-  })
-
-  describe("Using req.logger if available", () => {
-    let logger: MockLoggerService
-    let host: ArgumentsHost
-    beforeEach(() => {
-      logger = new MockLoggerService()
-      host = executionContext(
-        express.request({
-          logger,
-        }),
-      ) as ArgumentsHost
-    })
-
-    warnExceptions.forEach((err: HttpException) => {
-      it(`should use the request Logger to log a warning for ${err.name}s`, () => {
         filter.catch(err, host)
 
         expect(logger.warn).toHaveBeenCalledWith(
@@ -475,15 +121,11 @@ describe("new NeomaExceptionFilter()", () => {
         expect(logger.debug).not.toHaveBeenCalled()
         expect(logger.error).not.toHaveBeenCalled()
       })
-
-      it(`should not use the default Logger to log a warning for ${err.name}s`, () => {
-        filter.catch(err, host)
-        expect(loggerSpy.warn).not.toHaveBeenCalled()
-      })
     })
 
     debugExceptions.forEach((err: HttpException) => {
-      it(`should use the request Logger to log a debug message for ${err.name}s`, () => {
+      it(`should log via the injected ApplicationLoggerService to log a debug message for ${err.name}s`, () => {
+        const host = executionContext() as ArgumentsHost
         filter.catch(err, host)
 
         expect(logger.debug).toHaveBeenCalledWith(
@@ -493,15 +135,11 @@ describe("new NeomaExceptionFilter()", () => {
         expect(logger.warn).not.toHaveBeenCalled()
         expect(logger.error).not.toHaveBeenCalled()
       })
-
-      it(`should not use the default Logger to log a debug message for ${err.name}s`, () => {
-        filter.catch(err, host)
-        expect(loggerSpy.debug).not.toHaveBeenCalled()
-      })
     })
 
     errorExceptions.forEach((err: HttpException) => {
-      it(`should use the request Logger to log a error for ${err.name}s`, () => {
+      it(`should log via the injected ApplicationLoggerService to log an error for ${err.name}s`, () => {
+        const host = executionContext() as ArgumentsHost
         filter.catch(err, host)
 
         expect(logger.error).toHaveBeenCalledWith(
@@ -511,15 +149,11 @@ describe("new NeomaExceptionFilter()", () => {
         expect(logger.warn).not.toHaveBeenCalled()
         expect(logger.debug).not.toHaveBeenCalled()
       })
-
-      it(`should not use the default Logger to log a error for ${err.name}s`, () => {
-        filter.catch(err, host)
-        expect(loggerSpy.error).not.toHaveBeenCalled()
-      })
     })
 
     unhandledExceptions.forEach((err: Error) => {
-      it(`should use the request Logger to log an error for uncaught (non-http) exceptions of type ${err.constructor.name}`, () => {
+      it(`should log via the injected ApplicationLoggerService to log an error for uncaught (non-http) exceptions of type ${err.constructor.name}`, () => {
+        const host = executionContext() as ArgumentsHost
         filter.catch(err, host)
 
         expect(logger.error).toHaveBeenCalledWith(
@@ -531,10 +165,10 @@ describe("new NeomaExceptionFilter()", () => {
       })
     })
 
-    it("should use the request Logger to log a debug message if a duck typed exception's getStatus function returns a 404", () => {
+    it("should log via the injected ApplicationLoggerService to log a debug message if a duck typed exception's getStatus function returns a 404", () => {
       const name = faker.hacker.noun()
       const statusCode = HttpStatus.NOT_FOUND
-      const err = {
+      const customException = {
         ...new Error(),
         name,
         getStatus: (): number => statusCode,
@@ -545,17 +179,18 @@ describe("new NeomaExceptionFilter()", () => {
         }),
       }
 
-      filter.catch(err, host)
+      const host = executionContext() as ArgumentsHost
+      filter.catch(customException, host)
 
       expect(logger.debug).toHaveBeenCalledWith(
         `[404] Resource not found - ${name}`,
-        { err },
+        { err: customException },
       )
       expect(logger.warn).not.toHaveBeenCalled()
       expect(logger.error).not.toHaveBeenCalled()
     })
 
-    it("should use the request Logger to log a warning message if a duck typed exception's getStatus function returns a 4xx (excluding 404)", () => {
+    it("should log via the injected ApplicationLoggerService to log a warning message if a duck typed exception's getStatus function returns a 4xx (excluding 404)", () => {
       const name = faker.hacker.noun()
       let statusCode = faker.number.int({
         min: HttpStatus.BAD_REQUEST,
@@ -565,7 +200,7 @@ describe("new NeomaExceptionFilter()", () => {
         // Ensure we don't accidentally pick 404
         statusCode = HttpStatus.BAD_REQUEST
       }
-      const err = {
+      const customException = {
         ...new Error(),
         name,
         getStatus: (): number => statusCode,
@@ -576,23 +211,24 @@ describe("new NeomaExceptionFilter()", () => {
         }),
       }
 
-      filter.catch(err, host)
+      const host = executionContext() as ArgumentsHost
+      filter.catch(customException, host)
 
       expect(logger.warn).toHaveBeenCalledWith(
         `[${statusCode}] Request rejected - ${name}`,
-        { err },
+        { err: customException },
       )
       expect(logger.debug).not.toHaveBeenCalled()
       expect(logger.error).not.toHaveBeenCalled()
     })
 
-    it("should use the request Logger to log an error message if a duck typed exception's getStatus function returns a 5xx", () => {
+    it("should log via the injected ApplicationLoggerService to log an error message if a duck typed exception's getStatus function returns a 5xx", () => {
       const name = faker.hacker.noun()
       const statusCode = faker.number.int({
         min: HttpStatus.INTERNAL_SERVER_ERROR,
         max: 599,
       })
-      const err = {
+      const customException = {
         ...new Error(),
         name,
         getStatus: (): number => statusCode,
@@ -603,24 +239,26 @@ describe("new NeomaExceptionFilter()", () => {
         }),
       }
 
-      filter.catch(err, host)
+      const host = executionContext() as ArgumentsHost
+      filter.catch(customException, host)
 
       expect(logger.error).toHaveBeenCalledWith(
         `[${statusCode}] Request failed - ${name}`,
-        { err },
+        { err: customException },
       )
       expect(logger.debug).not.toHaveBeenCalled()
       expect(logger.warn).not.toHaveBeenCalled()
     })
 
     describe("And the exception implements a log method", () => {
-      it("should call the exception's log method with the request Logger", () => {
+      it("should call the exception's log method with the injected ApplicationLoggerService", () => {
         const customException = {
           ...new Error(),
           name: faker.hacker.noun(),
           log: jest.fn(),
         }
 
+        const host = executionContext() as ArgumentsHost
         filter.catch(customException, host)
 
         expect(customException.log).toHaveBeenCalledWith(logger)
@@ -716,10 +354,9 @@ describe("new NeomaExceptionFilter()", () => {
 
       filter.catch(exception, host)
 
-      expect(loggerSpy.debug).toHaveBeenCalledWith(
-        exception,
+      expect(logger.debug).toHaveBeenCalledWith(
         `Rendering error template "${templateName}" for [${exception.getStatus()}]`,
-        "NeomaExceptionFilter",
+        { err: exception },
       )
     })
 
@@ -872,10 +509,9 @@ describe("new NeomaExceptionFilter()", () => {
 
       filter.catch(exception, host)
 
-      expect(loggerSpy.debug).toHaveBeenCalledWith(
-        exception,
+      expect(logger.debug).toHaveBeenCalledWith(
         `Rendering error template "${badRequestTemplate}" for [${exception.getStatus()}]`,
-        "NeomaExceptionFilter",
+        { err: exception },
       )
     })
   })
@@ -969,10 +605,9 @@ describe("new NeomaExceptionFilter()", () => {
 
       filter.catch(exception, host)
 
-      expect(loggerSpy.debug).toHaveBeenCalledWith(
-        exception,
+      expect(logger.debug).toHaveBeenCalledWith(
         `Redirecting to "/error" for [${exception.getStatus()}]`,
-        "NeomaExceptionFilter",
+        { err: exception },
       )
     })
   })
@@ -1095,10 +730,9 @@ describe("new NeomaExceptionFilter()", () => {
       filter.catch(err, host)
 
       const response = host.switchToHttp().getResponse()
-      expect(loggerSpy.warn).toHaveBeenCalledWith(
-        err,
+      expect(logger.warn).toHaveBeenCalledWith(
         `getRedirect() returned an invalid value — falling through to default handling`,
-        "NeomaExceptionFilter",
+        { err },
       )
       expect(response.redirect).not.toHaveBeenCalled()
       expect(response.json).toHaveBeenCalled()
@@ -1125,10 +759,9 @@ describe("new NeomaExceptionFilter()", () => {
       filter.catch(err, host)
 
       const response = host.switchToHttp().getResponse()
-      expect(loggerSpy.warn).toHaveBeenCalledWith(
-        err,
+      expect(logger.warn).toHaveBeenCalledWith(
         `getRedirect() returned an invalid value — falling through to default handling`,
-        "NeomaExceptionFilter",
+        { err },
       )
       expect(response.redirect).not.toHaveBeenCalled()
       expect(response.json).toHaveBeenCalled()
@@ -1185,10 +818,9 @@ describe("new NeomaExceptionFilter()", () => {
 
       filter.catch(err, host)
 
-      expect(loggerSpy.debug).toHaveBeenCalledWith(
-        err,
+      expect(logger.debug).toHaveBeenCalledWith(
         `Redirecting [${HttpStatus.UNAUTHORIZED}] to "/login" with ${HttpStatus.SEE_OTHER}`,
-        "NeomaExceptionFilter",
+        { err },
       )
     })
   })

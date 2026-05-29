@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
+import { getRequest } from "@neoma/request-context"
 import { Inject, Injectable, LoggerService } from "@nestjs/common"
 import pino, { Level } from "pino"
 
@@ -233,12 +234,17 @@ export class ApplicationLoggerService implements LoggerService {
     message: any,
     ...optionalParams: any[]
   ): void {
-    // If exactly one param and it's an object, use as Pino context
-    if (optionalParams.length === 1 && typeof optionalParams[0] === "object") {
-      this.pino[level](optionalParams[0], message)
+    const request = getRequest()
+    const reqField = request ? { req: request } : {}
+
+    if (
+      optionalParams.length === 1 &&
+      optionalParams[0] !== null &&
+      typeof optionalParams[0] === "object"
+    ) {
+      this.pino[level]({ ...optionalParams[0], ...reqField }, message)
     } else {
-      // Otherwise use printf-style interpolation
-      this.pino[level](message, ...optionalParams)
+      this.pino[level](reqField, message, ...optionalParams)
     }
   }
 }

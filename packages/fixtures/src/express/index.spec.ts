@@ -65,11 +65,11 @@ describe("express", () => {
     })
 
     it("should preserve extra properties passed via options", () => {
-      const logger = { info: jest.fn() }
-      const options: Partial<MockRequest> = { logger }
+      const principal = { id: "user-1", roles: ["admin"] }
+      const options: Partial<MockRequest> = { principal }
       const req = express.request(options)
 
-      expect(req.logger).toBe(logger)
+      expect(req.principal).toBe(principal)
     })
   })
 

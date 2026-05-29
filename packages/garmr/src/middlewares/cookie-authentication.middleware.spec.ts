@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker"
-import { express } from "@neoma/fixtures"
-import { type LoggerService } from "@nestjs/common"
+import { MockLoggerService, express } from "@neoma/fixtures"
+import { ApplicationLoggerService } from "@neoma/logging"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { type Request, type Response } from "express"
 import * as jwt from "jsonwebtoken"
@@ -14,16 +14,19 @@ import { CookieAuthenticationMiddleware } from "./cookie-authentication.middlewa
 describe("CookieAuthenticationMiddleware", () => {
   let service: any
   let middleware: CookieAuthenticationMiddleware
+  let logger: MockLoggerService
 
   const buildModule = async (cookieOptions?: {
     name?: string
   }): Promise<void> => {
     service = { authenticate: jest.fn() }
+    logger = new MockLoggerService()
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CookieAuthenticationMiddleware,
         { provide: AuthenticationService, useValue: service },
+        { provide: ApplicationLoggerService, useValue: logger },
         {
           provide: GARMR_OPTIONS,
           useValue: { cookie: cookieOptions },
@@ -147,13 +150,11 @@ describe("CookieAuthenticationMiddleware", () => {
       )
     })
 
-    it("should log a warning if req.logger is present", (done) => {
-      const logger = { warn: jest.fn() }
+    it("should log a warning via the injected ApplicationLoggerService", (done) => {
       const req = express.request({
         headers: {
           cookie: "garmr.sid=" + encodeURIComponent(sid),
         },
-        logger: logger as unknown as LoggerService,
       })
 
       void middleware.use(
@@ -162,9 +163,7 @@ describe("CookieAuthenticationMiddleware", () => {
         () => {
           expect(logger.warn).toHaveBeenCalledWith(
             "Authentication via cookie failed",
-            {
-              err: error,
-            },
+            { err: error },
           )
           done()
         },

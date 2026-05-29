@@ -1,3 +1,4 @@
+import { ApplicationLoggerService } from "@neoma/logging"
 import { Inject, Injectable, NestMiddleware } from "@nestjs/common"
 import * as cookie from "cookie"
 import { Request, NextFunction } from "express"
@@ -25,6 +26,7 @@ export class CookieAuthenticationMiddleware implements NestMiddleware {
 
   public constructor(
     private readonly service: AuthenticationService,
+    private readonly logger: ApplicationLoggerService,
     @Inject(GARMR_OPTIONS) options: GarmrOptions,
   ) {
     this.cookieName = options.cookie?.name ?? "garmr.sid"
@@ -53,9 +55,7 @@ export class CookieAuthenticationMiddleware implements NestMiddleware {
     try {
       req.principal = await this.service.authenticate(sid)
     } catch (err) {
-      req.logger?.warn?.("Authentication via cookie failed", {
-        err,
-      })
+      this.logger.warn("Authentication via cookie failed", { err })
     }
     next()
   }

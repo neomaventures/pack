@@ -1,10 +1,4 @@
-import {
-  type DynamicModule,
-  type MiddlewareConsumer,
-  Module,
-  type NestModule,
-  type Provider,
-} from "@nestjs/common"
+import { type DynamicModule, Module, type Provider } from "@nestjs/common"
 import { APP_INTERCEPTOR } from "@nestjs/core"
 
 import { RequestLoggerInterceptor } from "./interceptors/request-logger.interceptor"
@@ -12,42 +6,75 @@ import {
   type LoggingConfiguration,
   type LoggingModuleAsyncOptions,
 } from "./interfaces"
-import { RequestLoggerMiddleware } from "./middlewares/request-logger.middleware"
-import { ApplicationLoggerService, RequestLoggerService } from "./services"
+import { ApplicationLoggerService } from "./services"
 import { LOGGING_MODULE_OPTIONS } from "./symbols"
 
-// Shared by forRoot/forRootAsync; the options provider is prepended per-method.
 const PROVIDERS: Provider[] = [
   ApplicationLoggerService,
-  RequestLoggerService,
-  RequestLoggerMiddleware,
   { provide: APP_INTERCEPTOR, useClass: RequestLoggerInterceptor },
 ]
-const EXPORTS = [ApplicationLoggerService, RequestLoggerService]
+const EXPORTS = [ApplicationLoggerService]
 
 /**
- * NestJS module providing structured logging with automatic request tracing.
+ * NestJS module providing structured logging with request-scoped context.
  *
  * Features:
- * - **Two logger services**: ApplicationLoggerService (app-scoped) and RequestLoggerService (request-scoped)
- * - **Automatic request logging**: Logs incoming requests and responses when `logLevel: 'debug'`
- * - **Middleware integration**: RequestLoggerService automatically available as `req.logger` on all routes
- * - **Error interceptor**: Configurable automatic error logging with `logErrors` option
- * - **Field redaction**: Configurable sensitive data masking
- * - **Request tracing**: Automatic ULID generation or header extraction for request correlation
- * - **Context injection**: Merge custom metadata into all log entries
- * - **Performance optimized**: Uses Pino logger internally for high throughput
+ * - **Structured logging** via `ApplicationLoggerService`, which reads the current
+ *   request from `@neoma/request-context` and attaches it to log entries as a
+ *   `req` field.
+ * - **Automatic request logging** via `RequestLoggerInterceptor` when
+ *   `logLevel: 'debug'`.
+ * - **Error interceptor**: Configurable automatic error logging with `logErrors`.
+ * - **Field redaction**: Configurable sensitive data masking.
+ * - **Context injection**: Merge custom metadata into all log entries.
+ *
+ * Note: per-request trace ID generation (the old `logRequestTraceIdHeader`
+ * feature) is not yet restored — tracked in #69.
+ * - **Performance optimized**: Uses Pino logger internally for high throughput.
  *
  * Register via `forRoot()` or `forRootAsync()` (both make the module global).
  * The module is not designed to be imported bare.
  *
+ * ## Required companion: `@neoma/request-context`
+ *
+ * `ApplicationLoggerService` reads the active request via `getRequest()` from
+ * `@neoma/request-context`. For the `req` field to appear on log entries the
+ * consumer app **must** also install the request-context boundary:
+ *
+ * ```typescript
+ * imports: [
+ *   RequestContextModule.forRoot(),  // <-- required for getRequest() to work
+ *   LoggingModule.forRoot({ logLevel: 'debug' }),
+ * ]
+ * ```
+ *
+ * Without `RequestContextModule.forRoot()`, log entries still emit but `req`
+ * will always be absent.
+ *
+ * ## Convention for `@neoma/*` packages
+ *
+ * Inside other Neoma packages, **inject `ApplicationLoggerService`** rather
+ * than using `Logger` from `@nestjs/common`. Every Neoma package that logs
+ * declares `@neoma/logging` as a peerDependency. Consumers install
+ * `LoggingModule.forRoot()` once at the root; the singleton is available to
+ * every package below.
+ *
+ * Nest's own internal logs (RouterExplorer, etc.) still flow through Nest's
+ * `Logger`. Use `app.useLogger(app.get(ApplicationLoggerService))` with
+ * `NestFactory.create(AppModule, { bufferLogs: true })` to capture those
+ * through the structured logger.
+ *
  * @example
  * // Static registration at the app root — available everywhere
- * imports: [LoggingModule.forRoot({ logLevel: 'debug' })]
+ * imports: [
+ *   RequestContextModule.forRoot(),
+ *   LoggingModule.forRoot({ logLevel: 'debug' }),
+ * ]
  *
  * @example
  * // Async registration — resolve options from DI (e.g. ConfigService)
  * imports: [
+ *   RequestContextModule.forRoot(),
  *   LoggingModule.forRootAsync({
  *     inject: [ConfigService],
  *     useFactory: (config: ConfigService) => ({
@@ -56,26 +83,9 @@ const EXPORTS = [ApplicationLoggerService, RequestLoggerService]
  *     }),
  *   }),
  * ]
- *
- * @example
- * **Using req.logger (middleware approach):**
- * ```typescript
- * @Controller('users')
- * export class UserController {
- *   @Get(':id')
- *   getUser(@Req() req: Request, @Param('id') id: string) {
- *     // RequestLoggerService is attached to req.logger by the middleware
- *     req.logger?.log('Fetching user', { userId: id })
- *   }
- * }
- * ```
  */
 @Module({})
-export class LoggingModule implements NestModule {
-  /**
-   * Register the module with static options. All options are optional, so
-   * `forRoot()` is valid and uses defaults.
-   */
+export class LoggingModule {
   public static forRoot(options: LoggingConfiguration = {}): DynamicModule {
     return {
       global: true,
@@ -88,9 +98,6 @@ export class LoggingModule implements NestModule {
     }
   }
 
-  /**
-   * Register the module with options resolved asynchronously from DI.
-   */
   public static forRootAsync(
     options: LoggingModuleAsyncOptions,
   ): DynamicModule {
@@ -108,9 +115,5 @@ export class LoggingModule implements NestModule {
       ],
       exports: EXPORTS,
     }
-  }
-
-  public configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(RequestLoggerMiddleware).forRoutes("*")
   }
 }

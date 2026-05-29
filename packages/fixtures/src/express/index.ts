@@ -1,3 +1,4 @@
+/// <reference types="multer" />
 import crypto from "crypto"
 import { type OutgoingHttpHeader, type OutgoingHttpHeaders } from "http"
 import { type Socket } from "net"
@@ -56,6 +57,10 @@ export interface MockResponse {
  * arbitrary extra keys (the `[key: string]: any` index signature) — so nothing
  * you set is typed away. `get`/`header` are overridden to give case-insensitive
  * header access, and `res` is a {@link MockResponse} rather than a real one.
+ *
+ * `logger` is intentionally typed as `never` — loggers are no longer attached
+ * to requests in the Neoma ecosystem. Use `Logger.overrideLogger(...)` with
+ * {@link MockLoggerService} in tests instead.
  */
 export type MockRequest = Pick<
   Request,
@@ -65,6 +70,7 @@ export type MockRequest = Pick<
   header(name: string): any
   res: MockResponse
   connection: Socket
+  logger?: never
   [key: string]: any
 }
 
@@ -110,6 +116,39 @@ type ExpressFixtures = {
    */
   request: (options?: Partial<MockRequest>) => MockRequest
 }
+
+/**
+ * Generates a mock `Express.Multer.File` with realistic faker defaults.
+ * Override any property by passing a partial object.
+ *
+ * @param overrides - Properties to override the generated defaults.
+ * @returns An object conforming to the `Express.Multer.File` interface.
+ */
+export const multerFile = ({
+  fieldname = "file",
+  originalname = faker.system.fileName(),
+  encoding = "7bit",
+  mimetype = "text/plain",
+  size = faker.number.int({ min: 100, max: 5000 }),
+  buffer = Buffer.from(faker.string.alpha(size)),
+  destination = "",
+  filename = "",
+  path = "",
+  stream = undefined as any,
+  ...rest
+}: Partial<Express.Multer.File> = {}): Express.Multer.File => ({
+  fieldname,
+  originalname,
+  encoding,
+  mimetype,
+  size,
+  buffer,
+  destination,
+  filename,
+  path,
+  stream,
+  ...rest,
+})
 
 export const express: ExpressFixtures = {
   cookie(val: string | object, secret: string | undefined): string {
