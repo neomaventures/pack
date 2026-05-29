@@ -12,11 +12,22 @@
     "url": "https://github.com/neomaventures/pack/issues"
   },
   "homepage": "https://github.com/neomaventures/pack/tree/main/packages/features#readme",
-  "keywords": ["nestjs", "feature-flags", "feature-gating", "neoma"],
+  "keywords": [
+    "nestjs",
+    "feature-flags",
+    "feature-gating",
+    "neoma"
+  ],
   "private": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist", "README.md", "LICENSE", "!**/*.json", "!**/*.tsbuildinfo"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "!**/*.json",
+    "!**/*.tsbuildinfo"
+  ],
   "license": "MIT",
   "scripts": {
     "build": "tsc -p ./tsconfig.lib.json",
