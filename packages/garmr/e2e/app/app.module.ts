@@ -1,4 +1,6 @@
 import { GarmrModule } from "@neoma/garmr"
+import { LoggingModule } from "@neoma/logging"
+import { RequestContextModule } from "@neoma/request-context"
 import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
 
@@ -7,6 +9,8 @@ import { User } from "./user.entity"
 
 @Module({
   imports: [
+    RequestContextModule.forRoot(),
+    LoggingModule.forRoot(),
     TypeOrmModule.forRoot({
       type: "sqlite",
       database: ":memory:",

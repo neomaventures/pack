@@ -65,6 +65,7 @@
     "@neoma/mailpit": "workspace:*",
     "@neoma/managed-app": "workspace:*",
     "@neoma/mockserver": "workspace:*",
+    "@neoma/request-context": "workspace:*",
     "@nestjs/core": "^11.1.18",
     "@nestjs/event-emitter": "^3.1.0",
     "@nestjs/platform-express": "^11.1.18",

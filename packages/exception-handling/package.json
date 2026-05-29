@@ -48,6 +48,7 @@
     "@neoma/fixtures": "workspace:*",
     "@neoma/logging": "workspace:*",
     "@neoma/managed-app": "workspace:*",
+    "@neoma/request-context": "workspace:*",
     "@nestjs/core": "^11.1.18",
     "@nestjs/platform-express": "^11.1.18",
     "@nestjs/testing": "^11.1.18",
