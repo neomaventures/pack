@@ -27,7 +27,13 @@ Each package is versioned, changelogged, and published on its own cadence.
 
 ## Getting started
 
-Requires **Node ≥ 22**. The repo pins **pnpm 11.1.3** via `packageManager` — use Corepack so you get the right version:
+### Prerequisites
+
+- **Node ≥ 22**
+- **pnpm 11.1.3** — pinned via `packageManager`; install via Corepack so you get the right version.
+- **Docker** — required for test fixtures (`@neoma/minio`, `@neoma/mailpit`, `@neoma/mockserver`) that boot containers. Docker Desktop or any equivalent works. Without Docker running, tests that depend on these fixtures will fail.
+
+### Install
 
 ```bash
 corepack enable      # one-time — makes `pnpm` resolve to the pinned version
