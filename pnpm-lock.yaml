@@ -370,7 +370,7 @@ importers:
         specifier: workspace:*
         version: link:../managed-app
       '@neoma/request-context':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../request-context
       '@nestjs/core':
         specifier: ^11.1.18

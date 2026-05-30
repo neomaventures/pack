@@ -40,7 +40,7 @@
     "lint": "eslint ."
   },
   "peerDependencies": {
-    "@neoma/logging": "workspace:^",
+    "@neoma/logging": "*",
     "@nestjs/common": "11.x",
     "@nestjs/core": "11.x",
     "class-transformer": "0.x",
