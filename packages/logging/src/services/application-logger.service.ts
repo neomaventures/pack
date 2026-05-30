@@ -46,7 +46,7 @@ export type LogContext = {
  * Every method has the same shape:
  *
  * ```ts
- * logger.<level>(message: string, context?: object): void
+ * logger.<level>(message: string, context?: LogContext): void
  * ```
  *
  * The `context` object's fields are merged into the log entry alongside
@@ -113,27 +113,27 @@ export class ApplicationLoggerService {
   }
 
   /** Log a message at info level. Equivalent to {@link info}. */
-  public log(message: string, context?: object): void {
+  public log(message: string, context?: LogContext): void {
     this.logAtLevel("info", message, context)
   }
 
   /** Log a message at info level. Equivalent to {@link log}. */
-  public info(message: string, context?: object): void {
+  public info(message: string, context?: LogContext): void {
     this.logAtLevel("info", message, context)
   }
 
   /** Log a message at warn level. */
-  public warn(message: string, context?: object): void {
+  public warn(message: string, context?: LogContext): void {
     this.logAtLevel("warn", message, context)
   }
 
   /** Log a message at debug level. */
-  public debug(message: string, context?: object): void {
+  public debug(message: string, context?: LogContext): void {
     this.logAtLevel("debug", message, context)
   }
 
   /** Log a message at verbose (trace) level. */
-  public verbose(message: string, context?: object): void {
+  public verbose(message: string, context?: LogContext): void {
     this.logAtLevel("trace", message, context)
   }
 
@@ -142,7 +142,7 @@ export class ApplicationLoggerService {
    * `{ err: someError }` in the context — pino's `err` serializer
    * extracts `{ type, message, stack }` automatically.
    */
-  public error(message: string, context?: object): void {
+  public error(message: string, context?: LogContext): void {
     this.logAtLevel("error", message, context)
   }
 
@@ -151,46 +151,50 @@ export class ApplicationLoggerService {
    * `{ err: someError }` in the context — pino's `err` serializer
    * extracts `{ type, message, stack }` automatically.
    */
-  public fatal(message: string, context?: object): void {
+  public fatal(message: string, context?: LogContext): void {
     this.logAtLevel("fatal", message, context)
   }
 
   /** Static delegate for {@link log}. No-ops if the module has not yet been constructed. */
-  public static log(message: string, context?: object): void {
+  public static log(message: string, context?: LogContext): void {
     ApplicationLoggerService.instance?.log(message, context)
   }
 
   /** Static delegate for {@link info}. No-ops if the module has not yet been constructed. */
-  public static info(message: string, context?: object): void {
+  public static info(message: string, context?: LogContext): void {
     ApplicationLoggerService.instance?.info(message, context)
   }
 
   /** Static delegate for {@link warn}. No-ops if the module has not yet been constructed. */
-  public static warn(message: string, context?: object): void {
+  public static warn(message: string, context?: LogContext): void {
     ApplicationLoggerService.instance?.warn(message, context)
   }
 
   /** Static delegate for {@link debug}. No-ops if the module has not yet been constructed. */
-  public static debug(message: string, context?: object): void {
+  public static debug(message: string, context?: LogContext): void {
     ApplicationLoggerService.instance?.debug(message, context)
   }
 
   /** Static delegate for {@link verbose}. No-ops if the module has not yet been constructed. */
-  public static verbose(message: string, context?: object): void {
+  public static verbose(message: string, context?: LogContext): void {
     ApplicationLoggerService.instance?.verbose(message, context)
   }
 
   /** Static delegate for {@link error}. No-ops if the module has not yet been constructed. */
-  public static error(message: string, context?: object): void {
+  public static error(message: string, context?: LogContext): void {
     ApplicationLoggerService.instance?.error(message, context)
   }
 
   /** Static delegate for {@link fatal}. No-ops if the module has not yet been constructed. */
-  public static fatal(message: string, context?: object): void {
+  public static fatal(message: string, context?: LogContext): void {
     ApplicationLoggerService.instance?.fatal(message, context)
   }
 
-  private logAtLevel(level: Level, message: string, context?: object): void {
+  private logAtLevel(
+    level: Level,
+    message: string,
+    context?: LogContext,
+  ): void {
     const request = getRequest()
     const reqField = request ? { req: request } : {}
     this.pino[level]({ ...context, ...reqField }, message)
