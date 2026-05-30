@@ -4,6 +4,15 @@ NestJS-idiomatic audit trails. Audit (Odysseus's faithful dog -- waited twenty y
 
 ## Installation
 
+`@neoma/*` packages publish privately to GitHub Packages. Configure `.npmrc` to resolve the `@neoma` scope first:
+
+```
+@neoma:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```
+
+Then install:
+
 ```bash
 npm install @neoma/audit
 ```

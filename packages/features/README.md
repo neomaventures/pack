@@ -377,6 +377,6 @@ This package is part of the Neoma ecosystem of Laravel-inspired NestJS packages:
 
 - [@neoma/config](https://github.com/neomaventures/pack/tree/main/packages/config) - Type-safe environment configuration
 - [@neoma/logger](https://github.com/neomaventures/pack/tree/main/packages/logging) - Request and application logging
-- [@neoma/exceptions](https://github.com/neomaventures/pack/tree/main/packages/exception-handling) - Global exception handling
+- [@neoma/exceptions](https://github.com/neomaventures/pack/tree/main/packages/exceptions) - Global exception handling
 - **@neoma/features** - Feature flag gating (you are here)
 - More coming soon...

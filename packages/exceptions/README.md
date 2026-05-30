@@ -94,6 +94,15 @@ async getUser(@Param('id') id: string) {
 
 ## Installation
 
+`@neoma/*` packages publish privately to GitHub Packages. Configure `.npmrc` to resolve the `@neoma` scope first:
+
+```
+@neoma:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```
+
+Then install:
+
 ```bash
 npm install @neoma/exceptions
 ```
@@ -677,7 +686,7 @@ MIT
 ## Links
 
 - [npm package](https://www.npmjs.com/package/@neoma/exceptions)
-- [GitHub repository](https://github.com/neomaventures/pack/tree/main/packages/exception-handling)
+- [GitHub repository](https://github.com/neomaventures/pack/tree/main/packages/exceptions)
 - [Issue tracker](https://github.com/neomaventures/pack/issues)
 - [Neoma ecosystem](https://github.com/neomaventures)
 

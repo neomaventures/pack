@@ -3,7 +3,7 @@ import { type Storable } from "./interfaces/storable.interface"
 export const STORAGE_OPTIONS = Symbol("STORAGE_OPTIONS")
 
 /**
- * Configuration options for the Storage file storage module.
+ * Configuration options for the file storage module.
  *
  * @typeParam T - The entity class implementing Storable
  *

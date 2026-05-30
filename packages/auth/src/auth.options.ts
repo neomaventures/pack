@@ -97,7 +97,7 @@ export interface WebhookOptions {
 }
 
 /**
- * Base configuration options shared by all Auth auth strategies.
+ * Base configuration options shared by all auth strategies.
  *
  * @typeParam T - The entity class implementing Authenticatable
  */
@@ -115,7 +115,7 @@ interface AuthBaseOptions<T extends Authenticatable = Authenticatable> {
 }
 
 /**
- * Configuration options for the Auth authentication module.
+ * Configuration options for the authentication module.
  *
  * At least one authentication strategy (`magicLink` or `googleAuth`) must be provided.
  *
