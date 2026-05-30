@@ -7,7 +7,7 @@ import { type AuthProvider } from "../types/auth-provider"
  * @example
  * ```typescript
  * @OnEvent('auth.registered')
- * async handleRegistered(event: AuthRegisteredEvent<User>) {
+ * async handleRegistered(event: RegisteredEvent<User>) {
  *   await this.emailService.sendWelcome(event.entity.email)
  *   console.log(`Registered via ${event.provider}`)
  * }
@@ -16,7 +16,7 @@ import { type AuthProvider } from "../types/auth-provider"
  * @important Listeners should handle their own errors.
  * Unhandled errors will result in unhandled promise rejections.
  */
-export class AuthRegisteredEvent<T extends Authenticatable> {
+export class RegisteredEvent<T extends Authenticatable> {
   public static readonly EVENT_NAME = "auth.registered"
 
   /**

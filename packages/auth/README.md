@@ -750,25 +750,25 @@ public getReports() {}
 
 Both events include a `provider` property of type `AuthProvider` (`"magic-link" | "google" | "session"`) indicating which authentication method triggered the event.
 
-#### AuthRegisteredEvent
+#### RegisteredEvent
 
 Emitted when a new user is created via magic link verification or Google OAuth.
 
 ```typescript
-import { AuthRegisteredEvent } from "@neoma/auth"
+import { RegisteredEvent } from "@neoma/auth"
 import { OnEvent } from "@nestjs/event-emitter"
 
 @Injectable()
 export class NotificationService {
-  @OnEvent(AuthRegisteredEvent.EVENT_NAME)
-  public async onRegistered(event: AuthRegisteredEvent): Promise<void> {
+  @OnEvent(RegisteredEvent.EVENT_NAME)
+  public async onRegistered(event: RegisteredEvent): Promise<void> {
     console.log(`New user registered via ${event.provider}`)
     // Send welcome email, etc.
   }
 }
 ```
 
-#### AuthAuthenticatedEvent
+#### AuthenticatedEvent
 
 Emitted when an existing user verifies a magic link (provider `"magic-link"`), authenticates via session token (provider `"session"`), or signs in with Google OAuth (provider `"google"`).
 

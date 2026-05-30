@@ -8,8 +8,8 @@ import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm"
 
 import { AuthModule } from "../auth.module"
 import { AuthOptions, MailerOptions } from "../auth.options"
-import { AuthAuthenticatedEvent } from "../events/auth-authenticated.event"
-import { AuthRegisteredEvent } from "../events/auth-registered.event"
+import { AuthenticatedEvent } from "../events/authenticated.event"
+import { RegisteredEvent } from "../events/registered.event"
 import { InvalidMagicLinkTokenException } from "../exceptions/invalid-magic-link-token.exception"
 import { TokenFailedVerificationException } from "../exceptions/token-failed-verification.exception"
 import { Authenticatable } from "../interfaces/authenticatable.interface"
@@ -214,7 +214,7 @@ registrations.forEach(([name, register]) => {
           expect(result.isNewUser).toBe(true)
         })
 
-        it("should emit a AuthRegisteredEvent", async () => {
+        it("should emit a RegisteredEvent", async () => {
           const { token } = tokenService.issue(
             { email, aud: MAGIC_LINK_AUDIENCE },
             { expiresIn: "15m" },
@@ -224,12 +224,12 @@ registrations.forEach(([name, register]) => {
           const result = await service.verify<User>(token)
 
           expect(emitSpy).toHaveBeenCalledWith(
-            AuthRegisteredEvent.EVENT_NAME,
-            new AuthRegisteredEvent(result.entity),
+            RegisteredEvent.EVENT_NAME,
+            new RegisteredEvent(result.entity),
           )
         })
 
-        it("should not emit a AuthAuthenticatedEvent", async () => {
+        it("should not emit a AuthenticatedEvent", async () => {
           const { token } = tokenService.issue(
             { email, aud: MAGIC_LINK_AUDIENCE },
             { expiresIn: "15m" },
@@ -239,7 +239,7 @@ registrations.forEach(([name, register]) => {
           await service.verify<User>(token)
 
           expect(emitSpy).not.toHaveBeenCalledWith(
-            AuthAuthenticatedEvent.EVENT_NAME,
+            AuthenticatedEvent.EVENT_NAME,
             expect.anything(),
           )
         })
@@ -280,7 +280,7 @@ registrations.forEach(([name, register]) => {
           expect(users).toHaveLength(1)
         })
 
-        it("should emit a AuthAuthenticatedEvent", async () => {
+        it("should emit a AuthenticatedEvent", async () => {
           const { token } = tokenService.issue(
             { email: existingUser.email, aud: MAGIC_LINK_AUDIENCE },
             { expiresIn: "15m" },
@@ -290,12 +290,12 @@ registrations.forEach(([name, register]) => {
           await service.verify<User>(token)
 
           expect(emitSpy).toHaveBeenCalledWith(
-            AuthAuthenticatedEvent.EVENT_NAME,
-            new AuthAuthenticatedEvent(existingUser),
+            AuthenticatedEvent.EVENT_NAME,
+            new AuthenticatedEvent(existingUser),
           )
         })
 
-        it("should not emit a AuthRegisteredEvent", async () => {
+        it("should not emit a RegisteredEvent", async () => {
           const { token } = tokenService.issue(
             { email: existingUser.email, aud: MAGIC_LINK_AUDIENCE },
             { expiresIn: "15m" },
@@ -305,7 +305,7 @@ registrations.forEach(([name, register]) => {
           await service.verify<User>(token)
 
           expect(emitSpy).not.toHaveBeenCalledWith(
-            AuthRegisteredEvent.EVENT_NAME,
+            RegisteredEvent.EVENT_NAME,
             expect.anything(),
           )
         })

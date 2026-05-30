@@ -3,7 +3,7 @@ import { EventEmitter2 } from "@nestjs/event-emitter"
 import { DataSource, FindOptionsWhere } from "typeorm"
 
 import { AuthOptions, AUTH_OPTIONS } from "../auth.options"
-import { AuthAuthenticatedEvent } from "../events/auth-authenticated.event"
+import { AuthenticatedEvent } from "../events/authenticated.event"
 import { IncorrectCredentialsException } from "../exceptions/incorrect-credentials.exception"
 import { InvalidCredentialsException } from "../exceptions/invalid-credentials.exception"
 import { Authenticatable } from "../interfaces/authenticatable.interface"
@@ -77,8 +77,8 @@ export class AuthenticationService {
     }
 
     this.eventEmitter.emit(
-      AuthAuthenticatedEvent.EVENT_NAME,
-      new AuthAuthenticatedEvent(entity, "session"),
+      AuthenticatedEvent.EVENT_NAME,
+      new AuthenticatedEvent(entity, "session"),
     )
 
     return entity

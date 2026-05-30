@@ -4,8 +4,8 @@ import * as jwt from "jsonwebtoken"
 import { DataSource, FindOptionsWhere } from "typeorm"
 
 import { AUTH_OPTIONS, AuthOptions, GoogleAuthOptions } from "../auth.options"
-import { AuthAuthenticatedEvent } from "../events/auth-authenticated.event"
-import { AuthRegisteredEvent } from "../events/auth-registered.event"
+import { AuthenticatedEvent } from "../events/authenticated.event"
+import { RegisteredEvent } from "../events/registered.event"
 import { EmailNotVerifiedException } from "../exceptions/email-not-verified.exception"
 import { GoogleCodeExchangeException } from "../exceptions/google-code-exchange.exception"
 import { GoogleNetworkException } from "../exceptions/google-network.exception"
@@ -194,8 +194,8 @@ export class GoogleAuthService {
       }
 
       this.eventEmitter.emit(
-        AuthAuthenticatedEvent.EVENT_NAME,
-        new AuthAuthenticatedEvent(existing, "google"),
+        AuthenticatedEvent.EVENT_NAME,
+        new AuthenticatedEvent(existing, "google"),
       )
       return { entity: existing, isNewUser: false, profile }
     }
@@ -209,8 +209,8 @@ export class GoogleAuthService {
     const saved = await repo.save(toSave)
 
     this.eventEmitter.emit(
-      AuthRegisteredEvent.EVENT_NAME,
-      new AuthRegisteredEvent(saved, "google"),
+      RegisteredEvent.EVENT_NAME,
+      new RegisteredEvent(saved, "google"),
     )
 
     return { entity: saved, isNewUser: true, profile }

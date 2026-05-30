@@ -4,8 +4,8 @@ import { createTransport, Transporter } from "nodemailer"
 import { DataSource, FindOptionsWhere } from "typeorm"
 
 import { AUTH_OPTIONS, AuthOptions, MailerOptions } from "../auth.options"
-import { AuthAuthenticatedEvent } from "../events/auth-authenticated.event"
-import { AuthRegisteredEvent } from "../events/auth-registered.event"
+import { AuthenticatedEvent } from "../events/authenticated.event"
+import { RegisteredEvent } from "../events/registered.event"
 import { InvalidMagicLinkTokenException } from "../exceptions/invalid-magic-link-token.exception"
 import { Authenticatable } from "../interfaces/authenticatable.interface"
 
@@ -147,8 +147,8 @@ export class MagicLinkService {
 
     if (existing) {
       this.eventEmitter.emit(
-        AuthAuthenticatedEvent.EVENT_NAME,
-        new AuthAuthenticatedEvent(existing),
+        AuthenticatedEvent.EVENT_NAME,
+        new AuthenticatedEvent(existing),
       )
       return { entity: existing, isNewUser: false }
     }
@@ -157,8 +157,8 @@ export class MagicLinkService {
     const saved = await repo.save(toSave)
 
     this.eventEmitter.emit(
-      AuthRegisteredEvent.EVENT_NAME,
-      new AuthRegisteredEvent(saved),
+      RegisteredEvent.EVENT_NAME,
+      new RegisteredEvent(saved),
     )
 
     return { entity: saved, isNewUser: true }

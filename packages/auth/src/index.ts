@@ -48,8 +48,8 @@ export * from "./exceptions/permission-denied.exception"
 export * from "./exceptions/unauthorized-redirect.exception"
 
 // Events consumers listen for via @OnEvent
-export * from "./events/auth-registered.event"
-export * from "./events/auth-authenticated.event"
+export * from "./events/registered.event"
+export * from "./events/authenticated.event"
 
 // Types
 export * from "./types/auth-provider"

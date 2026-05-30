@@ -16,8 +16,8 @@ import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm"
 
 import { AuthModule } from "../auth.module"
 import { AuthOptions } from "../auth.options"
-import { AuthAuthenticatedEvent } from "../events/auth-authenticated.event"
-import { AuthRegisteredEvent } from "../events/auth-registered.event"
+import { AuthenticatedEvent } from "../events/authenticated.event"
+import { RegisteredEvent } from "../events/registered.event"
 import { EmailNotVerifiedException } from "../exceptions/email-not-verified.exception"
 import { GoogleCodeExchangeException } from "../exceptions/google-code-exchange.exception"
 import { GoogleNetworkException } from "../exceptions/google-network.exception"
@@ -132,7 +132,7 @@ registrations.forEach(([name, register]) => {
           expect(result.isNewUser).toBe(true)
         })
 
-        it("should emit a AuthRegisteredEvent with provider 'google'", async () => {
+        it("should emit a RegisteredEvent with provider 'google'", async () => {
           const code = faker.string.alphanumeric(20)
           const email = faker.internet.email()
           const idToken = google.idToken({ email })
@@ -142,12 +142,12 @@ registrations.forEach(([name, register]) => {
           const result = await service.authenticate<User>(code)
 
           expect(emitSpy).toHaveBeenCalledWith(
-            AuthRegisteredEvent.EVENT_NAME,
-            new AuthRegisteredEvent(result.entity, "google"),
+            RegisteredEvent.EVENT_NAME,
+            new RegisteredEvent(result.entity, "google"),
           )
         })
 
-        it("should not emit a AuthAuthenticatedEvent", async () => {
+        it("should not emit a AuthenticatedEvent", async () => {
           const code = faker.string.alphanumeric(20)
           const email = faker.internet.email()
           const idToken = google.idToken({ email })
@@ -157,7 +157,7 @@ registrations.forEach(([name, register]) => {
           await service.authenticate(code)
 
           expect(emitSpy).not.toHaveBeenCalledWith(
-            AuthAuthenticatedEvent.EVENT_NAME,
+            AuthenticatedEvent.EVENT_NAME,
             expect.anything(),
           )
         })
@@ -222,7 +222,7 @@ registrations.forEach(([name, register]) => {
           expect(users).toHaveLength(1)
         })
 
-        it("should emit a AuthAuthenticatedEvent with provider 'google'", async () => {
+        it("should emit a AuthenticatedEvent with provider 'google'", async () => {
           const code = faker.string.alphanumeric(20)
           const idToken = google.idToken({ email: existingUser.email })
           await mockCodeExchangeApi(code, { id_token: idToken })
@@ -231,12 +231,12 @@ registrations.forEach(([name, register]) => {
           await service.authenticate(code)
 
           expect(emitSpy).toHaveBeenCalledWith(
-            AuthAuthenticatedEvent.EVENT_NAME,
-            new AuthAuthenticatedEvent(existingUser, "google"),
+            AuthenticatedEvent.EVENT_NAME,
+            new AuthenticatedEvent(existingUser, "google"),
           )
         })
 
-        it("should not emit a AuthRegisteredEvent", async () => {
+        it("should not emit a RegisteredEvent", async () => {
           const code = faker.string.alphanumeric(20)
           const idToken = google.idToken({ email: existingUser.email })
           await mockCodeExchangeApi(code, { id_token: idToken })
@@ -245,7 +245,7 @@ registrations.forEach(([name, register]) => {
           await service.authenticate(code)
 
           expect(emitSpy).not.toHaveBeenCalledWith(
-            AuthRegisteredEvent.EVENT_NAME,
+            RegisteredEvent.EVENT_NAME,
             expect.anything(),
           )
         })

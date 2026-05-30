@@ -7,7 +7,7 @@ import { type AuthProvider } from "../types/auth-provider"
  * @example
  * ```typescript
  * @OnEvent('auth.authenticated')
- * async handleAuthenticated(event: AuthAuthenticatedEvent<User>) {
+ * async handleAuthenticated(event: AuthenticatedEvent<User>) {
  *   await this.analyticsService.trackLogin(event.entity.id)
  *   console.log(`Authenticated via ${event.provider}`)
  * }
@@ -16,7 +16,7 @@ import { type AuthProvider } from "../types/auth-provider"
  * @important Listeners should handle their own errors.
  * Unhandled errors will result in unhandled promise rejections.
  */
-export class AuthAuthenticatedEvent<T extends Authenticatable> {
+export class AuthenticatedEvent<T extends Authenticatable> {
   public static readonly EVENT_NAME = "auth.authenticated"
 
   /**
