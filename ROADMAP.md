@@ -96,16 +96,19 @@ unit spec). garmr already follows this. (Do as its own PR after the garmr bring-
 - **Flatten layout:** lib at `packages/<name>/src` (build via `tsconfig.lib.json`,
   excluding specs/fixtures); e2e under `packages/<name>/e2e`; per-package
   `jest.config.js`. Shared `tsconfig.base.json` + `eslint.config.mjs` at root.
-- **Versioning:** Changesets — `pnpm changeset` per change → merge → the auto "Version
-  Packages" PR → merge it to land the bumps. **No npm publish:** all packages are
-  private and consumed from this workspace. Changesets owns each package's
+- **Release:** Changesets — `pnpm changeset` per change → merge → the auto "Version
+  Packages" PR → merge it to publish. **Private to GitHub Packages**, not the public
+  npm registry — each `package.json` has `publishConfig.registry` set, and CI uses
+  `GITHUB_TOKEN` (no `NPM_TOKEN` involved). Packages graduate to public npm per-package
+  when ready (drop `publishConfig`, ship a `1.0.0`). Changesets owns each package's
   `CHANGELOG.md` (Keep-a-Changelog preamble removed). Bring-ins at current versions
   need no changeset.
 - **Supply chain (`pnpm-workspace.yaml`):** `minimumReleaseAge: 10080` (reject deps
   published < 7 days ago) + `allowBuilds` allowlist (build-script deps must be listed).
 - **CI:** `ci.yml` runs on every branch push (`pnpm -r build / lint / test` +
-  `pnpm -r test:e2e`). On `main` it also runs the Changesets action to open/update
-  the "Version Packages" PR — version step only, no publish step.
+  `pnpm -r test:e2e`). On `main` it also runs the Changesets action — opens/updates
+  the "Version Packages" PR and, when that PR merges, publishes to GitHub Packages
+  via the workflow's `packages: write` permission.
 - **Strict-base reconciliation checklist** (these surface when flattening a package):
   - `import * as request from "supertest"` → `import request from "supertest"`.
   - `catch (e)` is `unknown` → narrow (`const error = e as ...`); on re-throw attach

@@ -5,9 +5,9 @@
 # Produces the canonical flattened layout used across this monorepo
 # (see packages/managed-database for the reference shape): lib at
 # packages/<name>/src, per-package jest + tsconfig extending the shared
-# root configs, and a private package.json (workspace-only — no npm publish).
-# The new package builds, lints, and tests green immediately so the workspace
-# stays green.
+# root configs, and a package.json configured to publish privately to GitHub
+# Packages. The new package builds, lints, and tests green immediately so the
+# workspace stays green.
 #
 # Usage:
 #   scripts/new-package.sh <name> [description]
@@ -72,7 +72,8 @@ const pkg = {
   bugs: { url: "https://github.com/neomaventures/pack/issues" },
   homepage: `https://github.com/neomaventures/pack/tree/main/packages/${name}#readme`,
   keywords: ["nestjs", "neoma", name],
-  private: true,
+  private: false,
+  publishConfig: { registry: "https://npm.pkg.github.com" },
   main: "dist/index.js",
   types: "dist/index.d.ts",
   files: ["dist", "README.md", "LICENSE", "!**/*.json", "!**/*.tsbuildinfo"],

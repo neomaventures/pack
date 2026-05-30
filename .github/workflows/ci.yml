@@ -55,15 +55,14 @@ jobs:
       - name: E2E tests
         run: pnpm -r test:e2e
 
-  # Gated on `ci` via `needs`, so we never open a Version Packages PR from a
-  # commit whose build/lint/test/e2e hasn't gone green. Runs only on main;
-  # skipped on every other branch.
+  # Gated on `ci` via `needs`, so we never open a Version Packages PR or publish
+  # from a commit whose build/lint/test/e2e hasn't gone green. Runs only on
+  # main; skipped on every other branch.
   #
-  # All packages are private (workspace-only); npm publish is intentionally
-  # not part of this workflow. The Changesets action runs only its version
-  # step, which bumps package.json versions and writes CHANGELOG entries via
-  # the "Version Packages" PR.
-  version:
+  # Packages publish to GitHub Packages (per each package's `publishConfig`),
+  # not the public npm registry. Access is controlled by GitHub org
+  # membership; GITHUB_TOKEN with `packages: write` is sufficient.
+  release:
     needs: ci
     # Only on a push to main — never on a pull_request. Fork PRs can never
     # reach this job.
@@ -72,6 +71,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      packages: write
     steps:
       - uses: actions/checkout@v4
 
@@ -88,11 +88,13 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # If there are changesets on main → opens/updates the "Version Packages" PR.
-      # When that PR merges → bumps land on main; no npm publish step runs.
-      - name: Open or update Version Packages PR
+      # If versions were just bumped (that PR merged) → runs `pnpm release` to
+      # publish to GitHub Packages.
+      - name: Create Release PR or Publish
         uses: changesets/action@v1
         with:
           version: pnpm changeset version
+          publish: pnpm release
           commit: "chore: version packages"
           title: "chore: version packages"
         env:

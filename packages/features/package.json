@@ -18,7 +18,8 @@
     "feature-gating",
     "neoma"
   ],
-  "private": true,
+  "private": false,
+  "publishConfig": { "registry": "https://npm.pkg.github.com" },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
