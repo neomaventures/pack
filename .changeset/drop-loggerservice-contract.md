@@ -1,5 +1,5 @@
 ---
-"@neoma/logging": major
+"@neoma/logging": minor
 ---
 
 **Breaking:** `ApplicationLoggerService` no longer implements `@nestjs/common`'s `LoggerService` interface. It is **not** the app's main logger — `app.useLogger(applicationLoggerService)` will no longer type-check. Nest's own framework logs stay in Nest's `ConsoleLogger`; this service is the structured logger for application code and the Neoma ecosystem.
