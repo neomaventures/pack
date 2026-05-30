@@ -1,534 +1,340 @@
 # @neoma/logging
 
-High-performance, production-ready logging for NestJS applications powered by Pino. Provides excellent developer experience with request-scoped loggers, field redaction, and seamless NestJS integration.
+Structured, typed logging for NestJS applications, powered by pino. Reads the current request from `@neoma/request-context` and attaches it as a `req` field on every log entry — no `Scope.REQUEST`, no `req.logger`, no `@Req()` threading.
 
 ## Why @neoma/logging?
 
-- 🚀 **Drop-in replacement** for NestJS built-in logger
-- 🎯 **Request-scoped logging** with automatic request context
-- 🔧 **Global context configuration** for application metadata
-- 🔒 **Field redaction** for sensitive data protection
-- ⚡ **High performance** with Pino under the hood
-- 🛠️ **Excellent DX** with native NestJS patterns
-- 📝 **Comprehensive testing** with memory buffer approach
+- **Structured-only API** — every method has the same shape: `(message: string, context?: LogContext): void`. No printf, no positional context strings, no ambiguity at call sites.
+- **Automatic request context** — log lines made during a request automatically carry `req`. Works in any default-scoped service, no `Scope.REQUEST` contagion.
+- **`err` field convention** — pass an `Error` as `{ err }` and pino's default serializer extracts `{ type, message, stack }` for you.
+- **Field redaction** — declarative path patterns mask sensitive data before serialization.
+- **Static delegates** — `ApplicationLoggerService.log(...)` for decorators / non-DI code that still needs the structured pipeline.
+- **High performance** — pino under the hood.
+
+## Not Nest's app logger
+
+`ApplicationLoggerService` deliberately does not implement `@nestjs/common`'s `LoggerService` interface. **Don't pass it to `app.useLogger(...)`** — that won't type-check, and isn't the intended integration. Nest's own framework logs (bootstrap, router exploration, etc.) continue to flow through Nest's `ConsoleLogger`; this service is the structured logger for **application code** and the rest of the Neoma ecosystem.
+
+If you want one stream that captures everything, you can install a pino-compatible Nest logger separately. `@neoma/logging` doesn't compete in that space.
 
 ## Installation
 
 ```bash
-npm install @neoma/logging
+pnpm add @neoma/logging @neoma/request-context
 ```
 
-## Basic Usage
+`@neoma/request-context` is a peer dependency — it's what gives `ApplicationLoggerService` access to the current request.
 
-### Quick Start
+## Quick Start
 
-Register `LoggingModule.forRoot()` once in your root module — it's global, so `ApplicationLoggerService` and `RequestLoggerService` are injectable everywhere without re-importing:
+Install both modules at the root. `RequestContextModule.forRoot()` must come before `LoggingModule.forRoot()` so the request-context boundary is in place when the logger reads from it:
 
 ```typescript
-import { LoggingModule } from '@neoma/logging'
 import { Module } from '@nestjs/common'
+import { LoggingModule } from '@neoma/logging'
+import { RequestContextModule } from '@neoma/request-context'
 
 @Module({
-  imports: [LoggingModule.forRoot()]
+  imports: [
+    RequestContextModule.forRoot(),  // required for `req` on log entries
+    LoggingModule.forRoot({
+      logLevel: 'debug',
+      logContext: { service: 'api', version: '1.0.0' },
+    }),
+  ],
 })
 export class AppModule {}
 ```
 
-### Using the Logger
+## Using the logger
+
+Inject `ApplicationLoggerService` and call the typed methods:
 
 ```typescript
 import { Injectable } from '@nestjs/common'
 import { ApplicationLoggerService } from '@neoma/logging'
 
 @Injectable()
-export class UserService {
+export class UsersService {
   constructor(private readonly logger: ApplicationLoggerService) {}
 
-  createUser(userData: any) {
-    this.logger.log('Creating new user', { userId: userData.id })
-    
+  async createUser(data: CreateUserDto) {
+    this.logger.log('Creating user', { email: data.email })
+
     try {
-      // ... user creation logic
-      this.logger.log('User created successfully', { userId: userData.id })
-    } catch (error) {
-      this.logger.error('Failed to create user', { 
-        userId: userData.id, 
-        error: error.message 
-      })
-      throw error
+      const user = await this.repo.save(data)
+      this.logger.log('User created', { userId: user.id })
+      return user
+    } catch (err) {
+      this.logger.error('User creation failed', { err, email: data.email })
+      throw err
     }
   }
 }
 ```
 
-## Configuration
+Every entry inside a request automatically gets `req` (method, url, headers, etc.) attached:
 
-### Log Levels
-
-Configure the minimum log level to capture:
-
-```typescript
-LoggingModule.forRoot({
-  logLevel: 'warn' // Only log warnings, errors, and fatal messages
-})
-```
-
-Available levels (from most to least verbose):
-- `verbose` (maps to Pino `trace`)
-- `debug` - **Enables automatic request/response logging**
-- `log` (maps to Pino `info`) - **default**
-- `warn`
-- `error` 
-- `fatal`
-
-### Field Redaction
-
-Protect sensitive data by configuring field redaction:
-
-```typescript
-LoggingModule.forRoot({
-  logRedact: [
-    'password',           // Redact any top-level password field
-    'user.ssn',          // Redact nested fields with dot notation
-    '*.apiKey',          // Redact apiKey from any object
-    'tokens.*.secret',   // Redact secret from any object under tokens
-    'medical.*'          // Redact all fields under medical object
-  ]
-})
-```
-
-**Before redaction:**
-```typescript
-logger.log('User login', {
-  username: 'john_doe',
-  password: 'secret123',
-  profile: {
-    email: 'john@example.com',
-    apiKey: 'sk-1234567890'
-  }
-})
-```
-
-**After redaction:**
 ```json
 {
   "level": 30,
-  "msg": "User login",
-  "username": "john_doe",
-  "password": "[REDACTED]",
-  "profile": {
-    "email": "john@example.com", 
-    "apiKey": "[REDACTED]"
+  "msg": "Creating user",
+  "email": "user@example.com",
+  "service": "api",
+  "version": "1.0.0",
+  "req": { "method": "POST", "url": "/users", "headers": { ... } }
+}
+```
+
+### Static delegates
+
+Decorators, utility functions, and other non-DI code can use the static delegates — same structured contract, no DI required:
+
+```typescript
+import { ApplicationLoggerService } from '@neoma/logging'
+
+export function logBoot(stage: string) {
+  ApplicationLoggerService.log('Boot stage', { stage })
+}
+```
+
+Static calls route through the constructed singleton. They no-op silently if called before `LoggingModule.forRoot()` has been registered (e.g. at module-init time before the app is bootstrapped).
+
+## API
+
+### Method signatures
+
+Every log method has the same shape:
+
+```typescript
+class ApplicationLoggerService {
+  log(message: string, context?: LogContext): void
+  info(message: string, context?: LogContext): void   // alias for log
+  warn(message: string, context?: LogContext): void
+  debug(message: string, context?: LogContext): void
+  verbose(message: string, context?: LogContext): void
+  error(message: string, context?: LogContext): void
+  fatal(message: string, context?: LogContext): void
+
+  // Static delegates with the same shape:
+  static log(message: string, context?: LogContext): void
+  // ... etc
+}
+```
+
+### LogContext
+
+```typescript
+type LogContext = {
+  /**
+   * Attached error. When this is an `Error`, pino's default serializer
+   * extracts { type, message, stack } into the log entry.
+   */
+  err?: unknown
+} & Record<string, unknown>
+```
+
+Any keys allowed. `err` is called out because pino's default `err` serializer auto-extracts an attached `Error`'s structured shape.
+
+### Logging errors
+
+Put the error in the context as `err`:
+
+```typescript
+try {
+  await chargeCard(amount)
+} catch (err) {
+  this.logger.error('Charge failed', { err, chargeId, amount })
+}
+```
+
+Output:
+
+```json
+{
+  "level": 50,
+  "msg": "Charge failed",
+  "chargeId": "ch_abc",
+  "amount": 4900,
+  "err": {
+    "type": "StripeCardError",
+    "message": "Your card was declined.",
+    "stack": "StripeCardError: Your card was declined.\n    at ..."
   }
 }
 ```
 
-### Log Context
+Works for any field named `err` — caught exception, programmatic error wrapper, anything. If the value isn't an `Error` instance, pino logs it as-is.
 
-Add global context that gets included with every log entry:
+## Configuration
+
+### Log levels
+
+```typescript
+LoggingModule.forRoot({ logLevel: 'warn' })
+```
+
+Available levels, most to least verbose: `verbose`, `debug`, `log` (default), `warn`, `error`, `fatal`. `verbose` maps to pino's `trace`; `log` maps to pino's `info`.
+
+When `logLevel: 'debug'`, the `RequestLoggerInterceptor` automatically logs each incoming request's dispatch and completion.
+
+### Field redaction
+
+```typescript
+LoggingModule.forRoot({
+  logRedact: [
+    'password',         // top-level field
+    '*.password',       // any single-level nested field
+    'user.ssn',         // explicit nested path
+    'tokens.*.secret',  // wildcard over array/object children
+    'medicalRecords.*', // all children of a parent
+  ],
+})
+```
+
+Redacted values appear in output as `"[REDACTED]"`. Redaction is applied by pino before serialization, so the original objects aren't mutated.
+
+### Global context
+
+Add fields included on every log entry:
 
 ```typescript
 LoggingModule.forRoot({
   logContext: {
     service: 'user-api',
     version: '1.2.3',
-    environment: 'production'
-  }
+    environment: process.env.NODE_ENV,
+  },
 })
 ```
 
-**Result in logs:**
+### Automatic request logging
+
+With `logLevel: 'debug'`, every request gets logged at dispatch and completion via `RequestLoggerInterceptor`:
+
 ```json
-{
-  "level": 30,
-  "msg": "User created successfully",
-  "service": "user-api",
-  "version": "1.2.3", 
-  "environment": "production",
-  "userId": "123"
-}
+{"level":20,"msg":"Processing an incoming request...","controller":{"name":"UsersController","path":"users"},"handler":{"name":"create","path":"/"},"req":{"method":"POST","url":"/users"}}
+{"level":20,"msg":"Processed an incoming request that was successfully handled...","res":{"statusCode":201},"duration":"45ms"}
 ```
 
-### Automatic Request Logging
+### Error interceptor
 
-When `logLevel: 'debug'`, the module automatically logs all incoming requests and responses:
+When `logErrors: true`, the interceptor also logs exceptions thrown during request handling:
 
 ```typescript
 LoggingModule.forRoot({
-  logLevel: 'debug' // Enables automatic request/response logging
+  logLevel: 'debug',
+  logErrors: true,
 })
 ```
 
-**Automatic logs include:**
-- Request start: Method, URL, controller, handler
-- Request completion: Response status, duration  
-- Request errors: Error details and stack traces (when `logErrors: true`)
-
-**Example output:**
-```json
-{"level":20,"msg":"Processing an incoming request and dispatching it to a route handler.","controller":{"name":"UserController","path":"users"},"handler":{"name":"createUser","path":"/"},"req":{"method":"POST","url":"/users"}}
-{"level":20,"msg":"Processed an incoming request that was successfully handled by a route handler.","controller":{"name":"UserController","path":"users"},"handler":{"name":"createUser","path":"/"},"res":{"statusCode":201},"duration":"45ms"}
-```
-
-### Error Logging
-
-Control whether intercepted errors are automatically logged:
+## Async configuration
 
 ```typescript
-LoggingModule.forRoot({
-  logLevel: 'debug',  // Enable request logging
-  logErrors: true     // Also log errors caught by interceptor
+LoggingModule.forRootAsync({
+  inject: [ConfigService],
+  useFactory: (config: ConfigService) => ({
+    logLevel: config.get('LOG_LEVEL'),
+    logRedact: ['password', '*.secret'],
+  }),
 })
 ```
 
-### Complete Configuration
+## Testing
+
+Use `ArrayStream` from the shipped fixtures to capture log output in memory:
 
 ```typescript
-import { LoggingModule } from '@neoma/logging'
+import { Test } from '@nestjs/testing'
+import { LoggingModule, ApplicationLoggerService } from '@neoma/logging'
+import { RequestContextModule } from '@neoma/request-context'
+import { ArrayStream } from '@neoma/logging/fixtures'
 
-@Module({
-  imports: [
-    LoggingModule.forRoot({
-      logLevel: 'debug',
-      logContext: {
-        service: 'user-api',
-        version: '1.0.0',
-        environment: process.env.NODE_ENV
-      },
-      logRedact: [
-        'password',
-        '*.secret',
-        'user.personalInfo.*',
-        'payment.cardNumber'
+describe('UsersService', () => {
+  let logger: ApplicationLoggerService
+  const logs: any[] = []
+
+  beforeEach(async () => {
+    const module = await Test.createTestingModule({
+      imports: [
+        RequestContextModule.forRoot(),
+        LoggingModule.forRoot({ logDestination: new ArrayStream(logs) }),
       ],
-      logRequestTraceIdHeader: 'x-correlation-id',
-      logErrors: true
-    })
-  ]
-})
-export class AppModule {}
-```
+    }).compile()
 
-## API Reference
+    logger = module.get(ApplicationLoggerService)
+  })
 
-### ApplicationLoggerService
+  it('logs structured fields', () => {
+    logger.log('User created', { userId: '123' })
 
-Application-scoped logger for general application logging. Implements the NestJS `LoggerService` interface:
-
-```typescript
-class ApplicationLoggerService {
-  // Standard NestJS LoggerService methods
-  log(message: any, ...optionalParams: any[]): void
-  error(message: any, ...optionalParams: any[]): void  
-  warn(message: any, ...optionalParams: any[]): void
-  debug?(message: any, ...optionalParams: any[]): void
-  verbose?(message: any, ...optionalParams: any[]): void
-  fatal?(message: any, ...optionalParams: any[]): void
-}
-```
-
-**Usage:**
-```typescript
-@Injectable()
-export class UserService {
-  constructor(private logger: ApplicationLoggerService) {}
-  
-  processUsers() {
-    this.logger.log('Processing batch of users')
-    // Logs: { msg: 'Processing batch of users', service: 'user-api', version: '1.0.0' }
-  }
-}
-```
-
-### RequestLoggerService
-
-Request-scoped logger that automatically includes HTTP request context. Extends `ApplicationLoggerService` with additional request details:
-
-```typescript
-@Injectable()
-export class UserController {
-  constructor(private logger: RequestLoggerService) {}
-  
-  @Post()
-  createUser(@Body() userData: any) {
-    this.logger.log('Creating user', { userId: userData.id })
-    // Logs: { 
-    //   msg: 'Creating user', 
-    //   userId: userData.id,
-    //   service: 'user-api', 
-    //   version: '1.0.0',
-    //   req: { method: 'POST', url: '/users', headers: {...} }
-    // }
-  }
-}
-```
-
-**Key features:**
-- **Request-scoped**: New instance per HTTP request
-- **Automatic context**: Includes request method, URL, headers automatically  
-- **Request tracing**: Automatic request trace ID generation with ULID
-- **Header extraction**: Extract correlation IDs from request headers
-- **Context merging**: Combines `logContext` configuration with request details
-- **Same interface**: Uses identical logging methods as `ApplicationLoggerService`
-- **Middleware integration**: Automatically available as `req.logger` in routes/middleware
-
-### Request Tracing
-
-Every request automatically gets a unique trace ID included in all log entries. This enables request correlation across distributed systems:
-
-```typescript
-@Controller('users')
-export class UserController {
-  constructor(private logger: RequestLoggerService) {}
-  
-  @Post()
-  createUser(@Body() userData: any) {
-    this.logger.log('Processing user creation')
-    this.logger.log('Validating user data') 
-    this.logger.log('User created successfully')
-    
-    // All logs will have the same requestTraceId:
-    // { requestTraceId: '01HKQJQM7R8N4X3Z2T1V5B6Y9C', msg: 'Processing user creation' }
-    // { requestTraceId: '01HKQJQM7R8N4X3Z2T1V5B6Y9C', msg: 'Validating user data' }
-    // { requestTraceId: '01HKQJQM7R8N4X3Z2T1V5B6Y9C', msg: 'User created successfully' }
-  }
-}
-```
-
-#### Custom Correlation Headers
-
-Extract trace IDs from incoming request headers (useful for microservice communication):
-
-```typescript
-LoggingModule.forRoot({
-  logRequestTraceIdHeader: 'x-correlation-id', // Case-insensitive header lookup
-  logContext: {
-    service: 'user-api'
-  }
+    expect(logs).toContainEqual(
+      expect.objectContaining({
+        level: 30,
+        msg: 'User created',
+        userId: '123',
+      }),
+    )
+  })
 })
 ```
 
-**With header present:**
-```bash
-curl -H "x-correlation-id: abc123" POST /users
-```
-```json
-{
-  "level": 30,
-  "msg": "Processing user creation",
-  "requestTraceId": "abc123",
-  "service": "user-api"
-}
-```
-
-**With header missing:**
-```bash
-curl POST /users  
-```
-```json
-{
-  "level": 40,
-  "msg": "Request Trace Header 'x-correlation-id' not found, auto-generating trace ID: 01HKQJQM7R8N4X3Z2T1V5B6Y9C"
-}
-{
-  "level": 30,
-  "msg": "Processing user creation", 
-  "requestTraceId": "01HKQJQM7R8N4X3Z2T1V5B6Y9C",
-  "service": "user-api"
-}
-```
-
-**ULID Benefits:**
-- **Sortable**: Lexicographically sortable by generation time
-- **Compact**: 26 characters vs 36 for UUID  
-- **Random**: 80 bits of randomness for uniqueness
-- **Readable**: Crockford Base32 encoding (no confusing characters)
-
-### Middleware Integration
-
-The module automatically attaches `RequestLoggerService` to all incoming requests as `req.logger`, making it available in middleware, guards, and route handlers:
+For unit specs that don't need the full module, override the provider:
 
 ```typescript
-import { Request, Response, NextFunction } from 'express'
+const mockLogger = { log: jest.fn(), warn: jest.fn(), error: jest.fn(), /* ... */ }
 
-// In middleware
-export function customMiddleware(req: Request, res: Response, next: NextFunction) {
-  req.logger?.log('Custom middleware executed', { path: req.path })
-  next()
-}
-
-// In route handlers (alternative to injection)
-@Controller('users')
-export class UserController {
-  @Get(':id')
-  getUser(@Req() req: Request, @Param('id') id: string) {
-    req.logger?.log('Fetching user', { userId: id })
-    // This logger includes request context automatically
-  }
-}
-
-### Usage Patterns
-
-**Simple message:**
-```typescript
-logger.log('User logged in')
+const module = await Test.createTestingModule({
+  providers: [
+    UsersService,
+    { provide: ApplicationLoggerService, useValue: mockLogger },
+  ],
+}).compile()
 ```
 
-**Message with context object:**
-```typescript
-logger.log('User logged in', { 
-  userId: '123', 
-  email: 'user@example.com' 
-})
-```
-
-**Message with printf-style interpolation:**
-```typescript
-logger.log('Processing payment for user %s: %d %s', userId, amount, currency)
-// Results in: { msg: 'Processing payment for user john: 100 USD' }
-```
-
-### LoggingConfiguration
+## Configuration reference
 
 ```typescript
 interface LoggingConfiguration {
   /**
-   * Minimum log level to capture. Setting to 'debug' enables automatic request logging.
+   * Minimum log level to capture. Setting to 'debug' enables automatic
+   * request-boundary logging via RequestLoggerInterceptor.
    * @default 'log'
    */
   logLevel?: 'verbose' | 'debug' | 'log' | 'warn' | 'error' | 'fatal'
-  
+
   /**
-   * Custom destination for log output (mainly for testing)
+   * Custom destination for log output (primarily for testing with ArrayStream).
    * @default process.stdout
    */
   logDestination?: any
-  
+
   /**
-   * Fields to redact from logs for privacy/security
+   * Fields to redact from logs. Supports dot notation and wildcards.
    * @default []
    */
   logRedact?: string[]
-  
+
   /**
-   * Global context to include with every log entry
+   * Global context merged into every log entry.
    * @default {}
    */
   logContext?: any
-  
+
   /**
-   * Optional header name to extract trace ID from incoming requests
-   * Performs case-insensitive lookup and auto-generates ULID if missing
-   * @default null
-   */
-  logRequestTraceIdHeader?: string
-  
-  /**
-   * Whether to log errors caught by the RequestLoggerInterceptor
+   * Whether RequestLoggerInterceptor logs uncaught errors from route handlers.
    * @default false
    */
   logErrors?: boolean
 }
 ```
 
-## Advanced Usage
-
-### Testing Your Logs
-
-Use ArrayStream for testing log output:
-
-```typescript
-import { Test } from '@nestjs/testing'
-import { LoggingModule, ApplicationLoggerService } from '@neoma/logging'
-import { ArrayStream } from '@neoma/logging/fixtures'
-
-describe('MyService', () => {
-  let logger: ApplicationLoggerService
-  let logs: any[]
-
-  beforeEach(async () => {
-    logs = []
-    const module = await Test.createTestingModule({
-      imports: [
-        LoggingModule.forRoot({
-          logDestination: new ArrayStream(logs)
-        })
-      ]
-    }).compile()
-    
-    logger = module.get(ApplicationLoggerService)
-  })
-
-  it('should log user creation', () => {
-    logger.log('User created', { userId: '123' })
-    
-    expect(logs).toContainEqual(
-      expect.objectContaining({
-        level: 30, // INFO level
-        msg: 'User created',
-        userId: '123'
-      })
-    )
-  })
-})
-```
-
-
-## Performance
-
-@neoma/logging is built on Pino, one of the fastest Node.js loggers:
-
-- **Low overhead**: Minimal performance impact on your application
-- **Asynchronous**: Non-blocking log operations
-- **Efficient**: Optimized JSON serialization
-- **Memory efficient**: Smart object redaction without deep cloning
-
-## Comparison
-
-| Feature | @neoma/logging | NestJS Built-in | nestjs-pino |
-|---------|---------------|----------------|-------------|
-| Performance | ⚡ High | 🐌 Low | ⚡ High |
-| NestJS Integration | 🎯 Native | ✅ Built-in | 🔧 Manual |
-| Request Scoping | ✅ Yes | ❌ No | ✅ Yes (AsyncLocalStorage) |
-| Global Context | ✅ Built-in | ❌ No | 🔧 Manual |
-| Field Redaction | ✅ Built-in | ❌ No | 🔧 Manual |
-| Testing DX | ✅ Excellent | ❌ Poor | 🔧 Manual |
-| TypeScript Support | ✅ Full | ✅ Full | ✅ Full |
-
-## Features
-
-- ✅ **ApplicationLoggerService** - Application-scoped logging with global context
-- ✅ **RequestLoggerService** - Request-scoped logging with automatic request context
-- ✅ **Automatic request logging** - Log all requests/responses when `logLevel: 'debug'`
-- ✅ **Request tracing** - Automatic ULID generation for request correlation
-- ✅ **Header extraction** - Extract trace IDs from request headers with fallback
-- ✅ **Error interceptor** - Configurable automatic error logging
-- ✅ **Middleware integration** - Logger available as `req.logger` on all requests
-- ✅ **Field redaction** - Built-in sensitive data protection with Pino paths
-- ✅ **Global context configuration** - Add application metadata to all logs
-- ✅ **Memory buffer testing** - ArrayStream utility for comprehensive test coverage
-- ✅ **Printf-style and object context** - Flexible logging patterns
-
-## Coming Soon
-
-- 🏷️ **Default log fields** - Automatic environment, version, and deployment metadata
-- 📊 **Structured logging helpers** - Common log patterns and utilities  
-- 🔄 **Log rotation** - Built-in log file rotation
-- 📈 **Metrics integration** - Automatic logging metrics collection
-
 ## Requirements
 
 - Node.js >= 22
 - NestJS 11.x
-- Express >= 4
+- `@neoma/request-context` (peer dependency)
 
 ## License
 
-MIT License - see [LICENSE](./LICENSE) for details.
-
-## Links
-
-- [npm package](https://www.npmjs.com/package/@neoma/logging)
-- [GitHub repository](https://github.com/neomaventures/pack/tree/main/packages/logging)
-- [Pino documentation](https://getpino.io/)
-- [NestJS documentation](https://docs.nestjs.com/)
+MIT — see [LICENSE](./LICENSE).
