@@ -50,7 +50,7 @@
     "nodemailer": "^8.0.4"
   },
   "peerDependencies": {
-    "@neoma/logging": "workspace:^",
+    "@neoma/logging": "*",
     "@nestjs/common": "11.x",
     "@nestjs/core": "11.x",
     "@nestjs/event-emitter": "3.x",
