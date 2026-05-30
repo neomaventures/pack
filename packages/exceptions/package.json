@@ -1,0 +1,66 @@
+{
+  "name": "@neoma/exceptions",
+  "version": "0.10.0",
+  "description": "Effective and automatic exception handling for NestJS.",
+  "author": "Daniel Bruce",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neomaventures/pack",
+    "directory": "packages/exceptions"
+  },
+  "bugs": {
+    "url": "https://github.com/neomaventures/pack/issues"
+  },
+  "homepage": "https://github.com/neomaventures/pack/tree/main/packages/exceptions#readme",
+  "keywords": [
+    "nestjs",
+    "laravel",
+    "neoma",
+    "exceptions"
+  ],
+  "private": false,
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "!**/*.json",
+    "!**/*.tsbuildinfo"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc -p ./tsconfig.lib.json",
+    "test": "jest --runInBand --passWithNoTests",
+    "pretest:e2e": "pnpm build",
+    "test:e2e": "NODE_OPTIONS=--experimental-vm-modules jest --config ./e2e/jest-e2e.json --runInBand",
+    "lint": "eslint ."
+  },
+  "peerDependencies": {
+    "@neoma/logging": "workspace:^",
+    "@nestjs/common": "11.x",
+    "@nestjs/core": "11.x",
+    "class-transformer": "0.x",
+    "class-validator": "0.x"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^9.6.0",
+    "@neoma/fixtures": "workspace:*",
+    "@neoma/logging": "workspace:*",
+    "@neoma/managed-app": "workspace:*",
+    "@neoma/request-context": "workspace:*",
+    "@nestjs/core": "^11.1.18",
+    "@nestjs/platform-express": "^11.1.18",
+    "@nestjs/testing": "^11.1.18",
+    "@types/ejs": "^3.1.5",
+    "@types/express": "^5.0.0",
+    "@types/supertest": "^6.0.2",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "ejs": "^3.1.10",
+    "supertest": "^7.0.0"
+  }
+}
