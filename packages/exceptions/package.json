@@ -1,6 +1,6 @@
 {
   "name": "@neoma/exceptions",
-  "version": "0.10.0",
+  "version": "1.0.0",
   "description": "Effective and automatic exception handling for NestJS.",
   "author": "Daniel Bruce",
   "repository": {

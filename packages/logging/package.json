@@ -1,7 +1,7 @@
 {
   "name": "@neoma/logging",
-  "version": "0.7.0",
-  "description": "Great logging for NestJS \u2014 Pino-backed application + request-scoped loggers.",
+  "version": "0.8.0",
+  "description": "Great logging for NestJS — Pino-backed application + request-scoped loggers.",
   "author": "Daniel Bruce",
   "repository": {
     "type": "git",
