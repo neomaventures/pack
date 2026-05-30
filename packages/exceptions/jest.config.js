@@ -6,7 +6,7 @@ module.exports = {
   moduleNameMapper: {
     ...base.moduleNameMapper,
     // Spec convention: import the public barrel, resolve to src (no build).
-    "^@neoma/exception-handling$": "<rootDir>/src",
-    "^@neoma/exception-handling/(.*)$": "<rootDir>/src/$1",
+    "^@neoma/exceptions$": "<rootDir>/src",
+    "^@neoma/exceptions/(.*)$": "<rootDir>/src/$1",
   },
 }
