@@ -280,6 +280,47 @@ By default, keys are generated as `${ulid}-${originalName}`. ULIDs provide time-
 
 To customise key generation, pass a `key` option to `@Upload()`. See [Custom key resolution](#custom-key-resolution) above.
 
+## Customizing the ID generator
+
+The package ships `UlidIdGenerator` as the default — ULIDs are time-sortable, compact (26 chars vs 36 for UUID), and globally unique, which makes them a strong default for S3 object keys.
+
+If you want a different identifier (UUID v4, a custom sequential ID, deterministic test IDs, etc.), implement a class with the same shape and override the default via Nest's standard provider replacement.
+
+```ts
+// my-app/src/uuid-id-generator.ts
+import { Injectable } from "@nestjs/common"
+import { v4 as uuid } from "uuid"
+
+@Injectable()
+export class UuidIdGenerator {
+  public generate(): string {
+    return uuid()
+  }
+}
+```
+
+```ts
+// my-app/src/app.module.ts
+import { Module } from "@nestjs/common"
+import { StorageModule } from "@neoma/storage"
+// `UlidIdGenerator` is the default-implementation class, kept out of the
+// public barrel deliberately — reach for it via this deep path only when
+// you're replacing it.
+import { UlidIdGenerator } from "@neoma/storage/services/ulid-id-generator.service"
+
+import { UuidIdGenerator } from "./uuid-id-generator"
+
+@Module({
+  imports: [StorageModule.forRoot({ /* ... */ })],
+  providers: [
+    { provide: UlidIdGenerator, useClass: UuidIdGenerator },
+  ],
+})
+export class AppModule {}
+```
+
+Any class with a `generate(): string` method satisfies the contract — the upload pipeline calls `idGenerator.generate()` to mint each key prefix. Inject it the same way for tests (e.g. a `TestIdGenerator` that returns predictable strings) so your specs don't have to mock around ULID's randomness.
+
 ## License
 
 MIT

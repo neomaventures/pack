@@ -1,6 +1,11 @@
 import { faker } from "@faker-js/faker"
-import { UlidIdGenerator } from "@neoma/storage/services/ulid-id-generator.service"
 import { managedAppInstance } from "@neoma/managed-app"
+// UlidIdGenerator is intentionally imported past the public barrel: it's
+// the default implementation behind the IdGenerator contract, kept out of
+// the package's public API. Consumers wanting a deterministic id in tests
+// (or production) override it via this same deep-import path — see the
+// "Customizing the ID generator" section in the package README.
+import { UlidIdGenerator } from "@neoma/storage/services/ulid-id-generator.service"
 import { HttpStatus } from "@nestjs/common"
 import { TestIdGenerator } from "fixtures/services/test-id-generator"
 import { MinioClient } from "fixtures/storage/minio"
