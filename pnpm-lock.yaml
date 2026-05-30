@@ -84,7 +84,7 @@ importers:
         specifier: ^8.58.0
         version: 8.59.3(eslint@10.4.0)(typescript@6.0.3)
 
-  packages/argos:
+  packages/audit:
     dependencies:
       '@nestjs/common':
         specifier: 11.x
@@ -118,42 +118,48 @@ importers:
         specifier: ^0.3.20
         version: 0.3.29(sqlite3@5.1.7)(ts-node@10.9.2(@types/node@25.8.0)(typescript@6.0.3))
 
-  packages/cerberus:
+  packages/auth:
     dependencies:
-      '@aws-sdk/client-s3':
-        specifier: ^3.0.0
-        version: 3.1048.0
-      '@aws-sdk/s3-request-presigner':
-        specifier: ^3.0.0
-        version: 3.1048.0
       '@nestjs/common':
         specifier: 11.x
         version: 11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      multer:
-        specifier: ^2.1.1
-        version: 2.1.1
+      cookie:
+        specifier: ^1.1.1
+        version: 1.1.1
+      jsonwebtoken:
+        specifier: ^9.0.2
+        version: 9.0.3
+      ms:
+        specifier: ^2.1.3
+        version: 2.1.3
+      nodemailer:
+        specifier: ^8.0.4
+        version: 8.0.7
       reflect-metadata:
         specifier: '>=0.2'
         version: 0.2.2
       rxjs:
         specifier: '>=7'
         version: 7.8.2
-      ulid:
-        specifier: ^3.0.2
-        version: 3.0.2
     devDependencies:
       '@neoma/fixtures':
         specifier: workspace:*
         version: link:../fixtures
+      '@neoma/logging':
+        specifier: workspace:*
+        version: link:../logging
+      '@neoma/mailpit':
+        specifier: workspace:*
+        version: link:../mailpit
       '@neoma/managed-app':
         specifier: workspace:*
         version: link:../managed-app
-      '@neoma/managed-database':
+      '@neoma/mockserver':
         specifier: workspace:*
-        version: link:../managed-database
-      '@neoma/minio':
+        version: link:../mockserver
+      '@neoma/request-context':
         specifier: workspace:*
-        version: link:../minio
+        version: link:../request-context
       '@nestjs/core':
         specifier: ^11.1.18
         version: 11.1.21(@nestjs/common@11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.21)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -169,18 +175,24 @@ importers:
       '@nestjs/typeorm':
         specifier: ^11.0.0
         version: 11.0.1(@nestjs/common@11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.21)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.29(sqlite3@5.1.7)(ts-node@10.9.2(@types/node@25.8.0)(typescript@6.0.3)))
-      '@types/lodash':
-        specifier: ^4.17.13
-        version: 4.17.24
-      '@types/multer':
+      '@types/cookie':
+        specifier: ^0.6.0
+        version: 0.6.0
+      '@types/jsonwebtoken':
+        specifier: ^9.0.10
+        version: 9.0.10
+      '@types/ms':
         specifier: ^2.1.0
         version: 2.1.0
       '@types/supertest':
         specifier: ^6.0.2
         version: 6.0.3
-      lodash:
-        specifier: ^4.17.21
-        version: 4.18.1
+      class-transformer:
+        specifier: ^0.5.1
+        version: 0.5.1
+      class-validator:
+        specifier: ^0.14.1
+        version: 0.14.4
       sqlite3:
         specifier: ^5.1.7
         version: 5.1.7
@@ -190,6 +202,9 @@ importers:
       typeorm:
         specifier: ^0.3.20
         version: 0.3.29(sqlite3@5.1.7)(ts-node@10.9.2(@types/node@25.8.0)(typescript@6.0.3))
+      uuid:
+        specifier: ^11.0.0
+        version: 11.1.1
 
   packages/config:
     dependencies:
@@ -216,7 +231,7 @@ importers:
         specifier: ^9.6.0
         version: 9.9.0
 
-  packages/exception-handling:
+  packages/exceptions:
     dependencies:
       '@nestjs/common':
         specifier: 11.x
@@ -332,94 +347,6 @@ importers:
       '@types/multer':
         specifier: ^2.1.0
         version: 2.1.0
-
-  packages/garmr:
-    dependencies:
-      '@nestjs/common':
-        specifier: 11.x
-        version: 11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      cookie:
-        specifier: ^1.1.1
-        version: 1.1.1
-      jsonwebtoken:
-        specifier: ^9.0.2
-        version: 9.0.3
-      ms:
-        specifier: ^2.1.3
-        version: 2.1.3
-      nodemailer:
-        specifier: ^8.0.4
-        version: 8.0.7
-      reflect-metadata:
-        specifier: '>=0.2'
-        version: 0.2.2
-      rxjs:
-        specifier: '>=7'
-        version: 7.8.2
-    devDependencies:
-      '@neoma/fixtures':
-        specifier: workspace:*
-        version: link:../fixtures
-      '@neoma/logging':
-        specifier: workspace:*
-        version: link:../logging
-      '@neoma/mailpit':
-        specifier: workspace:*
-        version: link:../mailpit
-      '@neoma/managed-app':
-        specifier: workspace:*
-        version: link:../managed-app
-      '@neoma/mockserver':
-        specifier: workspace:*
-        version: link:../mockserver
-      '@neoma/request-context':
-        specifier: workspace:*
-        version: link:../request-context
-      '@nestjs/core':
-        specifier: ^11.1.18
-        version: 11.1.21(@nestjs/common@11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.21)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@nestjs/event-emitter':
-        specifier: ^3.1.0
-        version: 3.1.0(@nestjs/common@11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.21)
-      '@nestjs/platform-express':
-        specifier: ^11.1.18
-        version: 11.1.21(@nestjs/common@11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.21)
-      '@nestjs/testing':
-        specifier: ^11.1.18
-        version: 11.1.21(@nestjs/common@11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.21)(@nestjs/platform-express@11.1.21)
-      '@nestjs/typeorm':
-        specifier: ^11.0.0
-        version: 11.0.1(@nestjs/common@11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.21)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.29(sqlite3@5.1.7)(ts-node@10.9.2(@types/node@25.8.0)(typescript@6.0.3)))
-      '@types/cookie':
-        specifier: ^0.6.0
-        version: 0.6.0
-      '@types/jsonwebtoken':
-        specifier: ^9.0.10
-        version: 9.0.10
-      '@types/ms':
-        specifier: ^2.1.0
-        version: 2.1.0
-      '@types/supertest':
-        specifier: ^6.0.2
-        version: 6.0.3
-      class-transformer:
-        specifier: ^0.5.1
-        version: 0.5.1
-      class-validator:
-        specifier: ^0.14.1
-        version: 0.14.4
-      sqlite3:
-        specifier: ^5.1.7
-        version: 5.1.7
-      supertest:
-        specifier: ^7.0.0
-        version: 7.2.2
-      typeorm:
-        specifier: ^0.3.20
-        version: 0.3.29(sqlite3@5.1.7)(ts-node@10.9.2(@types/node@25.8.0)(typescript@6.0.3))
-      uuid:
-        specifier: ^11.0.0
-        version: 11.1.1
 
   packages/logging:
     dependencies:
@@ -611,6 +538,79 @@ importers:
       '@types/supertest':
         specifier: ^6.0.2
         version: 6.0.3
+      sqlite3:
+        specifier: ^5.1.7
+        version: 5.1.7
+      supertest:
+        specifier: ^7.0.0
+        version: 7.2.2
+      typeorm:
+        specifier: ^0.3.20
+        version: 0.3.29(sqlite3@5.1.7)(ts-node@10.9.2(@types/node@25.8.0)(typescript@6.0.3))
+
+  packages/storage:
+    dependencies:
+      '@aws-sdk/client-s3':
+        specifier: ^3.0.0
+        version: 3.1048.0
+      '@aws-sdk/s3-request-presigner':
+        specifier: ^3.0.0
+        version: 3.1048.0
+      '@nestjs/common':
+        specifier: 11.x
+        version: 11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      multer:
+        specifier: ^2.1.1
+        version: 2.1.1
+      reflect-metadata:
+        specifier: '>=0.2'
+        version: 0.2.2
+      rxjs:
+        specifier: '>=7'
+        version: 7.8.2
+      ulid:
+        specifier: ^3.0.2
+        version: 3.0.2
+    devDependencies:
+      '@neoma/fixtures':
+        specifier: workspace:*
+        version: link:../fixtures
+      '@neoma/managed-app':
+        specifier: workspace:*
+        version: link:../managed-app
+      '@neoma/managed-database':
+        specifier: workspace:*
+        version: link:../managed-database
+      '@neoma/minio':
+        specifier: workspace:*
+        version: link:../minio
+      '@nestjs/core':
+        specifier: ^11.1.18
+        version: 11.1.21(@nestjs/common@11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.21)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/event-emitter':
+        specifier: ^3.1.0
+        version: 3.1.0(@nestjs/common@11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.21)
+      '@nestjs/platform-express':
+        specifier: ^11.1.18
+        version: 11.1.21(@nestjs/common@11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.21)
+      '@nestjs/testing':
+        specifier: ^11.1.18
+        version: 11.1.21(@nestjs/common@11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.21)(@nestjs/platform-express@11.1.21)
+      '@nestjs/typeorm':
+        specifier: ^11.0.0
+        version: 11.0.1(@nestjs/common@11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.21)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.29(sqlite3@5.1.7)(ts-node@10.9.2(@types/node@25.8.0)(typescript@6.0.3)))
+      '@types/lodash':
+        specifier: ^4.17.13
+        version: 4.17.24
+      '@types/multer':
+        specifier: ^2.1.0
+        version: 2.1.0
+      '@types/supertest':
+        specifier: ^6.0.2
+        version: 6.0.3
+      lodash:
+        specifier: ^4.17.21
+        version: 4.18.1
       sqlite3:
         specifier: ^5.1.7
         version: 5.1.7

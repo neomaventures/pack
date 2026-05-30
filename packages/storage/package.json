@@ -1,0 +1,77 @@
+{
+  "name": "@neoma/storage",
+  "version": "0.2.0",
+  "description": "NestJS-idiomatic file storage for S3-compatible backends \u2014 upload, persist, presigned download.",
+  "author": "Daniel Bruce",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neomaventures/pack",
+    "directory": "packages/storage"
+  },
+  "bugs": {
+    "url": "https://github.com/neomaventures/pack/issues"
+  },
+  "homepage": "https://github.com/neomaventures/pack/tree/main/packages/storage#readme",
+  "keywords": [
+    "nestjs",
+    "file-upload",
+    "s3",
+    "neoma",
+    "storage"
+  ],
+  "private": false,
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "!**/*.json",
+    "!**/*.tsbuildinfo"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc -p ./tsconfig.lib.json",
+    "test": "NEOMA_TEST_PREFIX=storage MINIO_PORT=9002 MINIO_CONSOLE_PORT=9003 NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
+    "pretest:e2e": "pnpm build",
+    "test:e2e": "NEOMA_TEST_PREFIX=storage MINIO_PORT=9002 MINIO_CONSOLE_PORT=9003 NODE_OPTIONS=--experimental-vm-modules jest --config ./e2e/jest-e2e.json --runInBand",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.0.0",
+    "@aws-sdk/s3-request-presigner": "^3.0.0",
+    "multer": "^2.1.1",
+    "ulid": "^3.0.2"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "11.x",
+    "@nestjs/core": "11.x",
+    "@nestjs/event-emitter": ">=3.0.0",
+    "@nestjs/platform-express": "11.x",
+    "@nestjs/typeorm": "11.x",
+    "reflect-metadata": ">=0.2",
+    "rxjs": ">=7",
+    "typeorm": ">=0.3"
+  },
+  "devDependencies": {
+    "@neoma/fixtures": "workspace:*",
+    "@neoma/managed-app": "workspace:*",
+    "@neoma/managed-database": "workspace:*",
+    "@neoma/minio": "workspace:*",
+    "@nestjs/core": "^11.1.18",
+    "@nestjs/event-emitter": "^3.1.0",
+    "@nestjs/platform-express": "^11.1.18",
+    "@nestjs/testing": "^11.1.18",
+    "@nestjs/typeorm": "^11.0.0",
+    "@types/lodash": "^4.17.13",
+    "@types/multer": "^2.1.0",
+    "@types/supertest": "^6.0.2",
+    "lodash": "^4.17.21",
+    "sqlite3": "^5.1.7",
+    "supertest": "^7.0.0",
+    "typeorm": "^0.3.20"
+  }
+}

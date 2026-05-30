@@ -28,12 +28,12 @@ package not yet brought in (a currency-conversion feature still under developmen
 |---|---|
 | `@neoma/config` | type-safe environment configuration |
 | `@neoma/logging` | Pino-backed application + request-scoped loggers |
-| `@neoma/exception-handling` | automatic, content-negotiated exception handling |
-| `@neoma/garmr` | authn + authz — magic links, Google OAuth, sessions, wildcard permissions |
+| `@neoma/exceptions` | automatic, content-negotiated exception handling |
+| `@neoma/auth` | authn + authz — magic links, Google OAuth, sessions, wildcard permissions |
 | `@neoma/features` | feature flags — gate routes behind on/off flags |
 | `@neoma/route-model-binding` | Laravel-style route → model resolution |
-| `@neoma/cerberus` | S3-compatible file storage (upload / persist / download) |
-| `@neoma/argos` | audit trails — `@CreatedBy`/`@UpdatedBy` via ALS actor tracking |
+| `@neoma/storage` | S3-compatible file storage (upload / persist / download) |
+| `@neoma/audit` | audit trails — `@CreatedBy`/`@UpdatedBy` via ALS actor tracking |
 
 ---
 
@@ -55,9 +55,9 @@ Express/NestJS mocks + matchers only, no Docker.
   start/stop), not just a Jest drop-in, precisely so these can be layered on.
 
 ### ~~2. Move `garmr` in~~ ✅ done
-Flattened from `neoma-garmr` v0.10.0 (cloned fresh): lib → `packages/garmr/src`, e2e
-harness → `packages/garmr/e2e/app`, e2e specs → `packages/garmr/e2e`, package fixtures →
-`packages/garmr/fixtures`. Brought in at 0.10.0 (already on npm) — no changeset.
+Flattened from `neoma-garmr` v0.10.0 (cloned fresh): lib → `packages/auth/src`, e2e
+harness → `packages/auth/e2e/app`, e2e specs → `packages/auth/e2e`, package fixtures →
+`packages/auth/fixtures`. Brought in at 0.10.0 (already on npm) — no changeset.
 Builds + lints; **330 unit + 208 e2e green**.
 
 ### ~~3. Update garmr to consume the in-repo packages~~ ✅ done
@@ -66,7 +66,7 @@ Rewired off the deleted `@neoma/fixtures/docker` + `/mailpit` + `/mockserver` su
 - Google OAuth mock → `@neoma/mockserver` (`startContainer` + `MockServerClient`),
 - app boot → `@neoma/managed-app`, matchers → `@neoma/fixtures/matchers`.
 `@neoma/managed-database` isn't used (harness uses an inline in-memory sqlite datasource).
-e2e follows the dist-fidelity convention (harness imports `@neoma/garmr` → built `dist`).
+e2e follows the dist-fidelity convention (harness imports `@neoma/auth` → built `dist`).
 
 ### 4. Promote sensible fixtures from garmr → fixtures
 Garmr's fixtures currently stay local. Apply the boundary rule:
@@ -87,24 +87,30 @@ unit spec). garmr already follows this. (Do as its own PR after the garmr bring-
 
 ## Conventions & gotchas (reference for any bring-in)
 
-- **Naming:** product/library packages take mythic names (`@neoma/cerberus`,
-  `@neoma/garmr`); test-infra and fixture packages take plain descriptive names
-  (`@neoma/fixtures`, `@neoma/managed-app`, `@neoma/managed-database`, `@neoma/minio`).
-  A consumer should read the name and know which tier it's in.
+- **Naming:** packages take **descriptive names** that say what they do
+  (`@neoma/auth`, `@neoma/storage`, `@neoma/audit`, `@neoma/exceptions`,
+  `@neoma/billing`). Fixture packages wrapping a specific tool take that
+  tool's name (`@neoma/minio`, `@neoma/mailpit`, `@neoma/mockserver`). A
+  consumer should read the name and know what it provides without needing
+  a glossary. No mythology.
 - **Toolchain:** use `corepack pnpm` (pinned `11.1.3`). A different local pnpm can
   produce a lockfile CI rejects under the supply-chain policy.
 - **Flatten layout:** lib at `packages/<name>/src` (build via `tsconfig.lib.json`,
   excluding specs/fixtures); e2e under `packages/<name>/e2e`; per-package
   `jest.config.js`. Shared `tsconfig.base.json` + `eslint.config.mjs` at root.
 - **Release:** Changesets — `pnpm changeset` per change → merge → the auto "Version
-  Packages" PR → merge it to publish. Changesets owns each package's `CHANGELOG.md`
-  (Keep-a-Changelog preamble removed). Bring-ins at current versions need no changeset.
+  Packages" PR → merge it to publish. **Private to GitHub Packages**, not the public
+  npm registry — each `package.json` has `publishConfig.registry` set, and CI uses
+  `GITHUB_TOKEN` (no `NPM_TOKEN` involved). Packages graduate to public npm per-package
+  when ready (drop `publishConfig`, ship a `1.0.0`). Changesets owns each package's
+  `CHANGELOG.md` (Keep-a-Changelog preamble removed). Bring-ins at current versions
+  need no changeset.
 - **Supply chain (`pnpm-workspace.yaml`):** `minimumReleaseAge: 10080` (reject deps
   published < 7 days ago) + `allowBuilds` allowlist (build-script deps must be listed).
 - **CI:** `ci.yml` runs on every branch push (`pnpm -r build / lint / test` +
-  `pnpm -r test:e2e`). `release.yml` runs the Changesets action on `main`. **Do not**
-  add `setup-node` `registry-url` to `release.yml` — it shadows the Changesets
-  `NPM_TOKEN` auth and the publish 404s.
+  `pnpm -r test:e2e`). On `main` it also runs the Changesets action — opens/updates
+  the "Version Packages" PR and, when that PR merges, publishes to GitHub Packages
+  via the workflow's `packages: write` permission.
 - **Strict-base reconciliation checklist** (these surface when flattening a package):
   - `import * as request from "supertest"` → `import request from "supertest"`.
   - `catch (e)` is `unknown` → narrow (`const error = e as ...`); on re-throw attach

@@ -1,0 +1,18 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "globalSetup": "@neoma/minio/setup",
+  "globalTeardown": "@neoma/minio/teardown",
+  "setupFiles": ["<rootDir>/build.setup.ts"],
+  "setupFilesAfterEnv": ["jest-extended/all", "@neoma/fixtures/matchers"],
+  "transform": {
+    "^.+\\.tsx?$": "ts-jest"
+  },
+  "moduleNameMapper": {
+    "fixtures/(.*)$": "<rootDir>/../fixtures/$1",
+    "^@neoma/storage$": "<rootDir>/../dist/index.js",
+    "^@neoma/storage/(.*)$": "<rootDir>/../dist/$1"
+  }
+}

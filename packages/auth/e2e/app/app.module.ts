@@ -1,0 +1,47 @@
+import { AuthModule } from "@neoma/auth"
+import { LoggingModule } from "@neoma/logging"
+import { RequestContextModule } from "@neoma/request-context"
+import { Module } from "@nestjs/common"
+import { TypeOrmModule } from "@nestjs/typeorm"
+
+import { AppController } from "./app.controller"
+import { User } from "./user.entity"
+
+@Module({
+  imports: [
+    RequestContextModule.forRoot(),
+    LoggingModule.forRoot(),
+    TypeOrmModule.forRoot({
+      type: "sqlite",
+      database: ":memory:",
+      entities: [User],
+      synchronize: true,
+    }),
+    AuthModule.forRoot({
+      secret: process.env.AUTH_SECRET!,
+      expiresIn: "1h",
+      entity: User,
+      magicLink: {
+        mailer: {
+          host: process.env.SMTP_HOST!,
+          port: parseInt(process.env.SMTP_PORT!),
+          from: process.env.MAGIC_LINK_FROM!,
+          welcome: {
+            subject: process.env.MAGIC_LINK_WELCOME_SUBJECT!,
+            html: `<a href="${process.env.APP_URL!}/magic-link/verify?token={{token}}">Sign up</a>`,
+          },
+          welcomeBack: {
+            subject: process.env.MAGIC_LINK_WELCOME_BACK_SUBJECT!,
+            html: `<a href="${process.env.APP_URL!}/magic-link/verify?token={{token}}">Sign in</a>`,
+          },
+          auth: {
+            user: process.env.MAILPIT_AUTH_USER!,
+            pass: process.env.MAILPIT_AUTH_PASS!,
+          },
+        },
+      },
+    }),
+  ],
+  controllers: [AppController],
+})
+export class AppModule {}

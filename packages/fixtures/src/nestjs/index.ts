@@ -61,7 +61,7 @@ export const executionContext = <T>(
     resolvedHandler = handler
     resolvedClass = cls ?? Object
   } else if (handler) {
-    // Garmr pattern: typed route object
+    // Auth pattern: typed route object
     resolvedHandler = handler.controller.prototype[handler.method]
     resolvedClass = handler.controller
   }

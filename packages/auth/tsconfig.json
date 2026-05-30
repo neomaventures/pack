@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node", "jest", "jest-extended", "@neoma/fixtures/matchers"],
+    "paths": {
+      "@neoma/auth": ["./src"],
+      "@neoma/auth/*": ["./src/*"],
+      "fixtures/*": ["./fixtures/*"]
+    }
+  },
+  "include": ["src/**/*", "fixtures/**/*", "e2e/**/*"]
+}
