@@ -17,10 +17,6 @@ jest.mock("@neoma/request-context", () => ({
 
 const mockedGetRequest = jest.mocked(getRequest)
 
-const username = faker.internet.username()
-const attempts = 3
-const template = "User %s logged in with %d attempts"
-
 describe("ApplicationLoggerService", () => {
   const message = faker.hacker.phrase()
   const context = { ctx: faker.lorem.word() }
@@ -58,18 +54,15 @@ describe("ApplicationLoggerService", () => {
 
       const service = module.get(ApplicationLoggerService)
 
-      service.verbose!(message)
-      service.debug!(message)
+      service.verbose(message)
+      service.debug(message)
       service.log(message)
       service.warn(message)
       service.error(message)
-      service.fatal!(message)
+      service.fatal(message)
 
       expect(logs).toHaveLength(4)
-      expect(logs[0]).toMatchObject({
-        level: LogLevelNumber.log,
-        msg: message,
-      })
+      expect(logs[0]).toMatchObject({ level: LogLevelNumber.log, msg: message })
       expect(logs[1]).toMatchObject({
         level: LogLevelNumber.warn,
         msg: message,
@@ -94,18 +87,15 @@ describe("ApplicationLoggerService", () => {
 
       const service = module.get(ApplicationLoggerService)
 
-      service.verbose!(message)
-      service.debug!(message)
+      service.verbose(message)
+      service.debug(message)
       service.log(message)
       service.warn(message)
       service.error(message)
-      service.fatal!(message)
+      service.fatal(message)
 
       expect(logs).toHaveLength(4)
-      expect(logs[0]).toMatchObject({
-        level: LogLevelNumber.log,
-        msg: message,
-      })
+      expect(logs[0]).toMatchObject({ level: LogLevelNumber.log, msg: message })
       expect(logs[1]).toMatchObject({
         level: LogLevelNumber.warn,
         msg: message,
@@ -129,47 +119,16 @@ describe("ApplicationLoggerService", () => {
             it(`It should log the message at the ${method} level`, () => {
               service[method](message)
               expect(logOptions.logDestination.logs).toContainEqual(
-                expect.objectContaining({
-                  level,
-                  msg: message,
-                }),
+                expect.objectContaining({ level, msg: message }),
               )
             })
           })
 
-          describe("When it's called with a message and a single context parameter that is an object", () => {
+          describe("When it's called with a context object", () => {
             it(`It should log the message and merge the context's properties into the log entry at the ${method} level`, () => {
               service[method](message, context)
               expect(logOptions.logDestination.logs).toContainEqual(
-                expect.objectContaining({
-                  level,
-                  msg: message,
-                  ...context,
-                }),
-              )
-            })
-          })
-
-          describe("When it's called with a message and a single context parameter that is a primitive (e.g. string)", () => {
-            it(`It should interpolate the message with the primitive parameter at the ${method} level`, () => {
-              service[method]("User %s logged in", username)
-              expect(logOptions.logDestination.logs).toContainEqual(
-                expect.objectContaining({
-                  level,
-                  msg: `User ${username} logged in`,
-                }),
-              )
-            })
-          })
-
-          describe("When it's called with printf-style interpolation", () => {
-            it(`It should interpolate the message with the provided parameters at the ${method} level`, () => {
-              service[method](template, username, attempts)
-              expect(logOptions.logDestination.logs).toContainEqual(
-                expect.objectContaining({
-                  level,
-                  msg: `User ${username} logged in with 3 attempts`,
-                }),
+                expect.objectContaining({ level, msg: message, ...context }),
               )
             })
           })
@@ -197,8 +156,8 @@ describe("ApplicationLoggerService", () => {
             })
           })
 
-          describe("When it's called with a message and a single context parameter that is an object", () => {
-            it(`It should log the message and merge the context's properties into the log entry at the ${method} level`, () => {
+          describe("When it's called with a context object", () => {
+            it(`It should log the message, merge the context, and include the request at the ${method} level`, () => {
               service[method](message, context)
               expect(logOptions.logDestination.logs).toContainEqual(
                 expect.objectContaining({
@@ -213,40 +172,100 @@ describe("ApplicationLoggerService", () => {
               )
             })
           })
-
-          describe("When it's called with a message and a single context parameter that is a primitive (e.g. string)", () => {
-            it(`It should interpolate the message with the primitive parameter at the ${method} level`, () => {
-              service[method]("User %s logged in", username)
-              expect(logOptions.logDestination.logs).toContainEqual(
-                expect.objectContaining({
-                  level,
-                  msg: `User ${username} logged in`,
-                  req: expect.objectContaining({
-                    method: request.method,
-                    url: request.url,
-                  }),
-                }),
-              )
-            })
-          })
-
-          describe("When it's called with printf-style interpolation", () => {
-            it(`It should interpolate the message with the provided parameters at the ${method} level`, () => {
-              service[method](template, username, attempts)
-              expect(logOptions.logDestination.logs).toContainEqual(
-                expect.objectContaining({
-                  level,
-                  msg: `User ${username} logged in with 3 attempts`,
-                  req: expect.objectContaining({
-                    method: request.method,
-                    url: request.url,
-                  }),
-                }),
-              )
-            })
-          })
         })
       })
+    })
+
+    describe("info() is an alias for log()", () => {
+      it("It should log at the log (info) level", () => {
+        service.info(message, context)
+        expect(logOptions.logDestination.logs).toContainEqual(
+          expect.objectContaining({
+            level: LogLevelNumber.log,
+            msg: message,
+            ...context,
+          }),
+        )
+      })
+    })
+
+    describe("When called with an err in the context", () => {
+      it("It should let pino serialize Error fields as { type, message, stack }", () => {
+        const err = new Error(faker.hacker.phrase())
+
+        service.error(message, { err })
+
+        expect(logOptions.logDestination.logs).toContainEqual(
+          expect.objectContaining({
+            level: LogLevelNumber.error,
+            msg: message,
+            err: expect.objectContaining({
+              type: "Error",
+              message: err.message,
+              stack: expect.any(String),
+            }),
+          }),
+        )
+      })
+
+      it("It should preserve other fields alongside the serialized err", () => {
+        const err = new Error(faker.hacker.phrase())
+        const extra = { chargeId: faker.string.uuid() }
+
+        service.error(message, { err, ...extra })
+
+        expect(logOptions.logDestination.logs).toContainEqual(
+          expect.objectContaining({
+            level: LogLevelNumber.error,
+            msg: message,
+            chargeId: extra.chargeId,
+            err: expect.objectContaining({ message: err.message }),
+          }),
+        )
+      })
+    })
+  })
+
+  describe("Static delegates", () => {
+    it("It should route ApplicationLoggerService.log(...) through the constructed instance", () => {
+      ApplicationLoggerService.log(message, context)
+      expect(logOptions.logDestination.logs).toContainEqual(
+        expect.objectContaining({
+          level: LogLevelNumber.log,
+          msg: message,
+          ...context,
+        }),
+      )
+    })
+
+    it("It should route ApplicationLoggerService.error(...) through the constructed instance", () => {
+      const err = new Error(faker.hacker.phrase())
+      ApplicationLoggerService.error(message, { err })
+      expect(logOptions.logDestination.logs).toContainEqual(
+        expect.objectContaining({
+          level: LogLevelNumber.error,
+          msg: message,
+          err: expect.objectContaining({ message: err.message }),
+        }),
+      )
+    })
+
+    it("It should include the request when the static delegate is called inside a request context", () => {
+      const request = express.request()
+      mockedGetRequest.mockReturnValue(request as unknown as Request)
+
+      ApplicationLoggerService.warn(message)
+
+      expect(logOptions.logDestination.logs).toContainEqual(
+        expect.objectContaining({
+          level: LogLevelNumber.warn,
+          msg: message,
+          req: expect.objectContaining({
+            method: request.method,
+            url: request.url,
+          }),
+        }),
+      )
     })
   })
 
@@ -264,38 +283,22 @@ describe("ApplicationLoggerService", () => {
 
       const service = module.get(ApplicationLoggerService)
 
-      service.verbose!(message)
-      service.debug!(message)
+      service.verbose(message)
+      service.debug(message)
       service.log(message)
       service.warn(message)
       service.error(message)
-      service.fatal!(message)
+      service.fatal(message)
 
       expect(logs).toHaveLength(6)
-      expect(logs[0]).toMatchObject({
-        level: LogLevelNumber.verbose,
-        msg: message,
-      })
-      expect(logs[1]).toMatchObject({
-        level: LogLevelNumber.debug,
-        msg: message,
-      })
-      expect(logs[2]).toMatchObject({
-        level: LogLevelNumber.log,
-        msg: message,
-      })
-      expect(logs[3]).toMatchObject({
-        level: LogLevelNumber.warn,
-        msg: message,
-      })
-      expect(logs[4]).toMatchObject({
-        level: LogLevelNumber.error,
-        msg: message,
-      })
-      expect(logs[5]).toMatchObject({
-        level: LogLevelNumber.fatal,
-        msg: message,
-      })
+      expect(logs.map((l: any) => l.level)).toEqual([
+        LogLevelNumber.verbose,
+        LogLevelNumber.debug,
+        LogLevelNumber.log,
+        LogLevelNumber.warn,
+        LogLevelNumber.error,
+        LogLevelNumber.fatal,
+      ])
     })
 
     it("It should log at 'debug' level and above when logLevel is 'debug'", async () => {
@@ -311,34 +314,21 @@ describe("ApplicationLoggerService", () => {
 
       const service = module.get(ApplicationLoggerService)
 
-      service.verbose!(message)
-      service.debug!(message)
+      service.verbose(message)
+      service.debug(message)
       service.log(message)
       service.warn(message)
       service.error(message)
-      service.fatal!(message)
+      service.fatal(message)
 
       expect(logs).toHaveLength(5)
-      expect(logs[0]).toMatchObject({
-        level: LogLevelNumber.debug,
-        msg: message,
-      })
-      expect(logs[1]).toMatchObject({
-        level: LogLevelNumber.log,
-        msg: message,
-      })
-      expect(logs[2]).toMatchObject({
-        level: LogLevelNumber.warn,
-        msg: message,
-      })
-      expect(logs[3]).toMatchObject({
-        level: LogLevelNumber.error,
-        msg: message,
-      })
-      expect(logs[4]).toMatchObject({
-        level: LogLevelNumber.fatal,
-        msg: message,
-      })
+      expect(logs.map((l: any) => l.level)).toEqual([
+        LogLevelNumber.debug,
+        LogLevelNumber.log,
+        LogLevelNumber.warn,
+        LogLevelNumber.error,
+        LogLevelNumber.fatal,
+      ])
     })
 
     it("It should log at 'log' level and above when logLevel is 'log'", async () => {
@@ -354,30 +344,20 @@ describe("ApplicationLoggerService", () => {
 
       const service = module.get(ApplicationLoggerService)
 
-      service.verbose!(message)
-      service.debug!(message)
+      service.verbose(message)
+      service.debug(message)
       service.log(message)
       service.warn(message)
       service.error(message)
-      service.fatal!(message)
+      service.fatal(message)
 
       expect(logs).toHaveLength(4)
-      expect(logs[0]).toMatchObject({
-        level: LogLevelNumber.log,
-        msg: message,
-      })
-      expect(logs[1]).toMatchObject({
-        level: LogLevelNumber.warn,
-        msg: message,
-      })
-      expect(logs[2]).toMatchObject({
-        level: LogLevelNumber.error,
-        msg: message,
-      })
-      expect(logs[3]).toMatchObject({
-        level: LogLevelNumber.fatal,
-        msg: message,
-      })
+      expect(logs.map((l: any) => l.level)).toEqual([
+        LogLevelNumber.log,
+        LogLevelNumber.warn,
+        LogLevelNumber.error,
+        LogLevelNumber.fatal,
+      ])
     })
 
     it("It should log at 'warn' level and above when logLevel is 'warn'", async () => {
@@ -393,26 +373,19 @@ describe("ApplicationLoggerService", () => {
 
       const service = module.get(ApplicationLoggerService)
 
-      service.verbose!(message)
-      service.debug!(message)
+      service.verbose(message)
+      service.debug(message)
       service.log(message)
       service.warn(message)
       service.error(message)
-      service.fatal!(message)
+      service.fatal(message)
 
       expect(logs).toHaveLength(3)
-      expect(logs[0]).toMatchObject({
-        level: LogLevelNumber.warn,
-        msg: message,
-      })
-      expect(logs[1]).toMatchObject({
-        level: LogLevelNumber.error,
-        msg: message,
-      })
-      expect(logs[2]).toMatchObject({
-        level: LogLevelNumber.fatal,
-        msg: message,
-      })
+      expect(logs.map((l: any) => l.level)).toEqual([
+        LogLevelNumber.warn,
+        LogLevelNumber.error,
+        LogLevelNumber.fatal,
+      ])
     })
 
     it("It should log at 'error' level and above when logLevel is 'error'", async () => {
@@ -428,22 +401,18 @@ describe("ApplicationLoggerService", () => {
 
       const service = module.get(ApplicationLoggerService)
 
-      service.verbose!(message)
-      service.debug!(message)
+      service.verbose(message)
+      service.debug(message)
       service.log(message)
       service.warn(message)
       service.error(message)
-      service.fatal!(message)
+      service.fatal(message)
 
       expect(logs).toHaveLength(2)
-      expect(logs[0]).toMatchObject({
-        level: LogLevelNumber.error,
-        msg: message,
-      })
-      expect(logs[1]).toMatchObject({
-        level: LogLevelNumber.fatal,
-        msg: message,
-      })
+      expect(logs.map((l: any) => l.level)).toEqual([
+        LogLevelNumber.error,
+        LogLevelNumber.fatal,
+      ])
     })
 
     it("It should log at 'fatal' level and above when logLevel is 'fatal'", async () => {
@@ -459,12 +428,12 @@ describe("ApplicationLoggerService", () => {
 
       const service = module.get(ApplicationLoggerService)
 
-      service.verbose!(message)
-      service.debug!(message)
+      service.verbose(message)
+      service.debug(message)
       service.log(message)
       service.warn(message)
       service.error(message)
-      service.fatal!(message)
+      service.fatal(message)
 
       expect(logs).toHaveLength(1)
       expect(logs[0]).toMatchObject({
@@ -500,7 +469,7 @@ describe("ApplicationLoggerService", () => {
 
     LogMethodTests.forEach(({ method, level }) => {
       describe(method, () => {
-        it(`It should include the log context when logging a simple message at ${method} level`, () => {
+        it(`It should include the configured logContext when logging a bare message at ${method} level`, () => {
           service[method](message)
 
           expect(logs).toContainEqual(
@@ -512,7 +481,7 @@ describe("ApplicationLoggerService", () => {
           )
         })
 
-        it(`It should include the log context when logging with object context parameter at ${method} level`, () => {
+        it(`It should merge call-time context alongside the configured logContext at ${method} level`, () => {
           const contextParam = { userId: "user123", action: "login" }
 
           service[method](message, contextParam)
@@ -523,18 +492,6 @@ describe("ApplicationLoggerService", () => {
               msg: message,
               ...logContext,
               ...contextParam,
-            }),
-          )
-        })
-
-        it(`It should include the log context when using printf-style interpolation at ${method} level`, () => {
-          service[method]("User %s performed %s", username, "login")
-
-          expect(logs).toContainEqual(
-            expect.objectContaining({
-              level,
-              msg: `User ${username} performed login`,
-              ...logContext,
             }),
           )
         })

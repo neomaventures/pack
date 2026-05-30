@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { getRequest } from "@neoma/request-context"
-import { Inject, Injectable, LoggerService } from "@nestjs/common"
+import { Inject, Injectable } from "@nestjs/common"
 import pino, { Level } from "pino"
 
 import { LoggingConfiguration } from "../interfaces"
@@ -9,9 +8,9 @@ import { LOGGING_MODULE_OPTIONS } from "../symbols"
 const REDACTED = "[REDACTED]"
 
 /**
- * Maps NestJS log levels to Pino log levels
+ * Maps NestJS-style log level names to pino's level names.
  */
-const LEVEL_MAP = {
+const LEVEL_MAP: Record<string, Level> = {
   verbose: "trace",
   debug: "debug",
   log: "info",
@@ -21,55 +20,75 @@ const LEVEL_MAP = {
 }
 
 /**
- * Application-scoped logging service that implements NestJS LoggerService interface.
+ * Context fields merged into a log entry.
  *
- * This service provides structured logging capabilities using Pino as the underlying logger.
- * It supports field redaction, configurable log levels, and custom log context that gets
- * included with every log entry.
- *
- * @remarks
- * - Application-scoped: Single instance shared across the entire application
- * - Performance optimized using Pino
- * - Supports both printf-style interpolation and object context logging
- * - Automatic field redaction for sensitive data protection
- * - For configuration other than defaults, use `LoggingModule.forRoot()`
- *
- * @defaultValue
- * - `logLevel`: 'log' (info level)
- * - `logDestination`: null (stdout)
- * - `logRedact`: [] (no redaction)
- * - `logContext`: {} (no additional context)
+ * Any keys are allowed; `err` is called out as a recognised convention —
+ * when present and containing an `Error`, pino's default serializer
+ * extracts `{ type, message, stack }` as a structured field.
  *
  * @example
  * ```typescript
- * // Register once in root module via forRoot() — available everywhere
+ * logger.error('Charge failed', { err, chargeId, amount })
+ * logger.log('User login', { userId: '123', method: 'oauth' })
+ * ```
+ */
+export type LogContext = {
+  /**
+   * Attached error. When this is an `Error`, pino's default serializer
+   * extracts `{ type, message, stack }` into the log entry.
+   */
+  err?: unknown
+} & Record<string, unknown>
+
+/**
+ * Structured application logger backed by pino.
+ *
+ * Every method has the same shape:
+ *
+ * ```ts
+ * logger.<level>(message: string, context?: LogContext): void
+ * ```
+ *
+ * The `context` object's fields are merged into the log entry alongside
+ * the current request (read from `@neoma/request-context`). To attach
+ * an `Error`, put it in the context as `{ err: someError }` — pino's
+ * default `err` serializer extracts the stack into a structured field.
+ *
+ * **Not a Nest `LoggerService`.** This service deliberately does not
+ * implement `@nestjs/common`'s `LoggerService` interface — it should
+ * not be installed via `app.useLogger()`. Nest's own framework logs
+ * stay in Nest's `ConsoleLogger`; this service is the structured logger
+ * for app code and the rest of the Neoma ecosystem.
+ *
+ * @example
+ * ```typescript
  * @Module({
- *   imports: [LoggingModule.forRoot({
- *     logLevel: 'debug',
- *     logContext: { service: 'api', version: '1.0.0' },
- *     logRedact: ['password', '*.secret']
- *   })],
+ *   imports: [
+ *     RequestContextModule.forRoot(),
+ *     LoggingModule.forRoot({
+ *       logLevel: 'debug',
+ *       logContext: { service: 'api', version: '1.0.0' },
+ *       logRedact: ['password', '*.secret'],
+ *     }),
+ *   ],
  * })
  *
- * // Basic usage
- * logger.log('User login successful')
+ * // Inject and use:
+ * constructor(private readonly logger: ApplicationLoggerService) {}
  *
- * // With context object
- * logger.log('User login', { userId: '123', method: 'oauth' })
+ * this.logger.log('User authenticated', { userId: '123' })
+ * this.logger.error('Charge failed', { err, chargeId, amount })
  *
- * // Printf-style interpolation
- * logger.log('User %s logged in with %s', 'john', 'oauth')
+ * // Or via the static delegates (for decorators / non-DI code):
+ * ApplicationLoggerService.log('Boot complete')
  * ```
  */
 @Injectable()
-export class ApplicationLoggerService implements LoggerService {
+export class ApplicationLoggerService {
+  private static instance: ApplicationLoggerService | null = null
+
   private readonly pino: pino.Logger
 
-  /**
-   * Creates an instance of ApplicationLoggerService.
-   *
-   * @param configuration - Logging configuration options including level, redaction, and context
-   */
   public constructor(
     @Inject(LOGGING_MODULE_OPTIONS)
     {
@@ -77,12 +96,7 @@ export class ApplicationLoggerService implements LoggerService {
       logLevel = "log",
       logRedact = [],
       logContext = {},
-    }: LoggingConfiguration = {
-      logLevel: "log",
-      logDestination: null,
-      logRedact: [],
-      logContext: {},
-    },
+    }: LoggingConfiguration = {},
   ) {
     this.pino = pino(
       {
@@ -90,161 +104,99 @@ export class ApplicationLoggerService implements LoggerService {
         redact: { paths: logRedact, censor: REDACTED },
         base: { ...logContext },
       },
+      // `logDestination` is typed `any` on LoggingConfiguration to accept
+      // anything pino can write to (streams, sonic-boom, transports, etc.).
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       logDestination,
     )
+    ApplicationLoggerService.instance = this
+  }
+
+  /** Log a message at info level. Equivalent to {@link info}. */
+  public log(message: string, context?: LogContext): void {
+    this.logAtLevel("info", message, context)
+  }
+
+  /** Log a message at info level. Equivalent to {@link log}. */
+  public info(message: string, context?: LogContext): void {
+    this.logAtLevel("info", message, context)
+  }
+
+  /** Log a message at warn level. */
+  public warn(message: string, context?: LogContext): void {
+    this.logAtLevel("warn", message, context)
+  }
+
+  /** Log a message at debug level. */
+  public debug(message: string, context?: LogContext): void {
+    this.logAtLevel("debug", message, context)
+  }
+
+  /** Log a message at verbose (trace) level. */
+  public verbose(message: string, context?: LogContext): void {
+    this.logAtLevel("trace", message, context)
   }
 
   /**
-   * Log a message at info level (standard application logging).
-   *
-   * @param message - The message to log
-   * @param optionalParams - Additional context object OR printf-style parameters
-   *
-   * @example
-   * ```typescript
-   * // Simple message
-   * logger.log('User authentication successful')
-   *
-   * // With context object (recommended)
-   * logger.log('User login', { userId: '123', method: 'oauth', ip: req.ip })
-   *
-   * // Printf-style interpolation
-   * logger.log('User %s logged in from %s', username, ipAddress)
-   * ```
+   * Log a message at error level. To attach an `Error`, pass it as
+   * `{ err: someError }` in the context — pino's `err` serializer
+   * extracts `{ type, message, stack }` automatically.
    */
-  public log(message: any, ...optionalParams: any[]): void {
-    this.logAtLevel("info", message, ...optionalParams)
+  public error(message: string, context?: LogContext): void {
+    this.logAtLevel("error", message, context)
   }
 
   /**
-   * Log a message at error level for application errors and exceptions.
-   *
-   * @param message - The error message to log
-   * @param optionalParams - Additional context object OR printf-style parameters
-   *
-   * @example
-   * ```typescript
-   * // Simple error
-   * logger.error('Database connection failed')
-   *
-   * // With error context (recommended)
-   * logger.error('User creation failed', {
-   *   userId: data.id,
-   *   error: err.message,
-   *   stack: err.stack
-   * })
-   *
-   * // With error object
-   * logger.error('Unexpected error occurred', { err })
-   * ```
+   * Log a message at fatal level. To attach an `Error`, pass it as
+   * `{ err: someError }` in the context — pino's `err` serializer
+   * extracts `{ type, message, stack }` automatically.
    */
-  public error(message: any, ...optionalParams: any[]): void {
-    this.logAtLevel("error", message, ...optionalParams)
+  public fatal(message: string, context?: LogContext): void {
+    this.logAtLevel("fatal", message, context)
   }
 
-  /**
-   * Log a message at warning level for non-critical issues.
-   *
-   * @param message - The warning message to log
-   * @param optionalParams - Additional context object OR printf-style parameters
-   *
-   * @example
-   * ```typescript
-   * // Simple warning
-   * logger.warn('API rate limit approaching')
-   *
-   * // With context
-   * logger.warn('Deprecated API endpoint used', {
-   *   endpoint: '/api/v1/users',
-   *   deprecatedSince: '2024-01-01'
-   * })
-   * ```
-   */
-  public warn(message: any, ...optionalParams: any[]): void {
-    this.logAtLevel("warn", message, ...optionalParams)
+  /** Static delegate for {@link log}. No-ops if the module has not yet been constructed. */
+  public static log(message: string, context?: LogContext): void {
+    ApplicationLoggerService.instance?.log(message, context)
   }
 
-  /**
-   * Log a message at debug level for detailed debugging information.
-   *
-   * Note: When `logLevel: 'debug'`, this also enables automatic request/response logging.
-   *
-   * @param message - The debug message to log
-   * @param optionalParams - Additional context object OR printf-style parameters
-   *
-   * @example
-   * ```typescript
-   * // Simple debug message
-   * logger.debug('Cache miss for user profile')
-   *
-   * // With debugging context
-   * logger.debug('Database query executed', {
-   *   query: 'SELECT * FROM users WHERE id = ?',
-   *   duration: '45ms',
-   *   rows: 1
-   * })
-   * ```
-   */
-  public debug(message: any, ...optionalParams: any[]): void {
-    this.logAtLevel("debug", message, ...optionalParams)
+  /** Static delegate for {@link info}. No-ops if the module has not yet been constructed. */
+  public static info(message: string, context?: LogContext): void {
+    ApplicationLoggerService.instance?.info(message, context)
   }
 
-  /**
-   * Log a message at verbose (trace) level for extremely detailed debugging.
-   *
-   * @param message - The verbose message to log
-   * @param optionalParams - Additional context object OR printf-style parameters
-   *
-   * @example
-   * ```typescript
-   * // Detailed tracing
-   * logger.verbose('Function entry', { functionName: 'createUser', args })
-   * logger.verbose('Variable state', { userId, isValid, permissions })
-   * ```
-   */
-  public verbose(message: any, ...optionalParams: any[]): void {
-    this.logAtLevel("trace", message, ...optionalParams)
+  /** Static delegate for {@link warn}. No-ops if the module has not yet been constructed. */
+  public static warn(message: string, context?: LogContext): void {
+    ApplicationLoggerService.instance?.warn(message, context)
   }
 
-  /**
-   * Log a message at fatal level for critical system failures.
-   *
-   * @param message - The fatal error message to log
-   * @param optionalParams - Additional context object OR printf-style parameters
-   *
-   * @example
-   * ```typescript
-   * // System critical error
-   * logger.fatal('Database connection pool exhausted')
-   *
-   * // With detailed context
-   * logger.fatal('Application startup failed', {
-   *   error: err.message,
-   *   config: sanitizedConfig,
-   *   exitCode: 1
-   * })
-   * ```
-   */
-  public fatal(message: any, ...optionalParams: any[]): void {
-    this.logAtLevel("fatal", message, ...optionalParams)
+  /** Static delegate for {@link debug}. No-ops if the module has not yet been constructed. */
+  public static debug(message: string, context?: LogContext): void {
+    ApplicationLoggerService.instance?.debug(message, context)
+  }
+
+  /** Static delegate for {@link verbose}. No-ops if the module has not yet been constructed. */
+  public static verbose(message: string, context?: LogContext): void {
+    ApplicationLoggerService.instance?.verbose(message, context)
+  }
+
+  /** Static delegate for {@link error}. No-ops if the module has not yet been constructed. */
+  public static error(message: string, context?: LogContext): void {
+    ApplicationLoggerService.instance?.error(message, context)
+  }
+
+  /** Static delegate for {@link fatal}. No-ops if the module has not yet been constructed. */
+  public static fatal(message: string, context?: LogContext): void {
+    ApplicationLoggerService.instance?.fatal(message, context)
   }
 
   private logAtLevel(
     level: Level,
-    message: any,
-    ...optionalParams: any[]
+    message: string,
+    context?: LogContext,
   ): void {
     const request = getRequest()
     const reqField = request ? { req: request } : {}
-
-    if (
-      optionalParams.length === 1 &&
-      optionalParams[0] !== null &&
-      typeof optionalParams[0] === "object"
-    ) {
-      this.pino[level]({ ...optionalParams[0], ...reqField }, message)
-    } else {
-      this.pino[level](reqField, message, ...optionalParams)
-    }
+    this.pino[level]({ ...context, ...reqField }, message)
   }
 }

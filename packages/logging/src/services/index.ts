@@ -1,1 +1,4 @@
-export { ApplicationLoggerService } from "./application-logger.service"
+export {
+  ApplicationLoggerService,
+  type LogContext,
+} from "./application-logger.service"
