@@ -3,8 +3,8 @@
   "compilerOptions": {
     "types": ["node", "jest", "jest-extended"],
     "paths": {
-      "@neoma/config": ["./src"],
-      "@neoma/config/*": ["./src/*"],
+      "@neomaventures/config": ["./src"],
+      "@neomaventures/config/*": ["./src/*"],
       "fixtures/*": ["./fixtures/*"]
     }
   },

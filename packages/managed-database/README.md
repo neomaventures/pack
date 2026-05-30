@@ -1,8 +1,8 @@
-# @neoma/managed-database
+# @neomaventures/managed-database
 
 A managed database fixture for NestJS integration testing with TypeORM. Automatically handles in-memory SQLite database lifecycle for Jest tests.
 
-[![npm version](https://badge.fury.io/js/@neoma%2Fmanaged-database.svg)](https://www.npmjs.com/package/@neoma/managed-database)
+[![npm version](https://badge.fury.io/js/@neoma%2Fmanaged-database.svg)](https://www.npmjs.com/package/@neomaventures/managed-database)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Motivation
@@ -16,7 +16,7 @@ Integration testing NestJS applications with TypeORM requires setting up and tea
 
 ## Problem / Solution
 
-### Without @neoma/managed-database
+### Without @neomaventures/managed-database
 
 ```typescript
 import { DataSource } from "typeorm"
@@ -49,10 +49,10 @@ describe("UserRepository", () => {
 })
 ```
 
-### With @neoma/managed-database
+### With @neomaventures/managed-database
 
 ```typescript
-import { managedDatasourceInstance } from "@neoma/managed-database"
+import { managedDatasourceInstance } from "@neomaventures/managed-database"
 import { User } from "./user.entity"
 
 describe("UserRepository", () => {
@@ -81,7 +81,7 @@ describe("UserRepository", () => {
 ### 1. Install the package
 
 ```bash
-npm install --save-dev @neoma/managed-database
+npm install --save-dev @neomaventures/managed-database
 ```
 
 ### 2. Install peer dependencies
@@ -94,7 +94,7 @@ npm install @nestjs/common @nestjs/core
 ### 3. Import in your test files
 
 ```typescript
-import { managedDatasourceInstance } from "@neoma/managed-database"
+import { managedDatasourceInstance } from "@neomaventures/managed-database"
 ```
 
 That's it! The package automatically registers Jest hooks when imported, so your database lifecycle is managed automatically.
@@ -104,7 +104,7 @@ That's it! The package automatically registers Jest hooks when imported, so your
 ### Repository Testing
 
 ```typescript
-import { managedDatasourceInstance } from "@neoma/managed-database"
+import { managedDatasourceInstance } from "@neomaventures/managed-database"
 import { User } from "./user.entity"
 
 describe("User Repository", () => {
@@ -125,7 +125,7 @@ describe("User Repository", () => {
 ### Testing Services
 
 ```typescript
-import { managedDatasourceInstance } from "@neoma/managed-database"
+import { managedDatasourceInstance } from "@neomaventures/managed-database"
 import { UserService } from "./user.service"
 import { User } from "./user.entity"
 
@@ -245,13 +245,13 @@ Testing with SQLite in-memory provides several advantages:
 
 ## Links
 
-- [npm package](https://www.npmjs.com/package/@neoma/managed-database)
+- [npm package](https://www.npmjs.com/package/@neomaventures/managed-database)
 - [GitHub repository](https://github.com/neomaventures/pack/tree/main/packages/managed-database)
 - [Report Issues](https://github.com/neomaventures/pack/issues)
 
 ## Related Packages
 
-- [@neoma/managed-app](https://www.npmjs.com/package/@neoma/managed-app) - Managed NestJS app instances for E2E testing
+- [@neomaventures/managed-app](https://www.npmjs.com/package/@neomaventures/managed-app) - Managed NestJS app instances for E2E testing
 
 ## License
 

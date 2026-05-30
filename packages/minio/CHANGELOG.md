@@ -1,7 +1,6 @@
-# @neoma/minio
+# Changelog
 
-## 0.1.0
+All notable changes to this project will be documented in this file.
 
-### Minor Changes
-
-- b960062: Add `@neoma/minio` — a MinIO test fixture extracted from `@neoma/fixtures`. Ships the Docker container lifecycle (`startContainer` / `stopContainer`), which creates an S3 bucket and publishes the `STORAGE_*` connection env vars, plus Jest `globalSetup` / `globalTeardown` drop-ins (`@neoma/minio/setup`, `@neoma/minio/teardown`). Requires Docker on the host.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).

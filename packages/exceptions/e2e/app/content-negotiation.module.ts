@@ -2,9 +2,9 @@ import {
   ErrorTemplate,
   ExceptionHandlerModule,
   NeomaException,
-} from "@neoma/exceptions"
-import { LoggingModule } from "@neoma/logging"
-import { RequestContextModule } from "@neoma/request-context"
+} from "@neomaventures/exceptions"
+import { LoggingModule } from "@neomaventures/logging"
+import { RequestContextModule } from "@neomaventures/request-context"
 import {
   BadRequestException,
   Body,

@@ -1,17 +1,17 @@
 import { faker } from "@faker-js/faker"
-import { express } from "@neoma/fixtures"
+import { express } from "@neomaventures/fixtures"
 import {
   ApplicationLoggerService,
   LOGGING_MODULE_OPTIONS,
   type LoggingConfiguration,
   LoggingModule,
-} from "@neoma/logging"
-import { getRequest } from "@neoma/request-context"
+} from "@neomaventures/logging"
+import { getRequest } from "@neomaventures/request-context"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { type Request } from "express"
 import { LogLevelNumber, LogMethodTests, ArrayStream } from "fixtures/logging"
 
-jest.mock("@neoma/request-context", () => ({
+jest.mock("@neomaventures/request-context", () => ({
   getRequest: jest.fn(),
 }))
 

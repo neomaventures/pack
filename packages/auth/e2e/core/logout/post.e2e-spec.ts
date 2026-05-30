@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker"
-import { MailpitClient } from "@neoma/mailpit"
-import { managedAppInstance } from "@neoma/managed-app"
+import { MailpitClient } from "@neomaventures/mailpit"
+import { managedAppInstance } from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
 import {
   authenticateViaEmail,

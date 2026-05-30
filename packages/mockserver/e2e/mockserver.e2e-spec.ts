@@ -1,4 +1,4 @@
-import { MockServerClient } from "@neoma/mockserver"
+import { MockServerClient } from "@neomaventures/mockserver"
 
 /**
  * End-to-end check against a real container, consuming the package the
@@ -8,8 +8,8 @@ import { MockServerClient } from "@neoma/mockserver"
  * to `src` (tsconfig paths) so goto-definition and debugging stay on
  * source.
  */
-describe("@neoma/mockserver (e2e)", () => {
-  // globalSetup (@neoma/mockserver/setup) sets MOCKSERVER_URL.
+describe("@neomaventures/mockserver (e2e)", () => {
+  // globalSetup (@neomaventures/mockserver/setup) sets MOCKSERVER_URL.
   const controlUrl = (): string => process.env.MOCKSERVER_URL as string
   const mockUrl = (): string => controlUrl().replace("/mockserver", "")
 

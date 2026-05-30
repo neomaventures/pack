@@ -1,13 +1,13 @@
-# @neoma/managed-app
+# @neomaventures/managed-app
 
 A NestJS testing utility that provides managed application instance handling for E2E tests with automatic lifecycle management and singleton pattern support.
 
-[![npm version](https://badge.fury.io/js/@neoma%2Fmanaged-app.svg)](https://www.npmjs.com/package/@neoma/managed-app)
+[![npm version](https://badge.fury.io/js/@neoma%2Fmanaged-app.svg)](https://www.npmjs.com/package/@neomaventures/managed-app)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Description
 
-`@neoma/managed-app` simplifies NestJS E2E testing by providing a convenient utility to create, manage, and reuse application instances across your test suites. It eliminates boilerplate code, ensures proper cleanup, and supports dynamic module loading from configurable paths.
+`@neomaventures/managed-app` simplifies NestJS E2E testing by providing a convenient utility to create, manage, and reuse application instances across your test suites. It eliminates boilerplate code, ensures proper cleanup, and supports dynamic module loading from configurable paths.
 
 ## Features
 
@@ -23,7 +23,7 @@ A NestJS testing utility that provides managed application instance handling for
 ## Installation
 
 ```bash
-npm install --save-dev @neoma/managed-app
+npm install --save-dev @neomaventures/managed-app
 ```
 
 ### Peer Dependencies
@@ -39,7 +39,7 @@ npm install @nestjs/common @nestjs/core @nestjs/testing
 ```typescript
 import { INestApplication } from "@nestjs/common"
 import * as request from "supertest"
-import { managedAppInstance } from "@neoma/managed-app"
+import { managedAppInstance } from "@neomaventures/managed-app"
 
 describe("My API", () => {
   let app: INestApplication
@@ -292,7 +292,7 @@ src/my/module/path.ts#MyModuleName
 ```typescript
 import { INestApplication } from "@nestjs/common"
 import * as request from "supertest"
-import { managedAppInstance } from "@neoma/managed-app"
+import { managedAppInstance } from "@neomaventures/managed-app"
 
 describe("Users API", () => {
   let app: INestApplication
@@ -323,7 +323,7 @@ Use the `build` callback to override providers, guards, or interceptors before t
 ```typescript
 import { INestApplication } from "@nestjs/common"
 import * as request from "supertest"
-import { managedAppInstance } from "@neoma/managed-app"
+import { managedAppInstance } from "@neomaventures/managed-app"
 import { MailService } from "../src/mail/mail.service"
 
 describe("Mail API", () => {
@@ -404,7 +404,7 @@ class MyService { ... }
 Use the `configure` callback to set up the app before it initializes — useful for MPA setups, global prefixes, view engines, static assets, or CORS:
 
 ```typescript
-import { managedAppInstance } from "@neoma/managed-app"
+import { managedAppInstance } from "@neomaventures/managed-app"
 import { NestExpressApplication } from "@nestjs/platform-express"
 import { join } from "path"
 
@@ -454,7 +454,7 @@ describe("Staging environment tests", () => {
 ### Integration with Database Testing
 
 ```typescript
-import { managedAppInstance } from "@neoma/managed-app"
+import { managedAppInstance } from "@neomaventures/managed-app"
 import { DataSource } from "typeorm"
 
 describe("Database Integration", () => {
@@ -480,7 +480,7 @@ describe("Database Integration", () => {
 ### Accessing Services in Tests
 
 ```typescript
-import { managedAppInstance } from "@neoma/managed-app"
+import { managedAppInstance } from "@neomaventures/managed-app"
 import { UserService } from "../src/users/user.service"
 
 describe("User Service", () => {
@@ -592,4 +592,4 @@ If you encounter any issues or have questions, please file an issue on [GitHub](
 
 ## Related Packages
 
-- [@neoma/route-model-binding](https://www.npmjs.com/package/@neoma/route-model-binding) - NestJS route model binding utilities
+- [@neomaventures/route-model-binding](https://www.npmjs.com/package/@neomaventures/route-model-binding) - NestJS route model binding utilities

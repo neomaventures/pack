@@ -2,7 +2,7 @@ import {
   RouteModelBindingConfig,
   RouteModelBindingMiddleware,
   RouteModelBindingModule,
-} from "@neoma/route-model-binding"
+} from "@neomaventures/route-model-binding"
 import {
   INestApplication,
   MiddlewareConsumer,

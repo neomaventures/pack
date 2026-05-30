@@ -1,20 +1,20 @@
-# @neoma/audit
+# @neomaventures/audit
 
 NestJS-idiomatic audit trails. Audit (Odysseus's faithful dog -- waited twenty years and never forgot) tracks **who** changed your entities and **when**.
 
 ## Installation
 
-`@neoma/*` packages publish privately to GitHub Packages. Configure `.npmrc` to resolve the `@neoma` scope first:
+`@neomaventures/*` packages publish privately to GitHub Packages. Configure `.npmrc` to resolve the `@neoma` scope first:
 
 ```
-@neoma:registry=https://npm.pkg.github.com
+@neomaventures:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
 ```
 
 Then install:
 
 ```bash
-npm install @neoma/audit
+npm install @neomaventures/audit
 ```
 
 Peer dependencies: `@nestjs/common`, `@nestjs/core`, `typeorm`
@@ -24,7 +24,7 @@ Peer dependencies: `@nestjs/common`, `@nestjs/core`, `typeorm`
 ### 1. Register the module
 
 ```typescript
-import { AuditModule } from "@neoma/audit"
+import { AuditModule } from "@neomaventures/audit"
 
 @Module({
   imports: [
@@ -52,7 +52,7 @@ AuditModule.forRootAsync({
 ### 2. Decorate your entities
 
 ```typescript
-import { CreatedBy, UpdatedBy } from "@neoma/audit"
+import { CreatedBy, UpdatedBy } from "@neomaventures/audit"
 
 @Entity()
 export class Invoice {

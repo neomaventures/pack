@@ -1,4 +1,4 @@
-import { StorageModule } from "@neoma/storage"
+import { StorageModule } from "@neomaventures/storage"
 import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
 

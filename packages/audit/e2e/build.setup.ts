@@ -4,7 +4,7 @@ import { resolve } from "path"
 // Rebuild the lib before the e2e modules are imported.
 //
 // The e2e app modules — booted by the managed-app harness — resolve
-// `@neoma/audit` to `dist/` (see jest-e2e.json), so the compiled output must
+// `@neomaventures/audit` to `dist/` (see jest-e2e.json), so the compiled output must
 // be current. This runs as a `setupFiles` entry: once per test file, *before*
 // the test's top-level imports resolve, and again on every `--watch` save
 // (unlike `pretest`/`globalSetup`, which fire once per jest process).

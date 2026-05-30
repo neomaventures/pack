@@ -9,7 +9,7 @@
     "^.+\\.tsx?$": "ts-jest"
   },
   "moduleNameMapper": {
-    "^@neoma/audit$": "<rootDir>/../dist/index.js",
-    "^@neoma/audit/(.*)$": "<rootDir>/../dist/$1"
+    "^@neomaventures/audit$": "<rootDir>/../dist/index.js",
+    "^@neomaventures/audit/(.*)$": "<rootDir>/../dist/$1"
   }
 }

@@ -3,7 +3,7 @@
   "compilerOptions": {
     "types": ["node", "jest", "jest-extended"],
     "paths": {
-      "@neoma/request-context": ["./src"]
+      "@neomaventures/request-context": ["./src"]
     }
   },
   "include": ["src/**/*", "e2e/**/*"]

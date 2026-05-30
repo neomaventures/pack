@@ -1,7 +1,7 @@
 {
-  "name": "@neoma/route-model-binding",
-  "version": "0.2.0",
-  "description": "Laravel-inspired route model binding for NestJS — automatically resolve database models from route parameters.",
+  "name": "@neomaventures/route-model-binding",
+  "version": "0.1.0",
+  "description": "Laravel-inspired route model binding for NestJS \u2014 automatically resolve database models from route parameters.",
   "author": "Daniel Bruce",
   "repository": {
     "type": "git",
@@ -20,7 +20,9 @@
     "neoma"
   ],
   "private": false,
-  "publishConfig": { "registry": "https://npm.pkg.github.com" },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -45,8 +47,8 @@
     "typeorm": ">=0.3"
   },
   "devDependencies": {
-    "@neoma/fixtures": "workspace:*",
-    "@neoma/managed-database": "workspace:*",
+    "@neomaventures/fixtures": "workspace:*",
+    "@neomaventures/managed-database": "workspace:*",
     "@nestjs/core": "^11.1.18",
     "@nestjs/platform-express": "^11.1.18",
     "@nestjs/testing": "^11.1.18",

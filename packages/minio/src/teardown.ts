@@ -5,7 +5,7 @@ import { stopContainer } from "./docker/container"
  *
  * Usage in `jest-e2e.json`:
  * ```json
- * { "globalTeardown": "@neoma/minio/teardown" }
+ * { "globalTeardown": "@neomaventures/minio/teardown" }
  * ```
  */
 export default async function teardown(): Promise<void> {

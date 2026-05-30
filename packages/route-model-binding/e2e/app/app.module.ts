@@ -1,7 +1,7 @@
 import {
   RouteModelBindingModule,
   RouteModelBindingMiddleware,
-} from "@neoma/route-model-binding"
+} from "@neomaventures/route-model-binding"
 import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
 

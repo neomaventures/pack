@@ -53,7 +53,7 @@ export interface ErrorTemplateMetadata {
  *
  * @example Single template for all errors
  * ```typescript
- * import { ErrorTemplate } from '@neoma/exceptions'
+ * import { ErrorTemplate } from '@neomaventures/exceptions'
  *
  * @Controller('auth')
  * export class AuthController {
@@ -65,7 +65,7 @@ export interface ErrorTemplateMetadata {
  *
  * @example Per-exception-type templates
  * ```typescript
- * import { ErrorTemplate } from '@neoma/exceptions'
+ * import { ErrorTemplate } from '@neomaventures/exceptions'
  *
  * @Controller('auth')
  * export class AuthController {
@@ -80,7 +80,7 @@ export interface ErrorTemplateMetadata {
  *
  * @example Per-exception rendering with redirect fallback
  * ```typescript
- * import { ErrorTemplate } from '@neoma/exceptions'
+ * import { ErrorTemplate } from '@neomaventures/exceptions'
  *
  * @Controller('auth')
  * export class AuthController {
@@ -95,7 +95,7 @@ export interface ErrorTemplateMetadata {
  *
  * @example Template with static locals
  * ```typescript
- * import { ErrorTemplate } from '@neoma/exceptions'
+ * import { ErrorTemplate } from '@neomaventures/exceptions'
  *
  * @Controller('auth')
  * export class AuthController {

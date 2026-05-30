@@ -1,4 +1,4 @@
-import { type ResolverContext } from "@neoma/route-model-binding"
+import { type ResolverContext } from "@neomaventures/route-model-binding"
 import { HttpStatus, type INestApplication } from "@nestjs/common"
 import { managedCustomAppInstance, setupCustomApp } from "fixtures/app/custom"
 import { sqlInjectionAttempts } from "fixtures/database/sql-injection"

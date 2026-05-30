@@ -1,4 +1,4 @@
-import { Authenticated, Principal } from "@neoma/auth"
+import { Authenticated, Principal } from "@neomaventures/auth"
 import { Controller, Get, UseGuards } from "@nestjs/common"
 
 import { User } from "../user.entity"

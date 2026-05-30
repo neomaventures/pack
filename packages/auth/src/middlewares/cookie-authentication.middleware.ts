@@ -1,4 +1,4 @@
-import { ApplicationLoggerService } from "@neoma/logging"
+import { ApplicationLoggerService } from "@neomaventures/logging"
 import { Inject, Injectable, NestMiddleware } from "@nestjs/common"
 import * as cookie from "cookie"
 import { Request, NextFunction } from "express"

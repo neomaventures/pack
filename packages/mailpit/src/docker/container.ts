@@ -6,7 +6,7 @@ import {
   waitForHttp,
   waitForTcp,
   type BaseOptions,
-} from "@neoma/docker"
+} from "@neomaventures/docker"
 
 const MAILPIT_IMAGE = "axllent/mailpit:v1.21"
 const DEFAULT_SMTP_PORT = 1025

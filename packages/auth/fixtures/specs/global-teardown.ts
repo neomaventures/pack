@@ -1,5 +1,5 @@
-import { stopContainer as stopMailpit } from "@neoma/mailpit"
-import { stopContainer as stopMockServer } from "@neoma/mockserver"
+import { stopContainer as stopMailpit } from "@neomaventures/mailpit"
+import { stopContainer as stopMockServer } from "@neomaventures/mockserver"
 
 const NODE_ENV = process.env.NODE_ENV ?? "specs"
 

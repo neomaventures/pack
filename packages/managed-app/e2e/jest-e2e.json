@@ -9,8 +9,8 @@
   "setupFiles": ["reflect-metadata", "<rootDir>/build.setup.ts"],
   "setupFilesAfterEnv": ["jest-extended/all", "<rootDir>/support/setup.ts"],
   "moduleNameMapper": {
-    "^@neoma/managed-app$": "<rootDir>/../dist/index.js",
-    "^@neoma/managed-app/(.*)$": "<rootDir>/../dist/$1",
+    "^@neomaventures/managed-app$": "<rootDir>/../dist/index.js",
+    "^@neomaventures/managed-app/(.*)$": "<rootDir>/../dist/$1",
     "^src/(.*)$": "<rootDir>/../src/$1"
   }
 }

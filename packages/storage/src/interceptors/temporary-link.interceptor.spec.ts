@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker"
-import { executionContext, express } from "@neoma/fixtures"
+import { executionContext, express } from "@neomaventures/fixtures"
 import {
   type CallHandler,
   type ExecutionContext,

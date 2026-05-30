@@ -1,4 +1,4 @@
-import { Feature } from "@neoma/features"
+import { Feature } from "@neomaventures/features"
 import {
   Controller,
   ForbiddenException,

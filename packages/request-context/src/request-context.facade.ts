@@ -7,7 +7,7 @@ import { ClsServiceManager } from "nestjs-cls"
  * middleware) and {@link getRequest} (reader, the public API). Colon-namespaced
  * (no `.`) so nestjs-cls treats it as a flat key, not a path.
  */
-const REQUEST_KEY = "@neoma/request-context:request"
+const REQUEST_KEY = "@neomaventures/request-context:request"
 
 /**
  * Read the HTTP request currently being handled, from anywhere below the

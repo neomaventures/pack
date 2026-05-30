@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker"
-import { MockServerClient } from "@neoma/mockserver"
+import { MockServerClient } from "@neomaventures/mockserver"
 import { DynamicModule } from "@nestjs/common"
 import { EventEmitter2 } from "@nestjs/event-emitter"
 import { Test, TestingModule } from "@nestjs/testing"

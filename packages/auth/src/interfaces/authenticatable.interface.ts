@@ -23,7 +23,7 @@ export interface AuthenticatableProfile {
  *
  * @example
  * ```typescript
- * import { Authenticatable } from '@neoma/auth'
+ * import { Authenticatable } from '@neomaventures/auth'
  *
  * @Entity()
  * class User implements Authenticatable {

@@ -1,4 +1,4 @@
-# @neoma/features
+# @neomaventures/features
 
 > Feature flag gating for NestJS applications
 
@@ -6,7 +6,7 @@ Gate routes and controllers behind feature flags with a single decorator. Disabl
 
 ## Motivation
 
-Feature flags let you ship code to production behind a toggle. Without a framework-level solution, every controller ends up with manual `if (flag)` checks that are easy to forget and hard to audit. `@neoma/features` moves gating into the framework layer so your controllers stay clean.
+Feature flags let you ship code to production behind a toggle. Without a framework-level solution, every controller ends up with manual `if (flag)` checks that are easy to forget and hard to audit. `@neomaventures/features` moves gating into the framework layer so your controllers stay clean.
 
 ## The Problem
 
@@ -47,7 +47,7 @@ The `@Feature` decorator and a global guard handle gating automatically. No boil
 ## Installation
 
 ```bash
-npm install @neoma/features
+npm install @neomaventures/features
 ```
 
 ### Peer Dependencies
@@ -56,7 +56,7 @@ npm install @neoma/features
 npm install @nestjs/common @nestjs/core reflect-metadata rxjs express
 ```
 
-`@neoma/features` requires `express` as a peer dependency — the per-request resolver receives the express `Request`. Fastify is not supported at this signature.
+`@neomaventures/features` requires `express` as a peer dependency — the per-request resolver receives the express `Request`. Fastify is not supported at this signature.
 
 ## Basic Usage
 
@@ -66,7 +66,7 @@ npm install @nestjs/common @nestjs/core reflect-metadata rxjs express
 
 ```typescript
 import { Module } from "@nestjs/common"
-import { FeaturesModule } from "@neoma/features"
+import { FeaturesModule } from "@neomaventures/features"
 
 @Module({
   imports: [
@@ -86,7 +86,7 @@ export class AppModule {}
 ```typescript
 import { Module } from "@nestjs/common"
 import { ConfigModule, ConfigService } from "@nestjs/config"
-import { FeaturesModule } from "@neoma/features"
+import { FeaturesModule } from "@neomaventures/features"
 
 @Module({
   imports: [
@@ -111,7 +111,7 @@ The module registers globally by default so you only need to import it once in y
 
 ```typescript
 import { Controller, Get, Post, Body } from "@nestjs/common"
-import { Feature } from "@neoma/features"
+import { Feature } from "@neomaventures/features"
 
 @Controller("bank-statements")
 export class BankStatementsController {
@@ -135,7 +135,7 @@ Apply `@Feature` at the class level to gate all routes on a controller:
 
 ```typescript
 import { Controller, Get } from "@nestjs/common"
-import { Feature } from "@neoma/features"
+import { Feature } from "@neomaventures/features"
 
 @Controller("dashboard")
 @Feature("NEW_DASHBOARD")
@@ -196,7 +196,7 @@ By default, a denied request returns `HTTP 404` via `NotFoundException`. For som
 
 ```typescript
 import { Controller, ForbiddenException, Post } from "@nestjs/common"
-import { Feature } from "@neoma/features"
+import { Feature } from "@neomaventures/features"
 
 @Controller("checkout")
 export class CheckoutController {
@@ -228,7 +228,7 @@ The factory receives the live express `Request` — the same one the resolver wo
 
 ```typescript
 import { Injectable } from "@nestjs/common"
-import { FeaturesService } from "@neoma/features"
+import { FeaturesService } from "@neomaventures/features"
 
 @Injectable()
 export class DocumentsService {
@@ -300,7 +300,7 @@ type FeatureResolver = (
 The `Request` is the express request type (`import type { Request } from "express"`). Import `FeatureResolver` when you need to annotate a `useFactory` return or extract the resolver to its own function:
 
 ```typescript
-import type { FeatureResolver } from "@neoma/features"
+import type { FeatureResolver } from "@neomaventures/features"
 
 const resolve: FeatureResolver = async (req) => {
   return req.user?.features ?? {}
@@ -375,8 +375,8 @@ MIT
 
 This package is part of the Neoma ecosystem of Laravel-inspired NestJS packages:
 
-- [@neoma/config](https://github.com/neomaventures/pack/tree/main/packages/config) - Type-safe environment configuration
-- [@neoma/logger](https://github.com/neomaventures/pack/tree/main/packages/logging) - Request and application logging
-- [@neoma/exceptions](https://github.com/neomaventures/pack/tree/main/packages/exceptions) - Global exception handling
-- **@neoma/features** - Feature flag gating (you are here)
+- [@neomaventures/config](https://github.com/neomaventures/pack/tree/main/packages/config) - Type-safe environment configuration
+- [@neomaventures/logger](https://github.com/neomaventures/pack/tree/main/packages/logging) - Request and application logging
+- [@neomaventures/exceptions](https://github.com/neomaventures/pack/tree/main/packages/exceptions) - Global exception handling
+- **@neomaventures/features** - Feature flag gating (you are here)
 - More coming soon...

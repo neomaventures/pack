@@ -1,6 +1,10 @@
 import { faker } from "@faker-js/faker"
-import { MockLoggerService, executionContext, express } from "@neoma/fixtures"
-import { ApplicationLoggerService } from "@neoma/logging"
+import {
+  MockLoggerService,
+  executionContext,
+  express,
+} from "@neomaventures/fixtures"
+import { ApplicationLoggerService } from "@neomaventures/logging"
 import {
   type ArgumentsHost,
   BadRequestException,

@@ -1,6 +1,6 @@
-# @neoma/mailpit
+# @neomaventures/mailpit
 
-Mailpit test fixture for `@neoma/*` — a reusable client plus Docker container lifecycle and Jest `setup`/`teardown` drop-ins for email testing.
+Mailpit test fixture for `@neomaventures/*` — a reusable client plus Docker container lifecycle and Jest `setup`/`teardown` drop-ins for email testing.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -12,7 +12,7 @@ Mailpit test fixture for `@neoma/*` — a reusable client plus Docker container 
 ## Installation
 
 ```bash
-npm install --save-dev @neoma/mailpit
+npm install --save-dev @neomaventures/mailpit
 ```
 
 ## Quick start
@@ -22,15 +22,15 @@ Start a Mailpit container for the whole test run via Jest's `globalSetup`/`globa
 ```json
 // jest-e2e.json
 {
-  "globalSetup": "@neoma/mailpit/setup",
-  "globalTeardown": "@neoma/mailpit/teardown"
+  "globalSetup": "@neomaventures/mailpit/setup",
+  "globalTeardown": "@neomaventures/mailpit/teardown"
 }
 ```
 
 `setup` starts the container and sets `SMTP_HOST`, `SMTP_PORT`, and `MAILPIT_API` (e.g. `http://localhost:8025/api/v1`); `teardown` removes it.
 
 ```typescript
-import { MailpitClient } from "@neoma/mailpit"
+import { MailpitClient } from "@neomaventures/mailpit"
 
 const client = new MailpitClient(process.env.MAILPIT_API!)
 
@@ -57,7 +57,7 @@ The container honours these environment variables:
 
 - **`MailpitClient`** — `clear()`, `messages()`, `message(id)`, `findByRecipient(email)`.
 - **`startContainer(options?)` / `stopContainer(options?)`** — manage the container directly when `globalSetup` isn't a fit; `start` sets the `SMTP_*`/`MAILPIT_API` env vars. Supports SMTP auth via an `htpasswd` option.
-- **`@neoma/mailpit/setup` / `@neoma/mailpit/teardown`** — Jest `globalSetup`/`globalTeardown` drop-ins wrapping the above.
+- **`@neomaventures/mailpit/setup` / `@neomaventures/mailpit/teardown`** — Jest `globalSetup`/`globalTeardown` drop-ins wrapping the above.
 
 ## License
 

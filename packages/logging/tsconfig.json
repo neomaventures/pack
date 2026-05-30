@@ -2,8 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "paths": {
-      "@neoma/logging": ["./src"],
-      "@neoma/logging/*": ["./src/*"],
+      "@neomaventures/logging": ["./src"],
+      "@neomaventures/logging/*": ["./src/*"],
       "src/*": ["./e2e/app/*"],
       "fixtures/*": ["./fixtures/*"]
     }

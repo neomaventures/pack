@@ -1,7 +1,7 @@
 {
-  "name": "@neoma/docker",
+  "name": "@neomaventures/docker",
   "version": "0.1.0",
-  "description": "Docker test-container helpers for @neoma/* — HTTP/TCP health polling and container teardown.",
+  "description": "Docker test-container helpers for @neomaventures/* \u2014 HTTP/TCP health polling and container teardown.",
   "author": "Daniel Bruce",
   "repository": {
     "type": "git",
@@ -18,7 +18,9 @@
     "docker"
   ],
   "private": false,
-  "publishConfig": { "registry": "https://npm.pkg.github.com" },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {

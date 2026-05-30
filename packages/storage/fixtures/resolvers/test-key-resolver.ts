@@ -2,7 +2,7 @@ import {
   type StorageIdGenerator,
   type StorageKeyResolver,
   type OriginalFileInfo,
-} from "@neoma/storage"
+} from "@neomaventures/storage"
 import { Injectable } from "@nestjs/common"
 import { type Request } from "express"
 

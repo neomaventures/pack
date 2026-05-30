@@ -1,5 +1,8 @@
 import { faker } from "@faker-js/faker"
-import { type GoogleAuthOptions, type GoogleAuthResult } from "@neoma/auth"
+import {
+  type GoogleAuthOptions,
+  type GoogleAuthResult,
+} from "@neomaventures/auth"
 import * as jwt from "jsonwebtoken"
 
 const { hacker, internet, person, string } = faker

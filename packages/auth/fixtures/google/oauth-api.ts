@@ -3,7 +3,7 @@ import {
   MockServerClient,
   MockserverBodyTypes,
   MockserverMatchTypes,
-} from "@neoma/mockserver"
+} from "@neomaventures/mockserver"
 
 import { google } from "../fakes/google"
 

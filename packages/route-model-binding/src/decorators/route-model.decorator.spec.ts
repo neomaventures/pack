@@ -1,4 +1,4 @@
-import { express, executionContext } from "@neoma/fixtures"
+import { express, executionContext } from "@neomaventures/fixtures"
 import { ExecutionContext } from "@nestjs/common"
 import { ROUTE_ARGS_METADATA } from "@nestjs/common/constants"
 import { post as postEntity } from "fixtures/models/post"

@@ -1,4 +1,7 @@
-import { managedAppInstance, type ManagedAppOptions } from "@neoma/managed-app"
+import {
+  managedAppInstance,
+  type ManagedAppOptions,
+} from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
 import { CONTROLLER_MESSAGE } from "src/controllers/message.controller"
 import request from "supertest"

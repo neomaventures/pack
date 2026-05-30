@@ -1,4 +1,4 @@
-import { LoggingModule } from "@neoma/logging"
+import { LoggingModule } from "@neomaventures/logging"
 import { Module } from "@nestjs/common"
 
 import { ApplicationController } from "./application.controller"

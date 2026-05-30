@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker"
-import { validationFactory } from "@neoma/exceptions"
+import { validationFactory } from "@neomaventures/exceptions"
 import { BadRequestException } from "@nestjs/common"
 import { IsEmail, MinLength, ValidateNested, validate } from "class-validator"
 

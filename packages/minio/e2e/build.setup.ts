@@ -3,7 +3,7 @@ import { resolve } from "path"
 
 // Rebuild the lib before the e2e module is imported.
 //
-// The e2e resolves `@neoma/minio` to `dist/` (see jest-e2e.json), so the
+// The e2e resolves `@neomaventures/minio` to `dist/` (see jest-e2e.json), so the
 // compiled output must be current. This runs as a `setupFiles` entry — once
 // per test file, *before* the test's top-level imports resolve — and it
 // re-runs on every `--watch` save, unlike `pretest`/`globalSetup` which fire

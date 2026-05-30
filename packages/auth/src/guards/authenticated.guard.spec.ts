@@ -1,5 +1,9 @@
 import { faker } from "@faker-js/faker"
-import { executionContext, express, type MockRequest } from "@neoma/fixtures"
+import {
+  executionContext,
+  express,
+  type MockRequest,
+} from "@neomaventures/fixtures"
 import {
   type ExecutionContext,
   HttpStatus,

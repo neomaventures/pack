@@ -1,4 +1,4 @@
-import { executionContext, express } from "@neoma/fixtures"
+import { executionContext, express } from "@neomaventures/fixtures"
 import {
   ConflictException,
   type ExecutionContext,

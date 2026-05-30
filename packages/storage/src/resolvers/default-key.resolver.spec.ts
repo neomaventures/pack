@@ -1,4 +1,4 @@
-import { express } from "@neoma/fixtures"
+import { express } from "@neomaventures/fixtures"
 import { type Request } from "express"
 
 import { type StorageIdGenerator } from "../interfaces/id-generator.interface"

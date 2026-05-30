@@ -1,4 +1,4 @@
-import { type ApplicationLoggerService } from "@neoma/logging"
+import { type ApplicationLoggerService } from "@neomaventures/logging"
 
 /**
  * Interface for exceptions handled by NeomaExceptionFilter.
@@ -17,8 +17,8 @@ import { type ApplicationLoggerService } from "@neoma/logging"
  * @example
  * ```typescript
  * import { HttpStatus } from '@nestjs/common'
- * import { ApplicationLoggerService } from '@neoma/logging'
- * import { NeomaException } from '@neoma/exceptions'
+ * import { ApplicationLoggerService } from '@neomaventures/logging'
+ * import { NeomaException } from '@neomaventures/exceptions'
  *
  * export class PaymentFailedException extends Error implements NeomaException {
  *   public constructor(
@@ -104,7 +104,7 @@ export interface NeomaException {
    * - 5xx: ERROR level
    *
    * Implementing this method overrides that behavior entirely. The logger
-   * passed is the injected `ApplicationLoggerService` from `@neoma/logging`.
+   * passed is the injected `ApplicationLoggerService` from `@neomaventures/logging`.
    *
    * To disable logging for an exception, implement this method with an
    * empty body.

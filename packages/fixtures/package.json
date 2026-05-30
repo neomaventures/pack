@@ -1,7 +1,7 @@
 {
-  "name": "@neoma/fixtures",
-  "version": "0.6.1",
-  "description": "Test fixtures for @neoma/* NestJS packages",
+  "name": "@neomaventures/fixtures",
+  "version": "0.1.0",
+  "description": "Test fixtures for @neomaventures/* NestJS packages",
   "author": "Daniel Bruce",
   "repository": {
     "type": "git",
@@ -19,7 +19,9 @@
     "neoma"
   ],
   "private": false,
-  "publishConfig": { "registry": "https://npm.pkg.github.com" },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {

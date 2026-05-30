@@ -1,4 +1,4 @@
-# @neoma/config
+# @neomaventures/config
 
 Simple, type-safe environment configuration for NestJS applications.
 
@@ -13,7 +13,7 @@ Even worse than raw `process.env` calls, you end up maintaining configuration bo
 
 ## The Solution
 
-`@neoma/config` provides a clean, type-safe way to access environment variables through dependency injection:
+`@neomaventures/config` provides a clean, type-safe way to access environment variables through dependency injection:
 
 ```typescript
 // Before: Repetitive, untyped, error-prone
@@ -47,7 +47,7 @@ class DatabaseService {
 ## Installation
 
 ```bash
-npm install @neoma/config
+npm install @neomaventures/config
 ```
 
 ## Basic Usage
@@ -56,7 +56,7 @@ npm install @neoma/config
 
 ```typescript
 import { Module } from "@nestjs/common"
-import { ConfigModule } from "@neoma/config"
+import { ConfigModule } from "@neomaventures/config"
 
 @Module({
   imports: [ConfigModule.forRoot()],
@@ -70,7 +70,7 @@ export class AppModule {}
 
 ```typescript
 import { Module } from '@nestjs/common'
-import { ConfigModule } from '@neoma/config'
+import { ConfigModule } from '@neomaventures/config'
 
 @Module({
   imports: [
@@ -91,7 +91,7 @@ This automatically loads environment variables from:
 
 ```typescript
 import { Injectable } from "@nestjs/common"
-import { InjectConfig, TypedConfig } from "@neoma/config"
+import { InjectConfig, TypedConfig } from "@neomaventures/config"
 
 @Injectable()
 export class AppService {
@@ -166,7 +166,7 @@ export class AppService {
 
 ## How It Works
 
-Under the hood, `@neoma/config` uses a Proxy to intercept property access and automatically:
+Under the hood, `@neomaventures/config` uses a Proxy to intercept property access and automatically:
 
 1. Convert property names from camelCase to SCREAMING_SNAKE_CASE
 2. Look up the corresponding environment variable
@@ -224,7 +224,7 @@ This helps catch configuration errors early rather than silently returning `unde
 
 ```typescript
 import { Module } from '@nestjs/common'
-import { ConfigModule } from '@neoma/config'
+import { ConfigModule } from '@neomaventures/config'
 
 @Module({
   imports: [
@@ -403,7 +403,7 @@ Decorator for injecting the ConfigService into your services and controllers.
 ## Links
 
 - [GitHub Repository](https://github.com/neomaventures/pack/tree/main/packages/config)
-- [NPM Package](https://www.npmjs.com/package/@neoma/config)
+- [NPM Package](https://www.npmjs.com/package/@neomaventures/config)
 - [Neoma Ecosystem](https://github.com/neomaventures)
 
 ## License

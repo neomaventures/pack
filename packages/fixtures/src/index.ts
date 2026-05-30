@@ -5,5 +5,5 @@ export * from "./express"
 export * from "./nestjs"
 
 // Custom matchers are loaded separately via Jest setupFilesAfterEnv:
-//   import '@neoma/fixtures/matchers'
+//   import '@neomaventures/fixtures/matchers'
 // They are NOT re-exported here — they self-register via expect.extend().

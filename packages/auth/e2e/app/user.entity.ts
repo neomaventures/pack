@@ -1,4 +1,4 @@
-import { Authenticatable, AuthenticatableProfile } from "@neoma/auth"
+import { Authenticatable, AuthenticatableProfile } from "@neomaventures/auth"
 import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"
 
 @Entity()

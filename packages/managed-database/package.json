@@ -1,6 +1,6 @@
 {
-  "name": "@neoma/managed-database",
-  "version": "0.2.0",
+  "name": "@neomaventures/managed-database",
+  "version": "0.1.0",
   "description": "A managed in-memory database fixture for Jest testing (unit, integration).",
   "author": "Daniel Bruce",
   "repository": {
@@ -20,7 +20,9 @@
     "neoma"
   ],
   "private": false,
-  "publishConfig": { "registry": "https://npm.pkg.github.com" },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [

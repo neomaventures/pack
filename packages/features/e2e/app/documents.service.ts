@@ -1,4 +1,4 @@
-import { FeaturesService } from "@neoma/features"
+import { FeaturesService } from "@neomaventures/features"
 import { Injectable, NotFoundException } from "@nestjs/common"
 
 @Injectable()

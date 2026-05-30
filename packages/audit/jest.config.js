@@ -5,7 +5,7 @@ module.exports = {
   ...base,
   moduleNameMapper: {
     ...base.moduleNameMapper,
-    "^@neoma/audit$": "<rootDir>/src",
-    "^@neoma/audit/(.*)$": "<rootDir>/src/$1",
+    "^@neomaventures/audit$": "<rootDir>/src",
+    "^@neomaventures/audit/(.*)$": "<rootDir>/src/$1",
   },
 }

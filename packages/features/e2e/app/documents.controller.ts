@@ -1,4 +1,4 @@
-import { Feature } from "@neoma/features"
+import { Feature } from "@neomaventures/features"
 import { Controller, Get, HttpCode, HttpStatus, Post } from "@nestjs/common"
 
 import { DocumentsService } from "./documents.service"

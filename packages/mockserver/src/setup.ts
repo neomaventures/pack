@@ -5,7 +5,7 @@ import { startContainer } from "./docker/container"
  *
  * Usage in `jest-e2e.json`:
  * ```json
- * { "globalSetup": "@neoma/mockserver/setup" }
+ * { "globalSetup": "@neomaventures/mockserver/setup" }
  * ```
  */
 export default async function setup(): Promise<void> {

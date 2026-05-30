@@ -1,10 +1,10 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "types": ["node", "jest", "@neoma/fixtures/matchers"],
+    "types": ["node", "jest", "@neomaventures/fixtures/matchers"],
     "paths": {
-      "@neoma/storage": ["./src"],
-      "@neoma/storage/*": ["./src/*"],
+      "@neomaventures/storage": ["./src"],
+      "@neomaventures/storage/*": ["./src/*"],
       "fixtures/*": ["./fixtures/*"]
     }
   },

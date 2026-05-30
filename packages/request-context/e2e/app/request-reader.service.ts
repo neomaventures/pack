@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common"
 
-import { getRequest } from "@neoma/request-context"
+import { getRequest } from "@neomaventures/request-context"
 
 /**
  * A plain, default-scope (singleton) service that reads the current request

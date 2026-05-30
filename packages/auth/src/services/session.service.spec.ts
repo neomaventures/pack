@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker"
-import { express } from "@neoma/fixtures"
+import { express } from "@neomaventures/fixtures"
 import { DynamicModule } from "@nestjs/common"
 import { Test, TestingModule } from "@nestjs/testing"
 import { TypeOrmModule } from "@nestjs/typeorm"

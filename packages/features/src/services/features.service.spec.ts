@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker"
-import { express } from "@neoma/fixtures"
+import { express } from "@neomaventures/fixtures"
 import { ContextIdFactory } from "@nestjs/core"
 import { Test } from "@nestjs/testing"
 import type { Request } from "express"

@@ -1,6 +1,6 @@
-# @neoma/docker
+# @neomaventures/docker
 
-Docker test-container helpers for `@neoma/*` — HTTP/TCP health polling and container teardown. The shared building blocks the service fixtures (`@neoma/mockserver`, `@neoma/mailpit`, …) use to start and stop their containers.
+Docker test-container helpers for `@neomaventures/*` — HTTP/TCP health polling and container teardown. The shared building blocks the service fixtures (`@neomaventures/mockserver`, `@neomaventures/mailpit`, …) use to start and stop their containers.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -12,7 +12,7 @@ Docker test-container helpers for `@neoma/*` — HTTP/TCP health polling and con
 ## Installation
 
 ```bash
-npm install --save-dev @neoma/docker
+npm install --save-dev @neomaventures/docker
 ```
 
 ## API
@@ -23,7 +23,7 @@ npm install --save-dev @neoma/docker
 - **`BaseOptions`, `HealthCheckOptions`** — shared option types for container start functions and the health pollers.
 
 ```typescript
-import { waitForHttp, stopContainer } from "@neoma/docker"
+import { waitForHttp, stopContainer } from "@neomaventures/docker"
 
 await waitForHttp("http://localhost:8025/api/v1/messages", { timeoutMs: 30_000 })
 // ...run tests...

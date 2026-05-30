@@ -1,4 +1,4 @@
-import { getRequest } from "@neoma/request-context"
+import { getRequest } from "@neomaventures/request-context"
 import { Inject, Injectable } from "@nestjs/common"
 import pino, { Level } from "pino"
 
@@ -50,7 +50,7 @@ export type LogContext = {
  * ```
  *
  * The `context` object's fields are merged into the log entry alongside
- * the current request (read from `@neoma/request-context`). To attach
+ * the current request (read from `@neomaventures/request-context`). To attach
  * an `Error`, put it in the context as `{ err: someError }` — pino's
  * default `err` serializer extracts the stack into a structured field.
  *

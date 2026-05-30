@@ -1,7 +1,7 @@
 {
-  "name": "@neoma/minio",
+  "name": "@neomaventures/minio",
   "version": "0.1.0",
-  "description": "MinIO test fixture for @neoma/* — S3-compatible object storage via a Docker container, with a bucket created on start and Jest setup/teardown drop-ins.",
+  "description": "MinIO test fixture for @neomaventures/* \u2014 S3-compatible object storage via a Docker container, with a bucket created on start and Jest setup/teardown drop-ins.",
   "author": "Daniel Bruce",
   "repository": {
     "type": "git",
@@ -21,7 +21,9 @@
     "jest"
   ],
   "private": false,
-  "publishConfig": { "registry": "https://npm.pkg.github.com" },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -54,7 +56,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@neoma/docker": "workspace:*"
+    "@neomaventures/docker": "workspace:*"
   },
   "devDependencies": {
     "@faker-js/faker": "^9.6.0"

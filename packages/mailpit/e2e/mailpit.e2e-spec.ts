@@ -1,6 +1,6 @@
 import { createTransport } from "nodemailer"
 
-import { MailpitClient } from "@neoma/mailpit"
+import { MailpitClient } from "@neomaventures/mailpit"
 
 /**
  * End-to-end check against a real container, consuming the package the way
@@ -10,7 +10,7 @@ import { MailpitClient } from "@neoma/mailpit"
  * and MAILPIT_API. Types still resolve to `src` (tsconfig paths) so
  * goto-definition and debugging stay on source.
  */
-describe("@neoma/mailpit (e2e)", () => {
+describe("@neomaventures/mailpit (e2e)", () => {
   let client: MailpitClient
 
   beforeAll(() => {

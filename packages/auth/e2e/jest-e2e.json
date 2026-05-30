@@ -4,7 +4,7 @@
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
   "setupFiles": ["<rootDir>/build.setup.ts"],
-  "setupFilesAfterEnv": ["jest-extended/all", "@neoma/fixtures/matchers"],
+  "setupFilesAfterEnv": ["jest-extended/all", "@neomaventures/fixtures/matchers"],
   "globalSetup": "<rootDir>/../fixtures/e2e/global-setup.ts",
   "globalTeardown": "<rootDir>/../fixtures/e2e/global-teardown.ts",
   "transform": {
@@ -12,7 +12,7 @@
   },
   "moduleNameMapper": {
     "^fixtures/(.*)$": "<rootDir>/../fixtures/$1",
-    "^@neoma/auth$": "<rootDir>/../dist/index.js",
-    "^@neoma/auth/(.*)$": "<rootDir>/../dist/$1"
+    "^@neomaventures/auth$": "<rootDir>/../dist/index.js",
+    "^@neomaventures/auth/(.*)$": "<rootDir>/../dist/$1"
   }
 }

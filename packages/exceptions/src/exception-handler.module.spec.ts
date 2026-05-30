@@ -1,5 +1,5 @@
-import { ExceptionHandlerModule } from "@neoma/exceptions"
-import { LoggingModule } from "@neoma/logging"
+import { ExceptionHandlerModule } from "@neomaventures/exceptions"
+import { LoggingModule } from "@neomaventures/logging"
 import { Test } from "@nestjs/testing"
 
 describe("ExceptionHandlerModule", () => {

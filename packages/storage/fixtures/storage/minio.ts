@@ -7,7 +7,7 @@ import {
 /**
  * MinIO client helper for test assertions.
  *
- * Uses the STORAGE_* env vars set by @neoma/minio/setup.
+ * Uses the STORAGE_* env vars set by @neomaventures/minio/setup.
  */
 export class MinioClient {
   private readonly client: S3Client

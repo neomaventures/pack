@@ -1,4 +1,4 @@
-import { EmailDto, MagicLinkService, SessionService } from "@neoma/auth"
+import { EmailDto, MagicLinkService, SessionService } from "@neomaventures/auth"
 import {
   Body,
   Controller,

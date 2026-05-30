@@ -1,4 +1,4 @@
-import { type Storable } from "@neoma/storage"
+import { type Storable } from "@neomaventures/storage"
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
 
 /**

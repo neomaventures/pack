@@ -1,5 +1,9 @@
 import { faker } from "@faker-js/faker"
-import { ConfigModule, ConfigService, type TypedConfig } from "@neoma/config"
+import {
+  ConfigModule,
+  ConfigService,
+  type TypedConfig,
+} from "@neomaventures/config"
 import { Test, type TestingModule } from "@nestjs/testing"
 import "fixtures/env"
 
