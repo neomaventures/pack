@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker"
-import { CreatedBy } from "@neoma/audit"
+import { CreatedBy } from "@neomaventures/audit"
 import {
   DataSource,
   Entity,

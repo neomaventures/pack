@@ -25,7 +25,7 @@ export const datasource = async (
 // Cache of datasources for the current test, keyed by their entities config so
 // that distinct configs get distinct instances while repeated calls with the
 // same config (within a test) reuse one. Cleared after each test. Mirrors the
-// instance-cache pattern in @neoma/managed-app.
+// instance-cache pattern in @neomaventures/managed-app.
 const datasourceInstances: Record<string, DataSource> = {}
 
 afterEach(async () => {

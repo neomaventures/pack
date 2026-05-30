@@ -1,5 +1,9 @@
 import { faker } from "@faker-js/faker"
-import { executionContext, express, type MockRequest } from "@neoma/fixtures"
+import {
+  executionContext,
+  express,
+  type MockRequest,
+} from "@neomaventures/fixtures"
 import { ExecutionContext, UnauthorizedException } from "@nestjs/common"
 import { Reflector } from "@nestjs/core"
 import { Test, TestingModule } from "@nestjs/testing"

@@ -3,7 +3,7 @@ import {
   ConfigService,
   InjectConfig,
   TypedConfig,
-} from "@neoma/config"
+} from "@neomaventures/config"
 import { Controller, Module } from "@nestjs/common"
 import { Test } from "@nestjs/testing"
 

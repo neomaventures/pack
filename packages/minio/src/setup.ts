@@ -6,7 +6,7 @@ import { startContainer } from "./docker/container"
  *
  * Usage in `jest-e2e.json`:
  * ```json
- * { "globalSetup": "@neoma/minio/setup" }
+ * { "globalSetup": "@neomaventures/minio/setup" }
  * ```
  */
 export default async function setup(): Promise<void> {

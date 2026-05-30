@@ -1,27 +1,27 @@
 # pack 🐺
 
-The monorepo for the **`@neoma/*`** family — a pack of NestJS building blocks, each privately published to GitHub Packages for use across Neoma projects.
+The monorepo for the **`@neomaventures/*`** family — a pack of NestJS building blocks, each privately published to GitHub Packages for use across Neoma projects.
 
 ## Packages
 
 | Package | Description |
 |---------|-------------|
-| [`@neoma/fixtures`](packages/fixtures) | Test fixtures for `@neoma/*` packages — Express/NestJS mocks, Jest matchers, and a mock logger. |
-| [`@neoma/docker`](packages/docker) | Docker test-container helpers — HTTP/TCP health polling and container teardown; the shared base for the service fixtures. |
-| [`@neoma/mockserver`](packages/mockserver) | MockServer test fixture — a reusable client plus Docker container lifecycle and Jest setup/teardown drop-ins. |
-| [`@neoma/mailpit`](packages/mailpit) | Mailpit test fixture for email testing — a reusable client plus Docker container lifecycle and Jest setup/teardown drop-ins. |
-| [`@neoma/minio`](packages/minio) | MinIO test fixture — an S3-compatible object-storage container with a bucket created on start and Jest setup/teardown drop-ins. |
-| [`@neoma/storage`](packages/storage) | NestJS-idiomatic file storage for S3-compatible backends — upload, persist, presigned download. |
-| [`@neoma/auth`](packages/auth) | Authentication & authorization for NestJS — magic links, Google OAuth, cookie/bearer sessions, and wildcard permissions. |
-| [`@neoma/features`](packages/features) | Feature flagging for NestJS controllers — gate routes behind binary on/off flags. |
-| [`@neoma/route-model-binding`](packages/route-model-binding) | Laravel-inspired route model binding for NestJS — resolve database models from route parameters automatically. |
-| [`@neoma/audit`](packages/audit) | NestJS-idiomatic audit trails for TypeORM — `@CreatedBy` / `@UpdatedBy` decorators that record who changed your entities. |
-| [`@neoma/config`](packages/config) | Simple, type-safe environment configuration for NestJS — typed access to env vars with camelCase↔SCREAMING_SNAKE mapping and `.env` precedence loading. |
-| [`@neoma/logging`](packages/logging) | Great logging for NestJS — Pino-backed application + request-scoped loggers, with per-request trace IDs and field redaction. |
-| [`@neoma/exceptions`](packages/exceptions) | Automatic, Laravel-inspired exception handling for NestJS — consistent error responses, status-aware logging, and HTML content negotiation. |
-| [`@neoma/request-context`](packages/request-context) | Per-request context (AsyncLocalStorage) for NestJS — read the current request anywhere, no request scope. |
-| [`@neoma/managed-app`](packages/managed-app) | Boots a NestJS app from a module path — an e2e harness for the `@neoma/*` packages. |
-| [`@neoma/managed-database`](packages/managed-database) | In-memory SQLite `datasource` fixture for tests. |
+| [`@neomaventures/fixtures`](packages/fixtures) | Test fixtures for `@neomaventures/*` packages — Express/NestJS mocks, Jest matchers, and a mock logger. |
+| [`@neomaventures/docker`](packages/docker) | Docker test-container helpers — HTTP/TCP health polling and container teardown; the shared base for the service fixtures. |
+| [`@neomaventures/mockserver`](packages/mockserver) | MockServer test fixture — a reusable client plus Docker container lifecycle and Jest setup/teardown drop-ins. |
+| [`@neomaventures/mailpit`](packages/mailpit) | Mailpit test fixture for email testing — a reusable client plus Docker container lifecycle and Jest setup/teardown drop-ins. |
+| [`@neomaventures/minio`](packages/minio) | MinIO test fixture — an S3-compatible object-storage container with a bucket created on start and Jest setup/teardown drop-ins. |
+| [`@neomaventures/storage`](packages/storage) | NestJS-idiomatic file storage for S3-compatible backends — upload, persist, presigned download. |
+| [`@neomaventures/auth`](packages/auth) | Authentication & authorization for NestJS — magic links, Google OAuth, cookie/bearer sessions, and wildcard permissions. |
+| [`@neomaventures/features`](packages/features) | Feature flagging for NestJS controllers — gate routes behind binary on/off flags. |
+| [`@neomaventures/route-model-binding`](packages/route-model-binding) | Laravel-inspired route model binding for NestJS — resolve database models from route parameters automatically. |
+| [`@neomaventures/audit`](packages/audit) | NestJS-idiomatic audit trails for TypeORM — `@CreatedBy` / `@UpdatedBy` decorators that record who changed your entities. |
+| [`@neomaventures/config`](packages/config) | Simple, type-safe environment configuration for NestJS — typed access to env vars with camelCase↔SCREAMING_SNAKE mapping and `.env` precedence loading. |
+| [`@neomaventures/logging`](packages/logging) | Great logging for NestJS — Pino-backed application + request-scoped loggers, with per-request trace IDs and field redaction. |
+| [`@neomaventures/exceptions`](packages/exceptions) | Automatic, Laravel-inspired exception handling for NestJS — consistent error responses, status-aware logging, and HTML content negotiation. |
+| [`@neomaventures/request-context`](packages/request-context) | Per-request context (AsyncLocalStorage) for NestJS — read the current request anywhere, no request scope. |
+| [`@neomaventures/managed-app`](packages/managed-app) | Boots a NestJS app from a module path — an e2e harness for the `@neomaventures/*` packages. |
+| [`@neomaventures/managed-database`](packages/managed-database) | In-memory SQLite `datasource` fixture for tests. |
 
 Each package is versioned, changelogged, and published on its own cadence — **privately, to GitHub Packages** (not the public npm registry). When a package proves itself in production, it graduates to public npm publishing (see [Versioning](#versioning) for the graduation flow).
 
@@ -31,7 +31,7 @@ Each package is versioned, changelogged, and published on its own cadence — **
 
 - **Node ≥ 22**
 - **pnpm 11.1.3** — pinned via `packageManager`; install via Corepack so you get the right version.
-- **Docker** — required for test fixtures (`@neoma/minio`, `@neoma/mailpit`, `@neoma/mockserver`) that boot containers. Docker Desktop or any equivalent works. Without Docker running, tests that depend on these fixtures will fail.
+- **Docker** — required for test fixtures (`@neomaventures/minio`, `@neomaventures/mailpit`, `@neomaventures/mockserver`) that boot containers. Docker Desktop or any equivalent works. Without Docker running, tests that depend on these fixtures will fail.
 
 ### Install
 
@@ -51,20 +51,20 @@ pnpm -r build                                  # build all (topological order)
 pnpm -r lint
 pnpm -r test                                   # unit tests — Docker required (MinIO, etc.)
 
-pnpm --filter @neoma/storage test             # a single package
-pnpm --filter @neoma/storage test -- --watch  # watch mode
-pnpm --filter @neoma/storage test:e2e         # e2e — boots a Nest app against MinIO
+pnpm --filter @neomaventures/storage test             # a single package
+pnpm --filter @neomaventures/storage test -- --watch  # watch mode
+pnpm --filter @neomaventures/storage test:e2e         # e2e — boots a Nest app against MinIO
 ```
 
 Editing a package **and** its consumer together? The consumer resolves the dependency from its built `dist/`, so keep a build-watch running alongside:
 
 ```bash
-pnpm --filter @neoma/fixtures exec tsc -p tsconfig.lib.json --watch
+pnpm --filter @neomaventures/fixtures exec tsc -p tsconfig.lib.json --watch
 ```
 
 ## Creating a package
 
-Scaffold a new `@neoma/*` package in the canonical flattened layout:
+Scaffold a new `@neomaventures/*` package in the canonical flattened layout:
 
 ```bash
 pnpm new-package <name> ["description"]   # e.g. pnpm new-package minio
@@ -89,7 +89,7 @@ Replace `src/index.ts` with the real API and add specs alongside it. e2e (a `pac
    ```
    Commit the generated `.changeset/*.md` file alongside your change.
 2. **Merge to `main`** → CI opens a **"Version Packages"** PR that bumps versions and writes each package's `CHANGELOG.md`.
-3. **Merge the Version PR** → CI publishes the changed packages to GitHub Packages and tags them (`@neoma/<pkg>@<version>`).
+3. **Merge the Version PR** → CI publishes the changed packages to GitHub Packages and tags them (`@neomaventures/<pkg>@<version>`).
 
 A change merged **without** a changeset ships nothing — it waits on `main` until one is added.
 
@@ -98,7 +98,7 @@ A change merged **without** a changeset ships nothing — it waits on `main` unt
 Downstream consumers (Neoma SaaS apps, internal tools) configure the `@neoma` scope to resolve from GitHub Packages via `.npmrc`:
 
 ```
-@neoma:registry=https://npm.pkg.github.com
+@neomaventures:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
 ```
 
@@ -113,7 +113,7 @@ When a package proves itself in production, it graduates to public publishing:
 3. Merge → CI publishes to the default registry (npm)
 4. Old GitHub Packages versions remain at their URL as the pre-stable history
 
-Each package graduates independently. Bertie's consumption (`@neoma/<pkg>: ^x.y.z`) doesn't change between registries — only the `.npmrc` mapping does.
+Each package graduates independently. Bertie's consumption (`@neomaventures/<pkg>: ^x.y.z`) doesn't change between registries — only the `.npmrc` mapping does.
 
 ## Supply chain
 

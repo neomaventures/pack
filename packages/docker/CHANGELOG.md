@@ -1,7 +1,6 @@
-# @neoma/docker
+# Changelog
 
-## 0.1.0
+All notable changes to this project will be documented in this file.
 
-### Minor Changes
-
-- 1fff501: Add `@neoma/docker` — shared Docker test-container helpers (`waitForHttp`, `waitForTcp`, `stopContainer`, and the `BaseOptions` / `HealthCheckOptions` types) factored out of the per-package bundled copies. The service fixtures (`@neoma/mockserver`, `@neoma/mailpit`) and `@neoma/fixtures` (MinIO) now depend on it. Requires Docker on the host.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).

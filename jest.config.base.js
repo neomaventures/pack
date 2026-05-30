@@ -1,5 +1,5 @@
 /**
- * Shared Jest config for @neoma/* packages — the root base, alongside
+ * Shared Jest config for @neomaventures/* packages — the root base, alongside
  * tsconfig.base.json and eslint.config.mjs. Packages extend it:
  *
  *   module.exports = require("../../jest.config.base.js")
@@ -31,6 +31,6 @@ module.exports = {
   setupFiles: ["reflect-metadata"],
   setupFilesAfterEnv: ["jest-extended/all"],
   // No shared module mappers: unit specs import relative to source, and any
-  // package-specific aliases (fixtures/, @neoma/<pkg>) are added per package.
+  // package-specific aliases (fixtures/, @neomaventures/<pkg>) are added per package.
   moduleNameMapper: {},
 }

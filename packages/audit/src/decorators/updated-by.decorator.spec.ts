@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker"
-import { UpdatedBy } from "@neoma/audit"
+import { UpdatedBy } from "@neomaventures/audit"
 import {
   Column,
   DataSource,

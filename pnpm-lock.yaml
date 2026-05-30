@@ -90,7 +90,7 @@ importers:
         specifier: 11.x
         version: 11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
     devDependencies:
-      '@neoma/managed-app':
+      '@neomaventures/managed-app':
         specifier: workspace:*
         version: link:../managed-app
       '@nestjs/core':
@@ -142,22 +142,22 @@ importers:
         specifier: '>=7'
         version: 7.8.2
     devDependencies:
-      '@neoma/fixtures':
+      '@neomaventures/fixtures':
         specifier: workspace:*
         version: link:../fixtures
-      '@neoma/logging':
+      '@neomaventures/logging':
         specifier: workspace:*
         version: link:../logging
-      '@neoma/mailpit':
+      '@neomaventures/mailpit':
         specifier: workspace:*
         version: link:../mailpit
-      '@neoma/managed-app':
+      '@neomaventures/managed-app':
         specifier: workspace:*
         version: link:../managed-app
-      '@neoma/mockserver':
+      '@neomaventures/mockserver':
         specifier: workspace:*
         version: link:../mockserver
-      '@neoma/request-context':
+      '@neomaventures/request-context':
         specifier: workspace:*
         version: link:../request-context
       '@nestjs/core':
@@ -240,16 +240,16 @@ importers:
       '@faker-js/faker':
         specifier: ^9.6.0
         version: 9.9.0
-      '@neoma/fixtures':
+      '@neomaventures/fixtures':
         specifier: workspace:*
         version: link:../fixtures
-      '@neoma/logging':
+      '@neomaventures/logging':
         specifier: workspace:*
         version: link:../logging
-      '@neoma/managed-app':
+      '@neomaventures/managed-app':
         specifier: workspace:*
         version: link:../managed-app
-      '@neoma/request-context':
+      '@neomaventures/request-context':
         specifier: workspace:*
         version: link:../request-context
       '@nestjs/core':
@@ -298,10 +298,10 @@ importers:
         specifier: '>=7'
         version: 7.8.2
     devDependencies:
-      '@neoma/fixtures':
+      '@neomaventures/fixtures':
         specifier: workspace:*
         version: link:../fixtures
-      '@neoma/managed-app':
+      '@neomaventures/managed-app':
         specifier: workspace:*
         version: link:../managed-app
       '@nestjs/core':
@@ -363,13 +363,13 @@ importers:
         specifier: ^3.0.1
         version: 3.0.2
     devDependencies:
-      '@neoma/fixtures':
+      '@neomaventures/fixtures':
         specifier: workspace:*
         version: link:../fixtures
-      '@neoma/managed-app':
+      '@neomaventures/managed-app':
         specifier: workspace:*
         version: link:../managed-app
-      '@neoma/request-context':
+      '@neomaventures/request-context':
         specifier: workspace:*
         version: link:../request-context
       '@nestjs/core':
@@ -393,7 +393,7 @@ importers:
 
   packages/mailpit:
     dependencies:
-      '@neoma/docker':
+      '@neomaventures/docker':
         specifier: workspace:*
         version: link:../docker
     devDependencies:
@@ -450,7 +450,7 @@ importers:
 
   packages/minio:
     dependencies:
-      '@neoma/docker':
+      '@neomaventures/docker':
         specifier: workspace:*
         version: link:../docker
     devDependencies:
@@ -460,7 +460,7 @@ importers:
 
   packages/mockserver:
     dependencies:
-      '@neoma/docker':
+      '@neomaventures/docker':
         specifier: workspace:*
         version: link:../docker
     devDependencies:
@@ -483,10 +483,10 @@ importers:
         specifier: '>=7'
         version: 7.8.2
     devDependencies:
-      '@neoma/fixtures':
+      '@neomaventures/fixtures':
         specifier: workspace:*
         version: link:../fixtures
-      '@neoma/managed-app':
+      '@neomaventures/managed-app':
         specifier: workspace:*
         version: link:../managed-app
       '@nestjs/core':
@@ -517,10 +517,10 @@ importers:
         specifier: 11.x
         version: 11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
     devDependencies:
-      '@neoma/fixtures':
+      '@neomaventures/fixtures':
         specifier: workspace:*
         version: link:../fixtures
-      '@neoma/managed-database':
+      '@neomaventures/managed-database':
         specifier: workspace:*
         version: link:../managed-database
       '@nestjs/core':
@@ -572,16 +572,16 @@ importers:
         specifier: ^3.0.2
         version: 3.0.2
     devDependencies:
-      '@neoma/fixtures':
+      '@neomaventures/fixtures':
         specifier: workspace:*
         version: link:../fixtures
-      '@neoma/managed-app':
+      '@neomaventures/managed-app':
         specifier: workspace:*
         version: link:../managed-app
-      '@neoma/managed-database':
+      '@neomaventures/managed-database':
         specifier: workspace:*
         version: link:../managed-database
-      '@neoma/minio':
+      '@neomaventures/minio':
         specifier: workspace:*
         version: link:../minio
       '@nestjs/core':

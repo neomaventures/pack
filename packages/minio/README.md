@@ -1,6 +1,6 @@
-# @neoma/minio
+# @neomaventures/minio
 
-MinIO test fixture for `@neoma/*` — S3-compatible object storage via a Docker container, with a bucket created on start and Jest `setup`/`teardown` drop-ins.
+MinIO test fixture for `@neomaventures/*` — S3-compatible object storage via a Docker container, with a bucket created on start and Jest `setup`/`teardown` drop-ins.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -12,7 +12,7 @@ MinIO test fixture for `@neoma/*` — S3-compatible object storage via a Docker 
 ## Installation
 
 ```bash
-npm install --save-dev @neoma/minio
+npm install --save-dev @neomaventures/minio
 ```
 
 ## Quick start
@@ -22,8 +22,8 @@ Start a MinIO container for the whole test run via Jest's `globalSetup`/`globalT
 ```json
 // jest-e2e.json
 {
-  "globalSetup": "@neoma/minio/setup",
-  "globalTeardown": "@neoma/minio/teardown"
+  "globalSetup": "@neomaventures/minio/setup",
+  "globalTeardown": "@neomaventures/minio/teardown"
 }
 ```
 
@@ -67,7 +67,7 @@ The container honours these environment variables:
 ## API
 
 - **`startContainer(options?)` / `stopContainer(options?)`** — manage the container directly when `globalSetup` isn't a fit. `start` creates the bucket and sets the `STORAGE_*` env vars, then returns `{ container, apiPort, consolePort, bucket, accessKey, secretKey }`. Options: `prefix`, `apiPort`, `consolePort`, `bucket`.
-- **`@neoma/minio/setup` / `@neoma/minio/teardown`** — Jest `globalSetup`/`globalTeardown` drop-ins wrapping the above.
+- **`@neomaventures/minio/setup` / `@neomaventures/minio/teardown`** — Jest `globalSetup`/`globalTeardown` drop-ins wrapping the above.
 
 ## License
 

@@ -1,4 +1,4 @@
-# @neoma/exceptions
+# @neomaventures/exceptions
 
 > Automatic exception handling and intelligent logging for NestJS applications
 
@@ -23,7 +23,7 @@ NestJS's default exception handling works, but lacks sophisticated logging patte
 - Rich contextual logging with request details
 - Zero boilerplate in your controllers
 
-`@neoma/exceptions` provides Laravel-quality exception handling for NestJS with a single import.
+`@neomaventures/exceptions` provides Laravel-quality exception handling for NestJS with a single import.
 
 ## The Problem
 
@@ -64,7 +64,7 @@ async getUser(@Param('id') id: string) {
 ```typescript
 // app.module.ts - One-line setup
 import { Module } from '@nestjs/common'
-import { ExceptionHandlerModule } from '@neoma/exceptions'
+import { ExceptionHandlerModule } from '@neomaventures/exceptions'
 
 @Module({
   imports: [ExceptionHandlerModule],
@@ -94,17 +94,17 @@ async getUser(@Param('id') id: string) {
 
 ## Installation
 
-`@neoma/*` packages publish privately to GitHub Packages. Configure `.npmrc` to resolve the `@neoma` scope first:
+`@neomaventures/*` packages publish privately to GitHub Packages. Configure `.npmrc` to resolve the `@neoma` scope first:
 
 ```
-@neoma:registry=https://npm.pkg.github.com
+@neomaventures:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
 ```
 
 Then install:
 
 ```bash
-npm install @neoma/exceptions
+npm install @neomaventures/exceptions
 ```
 
 ### Peer Dependencies
@@ -121,7 +121,7 @@ These are required for the built-in global validation pipe.
 
 ```typescript
 import { Module } from '@nestjs/common'
-import { ExceptionHandlerModule } from '@neoma/exceptions'
+import { ExceptionHandlerModule } from '@neomaventures/exceptions'
 
 @Module({
   imports: [ExceptionHandlerModule],
@@ -248,7 +248,7 @@ This is more useful than the NestJS default (`{ message: ["must be valid"] }`) f
 Use the `@ErrorTemplate` decorator to render HTML error pages for browser requests while keeping JSON responses for API consumers:
 
 ```typescript
-import { ErrorTemplate } from '@neoma/exceptions'
+import { ErrorTemplate } from '@neomaventures/exceptions'
 
 @Controller('auth')
 export class AuthController {
@@ -297,7 +297,7 @@ Exceptions can carry their own redirect instruction via the `getRedirect()` meth
 
 ```typescript
 import { HttpStatus } from '@nestjs/common'
-import { NeomaException } from '@neoma/exceptions'
+import { NeomaException } from '@neomaventures/exceptions'
 
 export class UnauthenticatedException extends Error implements NeomaException {
   public constructor() {
@@ -398,14 +398,14 @@ export class LoggerMiddleware implements NestMiddleware {
 
 When a `req.logger` is available, all exception logs will include request context automatically.
 
-### Recommended: @neoma/logger
+### Recommended: @neomaventures/logger
 
-This package works best with [@neoma/logger](https://github.com/neomaventures/pack/tree/main/packages/logging) for rich, structured error logging with full request context and production-grade features.
+This package works best with [@neomaventures/logger](https://github.com/neomaventures/pack/tree/main/packages/logging) for rich, structured error logging with full request context and production-grade features.
 
 ```typescript
 import { Module } from '@nestjs/common'
-import { LoggerModule } from '@neoma/logger'
-import { ExceptionHandlerModule } from '@neoma/exceptions'
+import { LoggerModule } from '@neomaventures/logger'
+import { ExceptionHandlerModule } from '@neomaventures/exceptions'
 
 @Module({
   imports: [
@@ -441,7 +441,7 @@ This provides clean structured output with the full error object for better log 
 A NestJS module that registers a global exception filter, validation pipe, and error template metadata bridge guard.
 
 ```typescript
-import { ExceptionHandlerModule } from '@neoma/exceptions'
+import { ExceptionHandlerModule } from '@neomaventures/exceptions'
 
 @Module({
   imports: [ExceptionHandlerModule],
@@ -463,7 +463,7 @@ The global exception filter (automatically registered by `ExceptionHandlerModule
 You typically don't interact with this directly, but you can import it for testing:
 
 ```typescript
-import { NeomaExceptionFilter } from '@neoma/exceptions'
+import { NeomaExceptionFilter } from '@neomaventures/exceptions'
 
 // In tests
 const filter = new NeomaExceptionFilter()
@@ -474,7 +474,7 @@ const filter = new NeomaExceptionFilter()
 Route decorator that enables HTML error rendering via content negotiation. Accepts a string or an `ErrorTemplateOptions` object, with an optional second argument for static template locals.
 
 ```typescript
-import { ErrorTemplate } from '@neoma/exceptions'
+import { ErrorTemplate } from '@neomaventures/exceptions'
 
 // Single template for all errors on this route
 @ErrorTemplate('auth/login')
@@ -514,7 +514,7 @@ Exception factory for `ValidationPipe` that transforms validation errors into a 
 Can be imported for use with custom validation pipe configurations:
 
 ```typescript
-import { validationFactory } from '@neoma/exceptions'
+import { validationFactory } from '@neomaventures/exceptions'
 ```
 
 ### `NeomaException`
@@ -523,7 +523,7 @@ Interface for custom exceptions with full control over behavior. All methods are
 
 ```typescript
 import { LoggerService } from '@nestjs/common'
-import { NeomaException } from '@neoma/exceptions'
+import { NeomaException } from '@neomaventures/exceptions'
 
 export class MyException extends Error implements NeomaException {
   // Optional: HTTP status code (default: 500)
@@ -548,7 +548,7 @@ See [Custom Exceptions with `NeomaException`](#custom-exceptions-with-neomaexcep
 
 ```typescript
 import { Test } from '@nestjs/testing'
-import { ExceptionHandlerModule } from '@neoma/exceptions'
+import { ExceptionHandlerModule } from '@neomaventures/exceptions'
 import { INestApplication } from '@nestjs/common'
 import * as request from 'supertest'
 
@@ -617,7 +617,7 @@ Implement the `NeomaException` interface for full control over status, response,
 
 ```typescript
 import { LoggerService } from '@nestjs/common'
-import { NeomaException } from '@neoma/exceptions'
+import { NeomaException } from '@neomaventures/exceptions'
 
 export class PaymentFailedException extends Error implements NeomaException {
   constructor(
@@ -685,7 +685,7 @@ MIT
 
 ## Links
 
-- [npm package](https://www.npmjs.com/package/@neoma/exceptions)
+- [npm package](https://www.npmjs.com/package/@neomaventures/exceptions)
 - [GitHub repository](https://github.com/neomaventures/pack/tree/main/packages/exceptions)
 - [Issue tracker](https://github.com/neomaventures/pack/issues)
 - [Neoma ecosystem](https://github.com/neomaventures)
@@ -694,9 +694,9 @@ MIT
 
 This package is part of the Neoma ecosystem of Laravel-inspired NestJS packages:
 
-- [@neoma/config](https://github.com/neomaventures/pack/tree/main/packages/config) - Type-safe environment configuration
-- [@neoma/logger](https://github.com/neomaventures/pack/tree/main/packages/logging) - Request and application logging
-- **@neoma/exceptions** - Global exception handling (you are here)
+- [@neomaventures/config](https://github.com/neomaventures/pack/tree/main/packages/config) - Type-safe environment configuration
+- [@neomaventures/logger](https://github.com/neomaventures/pack/tree/main/packages/logging) - Request and application logging
+- **@neomaventures/exceptions** - Global exception handling (you are here)
 - More coming soon...
 
 Each package works independently but integrates seamlessly for a complete Laravel-like experience in NestJS.

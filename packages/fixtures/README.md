@@ -1,11 +1,11 @@
-# @neoma/fixtures
+# @neomaventures/fixtures
 
-Test fixtures for @neoma/* NestJS packages. Provides mock Express and NestJS objects, custom Jest matchers, and a mock logger for unit-testing NestJS building blocks (guards, interceptors, filters, pipes, middleware).
+Test fixtures for @neomaventures/* NestJS packages. Provides mock Express and NestJS objects, custom Jest matchers, and a mock logger for unit-testing NestJS building blocks (guards, interceptors, filters, pipes, middleware).
 
 ## Installation
 
 ```bash
-npm install --save-dev @neoma/fixtures
+npm install --save-dev @neomaventures/fixtures
 ```
 
 ### Peer dependencies
@@ -19,8 +19,8 @@ npm install --save-dev @neoma/fixtures
 ### Express mocks
 
 ```typescript
-import { express } from '@neoma/fixtures'
-import type { MockRequest, MockResponse } from '@neoma/fixtures'
+import { express } from '@neomaventures/fixtures'
+import type { MockRequest, MockResponse } from '@neomaventures/fixtures'
 
 // Create a request with randomized defaults
 const req = express.request()
@@ -60,7 +60,7 @@ const jsonCookie = express.cookie({ userId: 'abc' }, 'my-secret')
 ### NestJS ExecutionContext
 
 ```typescript
-import { executionContext, express } from '@neoma/fixtures'
+import { executionContext, express } from '@neomaventures/fixtures'
 
 // Minimal context (just switchToHttp)
 const ctx = executionContext(req, res)
@@ -90,7 +90,7 @@ ctx.getClass()   // => UserController
 ### MockLoggerService
 
 ```typescript
-import { MockLoggerService } from '@neoma/fixtures'
+import { MockLoggerService } from '@neomaventures/fixtures'
 
 const logger = new MockLoggerService()
 // Use anywhere NestJS expects a LoggerService
@@ -106,7 +106,7 @@ Add to your Jest config's `setupFilesAfterEnv`:
 
 ```json
 {
-  "setupFilesAfterEnv": ["@neoma/fixtures/matchers"]
+  "setupFilesAfterEnv": ["@neomaventures/fixtures/matchers"]
 }
 ```
 

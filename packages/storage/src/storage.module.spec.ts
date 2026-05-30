@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker"
-import { managedDatasourceInstance } from "@neoma/managed-database"
+import { managedDatasourceInstance } from "@neomaventures/managed-database"
 import { Global, Module } from "@nestjs/common"
 import { Test } from "@nestjs/testing"
 import { getDataSourceToken } from "@nestjs/typeorm"

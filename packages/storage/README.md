@@ -1,4 +1,4 @@
-# @neoma/storage
+# @neomaventures/storage
 
 NestJS-idiomatic file storage for S3-compatible backends.
 
@@ -6,17 +6,17 @@ Storage (the three-headed dog guarding the gates of the Underworld) handles the 
 
 ## Installation
 
-`@neoma/*` packages publish privately to GitHub Packages. Configure `.npmrc` to resolve the `@neoma` scope first:
+`@neomaventures/*` packages publish privately to GitHub Packages. Configure `.npmrc` to resolve the `@neoma` scope first:
 
 ```
-@neoma:registry=https://npm.pkg.github.com
+@neomaventures:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
 ```
 
 Then install:
 
 ```bash
-npm install @neoma/storage
+npm install @neomaventures/storage
 ```
 
 ### Peer dependencies
@@ -32,7 +32,7 @@ npm install @nestjs/common @nestjs/core @nestjs/platform-express @nestjs/typeorm
 Your entity implements the `Storable` interface:
 
 ```typescript
-import { type Storable } from "@neoma/storage"
+import { type Storable } from "@neomaventures/storage"
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
 
 @Entity()
@@ -64,7 +64,7 @@ export class Upload implements Storable {
 ### 2. Register the module
 
 ```typescript
-import { StorageModule } from "@neoma/storage"
+import { StorageModule } from "@neomaventures/storage"
 
 @Module({
   imports: [
@@ -107,7 +107,7 @@ import {
   Upload as UploadDecorator,
   StoredFile,
   TemporaryLink,
-} from "@neoma/storage"
+} from "@neomaventures/storage"
 
 @Controller("uploads")
 export class UploadController {
@@ -156,7 +156,7 @@ export class UploadController {
 After a successful upload and entity persistence, a `FileCreatedEvent` is emitted:
 
 ```typescript
-import { FileCreatedEvent } from "@neoma/storage"
+import { FileCreatedEvent } from "@neomaventures/storage"
 import { OnEvent } from "@nestjs/event-emitter"
 
 @Injectable()
@@ -311,11 +311,11 @@ export class UuidIdGenerator {
 ```ts
 // my-app/src/app.module.ts
 import { Module } from "@nestjs/common"
-import { StorageModule } from "@neoma/storage"
+import { StorageModule } from "@neomaventures/storage"
 // `UlidIdGenerator` is the default-implementation class, kept out of the
 // public barrel deliberately — reach for it via this deep path only when
 // you're replacing it.
-import { UlidIdGenerator } from "@neoma/storage/services/ulid-id-generator.service"
+import { UlidIdGenerator } from "@neomaventures/storage/services/ulid-id-generator.service"
 
 import { UuidIdGenerator } from "./uuid-id-generator"
 

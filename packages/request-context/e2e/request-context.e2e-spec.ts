@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker"
-import { managedAppInstance } from "@neoma/managed-app"
+import { managedAppInstance } from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
 import request from "supertest"
 

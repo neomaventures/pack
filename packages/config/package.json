@@ -1,6 +1,6 @@
 {
-  "name": "@neoma/config",
-  "version": "0.4.2",
+  "name": "@neomaventures/config",
+  "version": "0.1.0",
   "description": "Simple, type-safe environment configuration for NestJS applications",
   "author": "Daniel Bruce",
   "repository": {
@@ -22,7 +22,9 @@
     "neoma"
   ],
   "private": false,
-  "publishConfig": { "registry": "https://npm.pkg.github.com" },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [

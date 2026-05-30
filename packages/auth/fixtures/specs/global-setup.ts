@@ -1,8 +1,8 @@
 import { randomBytes, randomUUID } from "crypto"
 import { join } from "path"
 
-import { startContainer as startMailpit } from "@neoma/mailpit"
-import { startContainer as startMockServer } from "@neoma/mockserver"
+import { startContainer as startMailpit } from "@neomaventures/mailpit"
+import { startContainer as startMockServer } from "@neomaventures/mockserver"
 
 import { getTokenEndpoint } from "../google/oauth-api"
 

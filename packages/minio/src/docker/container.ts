@@ -4,7 +4,7 @@ import {
   stopContainer as stop,
   waitForHttp,
   type BaseOptions,
-} from "@neoma/docker"
+} from "@neomaventures/docker"
 
 const MINIO_IMAGE = "minio/minio:RELEASE.2025-09-07T16-13-09Z"
 const DEFAULT_API_PORT = 9000

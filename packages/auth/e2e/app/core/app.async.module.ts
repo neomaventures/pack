@@ -1,6 +1,6 @@
-import { AuthModule, AuthOptions } from "@neoma/auth"
-import { LoggingModule } from "@neoma/logging"
-import { RequestContextModule } from "@neoma/request-context"
+import { AuthModule, AuthOptions } from "@neomaventures/auth"
+import { LoggingModule } from "@neomaventures/logging"
+import { RequestContextModule } from "@neomaventures/request-context"
 import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
 

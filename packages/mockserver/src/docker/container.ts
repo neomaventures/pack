@@ -4,7 +4,7 @@ import {
   stopContainer as stop,
   waitForHttp,
   type BaseOptions,
-} from "@neoma/docker"
+} from "@neomaventures/docker"
 
 const MOCKSERVER_IMAGE = "mockserver/mockserver:5.15.0"
 const DEFAULT_PORT = 1080

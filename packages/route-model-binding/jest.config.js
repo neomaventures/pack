@@ -5,7 +5,7 @@ module.exports = {
   ...base,
   setupFilesAfterEnv: [
     ...base.setupFilesAfterEnv,
-    "@neoma/fixtures/matchers",
+    "@neomaventures/fixtures/matchers",
   ],
   moduleNameMapper: {
     ...base.moduleNameMapper,

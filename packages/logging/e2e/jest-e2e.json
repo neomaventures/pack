@@ -10,8 +10,8 @@
   },
   "moduleNameMapper": {
     "^fixtures/(.*)$": "<rootDir>/../fixtures/$1",
-    "^@neoma/logging$": "<rootDir>/../dist/index.js",
-    "^@neoma/logging/(.*)$": "<rootDir>/../dist/$1",
+    "^@neomaventures/logging$": "<rootDir>/../dist/index.js",
+    "^@neomaventures/logging/(.*)$": "<rootDir>/../dist/$1",
     "^src/(.*)$": "<rootDir>/../e2e/app/$1"
   }
 }

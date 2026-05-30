@@ -2,7 +2,7 @@ import {
   StoredFile,
   TemporaryLink,
   Upload as UploadDecorator,
-} from "@neoma/storage"
+} from "@neomaventures/storage"
 import {
   Controller,
   Get,

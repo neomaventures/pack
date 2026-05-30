@@ -1,8 +1,8 @@
-# @neoma/logging
+# @neomaventures/logging
 
-Structured, typed logging for NestJS applications, powered by pino. Reads the current request from `@neoma/request-context` and attaches it as a `req` field on every log entry — no `Scope.REQUEST`, no `req.logger`, no `@Req()` threading.
+Structured, typed logging for NestJS applications, powered by pino. Reads the current request from `@neomaventures/request-context` and attaches it as a `req` field on every log entry — no `Scope.REQUEST`, no `req.logger`, no `@Req()` threading.
 
-## Why @neoma/logging?
+## Why @neomaventures/logging?
 
 - **Structured-only API** — every method has the same shape: `(message: string, context?: LogContext): void`. No printf, no positional context strings, no ambiguity at call sites.
 - **Automatic request context** — log lines made during a request automatically carry `req`. Works in any default-scoped service, no `Scope.REQUEST` contagion.
@@ -15,15 +15,15 @@ Structured, typed logging for NestJS applications, powered by pino. Reads the cu
 
 `ApplicationLoggerService` deliberately does not implement `@nestjs/common`'s `LoggerService` interface. **Don't pass it to `app.useLogger(...)`** — that won't type-check, and isn't the intended integration. Nest's own framework logs (bootstrap, router exploration, etc.) continue to flow through Nest's `ConsoleLogger`; this service is the structured logger for **application code** and the rest of the Neoma ecosystem.
 
-If you want one stream that captures everything, you can install a pino-compatible Nest logger separately. `@neoma/logging` doesn't compete in that space.
+If you want one stream that captures everything, you can install a pino-compatible Nest logger separately. `@neomaventures/logging` doesn't compete in that space.
 
 ## Installation
 
 ```bash
-pnpm add @neoma/logging @neoma/request-context
+pnpm add @neomaventures/logging @neomaventures/request-context
 ```
 
-`@neoma/request-context` is a peer dependency — it's what gives `ApplicationLoggerService` access to the current request.
+`@neomaventures/request-context` is a peer dependency — it's what gives `ApplicationLoggerService` access to the current request.
 
 ## Quick Start
 
@@ -31,8 +31,8 @@ Install both modules at the root. `RequestContextModule.forRoot()` must come bef
 
 ```typescript
 import { Module } from '@nestjs/common'
-import { LoggingModule } from '@neoma/logging'
-import { RequestContextModule } from '@neoma/request-context'
+import { LoggingModule } from '@neomaventures/logging'
+import { RequestContextModule } from '@neomaventures/request-context'
 
 @Module({
   imports: [
@@ -52,7 +52,7 @@ Inject `ApplicationLoggerService` and call the typed methods:
 
 ```typescript
 import { Injectable } from '@nestjs/common'
-import { ApplicationLoggerService } from '@neoma/logging'
+import { ApplicationLoggerService } from '@neomaventures/logging'
 
 @Injectable()
 export class UsersService {
@@ -91,7 +91,7 @@ Every entry inside a request automatically gets `req` (method, url, headers, etc
 Decorators, utility functions, and other non-DI code can use the static delegates — same structured contract, no DI required:
 
 ```typescript
-import { ApplicationLoggerService } from '@neoma/logging'
+import { ApplicationLoggerService } from '@neomaventures/logging'
 
 export function logBoot(stage: string) {
   ApplicationLoggerService.log('Boot stage', { stage })
@@ -246,9 +246,9 @@ Use `ArrayStream` from the shipped fixtures to capture log output in memory:
 
 ```typescript
 import { Test } from '@nestjs/testing'
-import { LoggingModule, ApplicationLoggerService } from '@neoma/logging'
-import { RequestContextModule } from '@neoma/request-context'
-import { ArrayStream } from '@neoma/logging/fixtures'
+import { LoggingModule, ApplicationLoggerService } from '@neomaventures/logging'
+import { RequestContextModule } from '@neomaventures/request-context'
+import { ArrayStream } from '@neomaventures/logging/fixtures'
 
 describe('UsersService', () => {
   let logger: ApplicationLoggerService
@@ -333,7 +333,7 @@ interface LoggingConfiguration {
 
 - Node.js >= 22
 - NestJS 11.x
-- `@neoma/request-context` (peer dependency)
+- `@neomaventures/request-context` (peer dependency)
 
 ## License
 

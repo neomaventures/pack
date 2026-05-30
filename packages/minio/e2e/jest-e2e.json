@@ -11,7 +11,7 @@
     "^.+\\.tsx?$": "ts-jest"
   },
   "moduleNameMapper": {
-    "^@neoma/minio$": "<rootDir>/../dist/index.js",
-    "^@neoma/minio/(.*)$": "<rootDir>/../dist/$1"
+    "^@neomaventures/minio$": "<rootDir>/../dist/index.js",
+    "^@neomaventures/minio/(.*)$": "<rootDir>/../dist/$1"
   }
 }

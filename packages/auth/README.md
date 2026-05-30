@@ -1,4 +1,4 @@
-# @neoma/auth
+# @neomaventures/auth
 
 Passwordless authentication for NestJS applications. Auth provides magic link authentication, Google OAuth, JWT session management, cookie-based sessions, and route protection out of the box.
 
@@ -21,17 +21,17 @@ Password authentication requires secure hashing, strength validation, reset flow
 
 ## Installation
 
-`@neoma/*` packages publish privately to GitHub Packages. Configure `.npmrc` to resolve the `@neoma` scope first:
+`@neomaventures/*` packages publish privately to GitHub Packages. Configure `.npmrc` to resolve the `@neoma` scope first:
 
 ```
-@neoma:registry=https://npm.pkg.github.com
+@neomaventures:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
 ```
 
 Then install:
 
 ```bash
-npm install @neoma/auth
+npm install @neomaventures/auth
 ```
 
 ### Peer Dependencies
@@ -47,7 +47,7 @@ npm install @nestjs/common @nestjs/core @nestjs/platform-express @nestjs/event-e
 Your user entity must implement the `Authenticatable` interface:
 
 ```typescript
-import { Authenticatable } from "@neoma/auth"
+import { Authenticatable } from "@neomaventures/auth"
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
 
 @Entity()
@@ -66,7 +66,7 @@ export class User implements Authenticatable {
 If you are using Google OAuth and want to store provider profile data (e.g., Google `sub`, `name`, `picture`), add the optional `authProfile` column:
 
 ```typescript
-import { Authenticatable, AuthenticatableProfile } from "@neoma/auth"
+import { Authenticatable, AuthenticatableProfile } from "@neomaventures/auth"
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
 
 @Entity()
@@ -92,7 +92,7 @@ Import and configure `AuthModule` in your application module. You can use `forRo
 #### Static configuration
 
 ```typescript
-import { AuthModule } from "@neoma/auth"
+import { AuthModule } from "@neomaventures/auth"
 import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
 
@@ -146,7 +146,7 @@ export class AppModule {}
 Use `forRootAsync` when you need to inject a config service or resolve options at runtime:
 
 ```typescript
-import { AuthModule } from "@neoma/auth"
+import { AuthModule } from "@neomaventures/auth"
 import { Module } from "@nestjs/common"
 import { ConfigModule, ConfigService } from "@nestjs/config"
 import { TypeOrmModule } from "@nestjs/typeorm"
@@ -249,7 +249,7 @@ See the [NestJS Validation documentation](https://docs.nestjs.com/techniques/val
 Use the provided services to build your authentication endpoints:
 
 ```typescript
-import { EmailDto, MagicLinkService, SessionService } from "@neoma/auth"
+import { EmailDto, MagicLinkService, SessionService } from "@neomaventures/auth"
 import {
   Body,
   Controller,
@@ -296,7 +296,7 @@ export class AuthController {
 Use the `Authenticated` guard and `Principal` decorator to protect routes:
 
 ```typescript
-import { Authenticated, Principal } from "@neoma/auth"
+import { Authenticated, Principal } from "@neomaventures/auth"
 import { Controller, Get, UseGuards } from "@nestjs/common"
 
 import { User } from "./user.entity"
@@ -347,7 +347,7 @@ import {
   GoogleAuthResult,
   GoogleCallback,
   SessionService,
-} from "@neoma/auth"
+} from "@neomaventures/auth"
 import { Controller, Get, Res } from "@nestjs/common"
 import { Response } from "express"
 
@@ -764,7 +764,7 @@ Both events include a `provider` property of type `AuthProvider` (`"magic-link" 
 Emitted when a new user is created via magic link verification or Google OAuth.
 
 ```typescript
-import { RegisteredEvent } from "@neoma/auth"
+import { RegisteredEvent } from "@neomaventures/auth"
 import { OnEvent } from "@nestjs/event-emitter"
 
 @Injectable()

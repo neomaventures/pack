@@ -1,6 +1,6 @@
 {
-  "name": "@neoma/managed-app",
-  "version": "0.6.0",
+  "name": "@neomaventures/managed-app",
+  "version": "0.1.0",
   "description": "A package for creating a managed NestJS application in tests.",
   "author": "Daniel Bruce",
   "repository": {
@@ -12,12 +12,25 @@
     "url": "https://github.com/neomaventures/pack/issues"
   },
   "homepage": "https://github.com/neomaventures/pack/tree/main/packages/managed-app#readme",
-  "keywords": ["nestjs", "testing", "e2e", "neoma"],
+  "keywords": [
+    "nestjs",
+    "testing",
+    "e2e",
+    "neoma"
+  ],
   "private": false,
-  "publishConfig": { "registry": "https://npm.pkg.github.com" },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist", "README.md", "LICENSE", "!**/*.json", "!**/*.tsbuildinfo"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "!**/*.json",
+    "!**/*.tsbuildinfo"
+  ],
   "license": "MIT",
   "scripts": {
     "build": "tsc -p ./tsconfig.lib.json",

@@ -1,11 +1,11 @@
 # `pack` — consolidation roadmap
 
-Working plan for the `@neoma/*` monorepo consolidation. Jump to **Next steps**; the
+Working plan for the `@neomaventures/*` monorepo consolidation. Jump to **Next steps**; the
 **Conventions & gotchas** section is reference material for any package bring-in.
 
 ## Where things stand
 
-The bring-in epic is essentially complete — the standalone `@neoma/*` repos have been
+The bring-in epic is essentially complete — the standalone `@neomaventures/*` repos have been
 consolidated here, all green (build + lint + unit/e2e), with CI + a Changesets release
 pipeline + supply-chain policy in place. `argos` is in review (#44); `anubis` is the only
 package not yet brought in (a currency-conversion feature still under development upstream).
@@ -14,35 +14,35 @@ package not yet brought in (a currency-conversion feature still under developmen
 
 | Package | Role |
 |---|---|
-| `@neoma/fixtures` | Express/NestJS mocks + Jest matchers + mock logger (featherweight — no Docker) |
-| `@neoma/docker` | Docker container helpers — HTTP/TCP health polling + teardown; shared base for the service fixtures |
-| `@neoma/minio` | MinIO S3-compatible storage container + bucket + Jest drop-ins |
-| `@neoma/mockserver` | MockServer container + client + Jest drop-ins |
-| `@neoma/mailpit` | Mailpit email container + client + Jest drop-ins |
-| `@neoma/managed-app` | boots a NestJS app from a module path for e2e |
-| `@neoma/managed-database` | in-memory SQLite `datasource` fixture |
+| `@neomaventures/fixtures` | Express/NestJS mocks + Jest matchers + mock logger (featherweight — no Docker) |
+| `@neomaventures/docker` | Docker container helpers — HTTP/TCP health polling + teardown; shared base for the service fixtures |
+| `@neomaventures/minio` | MinIO S3-compatible storage container + bucket + Jest drop-ins |
+| `@neomaventures/mockserver` | MockServer container + client + Jest drop-ins |
+| `@neomaventures/mailpit` | Mailpit email container + client + Jest drop-ins |
+| `@neomaventures/managed-app` | boots a NestJS app from a module path for e2e |
+| `@neomaventures/managed-database` | in-memory SQLite `datasource` fixture |
 
 **Product / feature packages**
 
 | Package | Role |
 |---|---|
-| `@neoma/config` | type-safe environment configuration |
-| `@neoma/logging` | Pino-backed application + request-scoped loggers |
-| `@neoma/exceptions` | automatic, content-negotiated exception handling |
-| `@neoma/auth` | authn + authz — magic links, Google OAuth, sessions, wildcard permissions |
-| `@neoma/features` | feature flags — gate routes behind on/off flags |
-| `@neoma/route-model-binding` | Laravel-style route → model resolution |
-| `@neoma/storage` | S3-compatible file storage (upload / persist / download) |
-| `@neoma/audit` | audit trails — `@CreatedBy`/`@UpdatedBy` via ALS actor tracking |
+| `@neomaventures/config` | type-safe environment configuration |
+| `@neomaventures/logging` | Pino-backed application + request-scoped loggers |
+| `@neomaventures/exceptions` | automatic, content-negotiated exception handling |
+| `@neomaventures/auth` | authn + authz — magic links, Google OAuth, sessions, wildcard permissions |
+| `@neomaventures/features` | feature flags — gate routes behind on/off flags |
+| `@neomaventures/route-model-binding` | Laravel-style route → model resolution |
+| `@neomaventures/storage` | S3-compatible file storage (upload / persist / download) |
+| `@neomaventures/audit` | audit trails — `@CreatedBy`/`@UpdatedBy` via ALS actor tracking |
 
 ---
 
 ## Next steps
 
-### ~~1. Split base infra out of `@neoma/fixtures`~~ ✅ done
-`@neoma/minio`, `@neoma/mockserver`, and `@neoma/mailpit` are now standalone packages
+### ~~1. Split base infra out of `@neomaventures/fixtures`~~ ✅ done
+`@neomaventures/minio`, `@neomaventures/mockserver`, and `@neomaventures/mailpit` are now standalone packages
 (container lifecycle + client where applicable + the `setup`/`teardown` Jest drop-ins),
-on top of the shared `@neoma/docker` base. `@neoma/fixtures` is featherweight:
+on top of the shared `@neomaventures/docker` base. `@neomaventures/fixtures` is featherweight:
 Express/NestJS mocks + matchers only, no Docker.
 
 - **Boundary rule (kept for future bring-ins):** package boundaries follow
@@ -50,7 +50,7 @@ Express/NestJS mocks + matchers only, no Docker.
   (typeorm/sqlite, `aws-sdk` for an S3 client, nestjs-core) gets its own package so
   featherweight consumers don't inherit it.
 - **Still to come — domain mocks:** on top of the base infra, **domain mocks** (e.g.
-  `@neoma/mockserver-gmail` — pre-canned Gmail expectations; **does not exist yet**)
+  `@neomaventures/mockserver-gmail` — pre-canned Gmail expectations; **does not exist yet**)
   that depend on a base package. Base packages expose a reusable API (client +
   start/stop), not just a Jest drop-in, precisely so these can be layered on.
 
@@ -61,23 +61,23 @@ harness → `packages/auth/e2e/app`, e2e specs → `packages/auth/e2e`, package 
 Builds + lints; **330 unit + 208 e2e green**.
 
 ### ~~3. Update garmr to consume the in-repo packages~~ ✅ done
-Rewired off the deleted `@neoma/fixtures/docker` + `/mailpit` + `/mockserver` surfaces:
-- email/SMTP → `@neoma/mailpit` (`startContainer` + `MailpitClient`),
-- Google OAuth mock → `@neoma/mockserver` (`startContainer` + `MockServerClient`),
-- app boot → `@neoma/managed-app`, matchers → `@neoma/fixtures/matchers`.
-`@neoma/managed-database` isn't used (harness uses an inline in-memory sqlite datasource).
-e2e follows the dist-fidelity convention (harness imports `@neoma/auth` → built `dist`).
+Rewired off the deleted `@neomaventures/fixtures/docker` + `/mailpit` + `/mockserver` surfaces:
+- email/SMTP → `@neomaventures/mailpit` (`startContainer` + `MailpitClient`),
+- Google OAuth mock → `@neomaventures/mockserver` (`startContainer` + `MockServerClient`),
+- app boot → `@neomaventures/managed-app`, matchers → `@neomaventures/fixtures/matchers`.
+`@neomaventures/managed-database` isn't used (harness uses an inline in-memory sqlite datasource).
+e2e follows the dist-fidelity convention (harness imports `@neomaventures/auth` → built `dist`).
 
 ### 4. Promote sensible fixtures from garmr → fixtures
 Garmr's fixtures currently stay local. Apply the boundary rule:
-- **→ `@neoma/fixtures`** — pure, generic mocks/matchers not already there.
+- **→ `@neomaventures/fixtures`** — pure, generic mocks/matchers not already there.
 - **→ its own package** — anything needing a heavy peer.
 - **stays local in garmr** — domain-specific: `credentials` (password/email policy),
   `magic-link` auth-flow helper, the `google`/`oauth-api` fakes, the htpasswd asset.
 
 ### 5. Standardise e2e imports — remove `@lib`
 Make import resolution consistent across packages: **e2e (harness + specs) imports the
-package by name (`@neoma/<pkg>`)** → jest maps to `dist`, tsconfig maps to `src`;
+package by name (`@neomaventures/<pkg>`)** → jest maps to `dist`, tsconfig maps to `src`;
 **unit specs import relative** to the file under test; lib source stays relative. Drop
 `@lib` from `tsconfig.base.json` + `jest.config.base.js` and the scaffold placeholder,
 and migrate the stragglers (`cerberus` e2e+fixtures, `managed-app` e2e, one `managed-database`
@@ -88,9 +88,9 @@ unit spec). garmr already follows this. (Do as its own PR after the garmr bring-
 ## Conventions & gotchas (reference for any bring-in)
 
 - **Naming:** packages take **descriptive names** that say what they do
-  (`@neoma/auth`, `@neoma/storage`, `@neoma/audit`, `@neoma/exceptions`,
-  `@neoma/billing`). Fixture packages wrapping a specific tool take that
-  tool's name (`@neoma/minio`, `@neoma/mailpit`, `@neoma/mockserver`). A
+  (`@neomaventures/auth`, `@neomaventures/storage`, `@neomaventures/audit`, `@neomaventures/exceptions`,
+  `@neomaventures/billing`). Fixture packages wrapping a specific tool take that
+  tool's name (`@neomaventures/minio`, `@neomaventures/mailpit`, `@neomaventures/mockserver`). A
   consumer should read the name and know what it provides without needing
   a glossary. No mythology.
 - **Toolchain:** use `corepack pnpm` (pinned `11.1.3`). A different local pnpm can
@@ -128,11 +128,11 @@ unit spec). garmr already follows this. (Do as its own PR after the garmr bring-
 ---
 
 ## Open items
-- **`@types/multer` as a `@neoma/fixtures` peerDep** — `multerFile`'s return type is
+- **`@types/multer` as a `@neomaventures/fixtures` peerDep** — `multerFile`'s return type is
   `Express.Multer.File`; decide whether multer types become a declared peer.
 - **Node 20 GitHub Actions deprecation** — bump `actions/checkout`, `setup-node`,
   `pnpm/action-setup` (GitHub forces Node 24 from June 2026). Cosmetic for now.
-- **e2e fidelity** — consume the built `dist` via the public entry (`@neoma/<pkg>`)
+- **e2e fidelity** — consume the built `dist` via the public entry (`@neomaventures/<pkg>`)
   instead of `@lib` source, add a `publint`/pack check, and speed up (swc transpile,
   boot-once-per-suite + DB reset).
 
@@ -150,7 +150,7 @@ scoping (mission, API sketch, acceptance criteria) happens when one is picked up
 1. **`request-context` (#51)** — the foundation: a thin `AsyncLocalStorage` primitive
    holding per-request context (tenant + actor + trace-id). Resolves #25 (ALS vs request
    scope). Everything request-aware sits on it.
-2. **Port `@neoma/logging` onto request-context, drop request scope** — proves the
+2. **Port `@neomaventures/logging` onto request-context, drop request scope** — proves the
    primitive on a real consumer and removes `RequestLoggerService`'s costly (contagious)
    request scope, turning it into a plain singleton that reads context at log time.
 3. **Billing / subscriptions (#47)** — the headline capability.

@@ -10,7 +10,7 @@
   },
   "moduleNameMapper": {
     "fixtures/(.*)$": "<rootDir>/../fixtures/$1",
-    "^@neoma/features$": "<rootDir>/../dist/index.js",
-    "^@neoma/features/(.*)$": "<rootDir>/../dist/$1"
+    "^@neomaventures/features$": "<rootDir>/../dist/index.js",
+    "^@neomaventures/features/(.*)$": "<rootDir>/../dist/$1"
   }
 }

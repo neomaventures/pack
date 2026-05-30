@@ -1,6 +1,6 @@
 import { execFileSync } from "child_process"
 
-import { startContainer, stopContainer } from "@neoma/minio"
+import { startContainer, stopContainer } from "@neomaventures/minio"
 
 /**
  * End-to-end check against a real container, consuming the package the
@@ -10,7 +10,7 @@ import { startContainer, stopContainer } from "@neoma/minio"
  * to `src` (tsconfig paths) so goto-definition and debugging stay on
  * source.
  */
-describe("@neoma/minio (e2e)", () => {
+describe("@neomaventures/minio (e2e)", () => {
   // The container name follows {NEOMA_TEST_PREFIX}-minio; the e2e script
   // sets NEOMA_TEST_PREFIX=minio-e2e.
   const container = "minio-e2e-minio"

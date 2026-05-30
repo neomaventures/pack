@@ -19,7 +19,7 @@ import { validationFactory } from "./pipes/validation.factory"
  * ## Required companions
  *
  * `NeomaExceptionFilter` injects `ApplicationLoggerService` from
- * `@neoma/logging`, so consumers **must** install `LoggingModule.forRoot()`
+ * `@neomaventures/logging`, so consumers **must** install `LoggingModule.forRoot()`
  * (typically alongside `RequestContextModule.forRoot()`):
  *
  * ```typescript

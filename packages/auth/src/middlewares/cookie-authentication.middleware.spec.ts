@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker"
-import { MockLoggerService, express } from "@neoma/fixtures"
-import { ApplicationLoggerService } from "@neoma/logging"
+import { MockLoggerService, express } from "@neomaventures/fixtures"
+import { ApplicationLoggerService } from "@neomaventures/logging"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { type Request, type Response } from "express"
 import * as jwt from "jsonwebtoken"

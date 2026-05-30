@@ -3,7 +3,7 @@ import {
   GoogleAuthResult,
   GoogleCallback,
   SessionService,
-} from "@neoma/auth"
+} from "@neomaventures/auth"
 import { Controller, Get, Res } from "@nestjs/common"
 import { Response } from "express"
 

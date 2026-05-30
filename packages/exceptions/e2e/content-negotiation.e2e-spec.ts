@@ -1,7 +1,7 @@
 import { readFileSync } from "fs"
 import { join } from "path"
 
-import { managedAppInstance } from "@neoma/managed-app"
+import { managedAppInstance } from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
 import { type NestExpressApplication } from "@nestjs/platform-express"
 import * as ejs from "ejs"

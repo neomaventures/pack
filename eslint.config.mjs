@@ -80,9 +80,9 @@ export default tseslint.config(
         {
           patterns: [
             {
-              group: ["@neoma/request-context/*"],
+              group: ["@neomaventures/request-context/*"],
               message:
-                "Import from the `@neoma/request-context` barrel; reach internals with an explicit relative import.",
+                "Import from the `@neomaventures/request-context` barrel; reach internals with an explicit relative import.",
             },
           ],
         },

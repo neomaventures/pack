@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common"
 
-import { RequestContextModule } from "@neoma/request-context"
+import { RequestContextModule } from "@neomaventures/request-context"
 
 import { EchoController } from "./echo.controller"
 import { RequestReaderService } from "./request-reader.service"

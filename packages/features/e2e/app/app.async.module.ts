@@ -1,4 +1,7 @@
-import { FeaturesModule, type FeaturesModuleOptions } from "@neoma/features"
+import {
+  FeaturesModule,
+  type FeaturesModuleOptions,
+} from "@neomaventures/features"
 import { Module } from "@nestjs/common"
 
 import { AppController } from "./app.controller"

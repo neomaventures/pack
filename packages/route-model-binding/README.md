@@ -1,4 +1,4 @@
-# @neoma/route-model-binding
+# @neomaventures/route-model-binding
 
 Laravel-inspired route model binding for NestJS applications. Automatically resolve database entities from route parameters with zero boilerplate.
 
@@ -26,7 +26,7 @@ async getPost(
 }
 ```
 
-**After (with @neoma/route-model-binding):**
+**After (with @neomaventures/route-model-binding):**
 
 ```typescript
 @Get('/users/:user/posts/:post')
@@ -41,7 +41,7 @@ getPost(
 ## Installation
 
 ```bash
-npm install @neoma/route-model-binding
+npm install @neomaventures/route-model-binding
 ```
 
 ### Peer Dependencies
@@ -63,7 +63,7 @@ import { TypeOrmModule } from "@nestjs/typeorm"
 import { 
   RouteModelBindingModule, 
   RouteModelBindingMiddleware 
-} from "@neoma/route-model-binding"
+} from "@neomaventures/route-model-binding"
 
 @Module({
   imports: [
@@ -98,7 +98,7 @@ The middleware automatically maps route parameters to TypeORM entities. The para
 
 ```typescript
 import { Controller, Get } from "@nestjs/common"
-import { RouteModel } from "@neoma/route-model-binding"
+import { RouteModel } from "@neomaventures/route-model-binding"
 import { User } from "./entities/user.entity"
 import { Post } from "./entities/post.entity"
 
@@ -141,7 +141,7 @@ RouteModelBindingModule.forRoot(config?: RouteModelBindingConfig)
 
 **Example:**
 ```typescript
-import { RouteModelBindingModule } from "@neoma/route-model-binding"
+import { RouteModelBindingModule } from "@neomaventures/route-model-binding"
 
 @Module({
   imports: [
@@ -159,7 +159,7 @@ The middleware that handles the automatic resolution of entities. You must speci
 
 ```typescript
 import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common"
-import { RouteModelBindingMiddleware } from "@neoma/route-model-binding"
+import { RouteModelBindingMiddleware } from "@neomaventures/route-model-binding"
 
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
@@ -201,7 +201,7 @@ getArticle(@RouteModel('article') article: Article) {
 You can customize how entities are resolved by providing a default resolver function. This is useful for implementing features like soft delete filtering, multi-tenancy, or custom query logic.
 
 ```typescript
-import { RouteModelBindingModule } from "@neoma/route-model-binding"
+import { RouteModelBindingModule } from "@neomaventures/route-model-binding"
 
 @Module({
   imports: [
@@ -274,7 +274,7 @@ RouteModelBindingModule.forRoot({
 You can override the default resolver for specific route parameters using `paramResolvers`. This is useful when different entities need different resolution logic.
 
 ```typescript
-import { RouteModelBindingModule } from "@neoma/route-model-binding"
+import { RouteModelBindingModule } from "@neomaventures/route-model-binding"
 
 @Module({
   imports: [
@@ -351,7 +351,7 @@ Route parameter `:user` will map to the `User` entity class.
 
 If you're coming from Laravel, here's how this library compares:
 
-| Laravel                                  | @neoma/route-model-binding           |
+| Laravel                                  | @neomaventures/route-model-binding           |
 | ---------------------------------------- | ------------------------------------ |
 | `Route::get('/users/{user}', ...)`       | `@Get('/users/:user')`               |
 | Automatic injection via type-hinting     | Use `@RouteModel('user')` decorator  |

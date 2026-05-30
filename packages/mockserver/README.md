@@ -1,6 +1,6 @@
-# @neoma/mockserver
+# @neomaventures/mockserver
 
-MockServer test fixture for `@neoma/*` — a reusable client plus Docker container lifecycle and Jest `setup`/`teardown` drop-ins.
+MockServer test fixture for `@neomaventures/*` — a reusable client plus Docker container lifecycle and Jest `setup`/`teardown` drop-ins.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -12,7 +12,7 @@ MockServer test fixture for `@neoma/*` — a reusable client plus Docker contain
 ## Installation
 
 ```bash
-npm install --save-dev @neoma/mockserver
+npm install --save-dev @neomaventures/mockserver
 ```
 
 ## Quick start
@@ -22,15 +22,15 @@ Start a MockServer container for the whole test run via Jest's `globalSetup`/`gl
 ```json
 // jest-e2e.json
 {
-  "globalSetup": "@neoma/mockserver/setup",
-  "globalTeardown": "@neoma/mockserver/teardown"
+  "globalSetup": "@neomaventures/mockserver/setup",
+  "globalTeardown": "@neomaventures/mockserver/teardown"
 }
 ```
 
 `setup` starts the container and sets `process.env.MOCKSERVER_URL` (e.g. `http://localhost:1080/mockserver`); `teardown` removes it.
 
 ```typescript
-import { MockServerClient } from "@neoma/mockserver"
+import { MockServerClient } from "@neomaventures/mockserver"
 
 const client = new MockServerClient(process.env.MOCKSERVER_URL!)
 
@@ -62,7 +62,7 @@ The container honours these environment variables:
 
 - **`MockServerClient`** — `reset()`, `createExpectation(expectation)`, `verifyExpectationMatched(request, count?)`.
 - **`startContainer(options?)` / `stopContainer(options?)`** — manage the container directly when `globalSetup` isn't a fit. `start` sets `MOCKSERVER_URL`.
-- **`@neoma/mockserver/setup` / `@neoma/mockserver/teardown`** — Jest `globalSetup`/`globalTeardown` drop-ins wrapping the above.
+- **`@neomaventures/mockserver/setup` / `@neomaventures/mockserver/teardown`** — Jest `globalSetup`/`globalTeardown` drop-ins wrapping the above.
 
 ## License
 

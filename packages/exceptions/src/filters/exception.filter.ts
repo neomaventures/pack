@@ -1,4 +1,4 @@
-import { ApplicationLoggerService } from "@neoma/logging"
+import { ApplicationLoggerService } from "@neomaventures/logging"
 import {
   ArgumentsHost,
   Catch,
@@ -39,7 +39,7 @@ import {
  *
  * @example
  * ```typescript
- * import { NeomaException } from '@neoma/exceptions'
+ * import { NeomaException } from '@neomaventures/exceptions'
  *
  * export class PaymentFailedException extends Error implements NeomaException {
  *   constructor(private transactionId: string) {
@@ -69,7 +69,7 @@ import {
  *
  * Implement the `log(logger)` method to override default logging behavior.
  * The logger passed is the injected `ApplicationLoggerService` from
- * `@neoma/logging`. Implementing an empty `log()` method disables logging
+ * `@neomaventures/logging`. Implementing an empty `log()` method disables logging
  * for that exception entirely.
  *
  * ## Logger Setup

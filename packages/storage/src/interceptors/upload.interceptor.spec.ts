@@ -3,8 +3,8 @@ import {
   express,
   MockRequest,
   multerFile,
-} from "@neoma/fixtures"
-import { managedDatasourceInstance } from "@neoma/managed-database"
+} from "@neomaventures/fixtures"
+import { managedDatasourceInstance } from "@neomaventures/managed-database"
 import {
   type CallHandler,
   type ExecutionContext,
@@ -61,7 +61,7 @@ class TestUpload implements Storable {
  * Exposes a managed (cached, auto-torn-down) test DataSource globally so the
  * UploadInterceptor inside the global StorageModule can inject it — a
  * root-level provider can't cross that boundary. TODO: promote to a
- * `ManagedDatabaseModule` exported from @neoma/managed-database.
+ * `ManagedDatabaseModule` exported from @neomaventures/managed-database.
  */
 @Global()
 @Module({

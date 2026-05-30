@@ -1,7 +1,6 @@
-# @neoma/request-context
+# Changelog
 
-## 0.1.0
+All notable changes to this project will be documented in this file.
 
-### Minor Changes
-
-- 986ba28: Initial release of `@neoma/request-context`. Import `RequestContextModule.forRoot()` once in your root module to open one `AsyncLocalStorage` context per request, then call `getRequest()` anywhere below the controller boundary — deep singletons, repositories, listeners — to read the live request with no `@Req()`, no `Scope.REQUEST`, and no threading `req` through your call stack. Returns `undefined` off-request (never throws), keeps concurrent requests isolated.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).

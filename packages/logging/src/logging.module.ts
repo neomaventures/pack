@@ -20,7 +20,7 @@ const EXPORTS = [ApplicationLoggerService]
  *
  * Features:
  * - **Structured logging** via `ApplicationLoggerService`, which reads the
- *   current request from `@neoma/request-context` and attaches it to log
+ *   current request from `@neomaventures/request-context` and attaches it to log
  *   entries as a `req` field.
  * - **Automatic request logging** via `RequestLoggerInterceptor` when
  *   `logLevel: 'debug'`.
@@ -35,10 +35,10 @@ const EXPORTS = [ApplicationLoggerService]
  * Register via `forRoot()` or `forRootAsync()` (both make the module global).
  * The module is not designed to be imported bare.
  *
- * ## Required companion: `@neoma/request-context`
+ * ## Required companion: `@neomaventures/request-context`
  *
  * `ApplicationLoggerService` reads the active request via `getRequest()` from
- * `@neoma/request-context`. For the `req` field to appear on log entries the
+ * `@neomaventures/request-context`. For the `req` field to appear on log entries the
  * consumer app **must** also install the request-context boundary:
  *
  * ```typescript
@@ -68,10 +68,10 @@ const EXPORTS = [ApplicationLoggerService]
  *    `ApplicationLoggerService.error(...)`, etc. — for decorators and other
  *    non-DI code that still needs the structured pipeline.
  *
- * ## Convention for `@neoma/*` packages
+ * ## Convention for `@neomaventures/*` packages
  *
  * Inside other Neoma packages, **inject `ApplicationLoggerService`**. Every
- * Neoma package that logs declares `@neoma/logging` as a peerDependency.
+ * Neoma package that logs declares `@neomaventures/logging` as a peerDependency.
  * Consumers install `LoggingModule.forRoot()` once at the root; the singleton
  * is available to every package below.
  *

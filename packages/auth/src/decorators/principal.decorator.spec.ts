@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker"
-import { executionContext, express } from "@neoma/fixtures"
+import { executionContext, express } from "@neomaventures/fixtures"
 import { ROUTE_ARGS_METADATA } from "@nestjs/common/constants"
 import { CustomParamFactory, ExecutionContext } from "@nestjs/common/interfaces"
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"

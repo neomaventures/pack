@@ -1,4 +1,4 @@
-import { AuditModule } from "@neoma/audit"
+import { AuditModule } from "@neomaventures/audit"
 import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
 

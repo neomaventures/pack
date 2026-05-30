@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable @typescript-eslint/explicit-member-accessibility */
-import { executionContext, express } from "@neoma/fixtures"
+import { executionContext, express } from "@neomaventures/fixtures"
 import {
   Controller,
   type ExecutionContext,

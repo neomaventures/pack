@@ -71,4 +71,4 @@ describe("UserService", () => {
 
 ## Reference
 
-See `@neoma/route-model-binding` package for a complete example.
+See `@neomaventures/route-model-binding` package for a complete example.

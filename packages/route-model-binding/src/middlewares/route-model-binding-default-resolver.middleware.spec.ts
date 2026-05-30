@@ -1,5 +1,5 @@
-import { express, type MockRequest } from "@neoma/fixtures"
-import { managedDatasourceInstance } from "@neoma/managed-database"
+import { express, type MockRequest } from "@neomaventures/fixtures"
+import { managedDatasourceInstance } from "@neomaventures/managed-database"
 import { NotFoundException } from "@nestjs/common"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { getDataSourceToken } from "@nestjs/typeorm"

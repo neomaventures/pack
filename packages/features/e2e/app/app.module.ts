@@ -1,4 +1,4 @@
-import { FeaturesModule } from "@neoma/features"
+import { FeaturesModule } from "@neomaventures/features"
 import { Module } from "@nestjs/common"
 
 import { AppController } from "./app.controller"

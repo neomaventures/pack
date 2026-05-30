@@ -1,9 +1,12 @@
-import { express } from "@neoma/fixtures"
+import { express } from "@neomaventures/fixtures"
 import { Test } from "@nestjs/testing"
 import { type Request, type Response } from "express"
 import { ClsService } from "nestjs-cls"
 
-import { getRequest, RequestContextModule } from "@neoma/request-context"
+import {
+  getRequest,
+  RequestContextModule,
+} from "@neomaventures/request-context"
 
 import { RequestContextMiddleware } from "./request-context.middleware"
 

@@ -2,8 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "paths": {
-      "@neoma/exceptions": ["./src"],
-      "@neoma/exceptions/*": ["./src/*"]
+      "@neomaventures/exceptions": ["./src"],
+      "@neomaventures/exceptions/*": ["./src/*"]
     }
   },
   "include": ["src/**/*", "e2e/**/*"]

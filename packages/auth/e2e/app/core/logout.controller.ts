@@ -1,4 +1,4 @@
-import { SessionService } from "@neoma/auth"
+import { SessionService } from "@neomaventures/auth"
 import { Controller, HttpCode, HttpStatus, Post, Res } from "@nestjs/common"
 import { Response } from "express"
 

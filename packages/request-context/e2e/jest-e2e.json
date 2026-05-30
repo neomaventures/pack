@@ -9,6 +9,6 @@
     "^.+\\.tsx?$": "ts-jest"
   },
   "moduleNameMapper": {
-    "^@neoma/request-context$": "<rootDir>/../dist/index.js"
+    "^@neomaventures/request-context$": "<rootDir>/../dist/index.js"
   }
 }

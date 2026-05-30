@@ -1,11 +1,11 @@
-# @neoma/request-context
+# @neomaventures/request-context
 
 Per-request context (AsyncLocalStorage) for NestJS — read the current request anywhere below the controller, no request scope.
 
 ## Installation
 
 ```bash
-npm install @neoma/request-context
+npm install @neomaventures/request-context
 ```
 
 ## Usage
@@ -15,7 +15,7 @@ Import `RequestContextModule.forRoot()` once in your root module. It opens one
 anywhere in the call stack.
 
 ```typescript
-import { RequestContextModule } from "@neoma/request-context"
+import { RequestContextModule } from "@neomaventures/request-context"
 import { Module } from "@nestjs/common"
 
 @Module({
@@ -33,7 +33,7 @@ singleton service, a repository, a TypeORM listener — with no `@Req()`, no
 `Scope.REQUEST`, and no threading `req` through your call stack.
 
 ```typescript
-import { getRequest } from "@neoma/request-context"
+import { getRequest } from "@neomaventures/request-context"
 import { Injectable } from "@nestjs/common"
 
 @Injectable()

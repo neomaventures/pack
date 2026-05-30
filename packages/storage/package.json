@@ -1,6 +1,6 @@
 {
-  "name": "@neoma/storage",
-  "version": "0.2.0",
+  "name": "@neomaventures/storage",
+  "version": "0.1.0",
   "description": "NestJS-idiomatic file storage for S3-compatible backends \u2014 upload, persist, presigned download.",
   "author": "Daniel Bruce",
   "repository": {
@@ -57,10 +57,10 @@
     "typeorm": ">=0.3"
   },
   "devDependencies": {
-    "@neoma/fixtures": "workspace:*",
-    "@neoma/managed-app": "workspace:*",
-    "@neoma/managed-database": "workspace:*",
-    "@neoma/minio": "workspace:*",
+    "@neomaventures/fixtures": "workspace:*",
+    "@neomaventures/managed-app": "workspace:*",
+    "@neomaventures/managed-database": "workspace:*",
+    "@neomaventures/minio": "workspace:*",
     "@nestjs/core": "^11.1.18",
     "@nestjs/event-emitter": "^3.1.0",
     "@nestjs/platform-express": "^11.1.18",

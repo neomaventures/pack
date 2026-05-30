@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# new-package.sh — scaffold a new @neoma/* package under packages/<name>.
+# new-package.sh — scaffold a new @neomaventures/* package under packages/<name>.
 #
 # Produces the canonical flattened layout used across this monorepo
 # (see packages/managed-database for the reference shape): lib at
@@ -13,7 +13,7 @@
 #   scripts/new-package.sh <name> [description]
 #   pnpm new-package <name> [description]
 #
-# <name>  kebab-case, no @neoma/ prefix — e.g. 'minio', 'mockserver-gmail'.
+# <name>  kebab-case, no @neomaventures/ prefix — e.g. 'minio', 'mockserver-gmail'.
 
 set -euo pipefail
 
@@ -23,11 +23,11 @@ NAME="${1:-}"
 
 if [[ -z "$NAME" ]]; then
   echo "Usage: scripts/new-package.sh <name> [description]" >&2
-  echo "  <name>  kebab-case, no @neoma/ prefix — e.g. 'minio', 'mockserver-gmail'" >&2
+  echo "  <name>  kebab-case, no @neomaventures/ prefix — e.g. 'minio', 'mockserver-gmail'" >&2
   exit 1
 fi
 
-DESC="${2:-TODO: describe @neoma/$NAME}"
+DESC="${2:-TODO: describe @neomaventures/$NAME}"
 
 if [[ ! "$NAME" =~ ^[a-z][a-z0-9]*(-[a-z0-9]+)*$ ]]; then
   echo "Error: package name must be kebab-case (got '$NAME')." >&2
@@ -41,7 +41,7 @@ if [[ -e "$PKG_DIR" ]]; then
   exit 1
 fi
 
-echo "📦 Scaffolding @neoma/$NAME → packages/$NAME"
+echo "📦 Scaffolding @neomaventures/$NAME → packages/$NAME"
 
 mkdir -p "$PKG_DIR/src"
 
@@ -60,7 +60,7 @@ const desc = process.env.NEOMA_DESC
 const dir = process.env.NEOMA_DIR
 
 const pkg = {
-  name: `@neoma/${name}`,
+  name: `@neomaventures/${name}`,
   version: "0.0.0",
   description: desc,
   author: "Shipdventures",
@@ -92,14 +92,14 @@ fs.writeFileSync(join(dir, "package.json"), JSON.stringify(pkg, null, 2) + "\n")
 
 fs.writeFileSync(
   join(dir, "README.md"),
-  `# @neoma/${name}
+  `# @neomaventures/${name}
 
 ${desc}
 
 ## Installation
 
 \`\`\`bash
-npm install @neoma/${name}
+npm install @neomaventures/${name}
 \`\`\`
 
 ## Usage
@@ -144,20 +144,20 @@ EOF
 # --- src/index.ts -----------------------------------------------------------
 cat > "$PKG_DIR/src/index.ts" <<EOF
 /**
- * @neoma/$NAME
+ * @neomaventures/$NAME
  *
  * TODO: replace this placeholder export with the package's public API.
  */
-export const packageName = "@neoma/$NAME"
+export const packageName = "@neomaventures/$NAME"
 EOF
 
 # --- src/<name>.spec.ts -----------------------------------------------------
 cat > "$PKG_DIR/src/$NAME.spec.ts" <<EOF
 import { packageName } from "./index"
 
-describe("@neoma/$NAME", () => {
+describe("@neomaventures/$NAME", () => {
   it("exposes the package name", () => {
-    expect(packageName).toBe("@neoma/$NAME")
+    expect(packageName).toBe("@neomaventures/$NAME")
   })
 })
 EOF
@@ -193,7 +193,7 @@ echo "   src/index.ts  src/$NAME.spec.ts  README.md  LICENSE"
 echo
 echo "Next steps:"
 echo "  1. corepack pnpm install                       # register the package + update the lockfile"
-echo "  2. corepack pnpm --filter @neoma/$NAME test    # the placeholder spec should pass"
+echo "  2. corepack pnpm --filter @neomaventures/$NAME test    # the placeholder spec should pass"
 echo "  3. Replace src/index.ts with the real API; add specs alongside it"
-echo "  4. Add @neoma/$NAME to the root README Packages table  # CI enforces this"
+echo "  4. Add @neomaventures/$NAME to the root README Packages table  # CI enforces this"
 echo "  5. pnpm changeset                              # record the new package for its first release"

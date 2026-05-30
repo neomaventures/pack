@@ -1,6 +1,6 @@
 {
-  "name": "@neoma/audit",
-  "version": "0.1.1",
+  "name": "@neomaventures/audit",
+  "version": "0.1.0",
   "description": "NestJS-idiomatic audit trails for TypeORM \u2014 @CreatedBy/@UpdatedBy decorators that record who changed your entities.",
   "author": "Daniel Bruce",
   "repository": {
@@ -45,7 +45,7 @@
     "typeorm": "^0.3.20"
   },
   "devDependencies": {
-    "@neoma/managed-app": "workspace:*",
+    "@neomaventures/managed-app": "workspace:*",
     "@nestjs/core": "^11.1.18",
     "@nestjs/platform-express": "^11.1.18",
     "@nestjs/testing": "^11.1.18",

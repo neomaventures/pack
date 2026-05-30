@@ -7,8 +7,8 @@ module.exports = {
     ...base.moduleNameMapper,
     // Spec convention (#28): import the public barrel only, resolved to src (no
     // build). Internal symbols must be reached with an explicit relative import
-    // — there is deliberately no `@neoma/request-context/<subpath>` mapping, so
+    // — there is deliberately no `@neomaventures/request-context/<subpath>` mapping, so
     // a deep import via the package name fails.
-    "^@neoma/request-context$": "<rootDir>/src",
+    "^@neomaventures/request-context$": "<rootDir>/src",
   },
 }

@@ -1,6 +1,6 @@
-import { ExceptionHandlerModule } from "@neoma/exceptions"
-import { LoggingModule } from "@neoma/logging"
-import { RequestContextModule } from "@neoma/request-context"
+import { ExceptionHandlerModule } from "@neomaventures/exceptions"
+import { LoggingModule } from "@neomaventures/logging"
+import { RequestContextModule } from "@neomaventures/request-context"
 import { Module } from "@nestjs/common"
 
 import { AppController } from "./app.controller"

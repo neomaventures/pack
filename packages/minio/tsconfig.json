@@ -2,8 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "paths": {
-      "@neoma/minio": ["./src"],
-      "@neoma/minio/*": ["./src/*"]
+      "@neomaventures/minio": ["./src"],
+      "@neomaventures/minio/*": ["./src/*"]
     }
   },
   "include": ["src/**/*", "e2e/**/*"]

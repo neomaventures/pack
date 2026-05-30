@@ -2,8 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "paths": {
-      "@neoma/mockserver": ["./src"],
-      "@neoma/mockserver/*": ["./src/*"]
+      "@neomaventures/mockserver": ["./src"],
+      "@neomaventures/mockserver/*": ["./src/*"]
     }
   },
   "include": ["src/**/*", "e2e/**/*"]

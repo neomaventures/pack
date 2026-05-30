@@ -1,12 +1,6 @@
-# @neoma/mailpit
+# Changelog
 
-## 0.1.0
+All notable changes to this project will be documented in this file.
 
-### Minor Changes
-
-- 1fff501: Add `@neoma/mailpit` — a Mailpit test fixture extracted from `@neoma/fixtures`. Ships the `MailpitClient`, Docker container lifecycle (`startContainer` / `stopContainer`, SMTP + HTTP API ports, optional htpasswd auth), and Jest `globalSetup` / `globalTeardown` drop-ins (`@neoma/mailpit/setup`, `@neoma/mailpit/teardown`). Requires Docker on the host.
-
-### Patch Changes
-
-- Updated dependencies [1fff501]
-  - @neoma/docker@0.1.0
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).

@@ -1,7 +1,7 @@
 {
-  "name": "@neoma/features",
-  "version": "0.4.0",
-  "description": "Feature flagging for NestJS controllers — gate routes behind binary on/off flags.",
+  "name": "@neomaventures/features",
+  "version": "0.1.0",
+  "description": "Feature flagging for NestJS controllers \u2014 gate routes behind binary on/off flags.",
   "author": "Daniel Bruce",
   "repository": {
     "type": "git",
@@ -19,7 +19,9 @@
     "neoma"
   ],
   "private": false,
-  "publishConfig": { "registry": "https://npm.pkg.github.com" },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -45,8 +47,8 @@
     "rxjs": ">=7"
   },
   "devDependencies": {
-    "@neoma/fixtures": "workspace:*",
-    "@neoma/managed-app": "workspace:*",
+    "@neomaventures/fixtures": "workspace:*",
+    "@neomaventures/managed-app": "workspace:*",
     "@nestjs/core": "^11.1.18",
     "@nestjs/platform-express": "^11.1.18",
     "@nestjs/testing": "^11.1.18",

@@ -1,6 +1,6 @@
 import { type Server } from "http"
 
-import { MailpitClient } from "@neoma/mailpit"
+import { MailpitClient } from "@neomaventures/mailpit"
 import { type INestApplication } from "@nestjs/common"
 import request from "supertest"
 

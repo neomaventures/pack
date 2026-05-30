@@ -1,4 +1,4 @@
-import { RequiresAnyPermission, RequiresPermission } from "@neoma/auth"
+import { RequiresAnyPermission, RequiresPermission } from "@neomaventures/auth"
 import { Controller, Get } from "@nestjs/common"
 
 /**

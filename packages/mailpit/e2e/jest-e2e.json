@@ -11,7 +11,7 @@
     "^.+\\.tsx?$": "ts-jest"
   },
   "moduleNameMapper": {
-    "^@neoma/mailpit$": "<rootDir>/../dist/index.js",
-    "^@neoma/mailpit/(.*)$": "<rootDir>/../dist/$1"
+    "^@neomaventures/mailpit$": "<rootDir>/../dist/index.js",
+    "^@neomaventures/mailpit/(.*)$": "<rootDir>/../dist/$1"
   }
 }

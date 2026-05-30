@@ -1,4 +1,4 @@
-import { type StorageIdGenerator } from "@neoma/storage"
+import { type StorageIdGenerator } from "@neomaventures/storage"
 import { Injectable } from "@nestjs/common"
 import { ulid } from "ulid"
 

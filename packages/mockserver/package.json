@@ -1,7 +1,7 @@
 {
-  "name": "@neoma/mockserver",
-  "version": "0.1.1",
-  "description": "MockServer test fixture for @neoma/* — a reusable client plus Docker container lifecycle and Jest setup/teardown drop-ins.",
+  "name": "@neomaventures/mockserver",
+  "version": "0.1.0",
+  "description": "MockServer test fixture for @neomaventures/* \u2014 a reusable client plus Docker container lifecycle and Jest setup/teardown drop-ins.",
   "author": "Daniel Bruce",
   "repository": {
     "type": "git",
@@ -20,7 +20,9 @@
     "jest"
   ],
   "private": false,
-  "publishConfig": { "registry": "https://npm.pkg.github.com" },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -53,7 +55,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@neoma/docker": "workspace:*"
+    "@neomaventures/docker": "workspace:*"
   },
   "devDependencies": {
     "@faker-js/faker": "^9.6.0"

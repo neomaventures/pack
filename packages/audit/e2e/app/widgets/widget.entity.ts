@@ -1,4 +1,4 @@
-import { CreatedBy, UpdatedBy } from "@neoma/audit"
+import { CreatedBy, UpdatedBy } from "@neomaventures/audit"
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
 
 @Entity()

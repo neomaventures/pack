@@ -6,8 +6,8 @@ module.exports = {
   moduleNameMapper: {
     ...base.moduleNameMapper,
     // Spec convention: import the public barrel, resolve to src (no build).
-    "^@neoma/config$": "<rootDir>/src",
-    "^@neoma/config/(.*)$": "<rootDir>/src/$1",
+    "^@neomaventures/config$": "<rootDir>/src",
+    "^@neomaventures/config/(.*)$": "<rootDir>/src/$1",
     "^fixtures/(.*)$": "<rootDir>/fixtures/$1",
   },
 }

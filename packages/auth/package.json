@@ -1,6 +1,6 @@
 {
-  "name": "@neoma/auth",
-  "version": "1.0.0",
+  "name": "@neomaventures/auth",
+  "version": "0.1.0",
   "description": "Authentication and authorization for NestJS. Magic links, Google OAuth, cookie/bearer sessions, and wildcard permissions.",
   "author": "Daniel Bruce",
   "repository": {
@@ -50,7 +50,7 @@
     "nodemailer": "^8.0.4"
   },
   "peerDependencies": {
-    "@neoma/logging": "*",
+    "@neomaventures/logging": "*",
     "@nestjs/common": "11.x",
     "@nestjs/core": "11.x",
     "@nestjs/event-emitter": "3.x",
@@ -62,12 +62,12 @@
     "typeorm": ">=0.3"
   },
   "devDependencies": {
-    "@neoma/fixtures": "workspace:*",
-    "@neoma/logging": "workspace:*",
-    "@neoma/mailpit": "workspace:*",
-    "@neoma/managed-app": "workspace:*",
-    "@neoma/mockserver": "workspace:*",
-    "@neoma/request-context": "workspace:*",
+    "@neomaventures/fixtures": "workspace:*",
+    "@neomaventures/logging": "workspace:*",
+    "@neomaventures/mailpit": "workspace:*",
+    "@neomaventures/managed-app": "workspace:*",
+    "@neomaventures/mockserver": "workspace:*",
+    "@neomaventures/request-context": "workspace:*",
     "@nestjs/core": "^11.1.18",
     "@nestjs/event-emitter": "^3.1.0",
     "@nestjs/platform-express": "^11.1.18",

@@ -1,4 +1,4 @@
-import { RouteModel } from "@neoma/route-model-binding"
+import { RouteModel } from "@neomaventures/route-model-binding"
 import { Controller, Get } from "@nestjs/common"
 
 import { Post } from "./post.entity"

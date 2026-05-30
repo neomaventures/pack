@@ -1,6 +1,6 @@
 import { createHmac } from "crypto"
 
-import { executionContext, express } from "@neoma/fixtures"
+import { executionContext, express } from "@neomaventures/fixtures"
 import {
   type ExecutionContext,
   InternalServerErrorException,

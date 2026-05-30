@@ -3,16 +3,16 @@
   "rootDir": ".",
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
-  "globalSetup": "@neoma/minio/setup",
-  "globalTeardown": "@neoma/minio/teardown",
+  "globalSetup": "@neomaventures/minio/setup",
+  "globalTeardown": "@neomaventures/minio/teardown",
   "setupFiles": ["<rootDir>/build.setup.ts"],
-  "setupFilesAfterEnv": ["jest-extended/all", "@neoma/fixtures/matchers"],
+  "setupFilesAfterEnv": ["jest-extended/all", "@neomaventures/fixtures/matchers"],
   "transform": {
     "^.+\\.tsx?$": "ts-jest"
   },
   "moduleNameMapper": {
     "fixtures/(.*)$": "<rootDir>/../fixtures/$1",
-    "^@neoma/storage$": "<rootDir>/../dist/index.js",
-    "^@neoma/storage/(.*)$": "<rootDir>/../dist/$1"
+    "^@neomaventures/storage$": "<rootDir>/../dist/index.js",
+    "^@neomaventures/storage/(.*)$": "<rootDir>/../dist/$1"
   }
 }
