@@ -10,7 +10,6 @@
     "test": "pnpm -r test",
     "lint": "pnpm -r lint && pnpm lint:yaml",
     "lint:yaml": "eslint \"**/*.{yml,yaml}\"",
-    "release": "pnpm -r build && changeset publish",
     "new-package": "bash scripts/new-package.sh",
     "check:readme": "node scripts/check-readme-packages.mjs"
   },

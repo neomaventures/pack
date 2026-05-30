@@ -1,6 +1,6 @@
 # pack 🐺
 
-The monorepo for the **`@neoma/*`** family — a pack of NestJS building blocks, each published independently to npm.
+The monorepo for the **`@neoma/*`** family — a pack of NestJS building blocks consumed across Neoma projects via the workspace protocol.
 
 ## Packages
 
@@ -23,7 +23,7 @@ The monorepo for the **`@neoma/*`** family — a pack of NestJS building blocks,
 | [`@neoma/managed-app`](packages/managed-app) | Boots a NestJS app from a module path — an e2e harness for the `@neoma/*` packages. |
 | [`@neoma/managed-database`](packages/managed-database) | In-memory SQLite `datasource` fixture for tests. |
 
-Each package is versioned, changelogged, and published on its own cadence.
+Each package is versioned and changelogged on its own cadence via Changesets. **No npm publish** — packages are private and consumed from this workspace.
 
 ## Getting started
 
@@ -70,7 +70,7 @@ Scaffold a new `@neoma/*` package in the canonical flattened layout:
 pnpm new-package <name> ["description"]   # e.g. pnpm new-package minio
 ```
 
-This writes `packages/<name>/` — lib in `src/`, a per-package `jest.config.js` and tsconfigs that extend the root configs, a publishable `package.json`, plus `README.md` and `LICENSE` — with a passing placeholder spec so the workspace stays green. Then:
+This writes `packages/<name>/` — lib in `src/`, a per-package `jest.config.js` and tsconfigs that extend the root configs, a private `package.json`, plus `README.md` and `LICENSE` — with a passing placeholder spec so the workspace stays green. Then:
 
 ```bash
 corepack pnpm install        # register it in the workspace + update the lockfile
@@ -79,9 +79,9 @@ pnpm changeset               # record the new package for its first release
 
 Replace `src/index.ts` with the real API and add specs alongside it. e2e (a `packages/<name>/e2e/` suite + `test:e2e` script) is added per package when needed — see [`packages/cerberus`](packages/cerberus) for the pattern.
 
-## Releasing
+## Versioning
 
-Releases are driven by [Changesets](https://github.com/changesets/changesets), per package:
+Packages are private and **not published to npm**; they're consumed across Neoma projects via the workspace protocol. [Changesets](https://github.com/changesets/changesets) drive versions and CHANGELOGs.
 
 1. **With your change**, record the intent:
    ```bash
@@ -89,9 +89,9 @@ Releases are driven by [Changesets](https://github.com/changesets/changesets), p
    ```
    Commit the generated `.changeset/*.md` file alongside your change.
 2. **Merge to `main`** → CI opens a **"Version Packages"** PR that bumps versions and writes each package's `CHANGELOG.md`.
-3. **Merge the Version PR** → CI publishes the changed packages to npm and tags them (`@neoma/<pkg>@<version>`).
+3. **Merge the Version PR** → bumps land on `main`. Downstream consumers using `workspace:^` pick them up on their next install.
 
-A change merged **without** a changeset ships nothing — it waits on `main` until one is added.
+A change merged **without** a changeset doesn't bump anything — it waits on `main` until one is added.
 
 ## Supply chain
 
