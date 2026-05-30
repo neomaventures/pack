@@ -2,8 +2,8 @@ import { faker } from "@faker-js/faker"
 import { Test } from "@nestjs/testing"
 import { MinioClient } from "fixtures/storage/minio"
 
-import { CERBERUS_OPTIONS } from "../cerberus.options"
 import { InvalidStorageKeyException } from "../exceptions/invalid-storage-key.exception"
+import { STORAGE_OPTIONS } from "../storage.options"
 
 import { StorageService } from "./storage.service"
 
@@ -24,7 +24,7 @@ describe("StorageService", () => {
     const module = await Test.createTestingModule({
       providers: [
         StorageService,
-        { provide: CERBERUS_OPTIONS, useValue: options },
+        { provide: STORAGE_OPTIONS, useValue: options },
       ],
     }).compile()
 

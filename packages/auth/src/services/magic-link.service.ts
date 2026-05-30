@@ -3,10 +3,10 @@ import { EventEmitter2 } from "@nestjs/event-emitter"
 import { createTransport, Transporter } from "nodemailer"
 import { DataSource, FindOptionsWhere } from "typeorm"
 
-import { GarmrAuthenticatedEvent } from "../events/garmr-authenticated.event"
-import { GarmrRegisteredEvent } from "../events/garmr-registered.event"
+import { AUTH_OPTIONS, AuthOptions, MailerOptions } from "../auth.options"
+import { AuthAuthenticatedEvent } from "../events/auth-authenticated.event"
+import { AuthRegisteredEvent } from "../events/auth-registered.event"
 import { InvalidMagicLinkTokenException } from "../exceptions/invalid-magic-link-token.exception"
-import { GARMR_OPTIONS, GarmrOptions, MailerOptions } from "../garmr.options"
 import { Authenticatable } from "../interfaces/authenticatable.interface"
 
 import { TokenService } from "./token.service"
@@ -34,7 +34,7 @@ export class MagicLinkService {
   private transport?: Transporter
 
   public constructor(
-    @Inject(GARMR_OPTIONS) private readonly options: GarmrOptions,
+    @Inject(AUTH_OPTIONS) private readonly options: AuthOptions,
     private readonly tokenService: TokenService,
     private readonly datasource: DataSource,
     private readonly eventEmitter: EventEmitter2,
@@ -44,13 +44,13 @@ export class MagicLinkService {
    * Returns the mailer options, throwing if magic link is not configured.
    *
    * @returns The mailer options from the magicLink configuration
-   * @throws {Error} If magicLink is not configured in GarmrOptions
+   * @throws {Error} If magicLink is not configured in AuthOptions
    */
   private getMailer(): MailerOptions {
     const mailer = this.options.magicLink?.mailer
     if (!mailer) {
       throw new Error(
-        "Magic link is not configured. Provide magicLink.mailer in GarmrOptions to use MagicLinkService.",
+        "Magic link is not configured. Provide magicLink.mailer in AuthOptions to use MagicLinkService.",
       )
     }
     return mailer
@@ -60,7 +60,7 @@ export class MagicLinkService {
    * Returns the nodemailer transport, lazily creating it on first use.
    *
    * @returns The nodemailer Transporter instance
-   * @throws {Error} If magicLink is not configured in GarmrOptions
+   * @throws {Error} If magicLink is not configured in AuthOptions
    */
   private getTransport(): Transporter {
     if (!this.transport) {
@@ -107,7 +107,7 @@ export class MagicLinkService {
    * - Validates token signature and expiry
    * - Validates required claims (aud, email)
    * - Creates new user if email not found, or returns existing user
-   * - Emits `garmr.registered` for new users, `garmr.authenticated` for existing
+   * - Emits `auth.registered` for new users, `auth.authenticated` for existing
    *
    * @param token - The magic link JWT token
    * @returns Object containing the entity and whether it's a new user
@@ -122,8 +122,8 @@ export class MagicLinkService {
    * }
    * ```
    *
-   * @fires garmr.registered - when a new user is created
-   * @fires garmr.authenticated - when an existing user is authenticated
+   * @fires auth.registered - when a new user is created
+   * @fires auth.authenticated - when an existing user is authenticated
    */
   public async verify<T extends Authenticatable>(
     token: string,
@@ -147,8 +147,8 @@ export class MagicLinkService {
 
     if (existing) {
       this.eventEmitter.emit(
-        GarmrAuthenticatedEvent.EVENT_NAME,
-        new GarmrAuthenticatedEvent(existing),
+        AuthAuthenticatedEvent.EVENT_NAME,
+        new AuthAuthenticatedEvent(existing),
       )
       return { entity: existing, isNewUser: false }
     }
@@ -157,8 +157,8 @@ export class MagicLinkService {
     const saved = await repo.save(toSave)
 
     this.eventEmitter.emit(
-      GarmrRegisteredEvent.EVENT_NAME,
-      new GarmrRegisteredEvent(saved),
+      AuthRegisteredEvent.EVENT_NAME,
+      new AuthRegisteredEvent(saved),
     )
 
     return { entity: saved, isNewUser: true }

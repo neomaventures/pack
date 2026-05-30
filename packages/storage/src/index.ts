@@ -1,8 +1,8 @@
 import "./types/express"
 
 // Module & Configuration
-export * from "./cerberus.module"
-export * from "./cerberus.options"
+export * from "./storage.module"
+export * from "./storage.options"
 
 // Interfaces consumers implement
 export * from "./interfaces/storable.interface"

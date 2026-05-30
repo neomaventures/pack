@@ -1,6 +1,6 @@
 # @neoma/audit
 
-NestJS-idiomatic audit trails. Argos (Odysseus's faithful dog -- waited twenty years and never forgot) tracks **who** changed your entities and **when**.
+NestJS-idiomatic audit trails. Audit (Odysseus's faithful dog -- waited twenty years and never forgot) tracks **who** changed your entities and **when**.
 
 ## Installation
 
@@ -15,11 +15,11 @@ Peer dependencies: `@nestjs/common`, `@nestjs/core`, `typeorm`
 ### 1. Register the module
 
 ```typescript
-import { ArgosModule } from "@neoma/audit"
+import { AuditModule } from "@neoma/audit"
 
 @Module({
   imports: [
-    ArgosModule.forRoot({
+    AuditModule.forRoot({
       resolveActor: (req) =>
         req.principal ? `principal:${req.principal.id}` : null,
     }),
@@ -31,7 +31,7 @@ export class AppModule {}
 Or with async configuration:
 
 ```typescript
-ArgosModule.forRootAsync({
+AuditModule.forRootAsync({
   useFactory: (config: ConfigService) => ({
     resolveActor: (req) =>
       req.principal ? `principal:${req.principal.id}` : null,
@@ -65,7 +65,7 @@ That's it. `createdBy` is set on insert, `updatedBy` is set on every save.
 
 ## Configuration
 
-### `ArgosOptions`
+### `AuditOptions`
 
 | Option | Type | Default | Description |
 |---|---|---|---|

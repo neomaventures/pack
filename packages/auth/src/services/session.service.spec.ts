@@ -9,8 +9,8 @@ import * as jwt from "jsonwebtoken"
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
 import { v4 } from "uuid"
 
-import { GarmrModule } from "../garmr.module"
-import { GarmrOptions, MailerOptions } from "../garmr.options"
+import { AuthModule } from "../auth.module"
+import { AuthOptions, MailerOptions } from "../auth.options"
 import { Authenticatable } from "../interfaces/authenticatable.interface"
 
 import { SESSION_AUDIENCE } from "./magic-link.service"
@@ -25,12 +25,12 @@ class User implements Authenticatable {
   public email!: string
 }
 
-const registrations: [string, (opts: GarmrOptions<User>) => DynamicModule][] = [
-  ["forRoot", (opts): DynamicModule => GarmrModule.forRoot(opts)],
+const registrations: [string, (opts: AuthOptions<User>) => DynamicModule][] = [
+  ["forRoot", (opts): DynamicModule => AuthModule.forRoot(opts)],
   [
     "forRootAsync",
     (opts): DynamicModule =>
-      GarmrModule.forRootAsync({ useFactory: (): GarmrOptions<User> => opts }),
+      AuthModule.forRootAsync({ useFactory: (): AuthOptions<User> => opts }),
   ],
 ]
 
@@ -94,12 +94,12 @@ registrations.forEach(([name, register]) => {
         expect(result.payload.aud).toBe(SESSION_AUDIENCE)
       })
 
-      it("should set a Set-Cookie header with garmr.sid by default", () => {
+      it("should set a Set-Cookie header with auth.sid by default", () => {
         const res = express.response() as unknown as Response
         service.create(res, entity as Authenticatable)
 
         const parsed = cookie.parse(res.get("set-cookie")!)
-        expect(parsed["garmr.sid"]).toBeDefined()
+        expect(parsed["auth.sid"]).toBeDefined()
       })
 
       it("should append to existing Set-Cookie headers rather than overwrite", () => {
@@ -110,7 +110,7 @@ registrations.forEach(([name, register]) => {
         const header = res.getHeader("set-cookie") as string[]
         expect(header).toHaveLength(2)
         expect(header[0]).toBe("existing=value")
-        expect(header[1]).toContain("garmr.sid=")
+        expect(header[1]).toContain("auth.sid=")
       })
 
       it("should set httpOnly=true", () => {
@@ -166,7 +166,7 @@ registrations.forEach(([name, register]) => {
 
           const parsed = cookie.parse(res.get("set-cookie")!)
           expect(parsed["my-app.sid"]).toBeDefined()
-          expect(parsed["garmr.sid"]).toBeUndefined()
+          expect(parsed["auth.sid"]).toBeUndefined()
         })
 
         it("should use the custom domain", () => {
@@ -206,7 +206,7 @@ registrations.forEach(([name, register]) => {
         await expect(
           buildModule({ sameSite: "none", secure: false }),
         ).rejects.toThrow(
-          'Garmr cookie misconfiguration: sameSite="none" requires secure=true',
+          'Auth cookie misconfiguration: sameSite="none" requires secure=true',
         )
       })
 
@@ -230,12 +230,12 @@ registrations.forEach(([name, register]) => {
         expect(res.get("set-cookie")!).toContain("Max-Age=0")
       })
 
-      it("should set the cookie name to garmr.sid", () => {
+      it("should set the cookie name to auth.sid", () => {
         const res = express.response() as unknown as Response
         service.clear(res)
 
         const parsed = cookie.parse(res.get("set-cookie")!)
-        expect(parsed["garmr.sid"]).toBeDefined()
+        expect(parsed["auth.sid"]).toBeDefined()
       })
     })
   })

@@ -1,4 +1,4 @@
-import { CerberusModule } from "@neoma/storage"
+import { StorageModule } from "@neoma/storage"
 import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
 import { TestKeyResolver } from "fixtures/resolvers/test-key-resolver"
@@ -14,7 +14,7 @@ import { Upload } from "./upload.entity"
       entities: [Upload],
       synchronize: true,
     }),
-    CerberusModule.forRootAsync({
+    StorageModule.forRootAsync({
       useFactory: () => ({
         endpoint: process.env.STORAGE_ENDPOINT!,
         region: process.env.STORAGE_REGION!,

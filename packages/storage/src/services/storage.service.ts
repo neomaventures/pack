@@ -6,16 +6,16 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { Inject, Injectable } from "@nestjs/common"
 
-import { type CerberusOptions, CERBERUS_OPTIONS } from "../cerberus.options"
 import {
   InvalidStorageKeyException,
   MAX_KEY_BYTES,
 } from "../exceptions/invalid-storage-key.exception"
+import { type StorageOptions, STORAGE_OPTIONS } from "../storage.options"
 
 /**
  * Thin wrapper around the AWS S3 client for storing objects and generating
  * presigned URLs. Key resolution is performed upstream by a
- * {@link CerberusKeyResolver}; this service is responsible only for the
+ * {@link StorageKeyResolver}; this service is responsible only for the
  * persistence boundary.
  *
  * @example
@@ -29,7 +29,7 @@ export class StorageService {
   private readonly client: S3Client
 
   public constructor(
-    @Inject(CERBERUS_OPTIONS) private readonly options: CerberusOptions,
+    @Inject(STORAGE_OPTIONS) private readonly options: StorageOptions,
   ) {
     this.client = new S3Client({
       endpoint: options.endpoint,

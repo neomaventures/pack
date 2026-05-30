@@ -4,8 +4,8 @@ import { faker } from "@faker-js/faker"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { type NextFunction, type Request, type Response } from "express"
 
-import { CERBERUS_OPTIONS, type CerberusOptions } from "../cerberus.options"
 import { FileTooLargeException } from "../exceptions/file-too-large.exception"
+import { STORAGE_OPTIONS, type StorageOptions } from "../storage.options"
 
 import { MultipartMiddleware } from "./multipart.middleware"
 
@@ -44,9 +44,9 @@ const buildMultipartRequest = (body: Buffer): Request => {
 }
 
 const createModule = async (
-  overrides: Partial<CerberusOptions> = {},
+  overrides: Partial<StorageOptions> = {},
 ): Promise<TestingModule> => {
-  const options: CerberusOptions = {
+  const options: StorageOptions = {
     endpoint: faker.internet.url(),
     region: faker.location.countryCode(),
     bucket: faker.string.alphanumeric(10),
@@ -59,7 +59,7 @@ const createModule = async (
   return Test.createTestingModule({
     providers: [
       MultipartMiddleware,
-      { provide: CERBERUS_OPTIONS, useValue: options },
+      { provide: STORAGE_OPTIONS, useValue: options },
     ],
   }).compile()
 }

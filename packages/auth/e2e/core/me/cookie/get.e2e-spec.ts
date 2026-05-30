@@ -67,13 +67,13 @@ appModules.forEach(([name, modulePath]) => {
     })
 
     describe("When the verify endpoint responds", () => {
-      it("should include a Set-Cookie header with garmr.sid, HttpOnly, Secure, SameSite=Lax, and Path=/", async () => {
+      it("should include a Set-Cookie header with auth.sid, HttpOnly, Secure, SameSite=Lax, and Path=/", async () => {
         const { cookie } = await authenticateViaEmail(
           app,
           faker.internet.email(),
         )
 
-        expect(cookie).toContain("garmr.sid=")
+        expect(cookie).toContain("auth.sid=")
         expect(cookie.toLowerCase()).toContain("httponly")
         expect(cookie.toLowerCase()).toContain("secure")
         expect(cookie.toLowerCase()).toContain("samesite=lax")
@@ -95,13 +95,13 @@ appModules.forEach(([name, modulePath]) => {
       it("should respond with HTTP UNAUTHORIZED", async () => {
         const token = jwt.sign(
           { sub: v4(), aud: SESSION_AUDIENCE },
-          process.env.GARMR_SECRET!,
+          process.env.AUTH_SECRET!,
           { expiresIn: -10 },
         )
 
         await request(app.getHttpServer())
           .get("/me")
-          .set("Cookie", `garmr.sid=${token}`)
+          .set("Cookie", `auth.sid=${token}`)
           .expect(UNAUTHORIZED)
           .expect(UNAUTHORIZED_BODY)
       })
@@ -117,7 +117,7 @@ appModules.forEach(([name, modulePath]) => {
 
         await request(app.getHttpServer())
           .get("/me")
-          .set("Cookie", `garmr.sid=${token}`)
+          .set("Cookie", `auth.sid=${token}`)
           .expect(UNAUTHORIZED)
           .expect(UNAUTHORIZED_BODY)
       })
@@ -135,7 +135,7 @@ appModules.forEach(([name, modulePath]) => {
 
         await request(app.getHttpServer())
           .get("/me")
-          .set("Cookie", `garmr.sid=${token}`)
+          .set("Cookie", `auth.sid=${token}`)
           .expect(UNAUTHORIZED)
           .expect(UNAUTHORIZED_BODY)
       })
@@ -145,13 +145,13 @@ appModules.forEach(([name, modulePath]) => {
       it("should respond with HTTP UNAUTHORIZED", async () => {
         const token = jwt.sign(
           { sub: v4(), aud: SESSION_AUDIENCE },
-          process.env.GARMR_SECRET!,
+          process.env.AUTH_SECRET!,
           { expiresIn: "1h" },
         )
 
         await request(app.getHttpServer())
           .get("/me")
-          .set("Cookie", `garmr.sid=${token}`)
+          .set("Cookie", `auth.sid=${token}`)
           .expect(UNAUTHORIZED)
           .expect(UNAUTHORIZED_BODY)
       })
@@ -161,13 +161,13 @@ appModules.forEach(([name, modulePath]) => {
       it("should respond with HTTP UNAUTHORIZED", async () => {
         const token = jwt.sign(
           { aud: SESSION_AUDIENCE },
-          process.env.GARMR_SECRET!,
+          process.env.AUTH_SECRET!,
           { expiresIn: "1h" },
         )
 
         await request(app.getHttpServer())
           .get("/me")
-          .set("Cookie", `garmr.sid=${token}`)
+          .set("Cookie", `auth.sid=${token}`)
           .expect(UNAUTHORIZED)
           .expect(UNAUTHORIZED_BODY)
       })
@@ -177,13 +177,13 @@ appModules.forEach(([name, modulePath]) => {
       it("should respond with HTTP UNAUTHORIZED", async () => {
         const token = jwt.sign(
           { sub: v4(), aud: MAGIC_LINK_AUDIENCE },
-          process.env.GARMR_SECRET!,
+          process.env.AUTH_SECRET!,
           { expiresIn: "1h" },
         )
 
         await request(app.getHttpServer())
           .get("/me")
-          .set("Cookie", `garmr.sid=${token}`)
+          .set("Cookie", `auth.sid=${token}`)
           .expect(UNAUTHORIZED)
           .expect(UNAUTHORIZED_BODY)
       })

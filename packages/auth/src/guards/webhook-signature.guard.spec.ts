@@ -8,7 +8,7 @@ import {
 } from "@nestjs/common"
 import { Test, type TestingModule } from "@nestjs/testing"
 
-import { type GarmrOptions, GARMR_OPTIONS } from "../garmr.options"
+import { type AuthOptions, AUTH_OPTIONS } from "../auth.options"
 
 import { WebhookSignatureGuard } from "./webhook-signature.guard"
 
@@ -41,7 +41,7 @@ class User {
   public email!: string
 }
 
-const DEFAULT_OPTIONS: GarmrOptions = {
+const DEFAULT_OPTIONS: AuthOptions = {
   secret: "jwt-secret",
   expiresIn: "1h",
   entity: User,
@@ -58,7 +58,7 @@ describe("WebhookSignatureGuard", () => {
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           WebhookSignatureGuard,
-          { provide: GARMR_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
+          { provide: AUTH_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
         ],
       }).compile()
 
@@ -96,7 +96,7 @@ describe("WebhookSignatureGuard", () => {
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           WebhookSignatureGuard,
-          { provide: GARMR_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
+          { provide: AUTH_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
         ],
       }).compile()
 
@@ -135,7 +135,7 @@ describe("WebhookSignatureGuard", () => {
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           WebhookSignatureGuard,
-          { provide: GARMR_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
+          { provide: AUTH_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
         ],
       }).compile()
 
@@ -177,7 +177,7 @@ describe("WebhookSignatureGuard", () => {
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           WebhookSignatureGuard,
-          { provide: GARMR_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
+          { provide: AUTH_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
         ],
       }).compile()
 
@@ -218,7 +218,7 @@ describe("WebhookSignatureGuard", () => {
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           WebhookSignatureGuard,
-          { provide: GARMR_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
+          { provide: AUTH_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
         ],
       }).compile()
 
@@ -255,7 +255,7 @@ describe("WebhookSignatureGuard", () => {
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           WebhookSignatureGuard,
-          { provide: GARMR_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
+          { provide: AUTH_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
         ],
       }).compile()
 
@@ -292,7 +292,7 @@ describe("WebhookSignatureGuard", () => {
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           WebhookSignatureGuard,
-          { provide: GARMR_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
+          { provide: AUTH_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
         ],
       }).compile()
 
@@ -329,7 +329,7 @@ describe("WebhookSignatureGuard", () => {
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           WebhookSignatureGuard,
-          { provide: GARMR_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
+          { provide: AUTH_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
         ],
       }).compile()
 
@@ -364,7 +364,7 @@ describe("WebhookSignatureGuard", () => {
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           WebhookSignatureGuard,
-          { provide: GARMR_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
+          { provide: AUTH_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
         ],
       }).compile()
 
@@ -404,7 +404,7 @@ describe("WebhookSignatureGuard", () => {
           providers: [
             WebhookSignatureGuard,
             {
-              provide: GARMR_OPTIONS,
+              provide: AUTH_OPTIONS,
               useValue: {
                 ...DEFAULT_OPTIONS,
                 webhook: undefined,
@@ -413,7 +413,7 @@ describe("WebhookSignatureGuard", () => {
           ],
         }).compile(),
       ).rejects.toThrow(
-        "WebhookSignatureGuard requires webhook.secret to be configured in GarmrModule options.",
+        "WebhookSignatureGuard requires webhook.secret to be configured in AuthModule options.",
       )
     })
   })

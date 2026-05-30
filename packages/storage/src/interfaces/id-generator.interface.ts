@@ -7,13 +7,13 @@
  * @example
  * ```typescript
  * @Injectable()
- * export class FixedIdGenerator implements CerberusIdGenerator {
+ * export class FixedIdGenerator implements StorageIdGenerator {
  *   public generate(): string {
  *     return "fixed-id"
  *   }
  * }
  * ```
  */
-export interface CerberusIdGenerator {
+export interface StorageIdGenerator {
   generate(): string
 }

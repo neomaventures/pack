@@ -79,7 +79,7 @@ appModules.forEach(([name, modulePath]) => {
       })
     })
 
-    describe("When a file is uploaded to a route that customises the key with a CerberusKeyResolver class", () => {
+    describe("When a file is uploaded to a route that customises the key with a StorageKeyResolver class", () => {
       const xCustomFilename = `${faker.hacker.ingverb().toLowerCase().replace(/\s+/g, "-")}.txt`
 
       it(`should respond with HTTP ${CREATED} and store the file using the custom key`, () => {
@@ -119,7 +119,7 @@ appModules.forEach(([name, modulePath]) => {
       })
     })
 
-    describe("When a file is uploaded to a route that customises the key with a CerberusKeyResolver function", () => {
+    describe("When a file is uploaded to a route that customises the key with a StorageKeyResolver function", () => {
       const xCustomFilename = `${faker.hacker.ingverb().toLowerCase().replace(/\s+/g, "-")}.txt`
 
       it(`should respond with HTTP ${CREATED} and store the file using the custom key`, () => {

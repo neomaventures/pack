@@ -1,10 +1,10 @@
 // import { Test } from "@nestjs/testing"
-// import { GarmrModule } from "@lib"
+// import { AuthModule } from "@lib"
 
-describe("GarmrModule", () => {
+describe("AuthModule", () => {
   it("should compile the module", async () => {
     // const module = await Test.createTestingModule({
-    //   imports: [GarmrModule],
+    //   imports: [AuthModule],
     // }).compile()
     //
     // expect(module).toBeDefined()

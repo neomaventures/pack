@@ -3,7 +3,7 @@ import { Controller, Get } from "@nestjs/common"
 
 /**
  * A test Controller for testing permission-based authorization
- * using Garmr's RequiresPermission and RequiresAnyPermission decorators.
+ * using Auth's RequiresPermission and RequiresAnyPermission decorators.
  */
 @Controller("protected")
 export class ProtectedController {

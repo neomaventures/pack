@@ -31,7 +31,7 @@ function getBaseUrl(): string {
  *
  * @example
  * ```typescript
- * GarmrModule.forRoot({
+ * AuthModule.forRoot({
  *   googleAuth: {
  *     tokenEndpoint: getTokenEndpoint(),
  *     // ...

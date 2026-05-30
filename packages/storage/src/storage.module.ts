@@ -1,7 +1,7 @@
 import { MiddlewareConsumer, Module, type NestModule } from "@nestjs/common"
 
-import { ConfigurableModuleClass } from "./cerberus.module-definition"
 import { MultipartMiddleware } from "./middlewares/multipart.middleware"
+import { ConfigurableModuleClass } from "./storage.module-definition"
 
 /**
  * File storage module for NestJS applications.
@@ -13,7 +13,7 @@ import { MultipartMiddleware } from "./middlewares/multipart.middleware"
  *
  * @example Static configuration
  * ```typescript
- * CerberusModule.forRoot({
+ * StorageModule.forRoot({
  *   endpoint: "http://localhost:9000",
  *   region: "us-east-1",
  *   bucket: "uploads",
@@ -25,7 +25,7 @@ import { MultipartMiddleware } from "./middlewares/multipart.middleware"
  *
  * @example Async configuration via DI
  * ```typescript
- * CerberusModule.forRootAsync({
+ * StorageModule.forRootAsync({
  *   imports: [ConfigModule],
  *   useFactory: (config: ConfigService) => ({
  *     endpoint: config.get("S3_ENDPOINT"),
@@ -40,7 +40,7 @@ import { MultipartMiddleware } from "./middlewares/multipart.middleware"
  * ```
  */
 @Module({})
-export class CerberusModule
+export class StorageModule
   extends ConfigurableModuleClass
   implements NestModule
 {

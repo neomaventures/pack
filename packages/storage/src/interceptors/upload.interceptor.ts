@@ -12,7 +12,6 @@ import { type Request } from "express"
 import { from, type Observable, switchMap, tap } from "rxjs"
 import { DataSource, type DeepPartial, type Repository } from "typeorm"
 
-import { type CerberusOptions, CERBERUS_OPTIONS } from "../cerberus.options"
 import {
   UPLOAD_METADATA_KEY,
   type UploadOptions,
@@ -24,21 +23,22 @@ import { InvalidStorageKeyException } from "../exceptions/invalid-storage-key.ex
 import { NoFileProvidedException } from "../exceptions/no-file-provided.exception"
 import { UnsupportedFileTypeException } from "../exceptions/unsupported-file-type.exception"
 import {
-  CerberusKeyResolver,
-  type CerberusKeyResolverFn,
+  StorageKeyResolver,
+  type StorageKeyResolverFn,
   type OriginalFileInfo,
 } from "../interfaces/key-resolver.interface"
 import { type Storable } from "../interfaces/storable.interface"
 import { DefaultKeyResolver } from "../resolvers/default-key.resolver"
 import { StorageService } from "../services/storage.service"
 import { UlidIdGenerator } from "../services/ulid-id-generator.service"
+import { type StorageOptions, STORAGE_OPTIONS } from "../storage.options"
 
 /**
  * Interceptor that handles file uploads using the sandwich pattern.
  *
  * Pre-handler: Reads the file from `req.file` (parsed by {@link MultipartMiddleware}),
  * validates size/type, uploads to S3, creates an entity with Storable fields,
- * and attaches it to `req.cerberus.storedFile`.
+ * and attaches it to `req.storage.storedFile`.
  *
  * Post-handler: Persists the entity via `repository.save()` and returns the
  * original handler response unchanged.
@@ -60,7 +60,7 @@ export class UploadInterceptor<
   private readonly repository: Repository<T>
 
   public constructor(
-    @Inject(CERBERUS_OPTIONS) private readonly options: CerberusOptions<T>,
+    @Inject(STORAGE_OPTIONS) private readonly options: StorageOptions<T>,
     private readonly storageService: StorageService,
     private readonly reflector: Reflector,
     private readonly eventEmitter: EventEmitter2,
@@ -108,16 +108,16 @@ export class UploadInterceptor<
 
     if (uploadOptions.key) {
       const fileInfoWithDefault = { ...fileInfo, defaultKey: key }
-      // Classes implementing CerberusKeyResolver have `resolve` on their prototype;
+      // Classes implementing StorageKeyResolver have `resolve` on their prototype;
       // plain functions (including arrow functions) do not.
       if (uploadOptions.key.prototype?.resolve) {
         const resolver = this.moduleRef.get(
-          uploadOptions.key as Type<CerberusKeyResolver>,
+          uploadOptions.key as Type<StorageKeyResolver>,
           { strict: false },
         )
         key = resolver.resolve(req, this.idGenerator, fileInfoWithDefault)
       } else {
-        key = (uploadOptions.key as CerberusKeyResolverFn)(
+        key = (uploadOptions.key as StorageKeyResolverFn)(
           req,
           this.idGenerator,
           fileInfoWithDefault,
@@ -147,7 +147,7 @@ export class UploadInterceptor<
       bucket: this.options.bucket,
     } as DeepPartial<T>)
 
-    req.cerberus = { ...req.cerberus, storedFile: entity as Storable }
+    req.storage = { ...req.storage, storedFile: entity as Storable }
 
     return next.handle().pipe(
       switchMap((response) =>

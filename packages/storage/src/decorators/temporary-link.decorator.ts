@@ -5,7 +5,7 @@ import { TemporaryLinkInterceptor } from "../interceptors/temporary-link.interce
 /**
  * Metadata key used to store temporary link options on the handler.
  */
-export const TEMPORARY_LINK_METADATA_KEY = "cerberus:temporary-link"
+export const TEMPORARY_LINK_METADATA_KEY = "storage:temporary-link"
 
 /**
  * Method decorator that enables presigned URL redirect handling on a controller route.
@@ -14,7 +14,7 @@ export const TEMPORARY_LINK_METADATA_KEY = "cerberus:temporary-link"
  * The interceptor generates a presigned S3 download URL and responds with HTTP 302.
  *
  * @param expiresIn - Optional URL expiration time in seconds. Defaults to
- *   `CerberusOptions.linkExpiresIn` (or 900 seconds if not configured).
+ *   `StorageOptions.linkExpiresIn` (or 900 seconds if not configured).
  * @returns A composed method decorator
  *
  * @example Default expiry

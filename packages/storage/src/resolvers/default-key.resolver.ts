@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common"
 import { type Request } from "express"
 
-import { type CerberusIdGenerator } from "../interfaces/id-generator.interface"
+import { type StorageIdGenerator } from "../interfaces/id-generator.interface"
 import { type OriginalFileInfo } from "../interfaces/key-resolver.interface"
 
 /**
@@ -10,8 +10,8 @@ import { type OriginalFileInfo } from "../interfaces/key-resolver.interface"
  * path components from the original filename to prevent path-traversal in
  * the stored object key.
  *
- * Not a {@link CerberusKeyResolver} — the default's role is to *produce* the
- * baseline key from raw inputs, whereas a `CerberusKeyResolver` consumes the
+ * Not a {@link StorageKeyResolver} — the default's role is to *produce* the
+ * baseline key from raw inputs, whereas a `StorageKeyResolver` consumes the
  * baseline (via `file.defaultKey`) to decorate it with context. The signatures
  * differ deliberately.
  *
@@ -33,7 +33,7 @@ export class DefaultKeyResolver {
    */
   public resolve(
     _req: Request,
-    idGenerator: CerberusIdGenerator,
+    idGenerator: StorageIdGenerator,
     file: OriginalFileInfo,
   ): string {
     const id = idGenerator.generate()

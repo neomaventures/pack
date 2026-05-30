@@ -1,4 +1,4 @@
-import { ArgosModule } from "@neoma/audit"
+import { AuditModule } from "@neoma/audit"
 import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
 
@@ -14,7 +14,7 @@ import { Widget } from "./widgets/widget.entity"
       synchronize: true,
     }),
     TypeOrmModule.forFeature([Widget]),
-    ArgosModule.forRoot({
+    AuditModule.forRoot({
       resolveActor: (req) => req.headers["x-actor"] as string,
     }),
   ],

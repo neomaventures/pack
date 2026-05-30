@@ -17,7 +17,7 @@ const MAILPIT_API_PORT = isE2E ? 8026 : 8025
 const MOCKSERVER_PORT = isE2E ? 1081 : 1080
 
 // Set environment variables for tests
-process.env.GARMR_SECRET = randomBytes(32).toString("hex")
+process.env.AUTH_SECRET = randomBytes(32).toString("hex")
 process.env.MAILPIT_AUTH_USER = "ripley"
 process.env.MAILPIT_AUTH_PASS = "xenomorph"
 process.env.APP_URL = `https://${randomUUID()}.test`
@@ -35,13 +35,13 @@ export default async (): Promise<void> => {
 
   await Promise.all([
     startMailpit({
-      prefix: `garmr-${NODE_ENV}`,
+      prefix: `auth-${NODE_ENV}`,
       smtpPort: MAILPIT_SMTP_PORT,
       apiPort: MAILPIT_API_PORT,
       htpasswd: htpasswdPath,
     }),
     startMockServer({
-      prefix: `garmr-${NODE_ENV}`,
+      prefix: `auth-${NODE_ENV}`,
       port: MOCKSERVER_PORT,
     }),
   ])

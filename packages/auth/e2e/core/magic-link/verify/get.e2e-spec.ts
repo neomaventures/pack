@@ -35,7 +35,7 @@ appModules.forEach(([name, modulePath]) => {
           it("should respond with HTTP 200, normalized email, and isNewUser: true", async () => {
             const token = jwt.sign(
               { email, aud: MAGIC_LINK_AUDIENCE },
-              process.env.GARMR_SECRET!,
+              process.env.AUTH_SECRET!,
               { expiresIn: "15m" },
             )
 
@@ -56,7 +56,7 @@ appModules.forEach(([name, modulePath]) => {
             // Verify the session token is valid and has correct audience
             const payload = jwt.verify(
               response.body.token as string,
-              process.env.GARMR_SECRET!,
+              process.env.AUTH_SECRET!,
             ) as jwt.JwtPayload
             expect(payload).toMatchObject({
               sub: response.body.user.id,
@@ -78,7 +78,7 @@ appModules.forEach(([name, modulePath]) => {
 
         const token = jwt.sign(
           { email, aud: MAGIC_LINK_AUDIENCE },
-          process.env.GARMR_SECRET!,
+          process.env.AUTH_SECRET!,
           { expiresIn: "15m" },
         )
 
@@ -106,7 +106,7 @@ appModules.forEach(([name, modulePath]) => {
         // Token has uppercase email
         const token = jwt.sign(
           { email: "EXISTING@EXAMPLE.COM", aud: MAGIC_LINK_AUDIENCE },
-          process.env.GARMR_SECRET!,
+          process.env.AUTH_SECRET!,
           { expiresIn: "15m" },
         )
 
@@ -128,7 +128,7 @@ appModules.forEach(([name, modulePath]) => {
       it("should respond with HTTP 401", async () => {
         const token = jwt.sign(
           { email: faker.internet.email(), aud: MAGIC_LINK_AUDIENCE },
-          process.env.GARMR_SECRET!,
+          process.env.AUTH_SECRET!,
           { expiresIn: -10 },
         )
 
@@ -166,7 +166,7 @@ appModules.forEach(([name, modulePath]) => {
       it("should respond with HTTP 401", async () => {
         const token = jwt.sign(
           { aud: MAGIC_LINK_AUDIENCE },
-          process.env.GARMR_SECRET!,
+          process.env.AUTH_SECRET!,
           { expiresIn: "15m" },
         )
 
@@ -187,7 +187,7 @@ appModules.forEach(([name, modulePath]) => {
       it("should respond with HTTP 401 when aud is 'session'", async () => {
         const token = jwt.sign(
           { email: faker.internet.email(), aud: SESSION_AUDIENCE },
-          process.env.GARMR_SECRET!,
+          process.env.AUTH_SECRET!,
           { expiresIn: "15m" },
         )
 
@@ -206,7 +206,7 @@ appModules.forEach(([name, modulePath]) => {
       it("should respond with HTTP 401 when aud is missing", async () => {
         const token = jwt.sign(
           { email: faker.internet.email() },
-          process.env.GARMR_SECRET!,
+          process.env.AUTH_SECRET!,
           { expiresIn: "15m" },
         )
 

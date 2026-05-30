@@ -2,10 +2,10 @@ import { Inject, Injectable } from "@nestjs/common"
 import { EventEmitter2 } from "@nestjs/event-emitter"
 import { DataSource, FindOptionsWhere } from "typeorm"
 
-import { GarmrAuthenticatedEvent } from "../events/garmr-authenticated.event"
+import { AuthOptions, AUTH_OPTIONS } from "../auth.options"
+import { AuthAuthenticatedEvent } from "../events/auth-authenticated.event"
 import { IncorrectCredentialsException } from "../exceptions/incorrect-credentials.exception"
 import { InvalidCredentialsException } from "../exceptions/invalid-credentials.exception"
-import { GarmrOptions, GARMR_OPTIONS } from "../garmr.options"
 import { Authenticatable } from "../interfaces/authenticatable.interface"
 
 import { SESSION_AUDIENCE } from "./magic-link.service"
@@ -20,7 +20,7 @@ import { TokenService } from "./token.service"
 @Injectable()
 export class AuthenticationService {
   public constructor(
-    @Inject(GARMR_OPTIONS) private readonly options: GarmrOptions,
+    @Inject(AUTH_OPTIONS) private readonly options: AuthOptions,
     private readonly tokenService: TokenService,
     private readonly datasource: DataSource,
     private readonly eventEmitter: EventEmitter2,
@@ -38,7 +38,7 @@ export class AuthenticationService {
    * @throws {@link InvalidCredentialsException} if token is null/undefined, invalid, expired, wrong audience, or missing sub
    * @throws {@link IncorrectCredentialsException} if user in token doesn't exist
    *
-   * @fires garmr.authenticated
+   * @fires auth.authenticated
    */
   public async authenticate<T extends Authenticatable>(
     token: string,
@@ -77,8 +77,8 @@ export class AuthenticationService {
     }
 
     this.eventEmitter.emit(
-      GarmrAuthenticatedEvent.EVENT_NAME,
-      new GarmrAuthenticatedEvent(entity, "session"),
+      AuthAuthenticatedEvent.EVENT_NAME,
+      new AuthAuthenticatedEvent(entity, "session"),
     )
 
     return entity

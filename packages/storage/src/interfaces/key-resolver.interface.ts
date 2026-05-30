@@ -1,6 +1,6 @@
 import { type Request } from "express"
 
-import { type CerberusIdGenerator } from "./id-generator.interface"
+import { type StorageIdGenerator } from "./id-generator.interface"
 
 /**
  * Information about the uploaded file, as parsed by the multipart middleware.
@@ -41,9 +41,9 @@ export interface OriginalFileInfo {
  * public uploadAvatar() {}
  * ```
  */
-export type CerberusKeyResolverFn = (
+export type StorageKeyResolverFn = (
   req: Request,
-  idGenerator: CerberusIdGenerator,
+  idGenerator: StorageIdGenerator,
   file: OriginalFileInfo & { defaultKey: string },
 ) => string
 
@@ -58,17 +58,17 @@ export type CerberusKeyResolverFn = (
  * property initializer (`resolve = () => ...`), so the framework can
  * distinguish class resolvers from function resolvers at runtime.
  *
- * Prefer {@link CerberusKeyResolverFn} for stateless resolvers without DI needs.
+ * Prefer {@link StorageKeyResolverFn} for stateless resolvers without DI needs.
  *
  * @example
  * ```typescript
  * @Injectable()
- * export class AvatarKeyResolver implements CerberusKeyResolver {
+ * export class AvatarKeyResolver implements StorageKeyResolver {
  *   public constructor(private readonly config: ConfigService) {}
  *
  *   public resolve(
  *     req: Request,
- *     idGenerator: CerberusIdGenerator,
+ *     idGenerator: StorageIdGenerator,
  *     file: OriginalFileInfo & { defaultKey: string },
  *   ): string {
  *     const prefix = this.config.get("AVATAR_PREFIX")
@@ -77,6 +77,6 @@ export type CerberusKeyResolverFn = (
  * }
  * ```
  */
-export interface CerberusKeyResolver {
-  resolve: CerberusKeyResolverFn
+export interface StorageKeyResolver {
+  resolve: StorageKeyResolverFn
 }

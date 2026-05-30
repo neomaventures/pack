@@ -4,7 +4,7 @@ declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace -- Express global augmentation requires namespace
   namespace Express {
     interface Request {
-      cerberus?: {
+      storage?: {
         storedFile?: Storable
       }
     }

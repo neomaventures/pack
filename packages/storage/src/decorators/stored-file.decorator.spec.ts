@@ -40,7 +40,7 @@ describe("StoredFileDecorator", () => {
   describe("Given the request has a stored file", () => {
     it("should return the stored file entity", () => {
       const req = express.request({
-        cerberus: { storedFile: mockStoredFile },
+        storage: { storedFile: mockStoredFile },
       })
       const ctx = executionContext(req)
 
@@ -59,9 +59,9 @@ describe("StoredFileDecorator", () => {
     })
   })
 
-  describe("Given the request has cerberus namespace but no storedFile", () => {
+  describe("Given the request has storage namespace but no storedFile", () => {
     it("should throw an Error", () => {
-      const req = express.request({ cerberus: {} })
+      const req = express.request({ storage: {} })
       const ctx = executionContext(req)
 
       expect(() => factory(null, ctx as ExecutionContext)).toThrow(

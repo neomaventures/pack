@@ -10,8 +10,8 @@ import {
   PrimaryGeneratedColumn,
 } from "typeorm"
 
-import { CerberusModule } from "./cerberus.module"
 import { type Storable } from "./interfaces/storable.interface"
+import { StorageModule } from "./storage.module"
 
 @Entity()
 class TestFile implements Storable {
@@ -36,7 +36,7 @@ class TestFile implements Storable {
 
 /**
  * Exposes a managed (cached, auto-torn-down) test DataSource globally so the
- * interceptors inside the global CerberusModule can inject it — a root-level
+ * interceptors inside the global StorageModule can inject it — a root-level
  * provider can't cross that boundary.
  */
 @Global()
@@ -52,7 +52,7 @@ class TestFile implements Storable {
 })
 class GlobalTestDbModule {}
 
-describe("CerberusModule", () => {
+describe("StorageModule", () => {
   const options = {
     endpoint: faker.internet.url(),
     region: faker.location.countryCode(),
@@ -65,7 +65,7 @@ describe("CerberusModule", () => {
   describe("forRoot", () => {
     it("should compile the module", async () => {
       const module = await Test.createTestingModule({
-        imports: [GlobalTestDbModule, CerberusModule.forRoot(options)],
+        imports: [GlobalTestDbModule, StorageModule.forRoot(options)],
       }).compile()
 
       expect(module).toBeDefined()
@@ -77,7 +77,7 @@ describe("CerberusModule", () => {
       const module = await Test.createTestingModule({
         imports: [
           GlobalTestDbModule,
-          CerberusModule.forRootAsync({
+          StorageModule.forRootAsync({
             useFactory: () => options,
           }),
         ],

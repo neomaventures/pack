@@ -8,7 +8,7 @@ import {
   type Repository,
 } from "typeorm"
 
-import { auditStore } from "../argos.store"
+import { auditStore } from "../audit.store"
 
 @Entity()
 class TestEntity {

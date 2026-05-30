@@ -1,14 +1,14 @@
 import { express } from "@neoma/fixtures"
 import { type Request } from "express"
 
-import { type CerberusIdGenerator } from "../interfaces/id-generator.interface"
+import { type StorageIdGenerator } from "../interfaces/id-generator.interface"
 import { type OriginalFileInfo } from "../interfaces/key-resolver.interface"
 
 import { DefaultKeyResolver } from "./default-key.resolver"
 
 describe("DefaultKeyResolver", () => {
   let resolver: DefaultKeyResolver
-  let idGenerator: jest.Mocked<CerberusIdGenerator>
+  let idGenerator: jest.Mocked<StorageIdGenerator>
 
   const fileInfo = (
     overrides: Partial<OriginalFileInfo> = {},

@@ -6,7 +6,7 @@ import { PermissionService } from "../services/permission.service"
 /**
  * Metadata key for storing required permissions (AND logic).
  */
-export const REQUIRED_PERMISSIONS_KEY = "garmr:required_permissions"
+export const REQUIRED_PERMISSIONS_KEY = "auth:required_permissions"
 
 /**
  * Decorator that requires the authenticated principal to have ALL specified permissions.

@@ -6,8 +6,8 @@ import { FileCreatedEvent } from "./file-created.event"
 
 describe("FileCreatedEvent", () => {
   describe("EVENT_NAME", () => {
-    it("should equal 'cerberus.file.created'", () => {
-      expect(FileCreatedEvent.EVENT_NAME).toBe("cerberus.file.created")
+    it("should equal 'storage.file.created'", () => {
+      expect(FileCreatedEvent.EVENT_NAME).toBe("storage.file.created")
     })
   })
 

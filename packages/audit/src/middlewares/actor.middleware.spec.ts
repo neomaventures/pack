@@ -2,8 +2,8 @@ import { faker } from "@faker-js/faker"
 import { Test } from "@nestjs/testing"
 import { type Request, type Response } from "express"
 
-import { type ArgosOptions, ARGOS_OPTIONS } from "../argos.options"
-import { auditStore } from "../argos.store"
+import { type AuditOptions, AUDIT_OPTIONS } from "../audit.options"
+import { auditStore } from "../audit.store"
 
 import { ActorMiddleware } from "./actor.middleware"
 
@@ -13,10 +13,10 @@ const mockRequest = (headers: Record<string, string> = {}): Request =>
 const mockResponse = (): Response => ({}) as unknown as Response
 
 const buildMiddleware = async (
-  options: ArgosOptions,
+  options: AuditOptions,
 ): Promise<ActorMiddleware> => {
   const module = await Test.createTestingModule({
-    providers: [{ provide: ARGOS_OPTIONS, useValue: options }, ActorMiddleware],
+    providers: [{ provide: AUDIT_OPTIONS, useValue: options }, ActorMiddleware],
   }).compile()
 
   return module.get(ActorMiddleware)

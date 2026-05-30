@@ -6,7 +6,7 @@ import { type Request, type Response } from "express"
 import * as jwt from "jsonwebtoken"
 import { v4 } from "uuid"
 
-import { GARMR_OPTIONS } from "../garmr.options"
+import { AUTH_OPTIONS } from "../auth.options"
 import { AuthenticationService } from "../services/authentication.service"
 
 import { CookieAuthenticationMiddleware } from "./cookie-authentication.middleware"
@@ -28,7 +28,7 @@ describe("CookieAuthenticationMiddleware", () => {
         { provide: AuthenticationService, useValue: service },
         { provide: ApplicationLoggerService, useValue: logger },
         {
-          provide: GARMR_OPTIONS,
+          provide: AUTH_OPTIONS,
           useValue: { cookie: cookieOptions },
         },
       ],
@@ -47,7 +47,7 @@ describe("CookieAuthenticationMiddleware", () => {
       const sid = jwt.sign({ sub: v4() }, v4())
       const req = express.request({
         headers: {
-          cookie: "garmr.sid=" + encodeURIComponent(sid),
+          cookie: "auth.sid=" + encodeURIComponent(sid),
         },
         principal: existingPrincipal,
       })
@@ -64,7 +64,7 @@ describe("CookieAuthenticationMiddleware", () => {
     })
   })
 
-  describe("When called with a garmr.sid cookie", () => {
+  describe("When called with a auth.sid cookie", () => {
     it("should use it to authenticate and assign the result to req.principal", (done) => {
       const id = v4()
       const sid = jwt.sign({ sub: id }, v4())
@@ -73,7 +73,7 @@ describe("CookieAuthenticationMiddleware", () => {
 
       const req = express.request({
         headers: {
-          cookie: "garmr.sid=" + encodeURIComponent(sid),
+          cookie: "auth.sid=" + encodeURIComponent(sid),
         },
       })
 
@@ -105,7 +105,7 @@ describe("CookieAuthenticationMiddleware", () => {
     })
   })
 
-  describe("When called with cookies but no garmr.sid", () => {
+  describe("When called with cookies but no auth.sid", () => {
     it("should call next without calling service", (done) => {
       const req = express.request({
         headers: {
@@ -136,7 +136,7 @@ describe("CookieAuthenticationMiddleware", () => {
     it("should call next without setting principal", (done) => {
       const req = express.request({
         headers: {
-          cookie: "garmr.sid=" + encodeURIComponent(sid),
+          cookie: "auth.sid=" + encodeURIComponent(sid),
         },
       })
 
@@ -153,7 +153,7 @@ describe("CookieAuthenticationMiddleware", () => {
     it("should log a warning via the injected ApplicationLoggerService", (done) => {
       const req = express.request({
         headers: {
-          cookie: "garmr.sid=" + encodeURIComponent(sid),
+          cookie: "auth.sid=" + encodeURIComponent(sid),
         },
       })
 
@@ -199,12 +199,12 @@ describe("CookieAuthenticationMiddleware", () => {
       )
     })
 
-    it("should not match the default garmr.sid cookie", (done) => {
+    it("should not match the default auth.sid cookie", (done) => {
       const sid = jwt.sign({ sub: v4() }, v4())
 
       const req = express.request({
         headers: {
-          cookie: "garmr.sid=" + encodeURIComponent(sid),
+          cookie: "auth.sid=" + encodeURIComponent(sid),
         },
       })
 

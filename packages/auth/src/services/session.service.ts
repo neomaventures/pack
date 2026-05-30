@@ -3,7 +3,7 @@ import * as cookie from "cookie"
 import { Response } from "express"
 import * as jwt from "jsonwebtoken"
 
-import { CookieOptions, GarmrOptions, GARMR_OPTIONS } from "../garmr.options"
+import { CookieOptions, AuthOptions, AUTH_OPTIONS } from "../auth.options"
 import { Authenticatable } from "../interfaces/authenticatable.interface"
 
 import { SESSION_AUDIENCE } from "./magic-link.service"
@@ -17,7 +17,7 @@ export class SessionService {
     Pick<CookieOptions, "domain">
 
   public constructor(
-    @Inject(GARMR_OPTIONS) private readonly options: GarmrOptions,
+    @Inject(AUTH_OPTIONS) private readonly options: AuthOptions,
     private readonly tokenService: TokenService,
   ) {
     const opts = this.options.cookie ?? {}
@@ -26,13 +26,13 @@ export class SessionService {
 
     if (sameSite === "none" && !secure) {
       throw new Error(
-        'Garmr cookie misconfiguration: sameSite="none" requires secure=true. ' +
+        'Auth cookie misconfiguration: sameSite="none" requires secure=true. ' +
           "Browsers will reject SameSite=None cookies without the Secure flag.",
       )
     }
 
     this.cookieOptions = {
-      name: opts.name ?? "garmr.sid",
+      name: opts.name ?? "auth.sid",
       path: opts.path ?? "/",
       secure,
       sameSite,

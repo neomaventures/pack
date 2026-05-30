@@ -1,18 +1,18 @@
 import {
-  type CerberusIdGenerator,
-  type CerberusKeyResolver,
+  type StorageIdGenerator,
+  type StorageKeyResolver,
   type OriginalFileInfo,
 } from "@neoma/storage"
 import { Injectable } from "@nestjs/common"
 import { type Request } from "express"
 
 /**
- * A test implementation of the CerberusKeyResolver interface that generates a
+ * A test implementation of the StorageKeyResolver interface that generates a
  * custom file name using the request headers, an ID generator, and the original
  * file name.
  */
 @Injectable()
-export class TestKeyResolver implements CerberusKeyResolver {
+export class TestKeyResolver implements StorageKeyResolver {
   private keys: string[] = []
 
   /**
@@ -27,7 +27,7 @@ export class TestKeyResolver implements CerberusKeyResolver {
    */
   public resolve(
     req: Request,
-    idGenerator: CerberusIdGenerator,
+    idGenerator: StorageIdGenerator,
     file: OriginalFileInfo & { defaultKey: string },
   ): string {
     // Make a custom file name that uses all params to exercise the key resolver functionality.

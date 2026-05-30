@@ -1,4 +1,4 @@
-import { type CerberusIdGenerator } from "@neoma/storage"
+import { type StorageIdGenerator } from "@neoma/storage"
 import { Injectable } from "@nestjs/common"
 import { ulid } from "ulid"
 
@@ -10,7 +10,7 @@ import { ulid } from "ulid"
  * ideal for unique S3 object keys.
  */
 @Injectable()
-export class TestIdGenerator implements CerberusIdGenerator {
+export class TestIdGenerator implements StorageIdGenerator {
   private ids: string[] = []
 
   /**

@@ -2,7 +2,7 @@ import type * as jwt from "jsonwebtoken"
 
 import { type Authenticatable } from "./interfaces/authenticatable.interface"
 
-export const GARMR_OPTIONS = Symbol("GARMR_OPTIONS")
+export const AUTH_OPTIONS = Symbol("AUTH_OPTIONS")
 
 /**
  * Subject and HTML body for a magic link email template.
@@ -36,7 +36,7 @@ export interface MailerOptions {
  * Configuration options for session cookies.
  */
 export interface CookieOptions {
-  /** Cookie name (default: "garmr.sid") */
+  /** Cookie name (default: "auth.sid") */
   name?: string
   /** Cookie domain */
   domain?: string
@@ -97,11 +97,11 @@ export interface WebhookOptions {
 }
 
 /**
- * Base configuration options shared by all Garmr auth strategies.
+ * Base configuration options shared by all Auth auth strategies.
  *
  * @typeParam T - The entity class implementing Authenticatable
  */
-interface GarmrBaseOptions<T extends Authenticatable = Authenticatable> {
+interface AuthBaseOptions<T extends Authenticatable = Authenticatable> {
   /** Secret key used to sign and verify JWTs */
   secret: string
   /** Token expiration time (e.g., "1h", "7d", or seconds as number) */
@@ -115,7 +115,7 @@ interface GarmrBaseOptions<T extends Authenticatable = Authenticatable> {
 }
 
 /**
- * Configuration options for the Garmr authentication module.
+ * Configuration options for the Auth authentication module.
  *
  * At least one authentication strategy (`magicLink` or `googleAuth`) must be provided.
  *
@@ -123,7 +123,7 @@ interface GarmrBaseOptions<T extends Authenticatable = Authenticatable> {
  *
  * @example Magic link only
  * ```typescript
- * GarmrModule.forRoot({
+ * AuthModule.forRoot({
  *   secret: process.env.JWT_SECRET,
  *   expiresIn: '1h',
  *   entity: User,
@@ -141,7 +141,7 @@ interface GarmrBaseOptions<T extends Authenticatable = Authenticatable> {
  *
  * @example Both strategies
  * ```typescript
- * GarmrModule.forRoot({
+ * AuthModule.forRoot({
  *   secret: process.env.JWT_SECRET,
  *   expiresIn: '1h',
  *   entity: User,
@@ -154,8 +154,8 @@ interface GarmrBaseOptions<T extends Authenticatable = Authenticatable> {
  * })
  * ```
  */
-export type GarmrOptions<T extends Authenticatable = Authenticatable> =
-  GarmrBaseOptions<T> &
+export type AuthOptions<T extends Authenticatable = Authenticatable> =
+  AuthBaseOptions<T> &
     (
       | { magicLink: MagicLinkOptions; googleAuth?: GoogleAuthOptions }
       | { magicLink?: MagicLinkOptions; googleAuth: GoogleAuthOptions }

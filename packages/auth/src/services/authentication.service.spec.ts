@@ -7,11 +7,11 @@ import * as jwt from "jsonwebtoken"
 import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm"
 import { v4 } from "uuid"
 
-import { GarmrAuthenticatedEvent } from "../events/garmr-authenticated.event"
+import { AuthModule } from "../auth.module"
+import { AuthOptions, MailerOptions } from "../auth.options"
+import { AuthAuthenticatedEvent } from "../events/auth-authenticated.event"
 import { IncorrectCredentialsException } from "../exceptions/incorrect-credentials.exception"
 import { InvalidCredentialsException } from "../exceptions/invalid-credentials.exception"
-import { GarmrModule } from "../garmr.module"
-import { GarmrOptions, MailerOptions } from "../garmr.options"
 import { Authenticatable } from "../interfaces/authenticatable.interface"
 
 import { AuthenticationService } from "./authentication.service"
@@ -26,12 +26,12 @@ class User implements Authenticatable {
   public email!: string
 }
 
-const registrations: [string, (opts: GarmrOptions<User>) => DynamicModule][] = [
-  ["forRoot", (opts): DynamicModule => GarmrModule.forRoot(opts)],
+const registrations: [string, (opts: AuthOptions<User>) => DynamicModule][] = [
+  ["forRoot", (opts): DynamicModule => AuthModule.forRoot(opts)],
   [
     "forRootAsync",
     (opts): DynamicModule =>
-      GarmrModule.forRootAsync({ useFactory: (): GarmrOptions<User> => opts }),
+      AuthModule.forRootAsync({ useFactory: (): AuthOptions<User> => opts }),
   ],
 ]
 
@@ -92,12 +92,12 @@ registrations.forEach(([name, register]) => {
           expect(result).toEqual(user)
         })
 
-        it("should emit a 'garmr.authenticated' event", async () => {
+        it("should emit a 'auth.authenticated' event", async () => {
           const result = await service.authenticate(token)
 
           expect(emitSpy).toHaveBeenCalledWith(
-            GarmrAuthenticatedEvent.EVENT_NAME,
-            new GarmrAuthenticatedEvent(result, "session"),
+            AuthAuthenticatedEvent.EVENT_NAME,
+            new AuthAuthenticatedEvent(result, "session"),
           )
         })
       })
@@ -115,7 +115,7 @@ registrations.forEach(([name, register]) => {
           )
         })
 
-        it("should not emit a 'garmr.authenticated' event", async () => {
+        it("should not emit a 'auth.authenticated' event", async () => {
           await expect(service.authenticate(token)).rejects.toMatchError(
             IncorrectCredentialsException,
             { identifier: id },
@@ -134,7 +134,7 @@ registrations.forEach(([name, register]) => {
           )
         })
 
-        it("should not emit a 'garmr.authenticated' event", async () => {
+        it("should not emit a 'auth.authenticated' event", async () => {
           await expect(service.authenticate(token)).rejects.toThrow()
           expect(emitSpy).not.toHaveBeenCalled()
         })
@@ -155,7 +155,7 @@ registrations.forEach(([name, register]) => {
           )
         })
 
-        it("should not emit a 'garmr.authenticated' event", async () => {
+        it("should not emit a 'auth.authenticated' event", async () => {
           await expect(service.authenticate(token)).rejects.toThrow()
           expect(emitSpy).not.toHaveBeenCalled()
         })
@@ -174,7 +174,7 @@ registrations.forEach(([name, register]) => {
           )
         })
 
-        it("should not emit a 'garmr.authenticated' event", async () => {
+        it("should not emit a 'auth.authenticated' event", async () => {
           await expect(service.authenticate(token)).rejects.toThrow()
           expect(emitSpy).not.toHaveBeenCalled()
         })
@@ -195,7 +195,7 @@ registrations.forEach(([name, register]) => {
           )
         })
 
-        it("should not emit a 'garmr.authenticated' event", async () => {
+        it("should not emit a 'auth.authenticated' event", async () => {
           await expect(service.authenticate(token)).rejects.toThrow()
           expect(emitSpy).not.toHaveBeenCalled()
         })
@@ -215,7 +215,7 @@ registrations.forEach(([name, register]) => {
           )
         })
 
-        it("should not emit a 'garmr.authenticated' event", async () => {
+        it("should not emit a 'auth.authenticated' event", async () => {
           await expect(service.authenticate(token)).rejects.toThrow()
           expect(emitSpy).not.toHaveBeenCalled()
         })
@@ -235,7 +235,7 @@ registrations.forEach(([name, register]) => {
           )
         })
 
-        it("should not emit a 'garmr.authenticated' event", async () => {
+        it("should not emit a 'auth.authenticated' event", async () => {
           await expect(service.authenticate(token)).rejects.toThrow()
           expect(emitSpy).not.toHaveBeenCalled()
         })
@@ -259,7 +259,7 @@ registrations.forEach(([name, register]) => {
           )
         })
 
-        it("should not emit a 'garmr.authenticated' event", async () => {
+        it("should not emit a 'auth.authenticated' event", async () => {
           await expect(service.authenticate(token)).rejects.toThrow()
           expect(emitSpy).not.toHaveBeenCalled()
         })
@@ -280,7 +280,7 @@ registrations.forEach(([name, register]) => {
           )
         })
 
-        it("should not emit a 'garmr.authenticated' event", async () => {
+        it("should not emit a 'auth.authenticated' event", async () => {
           await expect(service.authenticate(token)).rejects.toThrow()
           expect(emitSpy).not.toHaveBeenCalled()
         })
@@ -303,7 +303,7 @@ registrations.forEach(([name, register]) => {
           })
         })
 
-        it("should not emit a 'garmr.authenticated' event", async () => {
+        it("should not emit a 'auth.authenticated' event", async () => {
           await expect(
             service.authenticate(undefined as unknown as string),
           ).rejects.toThrow()

@@ -9,13 +9,13 @@ import {
   UnauthorizedException,
 } from "@nestjs/common"
 
-import { GarmrOptions, GARMR_OPTIONS } from "../garmr.options"
+import { AuthOptions, AUTH_OPTIONS } from "../auth.options"
 
 /**
  * Guard that verifies Svix-standard webhook signatures.
  *
  * Validates the HMAC-SHA256 signature in the `svix-signature` header against
- * the request's raw body using the secret configured in `GarmrOptions.webhook`.
+ * the request's raw body using the secret configured in `AuthOptions.webhook`.
  *
  * Requires `rawBody: true` on the NestJS application factory so that
  * `req.rawBody` is available.
@@ -29,7 +29,7 @@ import { GarmrOptions, GARMR_OPTIONS } from "../garmr.options"
  * }
  * ```
  *
- * @throws {Error} If `webhook.secret` is not configured in GarmrModule options
+ * @throws {Error} If `webhook.secret` is not configured in AuthModule options
  * (boot-time configuration error).
  * @throws {InternalServerErrorException} If rawBody is unavailable (server
  * misconfiguration).
@@ -41,15 +41,15 @@ export class WebhookSignatureGuard implements CanActivate {
    * Validates that `webhook.secret` is configured and fails fast during
    * module initialisation if it is missing.
    *
-   * @param options - The Garmr module options injected via DI
-   * @throws {Error} If `webhook.secret` is not configured in GarmrModule options
+   * @param options - The Auth module options injected via DI
+   * @throws {Error} If `webhook.secret` is not configured in AuthModule options
    */
   public constructor(
-    @Inject(GARMR_OPTIONS) private readonly options: GarmrOptions,
+    @Inject(AUTH_OPTIONS) private readonly options: AuthOptions,
   ) {
     if (!this.options.webhook?.secret) {
       throw new Error(
-        "WebhookSignatureGuard requires webhook.secret to be configured in GarmrModule options.",
+        "WebhookSignatureGuard requires webhook.secret to be configured in AuthModule options.",
       )
     }
   }

@@ -2,9 +2,9 @@ import { Inject, Injectable } from "@nestjs/common"
 import * as jwt from "jsonwebtoken"
 import type { StringValue } from "ms"
 
+import { AuthOptions, AUTH_OPTIONS } from "../auth.options"
 import { TokenFailedVerificationException } from "../exceptions/token-failed-verification.exception"
 import { TokenMalformedException } from "../exceptions/token-malformed.exception"
-import { GarmrOptions, GARMR_OPTIONS } from "../garmr.options"
 
 /**
  * Service for issuing and managing JSON Web Tokens.
@@ -17,7 +17,7 @@ import { GarmrOptions, GARMR_OPTIONS } from "../garmr.options"
 @Injectable()
 export class TokenService {
   public constructor(
-    @Inject(GARMR_OPTIONS) private readonly options: GarmrOptions,
+    @Inject(AUTH_OPTIONS) private readonly options: AuthOptions,
   ) {}
 
   /**

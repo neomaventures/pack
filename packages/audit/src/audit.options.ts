@@ -1,7 +1,7 @@
 import { type Request } from "express"
 
 /**
- * Injection token for {@link ArgosOptions}.
+ * Injection token for {@link AuditOptions}.
  *
  * Use this to inject the resolved options into your own providers:
  *
@@ -10,17 +10,17 @@ import { type Request } from "express"
  * @Injectable()
  * export class MyService {
  *   public constructor(
- *     @Inject(ARGOS_OPTIONS) private readonly options: ArgosOptions,
+ *     @Inject(AUDIT_OPTIONS) private readonly options: AuditOptions,
  *   ) {}
  * }
  * ```
  */
-export const ARGOS_OPTIONS = Symbol("ARGOS_OPTIONS")
+export const AUDIT_OPTIONS = Symbol("AUDIT_OPTIONS")
 
 /**
- * Options for configuring the {@link ArgosModule}.
+ * Options for configuring the {@link AuditModule}.
  */
-export interface ArgosOptions {
+export interface AuditOptions {
   /**
    * The actor string used when `resolveActor` is not defined or returns
    * `null`/`undefined`.
@@ -41,7 +41,7 @@ export interface ArgosOptions {
    *
    * @example
    * ```typescript
-   * ArgosModule.forRoot({
+   * AuditModule.forRoot({
    *   resolveActor: (req) => req.principal
    *     ? `principal:${req.principal.id}`
    *     : null,

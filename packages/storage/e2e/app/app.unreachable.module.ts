@@ -1,4 +1,4 @@
-import { CerberusModule } from "@neoma/storage"
+import { StorageModule } from "@neoma/storage"
 import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
 
@@ -17,7 +17,7 @@ import { Upload } from "./upload.entity"
       entities: [Upload],
       synchronize: true,
     }),
-    CerberusModule.forRoot({
+    StorageModule.forRoot({
       endpoint: "http://localhost:1",
       region: "us-east-1",
       bucket: "unreachable-bucket",

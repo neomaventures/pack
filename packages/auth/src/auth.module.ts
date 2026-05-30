@@ -1,6 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common"
 
-import { ConfigurableModuleClass } from "./garmr.module-definition"
+import { ConfigurableModuleClass } from "./auth.module-definition"
 import { BearerAuthenticationMiddleware } from "./middlewares/bearer-authentication.middleware"
 import { CookieAuthenticationMiddleware } from "./middlewares/cookie-authentication.middleware"
 
@@ -11,7 +11,7 @@ import { CookieAuthenticationMiddleware } from "./middlewares/cookie-authenticat
  *
  * @example Static configuration
  * ```typescript
- * GarmrModule.forRoot({
+ * AuthModule.forRoot({
  *   secret: process.env.JWT_SECRET,
  *   expiresIn: '1h',
  *   entity: User,
@@ -21,7 +21,7 @@ import { CookieAuthenticationMiddleware } from "./middlewares/cookie-authenticat
  *
  * @example Async configuration via DI
  * ```typescript
- * GarmrModule.forRootAsync({
+ * AuthModule.forRootAsync({
  *   imports: [ConfigModule],
  *   useFactory: (config: ConfigService) => ({
  *     secret: config.get('JWT_SECRET'),
@@ -34,7 +34,7 @@ import { CookieAuthenticationMiddleware } from "./middlewares/cookie-authenticat
  * ```
  */
 @Module({})
-export class GarmrModule extends ConfigurableModuleClass implements NestModule {
+export class AuthModule extends ConfigurableModuleClass implements NestModule {
   public configure(consumer: MiddlewareConsumer): void {
     consumer
       .apply(BearerAuthenticationMiddleware, CookieAuthenticationMiddleware)

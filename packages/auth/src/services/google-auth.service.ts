@@ -3,18 +3,14 @@ import { EventEmitter2 } from "@nestjs/event-emitter"
 import * as jwt from "jsonwebtoken"
 import { DataSource, FindOptionsWhere } from "typeorm"
 
-import { GarmrAuthenticatedEvent } from "../events/garmr-authenticated.event"
-import { GarmrRegisteredEvent } from "../events/garmr-registered.event"
+import { AUTH_OPTIONS, AuthOptions, GoogleAuthOptions } from "../auth.options"
+import { AuthAuthenticatedEvent } from "../events/auth-authenticated.event"
+import { AuthRegisteredEvent } from "../events/auth-registered.event"
 import { EmailNotVerifiedException } from "../exceptions/email-not-verified.exception"
 import { GoogleCodeExchangeException } from "../exceptions/google-code-exchange.exception"
 import { GoogleNetworkException } from "../exceptions/google-network.exception"
 import { GoogleServiceException } from "../exceptions/google-service.exception"
 import { GoogleTokenException } from "../exceptions/google-token.exception"
-import {
-  GARMR_OPTIONS,
-  GarmrOptions,
-  GoogleAuthOptions,
-} from "../garmr.options"
 import {
   Authenticatable,
   AuthenticatableProfile,
@@ -70,7 +66,7 @@ export class GoogleAuthService {
     "https://oauth2.googleapis.com/token"
 
   public constructor(
-    @Inject(GARMR_OPTIONS) private readonly options: GarmrOptions,
+    @Inject(AUTH_OPTIONS) private readonly options: AuthOptions,
     private readonly datasource: DataSource,
     private readonly eventEmitter: EventEmitter2,
   ) {}
@@ -79,13 +75,13 @@ export class GoogleAuthService {
    * Returns the Google OAuth options, throwing if not configured.
    *
    * @returns The Google OAuth configuration
-   * @throws {Error} If googleAuth is not configured in GarmrOptions
+   * @throws {Error} If googleAuth is not configured in AuthOptions
    */
   private getGoogleAuth(): GoogleAuthOptions {
     const googleAuth = this.options.googleAuth
     if (!googleAuth) {
       throw new Error(
-        "Google OAuth is not configured. Provide googleAuth in GarmrOptions to use GoogleAuthService.",
+        "Google OAuth is not configured. Provide googleAuth in AuthOptions to use GoogleAuthService.",
       )
     }
     return googleAuth
@@ -109,8 +105,8 @@ export class GoogleAuthService {
    * const { entity, isNewUser, profile } = await googleAuthService.authenticate<User>(code)
    * ```
    *
-   * @fires garmr.registered - when a new user is created
-   * @fires garmr.authenticated - when an existing user is authenticated
+   * @fires auth.registered - when a new user is created
+   * @fires auth.authenticated - when an existing user is authenticated
    */
   public async authenticate<T extends Authenticatable>(
     code: string,
@@ -198,8 +194,8 @@ export class GoogleAuthService {
       }
 
       this.eventEmitter.emit(
-        GarmrAuthenticatedEvent.EVENT_NAME,
-        new GarmrAuthenticatedEvent(existing, "google"),
+        AuthAuthenticatedEvent.EVENT_NAME,
+        new AuthAuthenticatedEvent(existing, "google"),
       )
       return { entity: existing, isNewUser: false, profile }
     }
@@ -213,8 +209,8 @@ export class GoogleAuthService {
     const saved = await repo.save(toSave)
 
     this.eventEmitter.emit(
-      GarmrRegisteredEvent.EVENT_NAME,
-      new GarmrRegisteredEvent(saved, "google"),
+      AuthRegisteredEvent.EVENT_NAME,
+      new AuthRegisteredEvent(saved, "google"),
     )
 
     return { entity: saved, isNewUser: true, profile }

@@ -2,7 +2,7 @@
 
 NestJS-idiomatic file storage for S3-compatible backends.
 
-Cerberus (the three-headed dog guarding the gates of the Underworld) handles the file upload lifecycle: store to S3, persist metadata to your entity, and generate presigned download URLs -- all through interceptors and decorators that compose naturally with NestJS controllers.
+Storage (the three-headed dog guarding the gates of the Underworld) handles the file upload lifecycle: store to S3, persist metadata to your entity, and generate presigned download URLs -- all through interceptors and decorators that compose naturally with NestJS controllers.
 
 ## Installation
 
@@ -55,12 +55,12 @@ export class Upload implements Storable {
 ### 2. Register the module
 
 ```typescript
-import { CerberusModule } from "@neoma/storage"
+import { StorageModule } from "@neoma/storage"
 
 @Module({
   imports: [
     TypeOrmModule.forRoot({ ... }),
-    CerberusModule.forRoot({
+    StorageModule.forRoot({
       endpoint: "http://localhost:9000",
       region: "us-east-1",
       bucket: "uploads",
@@ -77,7 +77,7 @@ export class AppModule {}
 Or with async configuration:
 
 ```typescript
-CerberusModule.forRootAsync({
+StorageModule.forRootAsync({
   imports: [ConfigModule],
   useFactory: (config: ConfigService) => ({
     endpoint: config.get("S3_ENDPOINT"),
@@ -177,7 +177,7 @@ All exceptions extend `HttpException` and include metadata for diagnostics:
 
 ## API Reference
 
-### `CerberusOptions`
+### `StorageOptions`
 
 | Option | Type | Required | Default | Description |
 |--------|------|----------|---------|-------------|
@@ -235,10 +235,10 @@ Pass a `key` option to override how S3 object keys are generated. The resolver r
 
 ```typescript
 @Injectable()
-export class TenantKeyResolver implements CerberusKeyResolver {
+export class TenantKeyResolver implements StorageKeyResolver {
   public constructor(private readonly config: ConfigService) {}
 
-  public resolve(req: Request, idGenerator: CerberusIdGenerator, file: OriginalFileInfo & { defaultKey: string }): string {
+  public resolve(req: Request, idGenerator: StorageIdGenerator, file: OriginalFileInfo & { defaultKey: string }): string {
     return `${this.config.get("TENANT_PREFIX")}/${file.defaultKey}`
   }
 }
@@ -259,13 +259,13 @@ Parameter decorator that extracts the stored file entity from the request.
 Method decorator for download routes. Handler must return a `Storable` entity.
 
 ```typescript
-@TemporaryLink()                  // default expiry from CerberusOptions.linkExpiresIn
+@TemporaryLink()                  // default expiry from StorageOptions.linkExpiresIn
 @TemporaryLink(600)               // 10 minute expiry
 ```
 
 ### `FileCreatedEvent`
 
-Emitted after successful upload + persistence. `EVENT_NAME = "cerberus.file.created"`.
+Emitted after successful upload + persistence. `EVENT_NAME = "storage.file.created"`.
 
 ### `StorageService`
 

@@ -1,8 +1,8 @@
 import "./types/express-principal"
 
 // Module & Configuration
-export * from "./garmr.module"
-export * from "./garmr.options"
+export * from "./auth.module"
+export * from "./auth.options"
 
 // Interface consumers implement
 export * from "./interfaces/authenticatable.interface"
@@ -48,8 +48,8 @@ export * from "./exceptions/permission-denied.exception"
 export * from "./exceptions/unauthorized-redirect.exception"
 
 // Events consumers listen for via @OnEvent
-export * from "./events/garmr-registered.event"
-export * from "./events/garmr-authenticated.event"
+export * from "./events/auth-registered.event"
+export * from "./events/auth-authenticated.event"
 
 // Types
 export * from "./types/auth-provider"

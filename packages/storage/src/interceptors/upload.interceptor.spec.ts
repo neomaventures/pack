@@ -20,8 +20,7 @@ import { MinioClient } from "fixtures/storage/minio"
 import { lastValueFrom, type Observable, of, throwError } from "rxjs"
 import { Column, DataSource, Entity, PrimaryGeneratedColumn } from "typeorm"
 
-import { CerberusModule } from "../"
-import { CerberusOptions } from "../cerberus.options"
+import { StorageModule } from "../"
 import { Upload } from "../decorators/upload.decorator"
 import { FileCreatedEvent } from "../events/file-created.event"
 import { FileStoreUnreachableException } from "../exceptions/file-store-unreachable.exception"
@@ -30,6 +29,7 @@ import { NoFileProvidedException } from "../exceptions/no-file-provided.exceptio
 import { UnsupportedFileTypeException } from "../exceptions/unsupported-file-type.exception"
 import { type Storable } from "../interfaces/storable.interface"
 import { UlidIdGenerator } from "../services/ulid-id-generator.service"
+import { StorageOptions } from "../storage.options"
 
 import { UploadInterceptor } from "./upload.interceptor"
 
@@ -59,7 +59,7 @@ class TestUpload implements Storable {
 
 /**
  * Exposes a managed (cached, auto-torn-down) test DataSource globally so the
- * UploadInterceptor inside the global CerberusModule can inject it — a
+ * UploadInterceptor inside the global StorageModule can inject it — a
  * root-level provider can't cross that boundary. TODO: promote to a
  * `ManagedDatabaseModule` exported from @neoma/managed-database.
  */
@@ -76,7 +76,7 @@ class TestUpload implements Storable {
 })
 class GlobalTestDbModule {}
 
-const options: CerberusOptions = {
+const options: StorageOptions = {
   endpoint: process.env.STORAGE_ENDPOINT!,
   region: process.env.STORAGE_REGION!,
   bucket: process.env.STORAGE_BUCKET!,
@@ -127,7 +127,7 @@ describe("UploadInterceptor", () => {
       imports: [
         GlobalTestDbModule,
         EventEmitterModule.forRoot(),
-        CerberusModule.forRoot({
+        StorageModule.forRoot({
           ...options,
           allowedMimeTypes,
           maxFileSize: GLOBAL_MAX_FILE_SIZE,
@@ -159,7 +159,7 @@ describe("UploadInterceptor", () => {
 
         await lastValueFrom(await interceptor.intercept(ctx, handler))
 
-        const storedFile: Storable = req.cerberus!.storedFile!
+        const storedFile: Storable = req.storage!.storedFile!
         const stored = await minio.getObject(storedFile.key)
         expect(stored).toMatchObject({
           body: file.buffer.toString(),
@@ -167,13 +167,13 @@ describe("UploadInterceptor", () => {
         })
       })
 
-      it("should create an entity and attach it to req.cerberus.storedFile", async () => {
+      it("should create an entity and attach it to req.storage.storedFile", async () => {
         const file = multerFile()
         const { ctx, handler, req } = interceptorInvocation({ file })
 
         await interceptor.intercept(ctx, handler)
 
-        expect(req.cerberus!.storedFile).toMatchObject({
+        expect(req.storage!.storedFile).toMatchObject({
           originalName: file.originalname,
           mimeType: file.mimetype,
           size: file.size,
@@ -222,7 +222,7 @@ describe("UploadInterceptor", () => {
         public uploadHandler(): void {}
       }
 
-      it("should create an entity and attach it to req.cerberus.storedFile", async () => {
+      it("should create an entity and attach it to req.storage.storedFile", async () => {
         const resolver = module.get(TestKeyResolver)
         const file = multerFile()
         const { ctx, handler, req } = interceptorInvocation({
@@ -233,7 +233,7 @@ describe("UploadInterceptor", () => {
 
         await interceptor.intercept(ctx, handler)
 
-        expect(req.cerberus!.storedFile).toMatchObject({
+        expect(req.storage!.storedFile).toMatchObject({
           originalName: file.originalname,
           mimeType: file.mimetype,
           size: file.size,
@@ -269,7 +269,7 @@ describe("UploadInterceptor", () => {
         public uploadHandler(): void {}
       }
 
-      it("should create an entity and attach it to req.cerberus.storedFile", async () => {
+      it("should create an entity and attach it to req.storage.storedFile", async () => {
         const file = multerFile()
         const { ctx, handler, req } = interceptorInvocation({
           file,
@@ -279,7 +279,7 @@ describe("UploadInterceptor", () => {
 
         await interceptor.intercept(ctx, handler)
 
-        expect(req.cerberus!.storedFile).toMatchObject({
+        expect(req.storage!.storedFile).toMatchObject({
           originalName: file.originalname,
           mimeType: file.mimetype,
           size: file.size,
@@ -477,7 +477,7 @@ describe("UploadInterceptor", () => {
           imports: [
             GlobalTestDbModule,
             EventEmitterModule.forRoot(),
-            CerberusModule.forRoot({
+            StorageModule.forRoot({
               ...options,
               endpoint: "http://localhost:1",
               bucket: "unreachable-bucket",

@@ -54,7 +54,7 @@ appModules.forEach(([name, modulePath]) => {
           ? response.headers["set-cookie"][0]
           : response.headers["set-cookie"]
 
-        expect(setCookie).toContain("garmr.sid=")
+        expect(setCookie).toContain("auth.sid=")
         expect(setCookie).toContain("Max-Age=0")
         expect(setCookie.toLowerCase()).toContain("httponly")
         expect(setCookie.toLowerCase()).toContain("secure")

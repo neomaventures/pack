@@ -1,13 +1,13 @@
 import { ConfigurableModuleBuilder } from "@nestjs/common"
 
-import { type ArgosOptions, ARGOS_OPTIONS } from "./argos.options"
+import { type AuditOptions, AUDIT_OPTIONS } from "./audit.options"
 import { ActorMiddleware } from "./middlewares/actor.middleware"
 
-const ARGOS_RAW_OPTIONS = Symbol("ARGOS_RAW_OPTIONS")
+const AUDIT_RAW_OPTIONS = Symbol("AUDIT_RAW_OPTIONS")
 
 export const { ConfigurableModuleClass } =
-  new ConfigurableModuleBuilder<ArgosOptions>({
-    optionsInjectionToken: ARGOS_RAW_OPTIONS,
+  new ConfigurableModuleBuilder<AuditOptions>({
+    optionsInjectionToken: AUDIT_RAW_OPTIONS,
   })
     .setClassMethodName("forRoot")
     .setExtras({}, (definition) => ({
@@ -15,15 +15,15 @@ export const { ConfigurableModuleClass } =
       providers: [
         ...(definition.providers ?? []),
         {
-          provide: ARGOS_OPTIONS,
-          useFactory: (raw: ArgosOptions): ArgosOptions => ({
+          provide: AUDIT_OPTIONS,
+          useFactory: (raw: AuditOptions): AuditOptions => ({
             ...raw,
             defaultActor: raw.defaultActor ?? "system",
           }),
-          inject: [ARGOS_RAW_OPTIONS],
+          inject: [AUDIT_RAW_OPTIONS],
         },
         ActorMiddleware,
       ],
-      exports: [...(definition.exports ?? []), ARGOS_OPTIONS],
+      exports: [...(definition.exports ?? []), AUDIT_OPTIONS],
     }))
     .build()

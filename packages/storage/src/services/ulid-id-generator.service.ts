@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common"
 import { ulid } from "ulid"
 
-import { type CerberusIdGenerator } from "../interfaces/id-generator.interface"
+import { type StorageIdGenerator } from "../interfaces/id-generator.interface"
 
 /**
  * Default ID generator that produces ULID-based identifiers.
@@ -10,7 +10,7 @@ import { type CerberusIdGenerator } from "../interfaces/id-generator.interface"
  * ideal for unique S3 object keys.
  */
 @Injectable()
-export class UlidIdGenerator implements CerberusIdGenerator {
+export class UlidIdGenerator implements StorageIdGenerator {
   /**
    * Generates a new ULID string to be used as a unique identifier.
    *

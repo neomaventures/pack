@@ -1,6 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common"
 
-import { ConfigurableModuleClass } from "./argos.module-definition"
+import { ConfigurableModuleClass } from "./audit.module-definition"
 import { ActorMiddleware } from "./middlewares/actor.middleware"
 
 /**
@@ -11,7 +11,7 @@ import { ActorMiddleware } from "./middlewares/actor.middleware"
  *
  * @example Static configuration
  * ```typescript
- * ArgosModule.forRoot({
+ * AuditModule.forRoot({
  *   resolveActor: (req) =>
  *     req.principal ? `principal:${req.principal.id}` : null,
  * })
@@ -19,9 +19,9 @@ import { ActorMiddleware } from "./middlewares/actor.middleware"
  *
  * @example Async configuration with injected dependencies
  * ```typescript
- * ArgosModule.forRootAsync({
+ * AuditModule.forRootAsync({
  *   useFactory: (config: ConfigService) => ({
- *     defaultActor: config.get("ARGOS_DEFAULT_ACTOR", "system"),
+ *     defaultActor: config.get("AUDIT_DEFAULT_ACTOR", "system"),
  *     resolveActor: (req) =>
  *       req.principal ? `principal:${req.principal.id}` : null,
  *   }),
@@ -30,7 +30,7 @@ import { ActorMiddleware } from "./middlewares/actor.middleware"
  * ```
  */
 @Module({})
-export class ArgosModule extends ConfigurableModuleClass implements NestModule {
+export class AuditModule extends ConfigurableModuleClass implements NestModule {
   public configure(consumer: MiddlewareConsumer): void {
     consumer.apply(ActorMiddleware).forRoutes("*")
   }

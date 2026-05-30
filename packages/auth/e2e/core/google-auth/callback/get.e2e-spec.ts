@@ -72,7 +72,7 @@ appModules.forEach(([name, modulePath]) => {
             // Verify the session token is valid and has correct audience
             const payload = jwt.verify(
               response.body.token as string,
-              process.env.GARMR_SECRET!,
+              process.env.AUTH_SECRET!,
             ) as jwt.JwtPayload
             expect(payload).toMatchObject({
               sub: response.body.user.id,

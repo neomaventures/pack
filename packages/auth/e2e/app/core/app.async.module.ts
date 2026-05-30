@@ -1,4 +1,4 @@
-import { GarmrModule, GarmrOptions } from "@neoma/auth"
+import { AuthModule, AuthOptions } from "@neoma/auth"
 import { LoggingModule } from "@neoma/logging"
 import { RequestContextModule } from "@neoma/request-context"
 import { Module } from "@nestjs/common"
@@ -23,9 +23,9 @@ import { WebhookController } from "./webhook.controller"
       entities: [User],
       synchronize: true,
     }),
-    GarmrModule.forRootAsync({
-      useFactory: (): GarmrOptions<User> => ({
-        secret: process.env.GARMR_SECRET!,
+    AuthModule.forRootAsync({
+      useFactory: (): AuthOptions<User> => ({
+        secret: process.env.AUTH_SECRET!,
         expiresIn: "1h",
         entity: User,
         magicLink: {

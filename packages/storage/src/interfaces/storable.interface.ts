@@ -1,7 +1,7 @@
 /**
- * Interface that consumer entities must implement to be used with Cerberus.
+ * Interface that consumer entities must implement to be used with Storage.
  *
- * Cerberus populates these fields automatically during the upload lifecycle.
+ * Storage populates these fields automatically during the upload lifecycle.
  * Consumers may add additional columns to their entity beyond this interface.
  *
  * @example

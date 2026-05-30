@@ -14,15 +14,15 @@ import {
 import * as jwt from "jsonwebtoken"
 import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm"
 
-import { GarmrAuthenticatedEvent } from "../events/garmr-authenticated.event"
-import { GarmrRegisteredEvent } from "../events/garmr-registered.event"
+import { AuthModule } from "../auth.module"
+import { AuthOptions } from "../auth.options"
+import { AuthAuthenticatedEvent } from "../events/auth-authenticated.event"
+import { AuthRegisteredEvent } from "../events/auth-registered.event"
 import { EmailNotVerifiedException } from "../exceptions/email-not-verified.exception"
 import { GoogleCodeExchangeException } from "../exceptions/google-code-exchange.exception"
 import { GoogleNetworkException } from "../exceptions/google-network.exception"
 import { GoogleServiceException } from "../exceptions/google-service.exception"
 import { GoogleTokenException } from "../exceptions/google-token.exception"
-import { GarmrModule } from "../garmr.module"
-import { GarmrOptions } from "../garmr.options"
 import {
   Authenticatable,
   AuthenticatableProfile,
@@ -55,8 +55,8 @@ const googleAuth = google.authOptions({ tokenEndpoint: getTokenEndpoint() })
 
 async function buildModule<T extends Authenticatable>(
   entityClass: new () => T,
-  register: (opts: GarmrOptions) => DynamicModule,
-  opts?: Partial<GarmrOptions>,
+  register: (opts: AuthOptions) => DynamicModule,
+  opts?: Partial<AuthOptions>,
 ): Promise<TestingModule> {
   return Test.createTestingModule({
     imports: [
@@ -73,17 +73,17 @@ async function buildModule<T extends Authenticatable>(
         entity: entityClass,
         googleAuth,
         ...opts,
-      } as GarmrOptions),
+      } as AuthOptions),
     ],
   }).compile()
 }
 
-const registrations: [string, (opts: GarmrOptions) => DynamicModule][] = [
-  ["forRoot", (opts): DynamicModule => GarmrModule.forRoot(opts)],
+const registrations: [string, (opts: AuthOptions) => DynamicModule][] = [
+  ["forRoot", (opts): DynamicModule => AuthModule.forRoot(opts)],
   [
     "forRootAsync",
     (opts): DynamicModule =>
-      GarmrModule.forRootAsync({ useFactory: (): GarmrOptions => opts }),
+      AuthModule.forRootAsync({ useFactory: (): AuthOptions => opts }),
   ],
 ]
 
@@ -132,7 +132,7 @@ registrations.forEach(([name, register]) => {
           expect(result.isNewUser).toBe(true)
         })
 
-        it("should emit a GarmrRegisteredEvent with provider 'google'", async () => {
+        it("should emit a AuthRegisteredEvent with provider 'google'", async () => {
           const code = faker.string.alphanumeric(20)
           const email = faker.internet.email()
           const idToken = google.idToken({ email })
@@ -142,12 +142,12 @@ registrations.forEach(([name, register]) => {
           const result = await service.authenticate<User>(code)
 
           expect(emitSpy).toHaveBeenCalledWith(
-            GarmrRegisteredEvent.EVENT_NAME,
-            new GarmrRegisteredEvent(result.entity, "google"),
+            AuthRegisteredEvent.EVENT_NAME,
+            new AuthRegisteredEvent(result.entity, "google"),
           )
         })
 
-        it("should not emit a GarmrAuthenticatedEvent", async () => {
+        it("should not emit a AuthAuthenticatedEvent", async () => {
           const code = faker.string.alphanumeric(20)
           const email = faker.internet.email()
           const idToken = google.idToken({ email })
@@ -157,7 +157,7 @@ registrations.forEach(([name, register]) => {
           await service.authenticate(code)
 
           expect(emitSpy).not.toHaveBeenCalledWith(
-            GarmrAuthenticatedEvent.EVENT_NAME,
+            AuthAuthenticatedEvent.EVENT_NAME,
             expect.anything(),
           )
         })
@@ -222,7 +222,7 @@ registrations.forEach(([name, register]) => {
           expect(users).toHaveLength(1)
         })
 
-        it("should emit a GarmrAuthenticatedEvent with provider 'google'", async () => {
+        it("should emit a AuthAuthenticatedEvent with provider 'google'", async () => {
           const code = faker.string.alphanumeric(20)
           const idToken = google.idToken({ email: existingUser.email })
           await mockCodeExchangeApi(code, { id_token: idToken })
@@ -231,12 +231,12 @@ registrations.forEach(([name, register]) => {
           await service.authenticate(code)
 
           expect(emitSpy).toHaveBeenCalledWith(
-            GarmrAuthenticatedEvent.EVENT_NAME,
-            new GarmrAuthenticatedEvent(existingUser, "google"),
+            AuthAuthenticatedEvent.EVENT_NAME,
+            new AuthAuthenticatedEvent(existingUser, "google"),
           )
         })
 
-        it("should not emit a GarmrRegisteredEvent", async () => {
+        it("should not emit a AuthRegisteredEvent", async () => {
           const code = faker.string.alphanumeric(20)
           const idToken = google.idToken({ email: existingUser.email })
           await mockCodeExchangeApi(code, { id_token: idToken })
@@ -245,7 +245,7 @@ registrations.forEach(([name, register]) => {
           await service.authenticate(code)
 
           expect(emitSpy).not.toHaveBeenCalledWith(
-            GarmrRegisteredEvent.EVENT_NAME,
+            AuthRegisteredEvent.EVENT_NAME,
             expect.anything(),
           )
         })
@@ -533,7 +533,7 @@ registrations.forEach(([name, register]) => {
                 },
               },
             },
-          } as Partial<GarmrOptions>)
+          } as Partial<AuthOptions>)
 
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
@@ -542,7 +542,7 @@ registrations.forEach(([name, register]) => {
           await expect(
             service.authenticate(faker.string.alphanumeric(20)),
           ).rejects.toThrow(
-            "Google OAuth is not configured. Provide googleAuth in GarmrOptions to use GoogleAuthService.",
+            "Google OAuth is not configured. Provide googleAuth in AuthOptions to use GoogleAuthService.",
           )
         })
       })

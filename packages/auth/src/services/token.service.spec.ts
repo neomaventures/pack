@@ -5,10 +5,10 @@ import { TypeOrmModule } from "@nestjs/typeorm"
 import * as jwt from "jsonwebtoken"
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
 
+import { AuthModule } from "../auth.module"
+import { AuthOptions, MailerOptions } from "../auth.options"
 import { TokenFailedVerificationException } from "../exceptions/token-failed-verification.exception"
 import { TokenMalformedException } from "../exceptions/token-malformed.exception"
-import { GarmrModule } from "../garmr.module"
-import { GarmrOptions, MailerOptions } from "../garmr.options"
 import { Authenticatable } from "../interfaces/authenticatable.interface"
 
 import { TokenService } from "./token.service"
@@ -22,12 +22,12 @@ class User implements Authenticatable {
   public email!: string
 }
 
-const registrations: [string, (opts: GarmrOptions<User>) => DynamicModule][] = [
-  ["forRoot", (opts): DynamicModule => GarmrModule.forRoot(opts)],
+const registrations: [string, (opts: AuthOptions<User>) => DynamicModule][] = [
+  ["forRoot", (opts): DynamicModule => AuthModule.forRoot(opts)],
   [
     "forRootAsync",
     (opts): DynamicModule =>
-      GarmrModule.forRootAsync({ useFactory: (): GarmrOptions<User> => opts }),
+      AuthModule.forRootAsync({ useFactory: (): AuthOptions<User> => opts }),
   ],
 ]
 

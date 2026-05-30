@@ -5,7 +5,7 @@ import { User } from "../user.entity"
 
 /**
  * A test Controller for accessing the authenticated user
- * using Garmr's Authenticated guard and Principal decorator.
+ * using Auth's Authenticated guard and Principal decorator.
  */
 @Controller("me")
 @UseGuards(Authenticated)

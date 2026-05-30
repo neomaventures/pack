@@ -1,4 +1,4 @@
-import { GarmrModule } from "@neoma/auth"
+import { AuthModule } from "@neoma/auth"
 import { LoggingModule } from "@neoma/logging"
 import { RequestContextModule } from "@neoma/request-context"
 import { Module } from "@nestjs/common"
@@ -17,8 +17,8 @@ import { User } from "./user.entity"
       entities: [User],
       synchronize: true,
     }),
-    GarmrModule.forRoot({
-      secret: process.env.GARMR_SECRET!,
+    AuthModule.forRoot({
+      secret: process.env.AUTH_SECRET!,
       expiresIn: "1h",
       entity: User,
       magicLink: {

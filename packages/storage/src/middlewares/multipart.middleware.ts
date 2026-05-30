@@ -2,17 +2,17 @@ import { Inject, Injectable, type NestMiddleware } from "@nestjs/common"
 import { type NextFunction, type Request, type Response } from "express"
 import multer, { type Multer, type MulterError } from "multer"
 
-import { type CerberusOptions, CERBERUS_OPTIONS } from "../cerberus.options"
 import { FileTooLargeException } from "../exceptions/file-too-large.exception"
+import { type StorageOptions, STORAGE_OPTIONS } from "../storage.options"
 
 /**
  * Middleware that parses multipart/form-data requests using multer
  * with in-memory storage.
  *
- * Registered globally by {@link CerberusModule} for all routes.
+ * Registered globally by {@link StorageModule} for all routes.
  * Non-multipart requests pass through untouched.
  *
- * When `maxFileSize` is configured in {@link CerberusOptions}, multer rejects
+ * When `maxFileSize` is configured in {@link StorageOptions}, multer rejects
  * oversized files before buffering them into memory.
  */
 @Injectable()
@@ -20,7 +20,7 @@ export class MultipartMiddleware implements NestMiddleware {
   private readonly upload: Multer
 
   public constructor(
-    @Inject(CERBERUS_OPTIONS) private readonly options: CerberusOptions,
+    @Inject(STORAGE_OPTIONS) private readonly options: StorageOptions,
   ) {
     this.upload = multer({
       storage: multer.memoryStorage(),

@@ -10,14 +10,14 @@ import { Test, type TestingModule } from "@nestjs/testing"
 import { MinioClient } from "fixtures/storage/minio"
 import { of, throwError } from "rxjs"
 
-import { type CerberusOptions, CERBERUS_OPTIONS } from "../cerberus.options"
 import { TEMPORARY_LINK_METADATA_KEY } from "../decorators/temporary-link.decorator"
 import { StorageService } from "../services/storage.service"
 import { UlidIdGenerator } from "../services/ulid-id-generator.service"
+import { type StorageOptions, STORAGE_OPTIONS } from "../storage.options"
 
 import { TemporaryLinkInterceptor } from "./temporary-link.interceptor"
 
-const options: CerberusOptions = {
+const options: StorageOptions = {
   endpoint: process.env.STORAGE_ENDPOINT!,
   region: process.env.STORAGE_REGION!,
   bucket: process.env.STORAGE_BUCKET!,
@@ -27,14 +27,14 @@ const options: CerberusOptions = {
 }
 
 const createModule = async (
-  overrides: Partial<CerberusOptions> = {},
+  overrides: Partial<StorageOptions> = {},
 ): Promise<TestingModule> =>
   Test.createTestingModule({
     providers: [
       TemporaryLinkInterceptor,
       StorageService,
       UlidIdGenerator,
-      { provide: CERBERUS_OPTIONS, useValue: { ...options, ...overrides } },
+      { provide: STORAGE_OPTIONS, useValue: { ...options, ...overrides } },
     ],
   }).compile()
 

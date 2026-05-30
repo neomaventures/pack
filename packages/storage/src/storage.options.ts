@@ -1,15 +1,15 @@
 import { type Storable } from "./interfaces/storable.interface"
 
-export const CERBERUS_OPTIONS = Symbol("CERBERUS_OPTIONS")
+export const STORAGE_OPTIONS = Symbol("STORAGE_OPTIONS")
 
 /**
- * Configuration options for the Cerberus file storage module.
+ * Configuration options for the Storage file storage module.
  *
  * @typeParam T - The entity class implementing Storable
  *
  * @example
  * ```typescript
- * CerberusModule.forRoot({
+ * StorageModule.forRoot({
  *   endpoint: "http://localhost:9000",
  *   region: "us-east-1",
  *   bucket: "uploads",
@@ -19,7 +19,7 @@ export const CERBERUS_OPTIONS = Symbol("CERBERUS_OPTIONS")
  * })
  * ```
  */
-export interface CerberusOptions<T extends Storable = Storable> {
+export interface StorageOptions<T extends Storable = Storable> {
   /** S3-compatible endpoint URL */
   endpoint: string
   /** AWS region */

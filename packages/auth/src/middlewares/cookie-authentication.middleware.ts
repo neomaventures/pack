@@ -3,12 +3,12 @@ import { Inject, Injectable, NestMiddleware } from "@nestjs/common"
 import * as cookie from "cookie"
 import { Request, NextFunction } from "express"
 
-import { GarmrOptions, GARMR_OPTIONS } from "../garmr.options"
+import { AuthOptions, AUTH_OPTIONS } from "../auth.options"
 import { AuthenticationService } from "../services/authentication.service"
 
 /**
  * Middleware that attempts to authenticate the request using the
- * garmr.sid cookie (or a custom cookie name from options).
+ * auth.sid cookie (or a custom cookie name from options).
  *
  * If req.principal is already set (by a previous middleware), this
  * middleware skips authentication and calls next.
@@ -27,9 +27,9 @@ export class CookieAuthenticationMiddleware implements NestMiddleware {
   public constructor(
     private readonly service: AuthenticationService,
     private readonly logger: ApplicationLoggerService,
-    @Inject(GARMR_OPTIONS) options: GarmrOptions,
+    @Inject(AUTH_OPTIONS) options: AuthOptions,
   ) {
-    this.cookieName = options.cookie?.name ?? "garmr.sid"
+    this.cookieName = options.cookie?.name ?? "auth.sid"
   }
 
   public async use(

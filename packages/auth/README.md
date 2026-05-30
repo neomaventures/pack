@@ -1,6 +1,6 @@
 # @neoma/auth
 
-Passwordless authentication for NestJS applications. Garmr provides magic link authentication, Google OAuth, JWT session management, cookie-based sessions, and route protection out of the box.
+Passwordless authentication for NestJS applications. Auth provides magic link authentication, Google OAuth, JWT session management, cookie-based sessions, and route protection out of the box.
 
 ## Why Passwordless?
 
@@ -76,14 +76,14 @@ export class User implements Authenticatable {
 }
 ```
 
-### 2. Configure GarmrModule
+### 2. Configure AuthModule
 
-Import and configure `GarmrModule` in your application module. You can use `forRoot` with a static options object, or `forRootAsync` to resolve configuration via the NestJS DI container.
+Import and configure `AuthModule` in your application module. You can use `forRoot` with a static options object, or `forRootAsync` to resolve configuration via the NestJS DI container.
 
 #### Static configuration
 
 ```typescript
-import { GarmrModule } from "@neoma/auth"
+import { AuthModule } from "@neoma/auth"
 import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
 
@@ -96,7 +96,7 @@ import { User } from "./user.entity"
       // ... your database config
       entities: [User],
     }),
-    GarmrModule.forRoot({
+    AuthModule.forRoot({
       secret: process.env.JWT_SECRET,
       expiresIn: "1h",
       entity: User,
@@ -120,7 +120,7 @@ import { User } from "./user.entity"
         },
       },
       cookie: {
-        name: "garmr.sid",  // default
+        name: "auth.sid",  // default
         secure: true,       // default
         sameSite: "lax",    // default
         path: "/",          // default
@@ -137,7 +137,7 @@ export class AppModule {}
 Use `forRootAsync` when you need to inject a config service or resolve options at runtime:
 
 ```typescript
-import { GarmrModule } from "@neoma/auth"
+import { AuthModule } from "@neoma/auth"
 import { Module } from "@nestjs/common"
 import { ConfigModule, ConfigService } from "@nestjs/config"
 import { TypeOrmModule } from "@nestjs/typeorm"
@@ -147,7 +147,7 @@ import { User } from "./user.entity"
 @Module({
   imports: [
     TypeOrmModule.forRoot({ /* ... */ }),
-    GarmrModule.forRootAsync({
+    AuthModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => ({
         secret: config.getOrThrow("JWT_SECRET"),
@@ -183,7 +183,7 @@ export class AppModule {}
 #### Google OAuth only
 
 ```typescript
-GarmrModule.forRoot({
+AuthModule.forRoot({
   secret: process.env.JWT_SECRET,
   expiresIn: "1h",
   entity: User,
@@ -198,7 +198,7 @@ GarmrModule.forRoot({
 #### Both magic link and Google OAuth
 
 ```typescript
-GarmrModule.forRoot({
+AuthModule.forRoot({
   secret: process.env.JWT_SECRET,
   expiresIn: "1h",
   entity: User,
@@ -231,7 +231,7 @@ GarmrModule.forRoot({
 
 ### 3. Enable validation
 
-Garmr exports `EmailDto` with `class-validator` decorators. For validation to work, enable `ValidationPipe` in your application.
+Auth exports `EmailDto` with `class-validator` decorators. For validation to work, enable `ValidationPipe` in your application.
 
 See the [NestJS Validation documentation](https://docs.nestjs.com/techniques/validation) for setup instructions.
 
@@ -305,7 +305,7 @@ export class ProfileController {
 }
 ```
 
-`GarmrModule` automatically applies `BearerAuthenticationMiddleware` and `CookieAuthenticationMiddleware` to all routes. They extract the JWT from the `Authorization: Bearer <token>` header or the `garmr.sid` cookie respectively, and attach the authenticated user to `req.principal`. Bearer takes priority when both are present.
+`AuthModule` automatically applies `BearerAuthenticationMiddleware` and `CookieAuthenticationMiddleware` to all routes. They extract the JWT from the `Authorization: Bearer <token>` header or the `auth.sid` cookie respectively, and attach the authenticated user to `req.principal`. Bearer takes priority when both are present.
 
 ## Magic Link Flow
 
@@ -424,7 +424,7 @@ curl http://localhost:3000/me \
 Via cookie (set automatically by the verify endpoint):
 ```bash
 curl http://localhost:3000/me \
-  -b "garmr.sid=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  -b "auth.sid=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
 **Success (200 OK):**
@@ -446,9 +446,9 @@ curl http://localhost:3000/me \
 
 ## API Reference
 
-### GarmrModule
+### AuthModule
 
-#### `GarmrModule.forRoot(options)`
+#### `AuthModule.forRoot(options)`
 
 Configures the authentication module with a static options object. The module is global — import it once in your root module.
 
@@ -462,14 +462,14 @@ Configures the authentication module with a static options object. The module is
 | `cookie` | `CookieOptions` | Session cookie configuration (optional) |
 | `webhook` | `WebhookOptions` | Webhook signature verification configuration (optional) |
 
-#### `GarmrModule.forRootAsync(options)`
+#### `AuthModule.forRootAsync(options)`
 
 Configures the authentication module with options resolved via the NestJS DI container.
 
 | Option | Type | Description |
 |--------|------|-------------|
 | `imports` | `any[]` | Modules to import (e.g., `ConfigModule`) |
-| `useFactory` | `(...args) => GarmrOptions \| Promise<GarmrOptions>` | Factory function that returns the options |
+| `useFactory` | `(...args) => AuthOptions \| Promise<AuthOptions>` | Factory function that returns the options |
 | `inject` | `any[]` | Providers to inject into the factory |
 
 #### MagicLinkOptions
@@ -510,7 +510,7 @@ Configures the authentication module with options resolved via the NestJS DI con
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `name` | `string` | `"garmr.sid"` | Cookie name |
+| `name` | `string` | `"auth.sid"` | Cookie name |
 | `domain` | `string` | — | Cookie domain |
 | `path` | `string` | `"/"` | Cookie path |
 | `secure` | `boolean` | `true` | Only send over HTTPS |
@@ -555,9 +555,9 @@ Extracts JWT from the `Authorization: Bearer <token>` header. Throws `InvalidCre
 
 #### CookieAuthenticationMiddleware
 
-Extracts JWT from the configured cookie (default `garmr.sid`). Logs and continues for authentication failures.
+Extracts JWT from the configured cookie (default `auth.sid`). Logs and continues for authentication failures.
 
-Both middlewares are automatically applied by `GarmrModule`. Bearer runs first; if it sets `req.principal`, the cookie middleware skips.
+Both middlewares are automatically applied by `AuthModule`. Bearer runs first; if it sets `req.principal`, the cookie middleware skips.
 
 #### PermissionService
 
@@ -604,7 +604,7 @@ export class DashboardController {}
 
 #### WebhookSignatureGuard
 
-A guard that verifies Svix-standard HMAC-SHA256 webhook signatures. Validates the `svix-signature` header against the request's raw body using the secret configured in `GarmrOptions.webhook`.
+A guard that verifies Svix-standard HMAC-SHA256 webhook signatures. Validates the `svix-signature` header against the request's raw body using the secret configured in `AuthOptions.webhook`.
 
 Requires `rawBody: true` on the NestJS application factory:
 
@@ -615,7 +615,7 @@ const app = await NestFactory.create(AppModule, { rawBody: true })
 Configure the webhook secret in your module options:
 
 ```typescript
-GarmrModule.forRoot({
+AuthModule.forRoot({
   // ... other options
   webhook: {
     secret: process.env.WEBHOOK_SECRET, // e.g. "whsec_MfKQ9r8GKYqrTwjUPD..."
@@ -750,25 +750,25 @@ public getReports() {}
 
 Both events include a `provider` property of type `AuthProvider` (`"magic-link" | "google" | "session"`) indicating which authentication method triggered the event.
 
-#### GarmrRegisteredEvent
+#### AuthRegisteredEvent
 
 Emitted when a new user is created via magic link verification or Google OAuth.
 
 ```typescript
-import { GarmrRegisteredEvent } from "@neoma/auth"
+import { AuthRegisteredEvent } from "@neoma/auth"
 import { OnEvent } from "@nestjs/event-emitter"
 
 @Injectable()
 export class NotificationService {
-  @OnEvent(GarmrRegisteredEvent.EVENT_NAME)
-  public async onRegistered(event: GarmrRegisteredEvent): Promise<void> {
+  @OnEvent(AuthRegisteredEvent.EVENT_NAME)
+  public async onRegistered(event: AuthRegisteredEvent): Promise<void> {
     console.log(`New user registered via ${event.provider}`)
     // Send welcome email, etc.
   }
 }
 ```
 
-#### GarmrAuthenticatedEvent
+#### AuthAuthenticatedEvent
 
 Emitted when an existing user verifies a magic link (provider `"magic-link"`), authenticates via session token (provider `"session"`), or signs in with Google OAuth (provider `"google"`).
 

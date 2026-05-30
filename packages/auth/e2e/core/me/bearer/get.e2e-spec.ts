@@ -86,7 +86,7 @@ appModules.forEach(([name, modulePath]) => {
       it("should respond with HTTP UNAUTHORIZED", async () => {
         const token = jwt.sign(
           { sub: v4(), aud: SESSION_AUDIENCE },
-          process.env.GARMR_SECRET!,
+          process.env.AUTH_SECRET!,
           { expiresIn: -10 },
         )
 
@@ -136,7 +136,7 @@ appModules.forEach(([name, modulePath]) => {
       it("should respond with HTTP UNAUTHORIZED", async () => {
         const token = jwt.sign(
           { sub: v4(), aud: SESSION_AUDIENCE },
-          process.env.GARMR_SECRET!,
+          process.env.AUTH_SECRET!,
           { expiresIn: "1h" },
         )
 
@@ -152,7 +152,7 @@ appModules.forEach(([name, modulePath]) => {
       it("should respond with HTTP UNAUTHORIZED", async () => {
         const token = jwt.sign(
           { aud: SESSION_AUDIENCE },
-          process.env.GARMR_SECRET!,
+          process.env.AUTH_SECRET!,
           { expiresIn: "1h" },
         )
 
@@ -168,7 +168,7 @@ appModules.forEach(([name, modulePath]) => {
       it("should respond with HTTP UNAUTHORIZED", async () => {
         const token = jwt.sign(
           { sub: v4(), aud: MAGIC_LINK_AUDIENCE },
-          process.env.GARMR_SECRET!,
+          process.env.AUTH_SECRET!,
           { expiresIn: "1h" },
         )
 

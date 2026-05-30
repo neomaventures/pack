@@ -6,8 +6,8 @@ import { type AuthProvider } from "../types/auth-provider"
  *
  * @example
  * ```typescript
- * @OnEvent('garmr.registered')
- * async handleRegistered(event: GarmrRegisteredEvent<User>) {
+ * @OnEvent('auth.registered')
+ * async handleRegistered(event: AuthRegisteredEvent<User>) {
  *   await this.emailService.sendWelcome(event.entity.email)
  *   console.log(`Registered via ${event.provider}`)
  * }
@@ -16,8 +16,8 @@ import { type AuthProvider } from "../types/auth-provider"
  * @important Listeners should handle their own errors.
  * Unhandled errors will result in unhandled promise rejections.
  */
-export class GarmrRegisteredEvent<T extends Authenticatable> {
-  public static readonly EVENT_NAME = "garmr.registered"
+export class AuthRegisteredEvent<T extends Authenticatable> {
+  public static readonly EVENT_NAME = "auth.registered"
 
   /**
    * @param entity - The newly registered entity

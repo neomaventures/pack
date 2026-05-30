@@ -6,12 +6,12 @@ import { Test, TestingModule } from "@nestjs/testing"
 import { getRepositoryToken, TypeOrmModule } from "@nestjs/typeorm"
 import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm"
 
-import { GarmrAuthenticatedEvent } from "../events/garmr-authenticated.event"
-import { GarmrRegisteredEvent } from "../events/garmr-registered.event"
+import { AuthModule } from "../auth.module"
+import { AuthOptions, MailerOptions } from "../auth.options"
+import { AuthAuthenticatedEvent } from "../events/auth-authenticated.event"
+import { AuthRegisteredEvent } from "../events/auth-registered.event"
 import { InvalidMagicLinkTokenException } from "../exceptions/invalid-magic-link-token.exception"
 import { TokenFailedVerificationException } from "../exceptions/token-failed-verification.exception"
-import { GarmrModule } from "../garmr.module"
-import { GarmrOptions, MailerOptions } from "../garmr.options"
 import { Authenticatable } from "../interfaces/authenticatable.interface"
 
 import { MAGIC_LINK_AUDIENCE, MagicLinkService } from "./magic-link.service"
@@ -36,12 +36,12 @@ class User implements Authenticatable {
   public email!: string
 }
 
-const registrations: [string, (opts: GarmrOptions<User>) => DynamicModule][] = [
-  ["forRoot", (opts): DynamicModule => GarmrModule.forRoot(opts)],
+const registrations: [string, (opts: AuthOptions<User>) => DynamicModule][] = [
+  ["forRoot", (opts): DynamicModule => AuthModule.forRoot(opts)],
   [
     "forRootAsync",
     (opts): DynamicModule =>
-      GarmrModule.forRootAsync({ useFactory: (): GarmrOptions<User> => opts }),
+      AuthModule.forRootAsync({ useFactory: (): AuthOptions<User> => opts }),
   ],
 ]
 
@@ -214,7 +214,7 @@ registrations.forEach(([name, register]) => {
           expect(result.isNewUser).toBe(true)
         })
 
-        it("should emit a GarmrRegisteredEvent", async () => {
+        it("should emit a AuthRegisteredEvent", async () => {
           const { token } = tokenService.issue(
             { email, aud: MAGIC_LINK_AUDIENCE },
             { expiresIn: "15m" },
@@ -224,12 +224,12 @@ registrations.forEach(([name, register]) => {
           const result = await service.verify<User>(token)
 
           expect(emitSpy).toHaveBeenCalledWith(
-            GarmrRegisteredEvent.EVENT_NAME,
-            new GarmrRegisteredEvent(result.entity),
+            AuthRegisteredEvent.EVENT_NAME,
+            new AuthRegisteredEvent(result.entity),
           )
         })
 
-        it("should not emit a GarmrAuthenticatedEvent", async () => {
+        it("should not emit a AuthAuthenticatedEvent", async () => {
           const { token } = tokenService.issue(
             { email, aud: MAGIC_LINK_AUDIENCE },
             { expiresIn: "15m" },
@@ -239,7 +239,7 @@ registrations.forEach(([name, register]) => {
           await service.verify<User>(token)
 
           expect(emitSpy).not.toHaveBeenCalledWith(
-            GarmrAuthenticatedEvent.EVENT_NAME,
+            AuthAuthenticatedEvent.EVENT_NAME,
             expect.anything(),
           )
         })
@@ -280,7 +280,7 @@ registrations.forEach(([name, register]) => {
           expect(users).toHaveLength(1)
         })
 
-        it("should emit a GarmrAuthenticatedEvent", async () => {
+        it("should emit a AuthAuthenticatedEvent", async () => {
           const { token } = tokenService.issue(
             { email: existingUser.email, aud: MAGIC_LINK_AUDIENCE },
             { expiresIn: "15m" },
@@ -290,12 +290,12 @@ registrations.forEach(([name, register]) => {
           await service.verify<User>(token)
 
           expect(emitSpy).toHaveBeenCalledWith(
-            GarmrAuthenticatedEvent.EVENT_NAME,
-            new GarmrAuthenticatedEvent(existingUser),
+            AuthAuthenticatedEvent.EVENT_NAME,
+            new AuthAuthenticatedEvent(existingUser),
           )
         })
 
-        it("should not emit a GarmrRegisteredEvent", async () => {
+        it("should not emit a AuthRegisteredEvent", async () => {
           const { token } = tokenService.issue(
             { email: existingUser.email, aud: MAGIC_LINK_AUDIENCE },
             { expiresIn: "15m" },
@@ -305,7 +305,7 @@ registrations.forEach(([name, register]) => {
           await service.verify<User>(token)
 
           expect(emitSpy).not.toHaveBeenCalledWith(
-            GarmrRegisteredEvent.EVENT_NAME,
+            AuthRegisteredEvent.EVENT_NAME,
             expect.anything(),
           )
         })

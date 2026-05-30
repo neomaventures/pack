@@ -1,13 +1,13 @@
 import { Inject, Injectable, NestMiddleware } from "@nestjs/common"
 import { type NextFunction, type Request, type Response } from "express"
 
-import { type ArgosOptions, ARGOS_OPTIONS } from "../argos.options"
-import { auditStore } from "../argos.store"
+import { type AuditOptions, AUDIT_OPTIONS } from "../audit.options"
+import { auditStore } from "../audit.store"
 
 @Injectable()
 export class ActorMiddleware implements NestMiddleware {
   public constructor(
-    @Inject(ARGOS_OPTIONS) private readonly options: ArgosOptions,
+    @Inject(AUDIT_OPTIONS) private readonly options: AuditOptions,
   ) {}
 
   public async use(

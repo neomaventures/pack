@@ -7,14 +7,14 @@ import {
 
 import { UploadInterceptor } from "../interceptors/upload.interceptor"
 import {
-  type CerberusKeyResolver,
-  type CerberusKeyResolverFn,
+  type StorageKeyResolver,
+  type StorageKeyResolverFn,
 } from "../interfaces/key-resolver.interface"
 
 /**
  * Metadata key used to store upload options on the handler.
  */
-export const UPLOAD_METADATA_KEY = "cerberus:upload"
+export const UPLOAD_METADATA_KEY = "storage:upload"
 
 /**
  * Options for the {@link Upload} decorator.
@@ -28,8 +28,8 @@ export interface UploadOptions {
    * Custom key resolver — overrides the framework's default key generation.
    *
    * Accepts either:
-   * - A {@link CerberusKeyResolverFn} for stateless, pure naming policies, or
-   * - A class implementing {@link CerberusKeyResolver} when DI is needed
+   * - A {@link StorageKeyResolverFn} for stateless, pure naming policies, or
+   * - A class implementing {@link StorageKeyResolver} when DI is needed
    *   (resolved from the DI container via `ModuleRef.get`, so the class must
    *   be registered as a provider in the consumer's module).
    *
@@ -37,7 +37,7 @@ export interface UploadOptions {
    * resolver would have produced — so the common case is just to prefix it
    * with request context.
    */
-  key?: CerberusKeyResolverFn | Type<CerberusKeyResolver>
+  key?: StorageKeyResolverFn | Type<StorageKeyResolver>
 }
 
 /**

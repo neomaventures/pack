@@ -10,7 +10,7 @@ export const MAX_KEY_BYTES = 1024
  * Catches programmer/library bugs early — empty keys and keys exceeding the
  * S3 hard limit of 1024 bytes (UTF-8 encoded). Returns HTTP 500 because end
  * users do not produce these directly; they indicate a bug in a
- * {@link CerberusKeyResolver} or in the framework's default resolver.
+ * {@link StorageKeyResolver} or in the framework's default resolver.
  *
  * The offending key is intentionally excluded from the HTTP response body
  * to avoid leaking potentially large or sensitive resolver output.

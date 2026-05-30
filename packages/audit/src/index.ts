@@ -1,6 +1,6 @@
 // Module
-export { ArgosModule } from "./argos.module"
-export { type ArgosOptions, ARGOS_OPTIONS } from "./argos.options"
+export { AuditModule } from "./audit.module"
+export { type AuditOptions, AUDIT_OPTIONS } from "./audit.options"
 
 // Decorators
 export { CreatedBy } from "./decorators/created-by.decorator"

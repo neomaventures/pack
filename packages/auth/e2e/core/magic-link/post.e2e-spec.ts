@@ -69,7 +69,7 @@ appModules.forEach(([name, modulePath]) => {
         )
 
         // Verify correct signature.
-        const details = jwt.verify(token, process.env.GARMR_SECRET!) as Record<
+        const details = jwt.verify(token, process.env.AUTH_SECRET!) as Record<
           string,
           any
         >
@@ -135,7 +135,7 @@ appModules.forEach(([name, modulePath]) => {
         )
 
         // Verify correct signature.
-        const details = jwt.verify(token, process.env.GARMR_SECRET!) as Record<
+        const details = jwt.verify(token, process.env.AUTH_SECRET!) as Record<
           string,
           any
         >
