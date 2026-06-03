@@ -50,6 +50,7 @@
   "devDependencies": {
     "@faker-js/faker": "^9.6.0",
     "@nestjs/core": "^11.1.18",
-    "@nestjs/testing": "^11.1.18"
+    "@nestjs/testing": "^11.1.18",
+    "jest": "^30.3.0"
   }
 }

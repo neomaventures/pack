@@ -1,7 +1,7 @@
 {
   "name": "@neomaventures/minio",
   "version": "0.1.0",
-  "description": "MinIO test fixture for @neomaventures/* \u2014 S3-compatible object storage via a Docker container, with a bucket created on start and Jest setup/teardown drop-ins.",
+  "description": "MinIO test fixture for @neomaventures/* — S3-compatible object storage via a Docker container, with a bucket created on start and Jest setup/teardown drop-ins.",
   "author": "Daniel Bruce",
   "repository": {
     "type": "git",
@@ -59,6 +59,7 @@
     "@neomaventures/docker": "workspace:*"
   },
   "devDependencies": {
-    "@faker-js/faker": "^9.6.0"
+    "@faker-js/faker": "^9.6.0",
+    "jest": "^30.3.0"
   }
 }

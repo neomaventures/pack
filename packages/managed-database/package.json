@@ -46,6 +46,7 @@
     "typeorm": "^0.3"
   },
   "devDependencies": {
+    "jest": "^30.3.0",
     "sqlite3": "^5.1.7",
     "typeorm": "^0.3.20"
   }

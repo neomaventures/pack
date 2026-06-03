@@ -1,7 +1,7 @@
 {
   "name": "@neomaventures/mockserver",
   "version": "0.1.0",
-  "description": "MockServer test fixture for @neomaventures/* \u2014 a reusable client plus Docker container lifecycle and Jest setup/teardown drop-ins.",
+  "description": "MockServer test fixture for @neomaventures/* — a reusable client plus Docker container lifecycle and Jest setup/teardown drop-ins.",
   "author": "Daniel Bruce",
   "repository": {
     "type": "git",
@@ -58,6 +58,7 @@
     "@neomaventures/docker": "workspace:*"
   },
   "devDependencies": {
-    "@faker-js/faker": "^9.6.0"
+    "@faker-js/faker": "^9.6.0",
+    "jest": "^30.3.0"
   }
 }

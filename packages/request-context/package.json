@@ -1,7 +1,7 @@
 {
   "name": "@neomaventures/request-context",
   "version": "0.1.0",
-  "description": "Per-request context (AsyncLocalStorage) for NestJS \u2014 read the current request anywhere, no request scope.",
+  "description": "Per-request context (AsyncLocalStorage) for NestJS — read the current request anywhere, no request scope.",
   "author": "Daniel Bruce",
   "repository": {
     "type": "git",
@@ -63,6 +63,7 @@
     "@types/express": "^5.0.0",
     "@types/supertest": "^6.0.2",
     "express": "^5.0.0",
+    "jest": "^30.3.0",
     "supertest": "^7.0.0"
   }
 }

@@ -1,7 +1,7 @@
 {
   "name": "@neomaventures/docker",
   "version": "0.1.0",
-  "description": "Docker test-container helpers for @neomaventures/* \u2014 HTTP/TCP health polling and container teardown.",
+  "description": "Docker test-container helpers for @neomaventures/* — HTTP/TCP health polling and container teardown.",
   "author": "Daniel Bruce",
   "repository": {
     "type": "git",
@@ -43,6 +43,7 @@
     "lint": "eslint ."
   },
   "devDependencies": {
-    "@faker-js/faker": "^9.6.0"
+    "@faker-js/faker": "^9.6.0",
+    "jest": "^30.3.0"
   }
 }

@@ -1,7 +1,7 @@
 {
   "name": "@neomaventures/audit",
   "version": "0.1.0",
-  "description": "NestJS-idiomatic audit trails for TypeORM \u2014 @CreatedBy/@UpdatedBy decorators that record who changed your entities.",
+  "description": "NestJS-idiomatic audit trails for TypeORM — @CreatedBy/@UpdatedBy decorators that record who changed your entities.",
   "author": "Daniel Bruce",
   "repository": {
     "type": "git",
@@ -45,12 +45,14 @@
     "typeorm": "^0.3.20"
   },
   "devDependencies": {
+    "@faker-js/faker": "^9.6.0",
     "@neomaventures/managed-app": "workspace:*",
     "@nestjs/core": "^11.1.18",
     "@nestjs/platform-express": "^11.1.18",
     "@nestjs/testing": "^11.1.18",
     "@nestjs/typeorm": "^11.0.0",
     "@types/supertest": "^6.0.2",
+    "jest": "^30.3.0",
     "sqlite3": "^5.1.7",
     "supertest": "^7.0.0",
     "typeorm": "^0.3.20"

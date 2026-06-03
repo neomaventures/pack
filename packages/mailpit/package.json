@@ -1,7 +1,7 @@
 {
   "name": "@neomaventures/mailpit",
   "version": "0.1.0",
-  "description": "Mailpit test fixture for @neomaventures/* \u2014 a reusable client plus Docker container lifecycle and Jest setup/teardown drop-ins for email testing.",
+  "description": "Mailpit test fixture for @neomaventures/* — a reusable client plus Docker container lifecycle and Jest setup/teardown drop-ins for email testing.",
   "author": "Daniel Bruce",
   "repository": {
     "type": "git",
@@ -61,6 +61,7 @@
   "devDependencies": {
     "@faker-js/faker": "^9.6.0",
     "@types/nodemailer": "^8.0.0",
+    "jest": "^30.3.0",
     "nodemailer": "^8.0.7"
   }
 }
