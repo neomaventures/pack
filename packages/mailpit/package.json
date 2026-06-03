@@ -60,8 +60,12 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^9.6.0",
+    "@types/jest": "^30.0.0",
     "@types/nodemailer": "^8.0.0",
     "jest": "^30.3.0",
-    "nodemailer": "^8.0.7"
+    "jest-extended": "^7.0.0",
+    "nodemailer": "^8.0.7",
+    "reflect-metadata": "^0.2.2",
+    "ts-jest": "^29.4.9"
   }
 }

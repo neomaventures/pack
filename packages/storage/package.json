@@ -67,13 +67,17 @@
     "@nestjs/platform-express": "^11.1.18",
     "@nestjs/testing": "^11.1.18",
     "@nestjs/typeorm": "^11.0.0",
+    "@types/jest": "^30.0.0",
     "@types/lodash": "^4.17.13",
     "@types/multer": "^2.1.0",
     "@types/supertest": "^6.0.2",
     "jest": "^30.3.0",
+    "jest-extended": "^7.0.0",
     "lodash": "^4.17.21",
+    "reflect-metadata": "^0.2.2",
     "sqlite3": "^5.1.7",
     "supertest": "^7.0.0",
+    "ts-jest": "^29.4.9",
     "typeorm": "^0.3.20"
   }
 }

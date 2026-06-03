@@ -46,8 +46,12 @@
     "typeorm": "^0.3"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "jest": "^30.3.0",
+    "jest-extended": "^7.0.0",
+    "reflect-metadata": "^0.2.2",
     "sqlite3": "^5.1.7",
+    "ts-jest": "^29.4.9",
     "typeorm": "^0.3.20"
   }
 }
