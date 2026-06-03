@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0
+
+### Minor Changes
+
+- 66ffce1: `startContainer()` no longer sets environment variables. It returns a config object with all connection details — consumers must wire their own env vars from the returned config or use static `.env` files. See each package's updated README for the new pattern.
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),

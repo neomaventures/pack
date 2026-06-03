@@ -1,6 +1,6 @@
 {
   "name": "@neomaventures/mailpit",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Mailpit test fixture for @neomaventures/* — a reusable client plus Docker container lifecycle and Jest setup/teardown drop-ins for email testing.",
   "author": "Daniel Bruce",
   "repository": {
