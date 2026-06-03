@@ -14,6 +14,8 @@ describe("@neomaventures/minio (e2e)", () => {
   // The container name follows {NEOMA_TEST_PREFIX}-minio; the e2e script
   // sets NEOMA_TEST_PREFIX=minio-e2e.
   const container = "minio-e2e-minio"
+  // The e2e script sets MINIO_PORT; startContainer reads it for the host port.
+  const apiPort = process.env.MINIO_PORT ?? "9000"
 
   it("exposes the lifecycle API from the built package", () => {
     expect(typeof startContainer).toBe("function")
@@ -21,18 +23,9 @@ describe("@neomaventures/minio (e2e)", () => {
   })
 
   describe("the container started by the setup drop-in", () => {
-    it("sets the STORAGE_* env contract", () => {
-      expect(process.env.STORAGE_ENDPOINT).toBe("http://localhost:9010")
-      expect(process.env.STORAGE_REGION).toBe("us-east-1")
-      expect(process.env.STORAGE_ACCESS_KEY).toBe("minioadmin")
-      expect(process.env.STORAGE_SECRET_KEY).toBe("minioadmin")
-      expect(process.env.STORAGE_BUCKET).toBe("test-bucket")
-      expect(process.env.STORAGE_FORCE_PATH_STYLE).toBe("true")
-    })
-
     it("responds to health checks on the live S3 API", async () => {
       const response = await fetch(
-        `${process.env.STORAGE_ENDPOINT}/minio/health/live`,
+        `http://localhost:${apiPort}/minio/health/live`,
       )
 
       expect(response.ok).toBe(true)

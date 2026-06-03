@@ -40,7 +40,6 @@ describe("startContainer (MockServer)", () => {
 
   afterAll(async () => {
     await stopContainer({ prefix })
-    delete process.env.MOCKSERVER_URL
   })
 
   describe("Given default options with env-var overrides", () => {
@@ -50,12 +49,6 @@ describe("startContainer (MockServer)", () => {
 
     it("should return the configured port", () => {
       expect(config.port).toBe(port)
-    })
-
-    it("should set the MOCKSERVER_URL env var", () => {
-      expect(process.env.MOCKSERVER_URL).toBe(
-        `http://localhost:${port}/mockserver`,
-      )
     })
 
     it("should have a running Docker container", () => {

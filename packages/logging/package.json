@@ -1,7 +1,7 @@
 {
   "name": "@neomaventures/logging",
   "version": "0.1.0",
-  "description": "Great logging for NestJS \u2014 Pino-backed application + request-scoped loggers.",
+  "description": "Great logging for NestJS — Pino-backed application + request-scoped loggers.",
   "author": "Daniel Bruce",
   "repository": {
     "type": "git",
@@ -51,6 +51,7 @@
     "ulid": "^3.0.1"
   },
   "devDependencies": {
+    "@faker-js/faker": "^9.6.0",
     "@neomaventures/fixtures": "workspace:*",
     "@neomaventures/managed-app": "workspace:*",
     "@neomaventures/request-context": "workspace:*",
@@ -58,7 +59,12 @@
     "@nestjs/platform-express": "^11.1.18",
     "@nestjs/testing": "^11.1.18",
     "@types/express": "^5.0.0",
+    "@types/jest": "^30.0.0",
     "@types/supertest": "^6.0.2",
-    "supertest": "^7.0.0"
+    "jest": "^30.3.0",
+    "jest-extended": "^7.0.0",
+    "reflect-metadata": "^0.2.2",
+    "supertest": "^7.0.0",
+    "ts-jest": "^29.4.9"
   }
 }

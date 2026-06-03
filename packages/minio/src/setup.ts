@@ -1,8 +1,13 @@
 import { startContainer } from "./docker/container"
 
 /**
- * Jest `globalSetup` drop-in that starts a MinIO Docker container,
- * creates a bucket, and sets the `STORAGE_*` environment variables.
+ * Jest `globalSetup` drop-in that starts a MinIO Docker container
+ * and creates a bucket.
+ *
+ * The container reads its port configuration from the `MINIO_PORT`,
+ * `MINIO_CONSOLE_PORT`, and `NEOMA_TEST_PREFIX` environment variables
+ * but does **not** write any environment variables itself. The consumer
+ * is responsible for wiring connection details to the code under test.
  *
  * Usage in `jest-e2e.json`:
  * ```json

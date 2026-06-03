@@ -6,15 +6,19 @@ import { MailpitClient } from "@neomaventures/mailpit"
  * End-to-end check against a real container, consuming the package the way
  * an installer would: imports resolve to the built `dist` at runtime (see
  * e2e/jest-e2e.json), and the container is started by the built `setup`
- * drop-in (globalSetup, via dist/setup.js), which sets SMTP_HOST/SMTP_PORT
- * and MAILPIT_API. Types still resolve to `src` (tsconfig paths) so
- * goto-definition and debugging stay on source.
+ * drop-in (globalSetup, via dist/setup.js). Types still resolve to `src`
+ * (tsconfig paths) so goto-definition and debugging stay on source.
+ *
+ * The e2e script sets MAILPIT_SMTP_PORT and MAILPIT_API_PORT;
+ * startContainer reads them for the host ports.
  */
 describe("@neomaventures/mailpit (e2e)", () => {
+  const smtpPort = Number(process.env.MAILPIT_SMTP_PORT ?? "1025")
+  const apiPort = Number(process.env.MAILPIT_API_PORT ?? "8025")
   let client: MailpitClient
 
   beforeAll(() => {
-    client = new MailpitClient(process.env.MAILPIT_API as string)
+    client = new MailpitClient(`http://localhost:${apiPort}/api/v1`)
   })
 
   beforeEach(async () => {
@@ -23,8 +27,8 @@ describe("@neomaventures/mailpit (e2e)", () => {
 
   it("captures an SMTP email and reads it back through the client", async () => {
     const transport = createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT),
+      host: "localhost",
+      port: smtpPort,
       secure: false,
     })
 

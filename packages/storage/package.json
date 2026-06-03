@@ -1,7 +1,7 @@
 {
   "name": "@neomaventures/storage",
   "version": "0.1.0",
-  "description": "NestJS-idiomatic file storage for S3-compatible backends \u2014 upload, persist, presigned download.",
+  "description": "NestJS-idiomatic file storage for S3-compatible backends — upload, persist, presigned download.",
   "author": "Daniel Bruce",
   "repository": {
     "type": "git",
@@ -35,9 +35,9 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc -p ./tsconfig.lib.json",
-    "test": "NEOMA_TEST_PREFIX=storage MINIO_PORT=9002 MINIO_CONSOLE_PORT=9003 NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
+    "test": "node --env-file=.env.test --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
     "pretest:e2e": "pnpm build",
-    "test:e2e": "NEOMA_TEST_PREFIX=storage MINIO_PORT=9002 MINIO_CONSOLE_PORT=9003 NODE_OPTIONS=--experimental-vm-modules jest --config ./e2e/jest-e2e.json --runInBand",
+    "test:e2e": "node --env-file=.env.test --experimental-vm-modules ./node_modules/jest/bin/jest.js --config ./e2e/jest-e2e.json --runInBand",
     "lint": "eslint ."
   },
   "dependencies": {
@@ -57,6 +57,7 @@
     "typeorm": ">=0.3"
   },
   "devDependencies": {
+    "@faker-js/faker": "^9.6.0",
     "@neomaventures/fixtures": "workspace:*",
     "@neomaventures/managed-app": "workspace:*",
     "@neomaventures/managed-database": "workspace:*",
@@ -66,12 +67,17 @@
     "@nestjs/platform-express": "^11.1.18",
     "@nestjs/testing": "^11.1.18",
     "@nestjs/typeorm": "^11.0.0",
+    "@types/jest": "^30.0.0",
     "@types/lodash": "^4.17.13",
     "@types/multer": "^2.1.0",
     "@types/supertest": "^6.0.2",
+    "jest": "^30.3.0",
+    "jest-extended": "^7.0.0",
     "lodash": "^4.17.21",
+    "reflect-metadata": "^0.2.2",
     "sqlite3": "^5.1.7",
     "supertest": "^7.0.0",
+    "ts-jest": "^29.4.9",
     "typeorm": "^0.3.20"
   }
 }

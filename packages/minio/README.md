@@ -17,7 +17,7 @@ npm install --save-dev @neomaventures/minio
 
 ## Quick start
 
-Start a MinIO container for the whole test run via Jest's `globalSetup`/`globalTeardown`. The container is healthy and a bucket exists before your tests run, and the connection details are published as `STORAGE_*` environment variables.
+Start a MinIO container for the whole test run via Jest's `globalSetup`/`globalTeardown`. The container is healthy and a bucket exists before your tests run.
 
 ```json
 // jest-e2e.json
@@ -27,32 +27,25 @@ Start a MinIO container for the whole test run via Jest's `globalSetup`/`globalT
 }
 ```
 
-`setup` starts the container, creates a bucket, and sets the env vars below; `teardown` removes the container. Point your S3 client (e.g. `@aws-sdk/client-s3`) at them:
+`setup` starts the container and creates a bucket; `teardown` removes the container. The package does **not** set any environment variables — the consumer is responsible for wiring connection details (e.g. via env vars in the test script or a custom `globalSetup` that calls `startContainer()` and sets env vars from the returned config).
 
 ```typescript
+import { startContainer } from "@neomaventures/minio"
 import { S3Client } from "@aws-sdk/client-s3"
 
+// In a custom globalSetup:
+const config = await startContainer()
+
 const s3 = new S3Client({
-  endpoint: process.env.STORAGE_ENDPOINT,
-  region: process.env.STORAGE_REGION,
+  endpoint: `http://localhost:${config.apiPort}`,
+  region: "us-east-1",
   credentials: {
-    accessKeyId: process.env.STORAGE_ACCESS_KEY!,
-    secretAccessKey: process.env.STORAGE_SECRET_KEY!,
+    accessKeyId: config.accessKey,
+    secretAccessKey: config.secretKey,
   },
-  forcePathStyle: process.env.STORAGE_FORCE_PATH_STYLE === "true",
+  forcePathStyle: true,
 })
 ```
-
-### Environment variables set by `setup`
-
-| Variable | Example | Purpose |
-|---|---|---|
-| `STORAGE_ENDPOINT` | `http://localhost:9000` | S3 API endpoint (host + API port) |
-| `STORAGE_REGION` | `us-east-1` | Region to pass to the S3 client |
-| `STORAGE_ACCESS_KEY` | `minioadmin` | Root access key |
-| `STORAGE_SECRET_KEY` | `minioadmin` | Root secret key |
-| `STORAGE_BUCKET` | `test-bucket` | Name of the bucket created on start |
-| `STORAGE_FORCE_PATH_STYLE` | `true` | MinIO requires path-style URLs |
 
 ## Configuration
 
@@ -66,7 +59,7 @@ The container honours these environment variables:
 
 ## API
 
-- **`startContainer(options?)` / `stopContainer(options?)`** — manage the container directly when `globalSetup` isn't a fit. `start` creates the bucket and sets the `STORAGE_*` env vars, then returns `{ container, apiPort, consolePort, bucket, accessKey, secretKey }`. Options: `prefix`, `apiPort`, `consolePort`, `bucket`.
+- **`startContainer(options?)` / `stopContainer(options?)`** — manage the container directly when `globalSetup` isn't a fit. `start` creates the bucket and returns `{ container, apiPort, consolePort, bucket, accessKey, secretKey }`. Options: `prefix`, `apiPort`, `consolePort`, `bucket`.
 - **`@neomaventures/minio/setup` / `@neomaventures/minio/teardown`** — Jest `globalSetup`/`globalTeardown` drop-ins wrapping the above.
 
 ## License

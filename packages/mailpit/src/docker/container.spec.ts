@@ -45,9 +45,6 @@ describe("startContainer (Mailpit)", () => {
 
   afterAll(async () => {
     await stopContainer({ prefix })
-    delete process.env.SMTP_HOST
-    delete process.env.SMTP_PORT
-    delete process.env.MAILPIT_API
   })
 
   describe("Given default options with env-var overrides", () => {
@@ -61,18 +58,6 @@ describe("startContainer (Mailpit)", () => {
 
     it("should return the configured API port", () => {
       expect(config.apiPort).toBe(apiPort)
-    })
-
-    it("should set the SMTP_HOST env var", () => {
-      expect(process.env.SMTP_HOST).toBe("localhost")
-    })
-
-    it("should set the SMTP_PORT env var", () => {
-      expect(process.env.SMTP_PORT).toBe(String(smtpPort))
-    })
-
-    it("should set the MAILPIT_API env var", () => {
-      expect(process.env.MAILPIT_API).toBe(`http://localhost:${apiPort}/api/v1`)
     })
 
     it("should have a running Docker container", () => {

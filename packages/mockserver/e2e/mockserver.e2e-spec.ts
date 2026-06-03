@@ -9,9 +9,10 @@ import { MockServerClient } from "@neomaventures/mockserver"
  * source.
  */
 describe("@neomaventures/mockserver (e2e)", () => {
-  // globalSetup (@neomaventures/mockserver/setup) sets MOCKSERVER_URL.
-  const controlUrl = (): string => process.env.MOCKSERVER_URL as string
-  const mockUrl = (): string => controlUrl().replace("/mockserver", "")
+  // The e2e script sets MOCKSERVER_PORT; startContainer reads it for the host port.
+  const port = process.env.MOCKSERVER_PORT ?? "1080"
+  const controlUrl = (): string => `http://localhost:${port}/mockserver`
+  const mockUrl = (): string => `http://localhost:${port}`
 
   let client: MockServerClient
 

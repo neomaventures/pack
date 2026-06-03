@@ -1,7 +1,7 @@
 {
   "name": "@neomaventures/mockserver",
   "version": "0.1.0",
-  "description": "MockServer test fixture for @neomaventures/* \u2014 a reusable client plus Docker container lifecycle and Jest setup/teardown drop-ins.",
+  "description": "MockServer test fixture for @neomaventures/* — a reusable client plus Docker container lifecycle and Jest setup/teardown drop-ins.",
   "author": "Daniel Bruce",
   "repository": {
     "type": "git",
@@ -51,13 +51,18 @@
     "build": "tsc -p ./tsconfig.lib.json",
     "test": "jest --runInBand --passWithNoTests",
     "pretest:e2e": "pnpm build",
-    "test:e2e": "NEOMA_TEST_PREFIX=mockserver-e2e MOCKSERVER_PORT=10180 jest --config ./e2e/jest-e2e.json --runInBand",
+    "test:e2e": "node --env-file=.env.e2e ./node_modules/jest/bin/jest.js --config ./e2e/jest-e2e.json --runInBand",
     "lint": "eslint ."
   },
   "dependencies": {
     "@neomaventures/docker": "workspace:*"
   },
   "devDependencies": {
-    "@faker-js/faker": "^9.6.0"
+    "@faker-js/faker": "^9.6.0",
+    "@types/jest": "^30.0.0",
+    "jest": "^30.3.0",
+    "jest-extended": "^7.0.0",
+    "reflect-metadata": "^0.2.2",
+    "ts-jest": "^29.4.9"
   }
 }
