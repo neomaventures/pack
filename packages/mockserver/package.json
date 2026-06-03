@@ -51,7 +51,7 @@
     "build": "tsc -p ./tsconfig.lib.json",
     "test": "jest --runInBand --passWithNoTests",
     "pretest:e2e": "pnpm build",
-    "test:e2e": "node --env-file=.env.e2e ./node_modules/.bin/jest --config ./e2e/jest-e2e.json --runInBand",
+    "test:e2e": "node --env-file=.env.e2e ./node_modules/jest/bin/jest.js --config ./e2e/jest-e2e.json --runInBand",
     "lint": "eslint ."
   },
   "dependencies": {

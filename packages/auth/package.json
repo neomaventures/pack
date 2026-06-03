@@ -38,9 +38,9 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc -p ./tsconfig.lib.json",
-    "test": "node --env-file=.env.test ./node_modules/.bin/jest --runInBand --passWithNoTests",
+    "test": "node --env-file=.env.test ./node_modules/jest/bin/jest.js --runInBand --passWithNoTests",
     "pretest:e2e": "pnpm build",
-    "test:e2e": "node --env-file=.env.e2e --experimental-vm-modules ./node_modules/.bin/jest --config ./e2e/jest-e2e.json --runInBand",
+    "test:e2e": "node --env-file=.env.e2e --experimental-vm-modules ./node_modules/jest/bin/jest.js --config ./e2e/jest-e2e.json --runInBand",
     "lint": "eslint ."
   },
   "dependencies": {
