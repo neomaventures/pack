@@ -27,8 +27,7 @@ export interface MockServerConfig {
 }
 
 /**
- * Starts a MockServer Docker container, waits for it to become healthy,
- * and sets the `MOCKSERVER_URL` environment variable.
+ * Starts a MockServer Docker container and waits for it to become healthy.
  *
  * The port is read from the `MOCKSERVER_PORT` env var (default `1080`).
  * The container name is `{prefix}-mockserver` where prefix defaults to
@@ -45,7 +44,6 @@ export interface MockServerConfig {
  * const config = await startContainer()
  * // config.container === "neoma-test-mockserver"
  * // config.port === 1080
- * // process.env.MOCKSERVER_URL === "http://localhost:1080/mockserver"
  * ```
  */
 export async function startContainer({
@@ -76,8 +74,6 @@ export async function startContainer({
     method: "PUT",
     timeoutMs: 30_000,
   })
-
-  process.env.MOCKSERVER_URL = `http://localhost:${port}/mockserver`
 
   return { container, port }
 }

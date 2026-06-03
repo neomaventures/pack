@@ -7,7 +7,8 @@ import {
 /**
  * MinIO client helper for test assertions.
  *
- * Uses the STORAGE_* env vars set by @neomaventures/minio/setup.
+ * Reads STORAGE_* env vars set by the custom globalSetup in
+ * `fixtures/specs/global-setup.ts`.
  */
 export class MinioClient {
   private readonly client: S3Client

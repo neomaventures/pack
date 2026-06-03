@@ -51,7 +51,7 @@
     "build": "tsc -p ./tsconfig.lib.json",
     "test": "jest --runInBand --passWithNoTests",
     "pretest:e2e": "pnpm build",
-    "test:e2e": "NEOMA_TEST_PREFIX=mockserver-e2e MOCKSERVER_PORT=10180 jest --config ./e2e/jest-e2e.json --runInBand",
+    "test:e2e": "node --env-file=.env.e2e ./node_modules/.bin/jest --config ./e2e/jest-e2e.json --runInBand",
     "lint": "eslint ."
   },
   "dependencies": {

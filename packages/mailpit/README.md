@@ -27,12 +27,14 @@ Start a Mailpit container for the whole test run via Jest's `globalSetup`/`globa
 }
 ```
 
-`setup` starts the container and sets `SMTP_HOST`, `SMTP_PORT`, and `MAILPIT_API` (e.g. `http://localhost:8025/api/v1`); `teardown` removes it.
+`setup` starts the container; `teardown` removes it. The package does **not** set any environment variables — the consumer is responsible for wiring connection details (e.g. via env vars in the test script or a custom `globalSetup` that calls `startContainer()` and sets env vars from the returned config).
 
 ```typescript
 import { MailpitClient } from "@neomaventures/mailpit"
 
-const client = new MailpitClient(process.env.MAILPIT_API!)
+// Derive the URL from the MAILPIT_API_PORT env var set in your test script:
+const apiPort = process.env.MAILPIT_API_PORT ?? "8025"
+const client = new MailpitClient(`http://localhost:${apiPort}/api/v1`)
 
 await client.clear()
 
@@ -56,7 +58,7 @@ The container honours these environment variables:
 ## API
 
 - **`MailpitClient`** — `clear()`, `messages()`, `message(id)`, `findByRecipient(email)`.
-- **`startContainer(options?)` / `stopContainer(options?)`** — manage the container directly when `globalSetup` isn't a fit; `start` sets the `SMTP_*`/`MAILPIT_API` env vars. Supports SMTP auth via an `htpasswd` option.
+- **`startContainer(options?)` / `stopContainer(options?)`** — manage the container directly when `globalSetup` isn't a fit. `start` returns `{ container, smtpPort, apiPort }`. Supports SMTP auth via an `htpasswd` option.
 - **`@neomaventures/mailpit/setup` / `@neomaventures/mailpit/teardown`** — Jest `globalSetup`/`globalTeardown` drop-ins wrapping the above.
 
 ## License

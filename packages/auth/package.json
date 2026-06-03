@@ -38,9 +38,9 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc -p ./tsconfig.lib.json",
-    "test": "NODE_ENV=specs jest --runInBand --passWithNoTests",
+    "test": "node --env-file=.env.test ./node_modules/.bin/jest --runInBand --passWithNoTests",
     "pretest:e2e": "pnpm build",
-    "test:e2e": "NODE_ENV=e2e NEOMA_MANAGED_APP_MODULE_PATH=e2e/app/app.module.ts#AppModule WEBHOOK_SECRET=whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw NODE_OPTIONS=--experimental-vm-modules jest --config ./e2e/jest-e2e.json --runInBand",
+    "test:e2e": "node --env-file=.env.e2e --experimental-vm-modules ./node_modules/.bin/jest --config ./e2e/jest-e2e.json --runInBand",
     "lint": "eslint ."
   },
   "dependencies": {

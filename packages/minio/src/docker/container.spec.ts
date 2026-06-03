@@ -47,12 +47,6 @@ describe("startContainer (MinIO)", () => {
 
   afterAll(async () => {
     await stopContainer({ prefix })
-    delete process.env.STORAGE_ENDPOINT
-    delete process.env.STORAGE_REGION
-    delete process.env.STORAGE_ACCESS_KEY
-    delete process.env.STORAGE_SECRET_KEY
-    delete process.env.STORAGE_BUCKET
-    delete process.env.STORAGE_FORCE_PATH_STYLE
   })
 
   describe("Given default options with env-var overrides", () => {
@@ -70,30 +64,6 @@ describe("startContainer (MinIO)", () => {
 
     it("should return the default bucket name", () => {
       expect(config.bucket).toBe("test-bucket")
-    })
-
-    it("should set the STORAGE_ENDPOINT env var", () => {
-      expect(process.env.STORAGE_ENDPOINT).toBe(`http://localhost:${apiPort}`)
-    })
-
-    it("should set the STORAGE_REGION env var", () => {
-      expect(process.env.STORAGE_REGION).toBe("us-east-1")
-    })
-
-    it("should set the STORAGE_ACCESS_KEY env var", () => {
-      expect(process.env.STORAGE_ACCESS_KEY).toBe("minioadmin")
-    })
-
-    it("should set the STORAGE_SECRET_KEY env var", () => {
-      expect(process.env.STORAGE_SECRET_KEY).toBe("minioadmin")
-    })
-
-    it("should set the STORAGE_BUCKET env var", () => {
-      expect(process.env.STORAGE_BUCKET).toBe("test-bucket")
-    })
-
-    it("should set the STORAGE_FORCE_PATH_STYLE env var", () => {
-      expect(process.env.STORAGE_FORCE_PATH_STYLE).toBe("true")
     })
 
     it("should have a running Docker container", () => {

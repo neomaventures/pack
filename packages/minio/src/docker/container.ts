@@ -13,7 +13,6 @@ const DEFAULT_BUCKET = "test-bucket"
 const DEFAULT_PREFIX = "neoma-test"
 const DEFAULT_ACCESS_KEY = "minioadmin"
 const DEFAULT_SECRET_KEY = "minioadmin"
-const DEFAULT_REGION = "us-east-1"
 
 /**
  * Options for {@link startContainer}.
@@ -52,7 +51,7 @@ export interface MinIOConfig {
 
 /**
  * Starts a MinIO Docker container, waits for it to become healthy,
- * creates a bucket, and sets storage environment variables.
+ * and creates a bucket.
  *
  * The API port is read from the `MINIO_PORT` env var (default `9000`).
  * The Console port is read from the `MINIO_CONSOLE_PORT` env var (default `9001`).
@@ -72,12 +71,8 @@ export interface MinIOConfig {
  * // config.apiPort === 9000
  * // config.consolePort === 9001
  * // config.bucket === "test-bucket"
- * // process.env.STORAGE_ENDPOINT === "http://localhost:9000"
- * // process.env.STORAGE_REGION === "us-east-1"
- * // process.env.STORAGE_ACCESS_KEY === "minioadmin"
- * // process.env.STORAGE_SECRET_KEY === "minioadmin"
- * // process.env.STORAGE_BUCKET === "test-bucket"
- * // process.env.STORAGE_FORCE_PATH_STYLE === "true"
+ * // config.accessKey === "minioadmin"
+ * // config.secretKey === "minioadmin"
  * ```
  */
 export async function startContainer({
@@ -140,13 +135,6 @@ export async function startContainer({
   execFileSync("docker", ["exec", container, "mc", "mb", `local/${bucket}`], {
     stdio: "ignore",
   })
-
-  process.env.STORAGE_ENDPOINT = `http://localhost:${apiPort}`
-  process.env.STORAGE_REGION = DEFAULT_REGION
-  process.env.STORAGE_ACCESS_KEY = DEFAULT_ACCESS_KEY
-  process.env.STORAGE_SECRET_KEY = DEFAULT_SECRET_KEY
-  process.env.STORAGE_BUCKET = bucket
-  process.env.STORAGE_FORCE_PATH_STYLE = "true"
 
   return {
     container,

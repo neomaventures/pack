@@ -27,12 +27,14 @@ Start a MockServer container for the whole test run via Jest's `globalSetup`/`gl
 }
 ```
 
-`setup` starts the container and sets `process.env.MOCKSERVER_URL` (e.g. `http://localhost:1080/mockserver`); `teardown` removes it.
+`setup` starts the container; `teardown` removes it. The package does **not** set any environment variables — the consumer is responsible for wiring the connection URL (e.g. via env vars in the test script or a custom `globalSetup` that calls `startContainer()` and sets env vars from the returned config).
 
 ```typescript
 import { MockServerClient } from "@neomaventures/mockserver"
 
-const client = new MockServerClient(process.env.MOCKSERVER_URL!)
+// Derive the URL from the MOCKSERVER_PORT env var set in your test script:
+const port = process.env.MOCKSERVER_PORT ?? "1080"
+const client = new MockServerClient(`http://localhost:${port}/mockserver`)
 
 await client.reset()
 await client.createExpectation({
@@ -61,7 +63,7 @@ The container honours these environment variables:
 ## API
 
 - **`MockServerClient`** — `reset()`, `createExpectation(expectation)`, `verifyExpectationMatched(request, count?)`.
-- **`startContainer(options?)` / `stopContainer(options?)`** — manage the container directly when `globalSetup` isn't a fit. `start` sets `MOCKSERVER_URL`.
+- **`startContainer(options?)` / `stopContainer(options?)`** — manage the container directly when `globalSetup` isn't a fit. `start` returns `{ container, port }`.
 - **`@neomaventures/mockserver/setup` / `@neomaventures/mockserver/teardown`** — Jest `globalSetup`/`globalTeardown` drop-ins wrapping the above.
 
 ## License

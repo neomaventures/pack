@@ -43,8 +43,8 @@ export interface MailpitConfig {
 }
 
 /**
- * Starts a Mailpit Docker container, waits for SMTP to become healthy,
- * and sets environment variables for SMTP and API access.
+ * Starts a Mailpit Docker container and waits for SMTP and the HTTP
+ * API to become healthy.
  *
  * The SMTP port is read from the `MAILPIT_SMTP_PORT` env var (default `1025`).
  * The API port is read from the `MAILPIT_API_PORT` env var (default `8025`).
@@ -63,9 +63,6 @@ export interface MailpitConfig {
  * // config.container === "neoma-test-mailpit"
  * // config.smtpPort === 1025
  * // config.apiPort === 8025
- * // process.env.SMTP_HOST === "localhost"
- * // process.env.SMTP_PORT === "1025"
- * // process.env.MAILPIT_API === "http://localhost:8025/api/v1"
  * ```
  */
 export async function startContainer({
@@ -121,10 +118,6 @@ export async function startContainer({
   await waitForHttp(`http://localhost:${apiPort}/api/v1/messages`, {
     timeoutMs: 30_000,
   })
-
-  process.env.SMTP_HOST = "localhost"
-  process.env.SMTP_PORT = String(smtpPort)
-  process.env.MAILPIT_API = `http://localhost:${apiPort}/api/v1`
 
   return { container, smtpPort, apiPort }
 }

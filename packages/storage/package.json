@@ -35,9 +35,9 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc -p ./tsconfig.lib.json",
-    "test": "NEOMA_TEST_PREFIX=storage MINIO_PORT=9002 MINIO_CONSOLE_PORT=9003 NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
+    "test": "node --env-file=.env.test --experimental-vm-modules ./node_modules/.bin/jest --runInBand",
     "pretest:e2e": "pnpm build",
-    "test:e2e": "NEOMA_TEST_PREFIX=storage MINIO_PORT=9002 MINIO_CONSOLE_PORT=9003 NODE_OPTIONS=--experimental-vm-modules jest --config ./e2e/jest-e2e.json --runInBand",
+    "test:e2e": "node --env-file=.env.test --experimental-vm-modules ./node_modules/.bin/jest --config ./e2e/jest-e2e.json --runInBand",
     "lint": "eslint ."
   },
   "dependencies": {
