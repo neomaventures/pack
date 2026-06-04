@@ -4,7 +4,7 @@ import { ClsService } from "nestjs-cls"
 
 import {
   ContextSlotMutationError,
-  ContextSlotNoContextError,
+  NoContextError,
   ContextSlotPrimitiveError,
   type ContextSlot,
   RequestContextModule,
@@ -84,7 +84,7 @@ describe("createContextSlot", () => {
     })
 
     describe("Given no active context", () => {
-      it("should throw ContextSlotNoContextError with the original error as cause", () => {
+      it("should throw NoContextError with the original error as cause", () => {
         let caught: unknown
 
         try {
@@ -93,8 +93,8 @@ describe("createContextSlot", () => {
           caught = err
         }
 
-        expect(caught).toBeInstanceOf(ContextSlotNoContextError)
-        expect((caught as ContextSlotNoContextError).cause).toBeInstanceOf(
+        expect(caught).toBeInstanceOf(NoContextError)
+        expect((caught as NoContextError).cause).toBeInstanceOf(
           Error,
         )
       })

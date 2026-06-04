@@ -1,5 +1,5 @@
 import {
-  ContextSlotNoContextError,
+  NoContextError,
   RequestContextModule,
 } from "@neomaventures/request-context"
 import { Inject, Injectable } from "@nestjs/common"
@@ -70,9 +70,9 @@ describe("principal.slot", () => {
     })
 
     describe("Given no active CLS context", () => {
-      it("should throw ContextSlotNoContextError", () => {
+      it("should throw NoContextError", () => {
         expect(() => setPrincipal(fakes.principal())).toThrow(
-          ContextSlotNoContextError,
+          NoContextError,
         )
       })
     })

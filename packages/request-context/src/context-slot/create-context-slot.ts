@@ -72,7 +72,7 @@ export class ContextSlotPrimitiveError extends Error {
  * `RequestContextModule.forRoot()` is either not imported or its middleware
  * has not yet run for this request.
  */
-export class ContextSlotNoContextError extends Error {
+export class NoContextError extends Error {
   public constructor(key: string, cause?: unknown) {
     super(
       `Cannot set context-slot "${key}" — no active request context. ` +
@@ -80,7 +80,7 @@ export class ContextSlotNoContextError extends Error {
         `and its middleware runs before the middleware that writes to this slot.`,
       { cause },
     )
-    this.name = "ContextSlotNoContextError"
+    this.name = "NoContextError"
   }
 }
 
@@ -117,7 +117,7 @@ export function createContextSlot<T>(key: string): ContextSlot<T> {
     try {
       ClsServiceManager.getClsService().set(key, value)
     } catch (cause) {
-      throw new ContextSlotNoContextError(key, cause)
+      throw new NoContextError(key, cause)
     }
   }
 
