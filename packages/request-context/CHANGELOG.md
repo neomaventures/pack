@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- b72c273: Add `NoContextError` — thrown by `set()` when called outside an active request context, with the original error preserved as `cause`. Also adds `ContextSlotPrimitiveError` for proxy access on primitive-typed slots.
+
 ## 0.2.0
 
 ### Minor Changes
