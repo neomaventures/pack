@@ -8,6 +8,7 @@ export { getRequest } from "./request-context.facade"
 export {
   createContextSlot,
   ContextSlotMutationError,
+  ContextSlotNoContextError,
   ContextSlotPrimitiveError,
 } from "./context-slot/create-context-slot"
 export type { ContextSlot } from "./context-slot/create-context-slot"

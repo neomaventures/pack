@@ -79,7 +79,6 @@ describe("BearerAuthenticationMiddleware", () => {
           () => {
             expect(service.authenticate).not.toHaveBeenCalled()
             expect(req.principal).toBe(existingPrincipal)
-            expect(getPrincipal()).toBe(existingPrincipal)
             done()
           },
         )

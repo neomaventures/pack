@@ -37,7 +37,6 @@ export class BearerAuthenticationMiddleware implements NestMiddleware {
     next: NextFunction,
   ): Promise<void> {
     if (req.principal) {
-      setPrincipal(req.principal)
       return next()
     }
 
@@ -62,12 +61,16 @@ export class BearerAuthenticationMiddleware implements NestMiddleware {
 
     try {
       req.principal = await this.service.authenticate(token)
-      setPrincipal(req.principal)
     } catch (err) {
       this.logger.warn("Authentication via authorization header failed", {
         err,
       })
     }
+
+    if (req.principal) {
+      setPrincipal(req.principal)
+    }
+
     next()
   }
 }
