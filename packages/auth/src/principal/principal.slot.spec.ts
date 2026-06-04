@@ -71,9 +71,7 @@ describe("principal.slot", () => {
 
     describe("Given no active CLS context", () => {
       it("should throw NoContextError", () => {
-        expect(() => setPrincipal(fakes.principal())).toThrow(
-          NoContextError,
-        )
+        expect(() => setPrincipal(fakes.principal())).toThrow(NoContextError)
       })
     })
   })
