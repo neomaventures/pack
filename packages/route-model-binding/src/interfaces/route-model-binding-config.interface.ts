@@ -1,5 +1,8 @@
+import { type Type } from "@nestjs/common"
 import { type Request } from "express"
 import { type FindOptionsWhere } from "typeorm"
+
+import { type ScopeAccessor } from "./scope-accessor.interface"
 
 /**
  * Context provided to resolver functions containing all information
@@ -25,6 +28,36 @@ export interface ResolverContext {
 export type ResolverFunction = (
   context: ResolverContext,
 ) => FindOptionsWhere<any> | Promise<FindOptionsWhere<any>>
+
+/**
+ * Configuration for the optional post-load scoping mechanism.
+ *
+ * @example
+ * ```typescript
+ * scope: {
+ *   accessor: TenantScopeAccessor,
+ *   deny: 403,
+ * }
+ * ```
+ */
+export interface ScopeConfig {
+  /**
+   * Class implementing {@link ScopeAccessor}, resolved via DI (`useClass`).
+   * The accessor is called after each entity is resolved to determine
+   * whether the current context may access it.
+   */
+  accessor: Type<ScopeAccessor>
+
+  /**
+   * HTTP status code to return when `canAccess` returns `false`.
+   *
+   * - `404` — hides entity existence (default)
+   * - `403` — reveals entity exists but access is denied
+   *
+   * @default 404
+   */
+  deny?: 404 | 403
+}
 
 /**
  * Configuration options for the RouteModelBinding module.
@@ -55,4 +88,19 @@ export interface RouteModelBindingConfig {
   paramResolvers?: {
     [paramName: string]: ResolverFunction
   }
+
+  /**
+   * Optional post-load scoping configuration. When provided, a
+   * {@link ScopeAccessor} is called after each entity is resolved to
+   * determine whether the current context may access it.
+   *
+   * @example
+   * ```typescript
+   * scope: {
+   *   accessor: TenantScopeAccessor,
+   *   deny: 404,
+   * }
+   * ```
+   */
+  scope?: ScopeConfig
 }

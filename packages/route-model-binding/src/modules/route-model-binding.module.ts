@@ -1,7 +1,10 @@
-import { DynamicModule, Module } from "@nestjs/common"
+import { DynamicModule, Module, type Provider } from "@nestjs/common"
 import { FindOptionsWhere } from "typeorm"
 
-import { ROUTE_MODEL_BINDING_CONFIG } from "../constants/injection-tokens"
+import {
+  ROUTE_MODEL_BINDING_CONFIG,
+  SCOPE_ACCESSOR,
+} from "../constants/injection-tokens"
 import { RouteModelBindingConfig } from "../interfaces/route-model-binding-config.interface"
 import { RouteModelBindingMiddleware } from "../middlewares/route-model-binding.middleware"
 
@@ -37,16 +40,34 @@ export class RouteModelBindingModule {
       defaultResolver: DEFAULT_RESOLVER,
     },
   ): DynamicModule {
+    const providers: Provider[] = [
+      {
+        provide: ROUTE_MODEL_BINDING_CONFIG,
+        useValue: config,
+      },
+      RouteModelBindingMiddleware,
+    ]
+
+    if (config.scope?.accessor) {
+      providers.push({
+        provide: SCOPE_ACCESSOR,
+        useClass: config.scope.accessor,
+      })
+    }
+
+    const exports: any[] = [
+      RouteModelBindingMiddleware,
+      ROUTE_MODEL_BINDING_CONFIG,
+    ]
+
+    if (config.scope?.accessor) {
+      exports.push(SCOPE_ACCESSOR)
+    }
+
     return {
       module: RouteModelBindingModule,
-      providers: [
-        {
-          provide: ROUTE_MODEL_BINDING_CONFIG,
-          useValue: config,
-        },
-        RouteModelBindingMiddleware,
-      ],
-      exports: [RouteModelBindingMiddleware, ROUTE_MODEL_BINDING_CONFIG],
+      providers,
+      exports,
     }
   }
 }
