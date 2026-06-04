@@ -85,9 +85,7 @@ describe("createContextSlot", () => {
 
     describe("Given no active context", () => {
       it("should throw ContextSlotNoContextError", () => {
-        expect(() => slot.set(fakeProfile())).toThrow(
-          ContextSlotNoContextError,
-        )
+        expect(() => slot.set(fakeProfile())).toThrow(ContextSlotNoContextError)
       })
     })
   })
