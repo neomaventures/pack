@@ -15,8 +15,8 @@ import { getPrincipal } from "../principal/principal.slot"
  * if there is an authenticated principal.
  *
  * It is recommended to use this in conjunction with the {@link BearerAuthenticationMiddleware}
- * and {@link CookieAuthenticationMiddleware} which set req.principal when there is an
- * authenticated session.
+ * and {@link CookieAuthenticationMiddleware} which populate the principal context slot
+ * when there is an authenticated session.
  *
  * @example API usage (returns 401 JSON)
  * ```typescript
@@ -44,16 +44,15 @@ export class Authenticated implements CanActivate {
   public constructor(@Optional() private readonly redirectUrl?: string) {}
 
   /**
-   * If req.principal is truthy will return true so that request handling can be
-   * passed onto the relevant [Controller](https://docs.nestjs.com/controllers)
-   * method, otherwise throws an UnauthorizedException.
+   * Returns `true` if a principal exists in the request context, allowing
+   * request handling to proceed. Throws if no principal is found.
    *
-   * @param { ExecutionContext } context - Context providing access to the underlying request.
+   * Reads from the ALS-backed principal slot via `getPrincipal()`.
    *
-   * @returns { true } - If req.principal is set.
+   * @returns `true` if a principal is present.
    *
-   * @throws { UnauthorizedException } - If req.principal is not set.
-   * @throws { UnauthorizedRedirectException } - If req.principal is not set and a redirect URL was provided.
+   * @throws {UnauthorizedException} If no principal is found.
+   * @throws {UnauthorizedRedirectException} If no principal is found and a redirect URL was provided.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Required by CanActivate interface
   public canActivate(_context: ExecutionContext): boolean {

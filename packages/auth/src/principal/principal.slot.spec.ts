@@ -66,5 +66,11 @@ describe("principal.slot", () => {
         expect(result).toBe(principal)
       })
     })
+
+    describe("Given no active CLS context", () => {
+      it("should throw", () => {
+        expect(() => setPrincipal(fakePrincipal())).toThrow()
+      })
+    })
   })
 })
