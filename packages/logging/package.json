@@ -1,6 +1,6 @@
 {
   "name": "@neomaventures/logging",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Great logging for NestJS — Pino-backed application + request-scoped loggers.",
   "author": "Daniel Bruce",
   "repository": {

@@ -1,6 +1,6 @@
 {
   "name": "@neomaventures/request-context",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Per-request context (AsyncLocalStorage) for NestJS — read the current request anywhere, no request scope.",
   "author": "Daniel Bruce",
   "repository": {
