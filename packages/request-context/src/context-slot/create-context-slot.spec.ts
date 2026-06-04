@@ -84,17 +84,17 @@ describe("createContextSlot", () => {
     })
 
     describe("Given no active context", () => {
-      it("should throw ContextSlotNoContextError", () => {
-        expect(() => slot.set(fakeProfile())).toThrow(ContextSlotNoContextError)
-      })
+      it("should throw ContextSlotNoContextError with the original error as cause", () => {
+        let caught: unknown
 
-      it("should preserve the original error as cause", () => {
         try {
           slot.set(fakeProfile())
         } catch (err) {
-          expect(err).toBeInstanceOf(ContextSlotNoContextError)
-          expect((err as ContextSlotNoContextError).cause).toBeDefined()
+          caught = err
         }
+
+        expect(caught).toBeInstanceOf(ContextSlotNoContextError)
+        expect((caught as ContextSlotNoContextError).cause).toBeDefined()
       })
     })
   })
