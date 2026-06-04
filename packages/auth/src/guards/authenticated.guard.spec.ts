@@ -42,7 +42,7 @@ describe("Authenticated", () => {
         ctx = executionContext(request, express.response())
       })
 
-      describe(`When it is called with a request with no current Account`, () => {
+      describe(`When it is called with a request with no current principal`, () => {
         it("Then it should throw an UnauthorizedException.", () => {
           cls.run(() => {
             expect(() =>
@@ -79,6 +79,7 @@ describe("Authenticated", () => {
       }).compile()
 
       cls = module.get(ClsService)
+      // TODO : Can we decorate a class or function and grab the Authenticated instance from it to avoid this new?
       guard = new Authenticated(redirectUrl)
     })
 
@@ -90,7 +91,7 @@ describe("Authenticated", () => {
         ctx = executionContext(request, express.response())
       })
 
-      describe(`When it is called with a request with no current Account`, () => {
+      describe(`When it is called with a request with no current principal`, () => {
         it("Then it should throw an UnauthorizedRedirectException.", () => {
           cls.run(() => {
             expect(() =>

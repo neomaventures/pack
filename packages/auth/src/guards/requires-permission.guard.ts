@@ -39,6 +39,7 @@ export class RequiresPermissionGuard implements CanActivate {
    * @throws {PermissionDeniedException} If permission check fails
    */
   public canActivate(context: ExecutionContext): boolean {
+    // TODO : Should we be leaning more on constructor injection?
     const principal = getPrincipal()
 
     // Check authentication first

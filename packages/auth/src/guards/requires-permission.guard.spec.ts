@@ -66,6 +66,7 @@ describe("RequiresPermissionGuard", () => {
     request = express.request()
   })
 
+  // TODO : I'm wondering if this should be hoisted into a fixture in this package?
   const createPrincipal = (permissions: string[] = []): Authenticatable => ({
     id: faker.string.uuid(),
     email: faker.internet.email(),

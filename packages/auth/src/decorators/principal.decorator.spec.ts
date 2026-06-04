@@ -54,7 +54,7 @@ describe("PrincipalDecorator", () => {
     cls = module.get(ClsService)
   })
 
-  describe("Given a CLS context with a principal set", () => {
+  describe("Given a principal has been stored in the CLS context", () => {
     it("should return the principal", () => {
       const principal = {
         id: faker.string.uuid(),
@@ -71,7 +71,7 @@ describe("PrincipalDecorator", () => {
     })
   })
 
-  describe("Given a CLS context with no principal set", () => {
+  describe("Given a principal hasn't been stored in the CLS context", () => {
     it("should return undefined", () => {
       cls.run(() => {
         expect(factory(null, {} as unknown as ExecutionContext)).toBeUndefined()
