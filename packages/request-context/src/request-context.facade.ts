@@ -1,22 +1,25 @@
 import { type Request } from "express"
-import { ClsServiceManager } from "nestjs-cls"
+
+import { createContextSlot } from "./context-slot/create-context-slot"
 
 /**
- * The ALS key under which the live request is stored. File-private — the only
- * paths in and out are {@link setRequest} (writer, called by the boundary
- * middleware) and {@link getRequest} (reader, the public API). Colon-namespaced
- * (no `.`) so nestjs-cls treats it as a flat key, not a path.
+ * Internal slot for the live HTTP request. The `param`, `token`, and `provider`
+ * forms are intentionally not exported -- the request is stored for deep reads
+ * via {@link getRequest}, not for DI injection (use `@Req()` at the controller
+ * boundary instead).
  */
-const REQUEST_KEY = "@neomaventures/request-context:request"
+const requestSlot = createContextSlot<Request>(
+  "@neomaventures/request-context:request",
+)
 
 /**
  * Read the HTTP request currently being handled, from anywhere below the
- * controller boundary — deep services, repositories, TypeORM listeners — with
+ * controller boundary -- deep services, repositories, TypeORM listeners -- with
  * no `@Req()`, no `Scope.REQUEST`, and no constructor injection of `REQUEST`.
  *
  * Resolves the request out of the per-request `AsyncLocalStorage` context
  * opened by `RequestContextModule`. Returns `undefined` when called outside any
- * request (e.g. at bootstrap, in a script, or in a background job) — it never
+ * request (e.g. at bootstrap, in a script, or in a background job) -- it never
  * throws.
  *
  * @returns The live request being handled, or `undefined` outside a request.
@@ -32,20 +35,17 @@ const REQUEST_KEY = "@neomaventures/request-context:request"
  * }
  * ```
  */
-export const getRequest = (): Request | undefined =>
-  ClsServiceManager.getClsService().get<Request | undefined>(REQUEST_KEY)
+export const getRequest: () => Request | undefined = requestSlot.get
 
 /**
- * Store the live request in the current ALS context. Internal — the boundary
+ * Store the live request in the current ALS context. Internal -- the boundary
  * middleware is the only caller, writing once per request inside its
  * `cls.run()`. Deliberately kept out of `index.ts` so consumers can't bypass
  * the boundary; if a non-HTTP entry point (e.g. a queue consumer) ever needs
- * to establish a context manually, promote it then — paired with a
+ * to establish a context manually, promote it then -- paired with a
  * `runWithRequest()` helper that bundles `cls.run()` + `setRequest()` so
  * callers can't get the order wrong.
  *
  * @param req The HTTP request to store for the lifetime of the current context.
  */
-export const setRequest = (req: Request): void => {
-  ClsServiceManager.getClsService().set(REQUEST_KEY, req)
-}
+export const setRequest: (req: Request) => void = requestSlot.set

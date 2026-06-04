@@ -51,6 +51,93 @@ called outside any request (at bootstrap, in a script, or in a background job).
 It never throws. Concurrent requests are fully isolated — each call site sees
 its own request.
 
+### Creating context slots
+
+Use `createContextSlot<T>(key)` to define a typed, per-request value that
+consumer packages can read via three forms: a plain accessor, a param
+decorator, and constructor injection.
+
+```typescript
+import { createContextSlot } from "@neomaventures/request-context"
+
+interface Principal {
+  id: string
+  email: string
+}
+
+const principalSlot = createContextSlot<Principal>("@neomaventures/auth:principal")
+
+// Plain accessor — works anywhere, no DI required
+export const getPrincipal = principalSlot.get
+
+// Writer — called by your middleware to store the value
+export const setPrincipal = principalSlot.set
+
+// Param decorator — use in controller method signatures
+export const Principal = principalSlot.param
+
+// Injection token — use with @Inject() in constructors
+export const CurrentPrincipal = principalSlot.token
+
+// Provider — register in your module's providers array
+export const principalProvider = principalSlot.provider
+```
+
+#### Plain accessor (`get` / `set`)
+
+The `get` accessor reads from `AsyncLocalStorage` via the static CLS handle.
+It works anywhere — services, repositories, TypeORM listeners, utility
+functions — with no DI wiring. Returns `undefined` outside a request context.
+
+```typescript
+import { getPrincipal } from "@neomaventures/auth"
+
+const principal = getPrincipal()
+const userId = principal?.id
+```
+
+The `set` writer is typically called once by the consumer package's middleware
+to store the value at the request boundary.
+
+#### Param decorator (`param`)
+
+Use in controller method parameters, just like `@Body()` or `@Param()`:
+
+```typescript
+@Get("profile")
+public getProfile(@Principal() principal: Principal): Principal {
+  return principal
+}
+```
+
+#### Constructor injection (`token` / `provider`)
+
+Register the provider in your module, then inject with `@Inject(token)`:
+
+```typescript
+// In your module
+@Module({
+  providers: [principalProvider],
+  exports: [CurrentPrincipal],
+})
+export class AuthModule {}
+
+// In any service
+@Injectable()
+export class BillingService {
+  public constructor(
+    @Inject(CurrentPrincipal) private readonly principal: Principal,
+  ) {}
+}
+```
+
+The injected value is a transparent proxy that resolves to the per-request
+stored object. Concurrent requests are fully isolated.
+
+> **Note:** The proxy delegates property access to the underlying object, so it
+> works for object types. For primitive values (string, number), use the plain
+> `get` accessor instead.
+
 ## License
 
 MIT
