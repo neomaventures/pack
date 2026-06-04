@@ -87,6 +87,15 @@ describe("createContextSlot", () => {
       it("should throw ContextSlotNoContextError", () => {
         expect(() => slot.set(fakeProfile())).toThrow(ContextSlotNoContextError)
       })
+
+      it("should preserve the original error as cause", () => {
+        try {
+          slot.set(fakeProfile())
+        } catch (err) {
+          expect(err).toBeInstanceOf(ContextSlotNoContextError)
+          expect((err as ContextSlotNoContextError).cause).toBeDefined()
+        }
+      })
     })
   })
 
