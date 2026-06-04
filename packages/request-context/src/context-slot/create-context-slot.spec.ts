@@ -94,7 +94,9 @@ describe("createContextSlot", () => {
         }
 
         expect(caught).toBeInstanceOf(ContextSlotNoContextError)
-        expect((caught as ContextSlotNoContextError).cause).toBeDefined()
+        expect((caught as ContextSlotNoContextError).cause).toBeInstanceOf(
+          Error,
+        )
       })
     })
   })
