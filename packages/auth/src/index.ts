@@ -18,6 +18,9 @@ export * from "./services/token.service"
 // DTO for request validation
 export * from "./dtos/email.dto"
 
+// Principal (context slot)
+export { getPrincipal, CurrentPrincipal } from "./principal/principal.slot"
+
 // Decorators used in consumer controllers
 export * from "./decorators/google-auth-result.decorator"
 export * from "./decorators/google-callback.decorator"

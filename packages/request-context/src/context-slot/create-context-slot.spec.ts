@@ -4,6 +4,7 @@ import { ClsService } from "nestjs-cls"
 
 import {
   ContextSlotMutationError,
+  NoContextError,
   ContextSlotPrimitiveError,
   type ContextSlot,
   RequestContextModule,
@@ -79,6 +80,21 @@ describe("createContextSlot", () => {
         })
 
         expect(result).toBe(profile)
+      })
+    })
+
+    describe("Given no active context", () => {
+      it("should throw NoContextError with the original error as cause", () => {
+        let caught: unknown
+
+        try {
+          slot.set(fakeProfile())
+        } catch (err) {
+          caught = err
+        }
+
+        expect(caught).toBeInstanceOf(NoContextError)
+        expect((caught as NoContextError).cause).toBeInstanceOf(Error)
       })
     })
   })

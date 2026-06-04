@@ -51,6 +51,7 @@
   },
   "peerDependencies": {
     "@neomaventures/logging": "*",
+    "@neomaventures/request-context": "*",
     "@nestjs/common": "11.x",
     "@nestjs/core": "11.x",
     "@nestjs/event-emitter": "3.x",
@@ -83,6 +84,7 @@
     "class-validator": "^0.14.1",
     "jest": "^30.3.0",
     "jest-extended": "^7.0.0",
+    "nestjs-cls": "6.2.0",
     "reflect-metadata": "^0.2.2",
     "sqlite3": "^5.1.7",
     "supertest": "^7.0.0",

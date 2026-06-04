@@ -1,15 +1,19 @@
 import { faker } from "@faker-js/faker"
-import { executionContext, express } from "@neomaventures/fixtures"
+import { RequestContextModule } from "@neomaventures/request-context"
+import { type ExecutionContext } from "@nestjs/common"
 import { ROUTE_ARGS_METADATA } from "@nestjs/common/constants"
-import { CustomParamFactory, ExecutionContext } from "@nestjs/common/interfaces"
+import { CustomParamFactory } from "@nestjs/common/interfaces"
+import { Test } from "@nestjs/testing"
+import { ClsService } from "nestjs-cls"
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
 
 import { Authenticatable } from "../interfaces/authenticatable.interface"
+import { setPrincipal } from "../principal/principal.slot"
 
 import { Principal } from "./principal.decorator"
 
 /**
- * Definition of a the object returned from Reflect.getMetadata
+ * Definition of the object returned from Reflect.getMetadata
  * when creating a CustomParameterDecorator, used for testing
  * ParameterDecorators.
  */
@@ -27,16 +31,11 @@ class User implements Authenticatable {
   public password!: string
 }
 
-const id = faker.string.uuid()
-const principal = {
-  id,
-  email: faker.internet.email(),
-  password: faker.internet.password(),
-}
-
 describe("PrincipalDecorator", () => {
-  let decorator: typeof Principal
-  beforeAll(() => {
+  let factory: CustomParamFactory
+  let cls: ClsService
+
+  beforeAll(async () => {
     class PrincipalDecoratorTest {
       // eslint-disable-next-line
       public test(@Principal() _value: User): void {}
@@ -46,26 +45,37 @@ describe("PrincipalDecorator", () => {
       Reflect.getMetadata(ROUTE_ARGS_METADATA, PrincipalDecoratorTest, "test")
     )
 
-    decorator = args[Object.keys(args)[0]].factory
+    factory = args[Object.keys(args)[0]].factory
+
+    const module = await Test.createTestingModule({
+      imports: [RequestContextModule.forRoot()],
+    }).compile()
+
+    cls = module.get(ClsService)
   })
 
-  describe("When it is called with a response that has an account object", () => {
-    it("It should return the account object.", () => {
-      const context = <ExecutionContext>(
-        executionContext(express.request({ principal }), express.response())
-      )
-      expect(decorator(null, context)).toEqual(principal)
+  describe("Given a principal has been stored in the CLS context", () => {
+    it("should return the principal", () => {
+      const principal = {
+        id: faker.string.uuid(),
+        email: faker.internet.email(),
+        password: faker.internet.password(),
+      }
+
+      cls.run(() => {
+        setPrincipal(principal)
+        expect(factory(null, {} as unknown as ExecutionContext)).toEqual(
+          principal,
+        )
+      })
     })
   })
 
-  describe("When it is called with a request that does not have an account object", () => {
-    it("Should throw an Error.", () => {
-      const context = <ExecutionContext>(
-        executionContext(express.request(), express.response())
-      )
-      expect(() => decorator(null, context)).toThrow(
-        "PrincipalDecorator called without a principal, have you installed the BearerAuthenticationMiddleware or CookieAuthenticationMiddleware?",
-      )
+  describe("Given a principal hasn't been stored in the CLS context", () => {
+    it("should return undefined", () => {
+      cls.run(() => {
+        expect(factory(null, {} as unknown as ExecutionContext)).toBeUndefined()
+      })
     })
   })
 })

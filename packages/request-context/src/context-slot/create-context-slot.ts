@@ -68,6 +68,23 @@ export class ContextSlotPrimitiveError extends Error {
 }
 
 /**
+ * Thrown when `set()` is called outside an active request context. This means
+ * `RequestContextModule.forRoot()` is either not imported or its middleware
+ * has not yet run for this request.
+ */
+export class NoContextError extends Error {
+  public constructor(key: string, cause?: unknown) {
+    super(
+      `Cannot set context-slot "${key}" — no active request context. ` +
+        `Ensure RequestContextModule.forRoot() is imported in your root module ` +
+        `and its middleware runs before the middleware that writes to this slot.`,
+      { cause },
+    )
+    this.name = "NoContextError"
+  }
+}
+
+/**
  * Create a typed context slot backed by a single namespaced key in the
  * per-request `AsyncLocalStorage` store. Returns all five forms a consumer
  * package needs to expose the value: a plain accessor (`get`/`set`), a
@@ -97,7 +114,11 @@ export function createContextSlot<T>(key: string): ContextSlot<T> {
     ClsServiceManager.getClsService().get(key) as T | undefined
 
   const set = (value: T): void => {
-    ClsServiceManager.getClsService().set(key, value)
+    try {
+      ClsServiceManager.getClsService().set(key, value)
+    } catch (cause) {
+      throw new NoContextError(key, cause)
+    }
   }
 
   const param = (): ParameterDecorator => createParamDecorator(() => get())()

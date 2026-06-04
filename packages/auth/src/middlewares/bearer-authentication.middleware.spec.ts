@@ -1,12 +1,15 @@
 import { faker } from "@faker-js/faker"
 import { MockLoggerService, express } from "@neomaventures/fixtures"
 import { ApplicationLoggerService } from "@neomaventures/logging"
+import { RequestContextModule } from "@neomaventures/request-context"
 import { type TestingModule, Test } from "@nestjs/testing"
 import { type Request, type Response } from "express"
 import * as jwt from "jsonwebtoken"
+import { ClsService } from "nestjs-cls"
 import { v4 } from "uuid"
 
 import { InvalidCredentialsException } from "../exceptions/invalid-credentials.exception"
+import { getPrincipal } from "../principal/principal.slot"
 import { AuthenticationService } from "../services/authentication.service"
 
 import { BearerAuthenticationMiddleware } from "./bearer-authentication.middleware"
@@ -40,11 +43,14 @@ describe("BearerAuthenticationMiddleware", () => {
   let service: any
   let middleware: BearerAuthenticationMiddleware
   let logger: MockLoggerService
+  let cls: ClsService
+
   beforeEach(async () => {
     service = { authenticate: jest.fn() }
     logger = new MockLoggerService()
 
     const module: TestingModule = await Test.createTestingModule({
+      imports: [RequestContextModule.forRoot()],
       providers: [
         BearerAuthenticationMiddleware,
         { provide: AuthenticationService, useValue: service },
@@ -53,6 +59,7 @@ describe("BearerAuthenticationMiddleware", () => {
     }).compile()
 
     middleware = module.get(BearerAuthenticationMiddleware)
+    cls = module.get(ClsService)
   })
 
   describe("When req.principal is already set", () => {
@@ -65,15 +72,17 @@ describe("BearerAuthenticationMiddleware", () => {
         principal: existingPrincipal,
       })
 
-      void middleware.use(
-        req as unknown as Request,
-        express.response() as unknown as Response,
-        () => {
-          expect(service.authenticate).not.toHaveBeenCalled()
-          expect(req.principal).toBe(existingPrincipal)
-          done()
-        },
-      )
+      cls.run(() => {
+        void middleware.use(
+          req as unknown as Request,
+          express.response() as unknown as Response,
+          () => {
+            expect(service.authenticate).not.toHaveBeenCalled()
+            expect(req.principal).toBe(existingPrincipal)
+            done()
+          },
+        )
+      })
     })
   })
 
@@ -92,15 +101,18 @@ describe("BearerAuthenticationMiddleware", () => {
           },
         })
 
-        void middleware.use(
-          req as unknown as Request,
-          express.response() as unknown as Response,
-          () => {
-            expect(service.authenticate).toHaveBeenCalledWith(token)
-            expect(req.principal).toBe(principal)
-            done()
-          },
-        )
+        cls.run(() => {
+          void middleware.use(
+            req as unknown as Request,
+            express.response() as unknown as Response,
+            () => {
+              expect(service.authenticate).toHaveBeenCalledWith(token)
+              expect(req.principal).toBe(principal)
+              expect(getPrincipal()).toBe(principal)
+              done()
+            },
+          )
+        })
       })
     })
   })
@@ -109,15 +121,18 @@ describe("BearerAuthenticationMiddleware", () => {
     it("should call next without calling service", (done) => {
       const req = express.request()
 
-      void middleware.use(
-        req as unknown as Request,
-        express.response() as unknown as Response,
-        () => {
-          expect(service.authenticate).not.toHaveBeenCalled()
-          expect(req.principal).toBeUndefined()
-          done()
-        },
-      )
+      cls.run(() => {
+        void middleware.use(
+          req as unknown as Request,
+          express.response() as unknown as Response,
+          () => {
+            expect(service.authenticate).not.toHaveBeenCalled()
+            expect(req.principal).toBeUndefined()
+            expect(getPrincipal()).toBeUndefined()
+            done()
+          },
+        )
+      })
     })
   })
 
@@ -137,14 +152,17 @@ describe("BearerAuthenticationMiddleware", () => {
         },
       })
 
-      void middleware.use(
-        req as unknown as Request,
-        express.response() as unknown as Response,
-        () => {
-          expect(req.principal).toBeUndefined()
-          done()
-        },
-      )
+      cls.run(() => {
+        void middleware.use(
+          req as unknown as Request,
+          express.response() as unknown as Response,
+          () => {
+            expect(req.principal).toBeUndefined()
+            expect(getPrincipal()).toBeUndefined()
+            done()
+          },
+        )
+      })
     })
 
     it("should log a warning via the injected ApplicationLoggerService", (done) => {
@@ -154,17 +172,19 @@ describe("BearerAuthenticationMiddleware", () => {
         },
       })
 
-      void middleware.use(
-        req as unknown as Request,
-        express.response() as unknown as Response,
-        () => {
-          expect(logger.warn).toHaveBeenCalledWith(
-            "Authentication via authorization header failed",
-            { err: error },
-          )
-          done()
-        },
-      )
+      cls.run(() => {
+        void middleware.use(
+          req as unknown as Request,
+          express.response() as unknown as Response,
+          () => {
+            expect(logger.warn).toHaveBeenCalledWith(
+              "Authentication via authorization header failed",
+              { err: error },
+            )
+            done()
+          },
+        )
+      })
     })
   })
 
@@ -178,10 +198,12 @@ describe("BearerAuthenticationMiddleware", () => {
         })
 
         await expect(
-          middleware.use(
-            req as unknown as Request,
-            express.response() as unknown as Response,
-            () => {},
+          cls.run(() =>
+            middleware.use(
+              req as unknown as Request,
+              express.response() as unknown as Response,
+              () => {},
+            ),
           ),
         ).rejects.toMatchError(InvalidCredentialsException, { message: err })
       })
@@ -198,10 +220,12 @@ describe("BearerAuthenticationMiddleware", () => {
         })
 
         await expect(
-          middleware.use(
-            req as unknown as Request,
-            express.response() as unknown as Response,
-            () => {},
+          cls.run(() =>
+            middleware.use(
+              req as unknown as Request,
+              express.response() as unknown as Response,
+              () => {},
+            ),
           ),
         ).rejects.toMatchError(InvalidCredentialsException, {
           message: `Invalid authentication scheme. Expected Bearer but got "${basic}"`,

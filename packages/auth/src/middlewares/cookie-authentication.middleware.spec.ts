@@ -1,12 +1,15 @@
 import { faker } from "@faker-js/faker"
 import { MockLoggerService, express } from "@neomaventures/fixtures"
 import { ApplicationLoggerService } from "@neomaventures/logging"
+import { RequestContextModule } from "@neomaventures/request-context"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { type Request, type Response } from "express"
 import * as jwt from "jsonwebtoken"
+import { ClsService } from "nestjs-cls"
 import { v4 } from "uuid"
 
 import { AUTH_OPTIONS } from "../auth.options"
+import { getPrincipal } from "../principal/principal.slot"
 import { AuthenticationService } from "../services/authentication.service"
 
 import { CookieAuthenticationMiddleware } from "./cookie-authentication.middleware"
@@ -15,6 +18,7 @@ describe("CookieAuthenticationMiddleware", () => {
   let service: any
   let middleware: CookieAuthenticationMiddleware
   let logger: MockLoggerService
+  let cls: ClsService
 
   const buildModule = async (cookieOptions?: {
     name?: string
@@ -23,6 +27,7 @@ describe("CookieAuthenticationMiddleware", () => {
     logger = new MockLoggerService()
 
     const module: TestingModule = await Test.createTestingModule({
+      imports: [RequestContextModule.forRoot()],
       providers: [
         CookieAuthenticationMiddleware,
         { provide: AuthenticationService, useValue: service },
@@ -35,6 +40,7 @@ describe("CookieAuthenticationMiddleware", () => {
     }).compile()
 
     middleware = module.get(CookieAuthenticationMiddleware)
+    cls = module.get(ClsService)
   }
 
   beforeEach(async () => {
@@ -52,15 +58,17 @@ describe("CookieAuthenticationMiddleware", () => {
         principal: existingPrincipal,
       })
 
-      void middleware.use(
-        req as unknown as Request,
-        express.response() as unknown as Response,
-        () => {
-          expect(service.authenticate).not.toHaveBeenCalled()
-          expect(req.principal).toBe(existingPrincipal)
-          done()
-        },
-      )
+      cls.run(() => {
+        void middleware.use(
+          req as unknown as Request,
+          express.response() as unknown as Response,
+          () => {
+            expect(service.authenticate).not.toHaveBeenCalled()
+            expect(req.principal).toBe(existingPrincipal)
+            done()
+          },
+        )
+      })
     })
   })
 
@@ -77,15 +85,18 @@ describe("CookieAuthenticationMiddleware", () => {
         },
       })
 
-      void middleware.use(
-        req as unknown as Request,
-        express.response() as unknown as Response,
-        () => {
-          expect(service.authenticate).toHaveBeenCalledWith(sid)
-          expect(req.principal).toBe(principal)
-          done()
-        },
-      )
+      cls.run(() => {
+        void middleware.use(
+          req as unknown as Request,
+          express.response() as unknown as Response,
+          () => {
+            expect(service.authenticate).toHaveBeenCalledWith(sid)
+            expect(req.principal).toBe(principal)
+            expect(getPrincipal()).toBe(principal)
+            done()
+          },
+        )
+      })
     })
   })
 
@@ -93,15 +104,18 @@ describe("CookieAuthenticationMiddleware", () => {
     it("should call next without calling service", (done) => {
       const req = express.request()
 
-      void middleware.use(
-        req as unknown as Request,
-        express.response() as unknown as Response,
-        () => {
-          expect(service.authenticate).not.toHaveBeenCalled()
-          expect(req.principal).toBeUndefined()
-          done()
-        },
-      )
+      cls.run(() => {
+        void middleware.use(
+          req as unknown as Request,
+          express.response() as unknown as Response,
+          () => {
+            expect(service.authenticate).not.toHaveBeenCalled()
+            expect(req.principal).toBeUndefined()
+            expect(getPrincipal()).toBeUndefined()
+            done()
+          },
+        )
+      })
     })
   })
 
@@ -113,15 +127,18 @@ describe("CookieAuthenticationMiddleware", () => {
         },
       })
 
-      void middleware.use(
-        req as unknown as Request,
-        express.response() as unknown as Response,
-        () => {
-          expect(service.authenticate).not.toHaveBeenCalled()
-          expect(req.principal).toBeUndefined()
-          done()
-        },
-      )
+      cls.run(() => {
+        void middleware.use(
+          req as unknown as Request,
+          express.response() as unknown as Response,
+          () => {
+            expect(service.authenticate).not.toHaveBeenCalled()
+            expect(req.principal).toBeUndefined()
+            expect(getPrincipal()).toBeUndefined()
+            done()
+          },
+        )
+      })
     })
   })
 
@@ -140,14 +157,17 @@ describe("CookieAuthenticationMiddleware", () => {
         },
       })
 
-      void middleware.use(
-        req as unknown as Request,
-        express.response() as unknown as Response,
-        () => {
-          expect(req.principal).toBeUndefined()
-          done()
-        },
-      )
+      cls.run(() => {
+        void middleware.use(
+          req as unknown as Request,
+          express.response() as unknown as Response,
+          () => {
+            expect(req.principal).toBeUndefined()
+            expect(getPrincipal()).toBeUndefined()
+            done()
+          },
+        )
+      })
     })
 
     it("should log a warning via the injected ApplicationLoggerService", (done) => {
@@ -157,17 +177,19 @@ describe("CookieAuthenticationMiddleware", () => {
         },
       })
 
-      void middleware.use(
-        req as unknown as Request,
-        express.response() as unknown as Response,
-        () => {
-          expect(logger.warn).toHaveBeenCalledWith(
-            "Authentication via cookie failed",
-            { err: error },
-          )
-          done()
-        },
-      )
+      cls.run(() => {
+        void middleware.use(
+          req as unknown as Request,
+          express.response() as unknown as Response,
+          () => {
+            expect(logger.warn).toHaveBeenCalledWith(
+              "Authentication via cookie failed",
+              { err: error },
+            )
+            done()
+          },
+        )
+      })
     })
   })
 
@@ -188,15 +210,18 @@ describe("CookieAuthenticationMiddleware", () => {
         },
       })
 
-      void middleware.use(
-        req as unknown as Request,
-        express.response() as unknown as Response,
-        () => {
-          expect(service.authenticate).toHaveBeenCalledWith(sid)
-          expect(req.principal).toBe(principal)
-          done()
-        },
-      )
+      cls.run(() => {
+        void middleware.use(
+          req as unknown as Request,
+          express.response() as unknown as Response,
+          () => {
+            expect(service.authenticate).toHaveBeenCalledWith(sid)
+            expect(req.principal).toBe(principal)
+            expect(getPrincipal()).toBe(principal)
+            done()
+          },
+        )
+      })
     })
 
     it("should not match the default auth.sid cookie", (done) => {
@@ -208,15 +233,18 @@ describe("CookieAuthenticationMiddleware", () => {
         },
       })
 
-      void middleware.use(
-        req as unknown as Request,
-        express.response() as unknown as Response,
-        () => {
-          expect(service.authenticate).not.toHaveBeenCalled()
-          expect(req.principal).toBeUndefined()
-          done()
-        },
-      )
+      cls.run(() => {
+        void middleware.use(
+          req as unknown as Request,
+          express.response() as unknown as Response,
+          () => {
+            expect(service.authenticate).not.toHaveBeenCalled()
+            expect(req.principal).toBeUndefined()
+            expect(getPrincipal()).toBeUndefined()
+            done()
+          },
+        )
+      })
     })
   })
 })

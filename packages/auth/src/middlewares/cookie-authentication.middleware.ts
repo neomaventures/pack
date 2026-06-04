@@ -4,6 +4,7 @@ import * as cookie from "cookie"
 import { Request, NextFunction } from "express"
 
 import { AuthOptions, AUTH_OPTIONS } from "../auth.options"
+import { setPrincipal } from "../principal/principal.slot"
 import { AuthenticationService } from "../services/authentication.service"
 
 /**
@@ -57,6 +58,11 @@ export class CookieAuthenticationMiddleware implements NestMiddleware {
     } catch (err) {
       this.logger.warn("Authentication via cookie failed", { err })
     }
+
+    if (req.principal) {
+      setPrincipal(req.principal)
+    }
+
     next()
   }
 }

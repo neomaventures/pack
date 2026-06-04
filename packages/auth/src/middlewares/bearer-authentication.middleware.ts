@@ -3,6 +3,7 @@ import { Injectable, NestMiddleware } from "@nestjs/common"
 import { Request, NextFunction } from "express"
 
 import { InvalidCredentialsException } from "../exceptions/invalid-credentials.exception"
+import { setPrincipal } from "../principal/principal.slot"
 import { AuthenticationService } from "../services/authentication.service"
 
 /**
@@ -65,6 +66,11 @@ export class BearerAuthenticationMiddleware implements NestMiddleware {
         err,
       })
     }
+
+    if (req.principal) {
+      setPrincipal(req.principal)
+    }
+
     next()
   }
 }

@@ -1,33 +1,20 @@
-import { createParamDecorator, type ExecutionContext } from "@nestjs/common"
-
-import { type Authenticatable } from "../interfaces/authenticatable.interface"
-
 /**
- * Parameter Decorator that extracts the current principal from the Request Object.
+ * Parameter decorator that extracts the authenticated principal from the
+ * request context. Backed by `AsyncLocalStorage` via the principal context
+ * slot — reads the same value as `getPrincipal()`.
+ *
+ * Returns `undefined` when no principal exists (e.g. unauthenticated request).
+ * Use behind `@UseGuards(Authenticated)` to guarantee a principal is present.
+ *
+ * Must be called with parentheses: `@Principal()`.
+ *
+ * @example
+ * ```typescript
+ * @UseGuards(Authenticated)
+ * @Get("me")
+ * public me(@Principal() user: User): User {
+ *   return user
+ * }
+ * ```
  */
-export const Principal = createParamDecorator(
-  /**
-   * Returns the principal object at req.principal.
-   *
-   * @param _data - ignored.
-   * @param context - Context that provides access to the underlying
-   * Request to allow access to req.principal.
-   *
-   * @throws Error if req.principal does not exist. This is likely a programmer error
-   * as the middleware should have been installed to provide the principal object and
-   * an {@link Authenticated} guard should have been used to protect against
-   * this scenario.
-   *
-   * @returns The principal from req.principal if it exists.
-   *
-   */
-  (_data: any, context: ExecutionContext): Authenticatable => {
-    const req = context.switchToHttp().getRequest()
-    if (!req.principal) {
-      throw new Error(
-        "PrincipalDecorator called without a principal, have you installed the BearerAuthenticationMiddleware or CookieAuthenticationMiddleware?",
-      )
-    }
-    return req.principal
-  },
-)
+export { Principal } from "../principal/principal.slot"
