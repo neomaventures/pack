@@ -65,7 +65,6 @@ describe("RequiresPermissionGuard", () => {
     request = express.request()
   })
 
-
   describe("When the request has no authenticated principal", () => {
     it("should throw UnauthorizedException", () => {
       const ctx = executionContext(request, express.response(), {
@@ -109,7 +108,9 @@ describe("RequiresPermissionGuard", () => {
 
         cls.run(() => {
           setPrincipal(
-            fakes.principal({ permissions: ["read:users", "write:users", "delete:users"] }),
+            fakes.principal({
+              permissions: ["read:users", "write:users", "delete:users"],
+            }),
           )
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
@@ -182,7 +183,9 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(fakes.principal({ permissions: ["read:users", "write:users"] }))
+          setPrincipal(
+            fakes.principal({ permissions: ["read:users", "write:users"] }),
+          )
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })
@@ -228,7 +231,9 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(fakes.principal({ permissions: ["read:admin", "write:admin"] }))
+          setPrincipal(
+            fakes.principal({ permissions: ["read:admin", "write:admin"] }),
+          )
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })
