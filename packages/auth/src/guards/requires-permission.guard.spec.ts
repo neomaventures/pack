@@ -1,4 +1,3 @@
-import { faker } from "@faker-js/faker"
 import {
   executionContext,
   express,
@@ -10,10 +9,10 @@ import { Reflector } from "@nestjs/core"
 import { Test, TestingModule } from "@nestjs/testing"
 import { ClsService } from "nestjs-cls"
 
+import * as fakes from "../../fixtures/fakes/principal"
 import { RequiresAnyPermission } from "../decorators/requires-any-permission.decorator"
 import { RequiresPermission } from "../decorators/requires-permission.decorator"
 import { PermissionDeniedException } from "../exceptions/permission-denied.exception"
-import { Authenticatable } from "../interfaces/authenticatable.interface"
 import { setPrincipal } from "../principal/principal.slot"
 import { PermissionService } from "../services/permission.service"
 
@@ -66,12 +65,6 @@ describe("RequiresPermissionGuard", () => {
     request = express.request()
   })
 
-  // TODO : I'm wondering if this should be hoisted into a fixture in this package?
-  const createPrincipal = (permissions: string[] = []): Authenticatable => ({
-    id: faker.string.uuid(),
-    email: faker.internet.email(),
-    permissions,
-  })
 
   describe("When the request has no authenticated principal", () => {
     it("should throw UnauthorizedException", () => {
@@ -101,7 +94,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(createPrincipal([]))
+          setPrincipal(fakes.principal({ permissions: [] }))
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })
@@ -116,7 +109,7 @@ describe("RequiresPermissionGuard", () => {
 
         cls.run(() => {
           setPrincipal(
-            createPrincipal(["read:users", "write:users", "delete:users"]),
+            fakes.principal({ permissions: ["read:users", "write:users", "delete:users"] }),
           )
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
@@ -129,7 +122,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(createPrincipal(["read:users"]))
+          setPrincipal(fakes.principal({ permissions: ["read:users"] }))
           expect(() =>
             guard.canActivate(<ExecutionContext>ctx),
           ).toThrowMatching(PermissionDeniedException, {
@@ -145,7 +138,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(createPrincipal(["*"]))
+          setPrincipal(fakes.principal({ permissions: ["*"] }))
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })
@@ -159,7 +152,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(createPrincipal(["delete:users"]))
+          setPrincipal(fakes.principal({ permissions: ["delete:users"] }))
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })
@@ -171,7 +164,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(createPrincipal(["read:users"]))
+          setPrincipal(fakes.principal({ permissions: ["read:users"] }))
           expect(() =>
             guard.canActivate(<ExecutionContext>ctx),
           ).toThrowMatching(PermissionDeniedException, {
@@ -189,7 +182,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(createPrincipal(["read:users", "write:users"]))
+          setPrincipal(fakes.principal({ permissions: ["read:users", "write:users"] }))
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })
@@ -201,7 +194,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(createPrincipal(["read:users"]))
+          setPrincipal(fakes.principal({ permissions: ["read:users"] }))
           expect(() =>
             guard.canActivate(<ExecutionContext>ctx),
           ).toThrowMatching(PermissionDeniedException, {
@@ -217,7 +210,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(createPrincipal(["admin"]))
+          setPrincipal(fakes.principal({ permissions: ["admin"] }))
           expect(() =>
             guard.canActivate(<ExecutionContext>ctx),
           ).toThrowMatching(PermissionDeniedException, {
@@ -235,7 +228,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(createPrincipal(["read:admin", "write:admin"]))
+          setPrincipal(fakes.principal({ permissions: ["read:admin", "write:admin"] }))
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })
@@ -247,7 +240,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(createPrincipal(["read:admin"]))
+          setPrincipal(fakes.principal({ permissions: ["read:admin"] }))
           expect(() =>
             guard.canActivate(<ExecutionContext>ctx),
           ).toThrowMatching(PermissionDeniedException, {
@@ -263,7 +256,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(createPrincipal(["write:admin"]))
+          setPrincipal(fakes.principal({ permissions: ["write:admin"] }))
           expect(() =>
             guard.canActivate(<ExecutionContext>ctx),
           ).toThrowMatching(PermissionDeniedException, {
@@ -281,7 +274,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(createPrincipal(["read:admin"]))
+          setPrincipal(fakes.principal({ permissions: ["read:admin"] }))
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })
@@ -295,7 +288,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(createPrincipal(["read:admin"]))
+          setPrincipal(fakes.principal({ permissions: ["read:admin"] }))
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })

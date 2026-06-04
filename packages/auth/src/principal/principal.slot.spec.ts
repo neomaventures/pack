@@ -1,9 +1,9 @@
-import { faker } from "@faker-js/faker"
 import { Inject, Injectable } from "@nestjs/common"
 import { RequestContextModule } from "@neomaventures/request-context"
 import { Test } from "@nestjs/testing"
 import { ClsService } from "nestjs-cls"
 
+import * as fakes from "../../fixtures/fakes/principal"
 import { type Authenticatable } from "../interfaces/authenticatable.interface"
 
 import {
@@ -12,13 +12,6 @@ import {
   principalProvider,
   setPrincipal,
 } from "./principal.slot"
-
-function fakePrincipal(): Authenticatable {
-  return {
-    id: faker.string.uuid(),
-    email: faker.internet.email(),
-  }
-}
 
 describe("principal.slot", () => {
   let cls: ClsService
@@ -34,7 +27,7 @@ describe("principal.slot", () => {
   describe("getPrincipal()", () => {
     describe("Given a CLS context with a principal set via setPrincipal()", () => {
       it("should return the principal", () => {
-        const principal = fakePrincipal()
+        const principal = fakes.principal()
 
         const result = cls.run(() => {
           setPrincipal(principal)
@@ -62,7 +55,7 @@ describe("principal.slot", () => {
   describe("setPrincipal()", () => {
     describe("Given an active CLS context", () => {
       it("should store the principal so getPrincipal() can retrieve it", () => {
-        const principal = fakePrincipal()
+        const principal = fakes.principal()
 
         const result = cls.run(() => {
           setPrincipal(principal)
@@ -75,7 +68,7 @@ describe("principal.slot", () => {
 
     describe("Given no active CLS context", () => {
       it("should throw", () => {
-        expect(() => setPrincipal(fakePrincipal())).toThrow()
+        expect(() => setPrincipal(fakes.principal())).toThrow()
       })
     })
   })
@@ -111,7 +104,7 @@ describe("principal.slot", () => {
 
     describe("Given a principal has been stored in the CLS context", () => {
       it("should resolve the principal's properties via the proxy", () => {
-        const principal = fakePrincipal()
+        const principal = fakes.principal()
 
         cls.run(() => {
           setPrincipal(principal)
