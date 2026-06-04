@@ -4,27 +4,34 @@ import {
   express,
   type MockRequest,
 } from "@neomaventures/fixtures"
+import { RequestContextModule } from "@neomaventures/request-context"
 import {
   type ExecutionContext,
   HttpStatus,
   UnauthorizedException,
 } from "@nestjs/common"
 import { Test, type TestingModule } from "@nestjs/testing"
+import { ClsService } from "nestjs-cls"
 
 import { UnauthorizedRedirectException } from "../exceptions/unauthorized-redirect.exception"
+import { setPrincipal } from "../principal/principal.slot"
 
 import { Authenticated } from "./authenticated.guard"
 
 describe("Authenticated", () => {
+  let cls: ClsService
+
   describe("Without a redirect URL", () => {
     let guard: Authenticated
 
     beforeAll(async () => {
       const module: TestingModule = await Test.createTestingModule({
+        imports: [RequestContextModule.forRoot()],
         providers: [Authenticated],
       }).compile()
 
       guard = module.get(Authenticated)
+      cls = module.get(ClsService)
     })
 
     describe("canActivate", () => {
@@ -37,25 +44,26 @@ describe("Authenticated", () => {
 
       describe(`When it is called with a request with no current Account`, () => {
         it("Then it should throw an UnauthorizedException.", () => {
-          expect(() =>
-            guard.canActivate(<ExecutionContext>ctx),
-          ).toThrowMatching(UnauthorizedException, {
-            message:
-              "Unable to authenticate a principal. Please check the documentation for accepted authentication methods",
+          cls.run(() => {
+            expect(() =>
+              guard.canActivate(<ExecutionContext>ctx),
+            ).toThrowMatching(UnauthorizedException, {
+              message:
+                "Unable to authenticate a principal. Please check the documentation for accepted authentication methods",
+            })
           })
         })
       })
 
       describe(`When it is called with a request with an attached principal`, () => {
-        beforeEach(() => {
-          request.principal = {
-            id: faker.string.uuid(),
-            email: faker.internet.email(),
-          }
-        })
-
         it("Then it should return true.", () => {
-          expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
+          cls.run(() => {
+            setPrincipal({
+              id: faker.string.uuid(),
+              email: faker.internet.email(),
+            })
+            expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
+          })
         })
       })
     })
@@ -65,7 +73,12 @@ describe("Authenticated", () => {
     const redirectUrl = "/auth/magic-link"
     let guard: Authenticated
 
-    beforeAll(() => {
+    beforeAll(async () => {
+      const module: TestingModule = await Test.createTestingModule({
+        imports: [RequestContextModule.forRoot()],
+      }).compile()
+
+      cls = module.get(ClsService)
       guard = new Authenticated(redirectUrl)
     })
 
@@ -79,33 +92,36 @@ describe("Authenticated", () => {
 
       describe(`When it is called with a request with no current Account`, () => {
         it("Then it should throw an UnauthorizedRedirectException.", () => {
-          expect(() =>
-            guard.canActivate(<ExecutionContext>ctx),
-          ).toThrowMatching(UnauthorizedRedirectException, {
-            message: "Unauthorized. Redirecting to login.",
+          cls.run(() => {
+            expect(() =>
+              guard.canActivate(<ExecutionContext>ctx),
+            ).toThrowMatching(UnauthorizedRedirectException, {
+              message: "Unauthorized. Redirecting to login.",
+            })
           })
         })
 
         it("Then the exception should have a redirect with the URL and 303 status.", () => {
-          expect(() =>
-            guard.canActivate(<ExecutionContext>ctx),
-          ).toThrowMatching(UnauthorizedRedirectException, {
-            url: redirectUrl,
-            redirectStatus: HttpStatus.SEE_OTHER,
+          cls.run(() => {
+            expect(() =>
+              guard.canActivate(<ExecutionContext>ctx),
+            ).toThrowMatching(UnauthorizedRedirectException, {
+              url: redirectUrl,
+              redirectStatus: HttpStatus.SEE_OTHER,
+            })
           })
         })
       })
 
       describe(`When it is called with a request with an attached principal`, () => {
-        beforeEach(() => {
-          request.principal = {
-            id: faker.string.uuid(),
-            email: faker.internet.email(),
-          }
-        })
-
         it("Then it should return true.", () => {
-          expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
+          cls.run(() => {
+            setPrincipal({
+              id: faker.string.uuid(),
+              email: faker.internet.email(),
+            })
+            expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
+          })
         })
       })
     })

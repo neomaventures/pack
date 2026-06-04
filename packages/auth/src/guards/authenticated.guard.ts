@@ -8,6 +8,7 @@ import {
 } from "@nestjs/common"
 
 import { UnauthorizedRedirectException } from "../exceptions/unauthorized-redirect.exception"
+import { getPrincipal } from "../principal/principal.slot"
 
 /**
  * Guard that only allows access to a [Controller](https://docs.nestjs.com/controllers)
@@ -54,10 +55,9 @@ export class Authenticated implements CanActivate {
    * @throws { UnauthorizedException } - If req.principal is not set.
    * @throws { UnauthorizedRedirectException } - If req.principal is not set and a redirect URL was provided.
    */
-  public canActivate(context: ExecutionContext): boolean {
-    const req = context.switchToHttp().getRequest()
-
-    if (!req.principal) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Required by CanActivate interface
+  public canActivate(_context: ExecutionContext): boolean {
+    if (!getPrincipal()) {
       if (this.redirectUrl) {
         throw new UnauthorizedRedirectException(
           this.redirectUrl,

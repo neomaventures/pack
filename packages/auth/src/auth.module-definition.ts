@@ -3,6 +3,7 @@ import { EventEmitterModule } from "@nestjs/event-emitter"
 
 import { type AuthOptions, AUTH_OPTIONS } from "./auth.options"
 import { GoogleCallbackInterceptor } from "./interceptors/google-callback.interceptor"
+import { CurrentPrincipal, principalProvider } from "./principal/principal.slot"
 import { AuthenticationService } from "./services/authentication.service"
 import { GoogleAuthService } from "./services/google-auth.service"
 import { MagicLinkService } from "./services/magic-link.service"
@@ -33,12 +34,23 @@ export const {
     ...definition,
     global: true,
     imports: [EventEmitterModule.forRoot(), ...(definition.imports ?? [])],
-    providers: [...(definition.providers ?? []), ...AUTH_PROVIDERS],
+    providers: [
+      ...(definition.providers ?? []),
+      ...AUTH_PROVIDERS,
+      principalProvider,
+    ],
     // Services are exported so consumers can inject them directly
     // (e.g. AuthenticationService, SessionService).
     // AUTH_OPTIONS is exported so that guards resolved on-demand
     // (e.g. WebhookSignatureGuard) can access the configuration
     // via @Inject(AUTH_OPTIONS).
-    exports: [...(definition.exports ?? []), ...AUTH_PROVIDERS, AUTH_OPTIONS],
+    // CurrentPrincipal is exported so consumers can inject the
+    // per-request principal via @Inject(CurrentPrincipal).
+    exports: [
+      ...(definition.exports ?? []),
+      ...AUTH_PROVIDERS,
+      AUTH_OPTIONS,
+      CurrentPrincipal,
+    ],
   }))
   .build()

@@ -3,6 +3,7 @@ import { Injectable, NestMiddleware } from "@nestjs/common"
 import { Request, NextFunction } from "express"
 
 import { InvalidCredentialsException } from "../exceptions/invalid-credentials.exception"
+import { setPrincipal } from "../principal/principal.slot"
 import { AuthenticationService } from "../services/authentication.service"
 
 /**
@@ -36,6 +37,7 @@ export class BearerAuthenticationMiddleware implements NestMiddleware {
     next: NextFunction,
   ): Promise<void> {
     if (req.principal) {
+      setPrincipal(req.principal)
       return next()
     }
 
@@ -60,6 +62,7 @@ export class BearerAuthenticationMiddleware implements NestMiddleware {
 
     try {
       req.principal = await this.service.authenticate(token)
+      setPrincipal(req.principal)
     } catch (err) {
       this.logger.warn("Authentication via authorization header failed", {
         err,

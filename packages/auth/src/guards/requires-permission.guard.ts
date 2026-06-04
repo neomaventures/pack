@@ -8,7 +8,7 @@ import { Reflector } from "@nestjs/core"
 
 import { REQUIRED_ANY_PERMISSIONS_KEY } from "../decorators/requires-any-permission.decorator"
 import { REQUIRED_PERMISSIONS_KEY } from "../decorators/requires-permission.decorator"
-import { Authenticatable } from "../interfaces/authenticatable.interface"
+import { getPrincipal } from "../principal/principal.slot"
 import { PermissionService } from "../services/permission.service"
 
 /**
@@ -39,10 +39,10 @@ export class RequiresPermissionGuard implements CanActivate {
    * @throws {PermissionDeniedException} If permission check fails
    */
   public canActivate(context: ExecutionContext): boolean {
-    const req = context.switchToHttp().getRequest()
+    const principal = getPrincipal()
 
     // Check authentication first
-    if (!req.principal) {
+    if (!principal) {
       throw new UnauthorizedException(
         "Unable to authenticate a principal. Please check the documentation for accepted authentication methods",
       )
@@ -67,8 +67,6 @@ export class RequiresPermissionGuard implements CanActivate {
         ]) ?? [],
       ),
     ]
-
-    const principal = req.principal as Authenticatable
 
     // Check AND permissions
     if (requiredAll?.length) {
