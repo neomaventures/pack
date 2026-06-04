@@ -65,7 +65,7 @@ interface Principal {
   email: string
 }
 
-const principalSlot = createContextSlot<Principal>("@neoma/auth:principal")
+const principalSlot = createContextSlot<Principal>("@neomaventures/auth:principal")
 
 // Plain accessor — works anywhere, no DI required
 export const getPrincipal = principalSlot.get

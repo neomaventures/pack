@@ -53,6 +53,21 @@ export class ContextSlotMutationError extends Error {
 }
 
 /**
+ * Thrown when the proxy encounters a non-object value in the slot. The proxy
+ * can only delegate property access to objects — primitive values (string,
+ * number, boolean) should be read via the slot's `get()` accessor instead.
+ */
+export class ContextSlotPrimitiveError extends Error {
+  public constructor(key: string, value: unknown) {
+    super(
+      `Context-slot proxy "${key}" received a primitive value (${typeof value}). ` +
+        `The proxy provider only works with object types. Use the slot's get() accessor instead.`,
+    )
+    this.name = "ContextSlotPrimitiveError"
+  }
+}
+
+/**
  * Create a typed context slot backed by a single namespaced key in the
  * per-request `AsyncLocalStorage` store. Returns all five forms a consumer
  * package needs to expose the value: a plain accessor (`get`/`set`), a
@@ -69,7 +84,7 @@ export class ContextSlotMutationError extends Error {
  *
  * @example Create a principal slot in an auth package
  * ```typescript
- * const principalSlot = createContextSlot<Authenticatable>("@neoma/auth:principal")
+ * const principalSlot = createContextSlot<Authenticatable>("@neomaventures/auth:principal")
  * export const getPrincipal      = principalSlot.get
  * export const setPrincipal      = principalSlot.set
  * export const Principal         = principalSlot.param
@@ -91,10 +106,17 @@ export function createContextSlot<T>(key: string): ContextSlot<T> {
 
   const target = {} as Record<string | symbol, unknown>
 
+  const assertObject = (value: T): void => {
+    if (typeof value !== "object" && typeof value !== "function") {
+      throw new ContextSlotPrimitiveError(key, value)
+    }
+  }
+
   const proxy = new Proxy(target, {
     get(_target, prop): unknown {
       const value = get()
       if (value == null) return undefined
+      assertObject(value)
       const result = (value as Record<string | symbol, unknown>)[prop]
       return typeof result === "function"
         ? (result as (...args: unknown[]) => unknown).bind(value)
@@ -106,11 +128,13 @@ export function createContextSlot<T>(key: string): ContextSlot<T> {
     has(_target, prop): boolean {
       const value = get()
       if (value == null) return false
+      assertObject(value)
       return prop in (value as object)
     },
     ownKeys(): Array<string | symbol> {
       const value = get()
       if (value == null) return []
+      assertObject(value)
       const keys = Reflect.ownKeys(value as object)
       for (const k of keys) {
         if (!Object.getOwnPropertyDescriptor(target, k)) {
@@ -126,11 +150,13 @@ export function createContextSlot<T>(key: string): ContextSlot<T> {
     getPrototypeOf(): object | null {
       const value = get()
       if (value == null) return null
+      assertObject(value)
       return Object.getPrototypeOf(value as object) as object | null
     },
     getOwnPropertyDescriptor(_target, prop): PropertyDescriptor | undefined {
       const value = get()
       if (value == null) return undefined
+      assertObject(value)
       const desc = Object.getOwnPropertyDescriptor(value as object, prop)
       if (desc) {
         Object.defineProperty(target, prop, {

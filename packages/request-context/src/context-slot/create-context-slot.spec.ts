@@ -2,13 +2,13 @@ import { faker } from "@faker-js/faker"
 import { Test } from "@nestjs/testing"
 import { ClsService } from "nestjs-cls"
 
-import { RequestContextModule } from "@neomaventures/request-context"
-
 import {
   ContextSlotMutationError,
+  ContextSlotPrimitiveError,
   type ContextSlot,
+  RequestContextModule,
   createContextSlot,
-} from "./create-context-slot"
+} from "@neomaventures/request-context"
 
 interface TestProfile {
   name: string
@@ -199,6 +199,20 @@ describe("createContextSlot", () => {
       it("should return undefined for property access", () => {
         const proxy = slot.provider.useValue as TestProfile
         expect(proxy.name).toBeUndefined()
+      })
+    })
+
+    describe("Given a primitive value is stored in the slot", () => {
+      it("should throw ContextSlotPrimitiveError on property access", () => {
+        const primitiveSlot = createContextSlot<string>("@test:primitive")
+
+        cls.run(() => {
+          primitiveSlot.set("hello")
+          const proxy = primitiveSlot.provider.useValue as unknown as string
+          expect(() => {
+            void (proxy as unknown as Record<string, unknown>).length
+          }).toThrow(ContextSlotPrimitiveError)
+        })
       })
     })
   })
