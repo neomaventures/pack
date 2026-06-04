@@ -39,17 +39,6 @@ export class DenyAllAccessor implements ScopeAccessor {
 }
 
 /**
- * A scope accessor that always denies access asynchronously.
- */
-@Injectable()
-export class AsyncDenyAccessor implements ScopeAccessor {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public async canAccess(_context: ScopeContext): Promise<boolean> {
-    return false
-  }
-}
-
-/**
  * A scope accessor that records each call for inspection.
  */
 @Injectable()

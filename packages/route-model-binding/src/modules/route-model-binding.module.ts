@@ -55,10 +55,9 @@ export class RouteModelBindingModule {
       })
     }
 
-    const exports: any[] = [
-      RouteModelBindingMiddleware,
-      ROUTE_MODEL_BINDING_CONFIG,
-    ]
+    const exports: Array<
+      Provider | symbol | typeof RouteModelBindingMiddleware
+    > = [RouteModelBindingMiddleware, ROUTE_MODEL_BINDING_CONFIG]
 
     if (config.scope?.accessor) {
       exports.push(SCOPE_ACCESSOR)
