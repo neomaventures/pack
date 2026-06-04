@@ -5,5 +5,8 @@ export { RequestContextModule } from "./request-context.module"
 export { getRequest } from "./request-context.facade"
 
 // Context Slot
-export { createContextSlot } from "./context-slot/create-context-slot"
+export {
+  createContextSlot,
+  ContextSlotMutationError,
+} from "./context-slot/create-context-slot"
 export type { ContextSlot } from "./context-slot/create-context-slot"

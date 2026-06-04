@@ -17,8 +17,39 @@ export interface ContextSlot<T> {
   param: () => ParameterDecorator
   /** A `Symbol` injection token for use with `@Inject()`. */
   token: symbol
-  /** A `ValueProvider` whose `useValue` is a proxy that delegates to `get()` per-request. */
+  /**
+   * A `ValueProvider` to register in the consumer module's `providers` array.
+   *
+   * The `useValue` is a transparent ES `Proxy` — a singleton object that
+   * delegates every property access to the per-request value returned by
+   * `get()`. This means a service injected with `@Inject(slot.token)` sees the
+   * current request's value on every access, even though the service itself is
+   * a singleton.
+   *
+   * The proxy is **read-only**: assigning to a property on the injected value
+   * throws `ContextSlotMutationError`. Use `set()` at the request boundary
+   * (middleware) to store values; consumers should treat the injected value as
+   * immutable.
+   *
+   * Works for object-typed `T` only. For primitive slots (string, number), use
+   * the `get` accessor instead.
+   */
   provider: ValueProvider
+}
+
+/**
+ * Thrown when consumer code attempts to assign a property on the injected
+ * context-slot proxy. The proxy is a read-only view — mutations should go
+ * through the slot's `set()` function at the request boundary.
+ */
+export class ContextSlotMutationError extends Error {
+  public constructor(key: string, prop: string | symbol) {
+    super(
+      `Cannot mutate property "${String(prop)}" on context-slot proxy "${key}". ` +
+        `Use the slot's set() function at the request boundary instead.`,
+    )
+    this.name = "ContextSlotMutationError"
+  }
 }
 
 /**
@@ -58,45 +89,59 @@ export function createContextSlot<T>(key: string): ContextSlot<T> {
 
   const token: symbol = Symbol(key)
 
-  const proxy = new Proxy(
-    Object.create(null) as Record<string | symbol, unknown>,
-    {
-      get(_target, prop): unknown {
-        const value = get()
-        if (value == null) return undefined
-        const result = (value as Record<string | symbol, unknown>)[prop]
-        return typeof result === "function"
-          ? (result as (...args: unknown[]) => unknown).bind(value)
-          : result
-      },
-      set(_target, prop, newValue): boolean {
-        const value = get()
-        if (value == null) return false
-        ;(value as Record<string | symbol, unknown>)[prop] = newValue
-        return true
-      },
-      has(_target, prop): boolean {
-        const value = get()
-        if (value == null) return false
-        return prop in (value as object)
-      },
-      ownKeys(): Array<string | symbol> {
-        const value = get()
-        if (value == null) return []
-        return Reflect.ownKeys(value as object)
-      },
-      getPrototypeOf(): object | null {
-        const value = get()
-        if (value == null) return null
-        return Object.getPrototypeOf(value as object) as object | null
-      },
-      getOwnPropertyDescriptor(_target, prop): PropertyDescriptor | undefined {
-        const value = get()
-        if (value == null) return undefined
-        return Object.getOwnPropertyDescriptor(value as object, prop)
-      },
+  const target = {} as Record<string | symbol, unknown>
+
+  const proxy = new Proxy(target, {
+    get(_target, prop): unknown {
+      const value = get()
+      if (value == null) return undefined
+      const result = (value as Record<string | symbol, unknown>)[prop]
+      return typeof result === "function"
+        ? (result as (...args: unknown[]) => unknown).bind(value)
+        : result
     },
-  )
+    set(_target, prop): never {
+      throw new ContextSlotMutationError(key, prop)
+    },
+    has(_target, prop): boolean {
+      const value = get()
+      if (value == null) return false
+      return prop in (value as object)
+    },
+    ownKeys(): Array<string | symbol> {
+      const value = get()
+      if (value == null) return []
+      const keys = Reflect.ownKeys(value as object)
+      for (const k of keys) {
+        if (!Object.getOwnPropertyDescriptor(target, k)) {
+          Object.defineProperty(target, k, {
+            configurable: true,
+            writable: true,
+            value: undefined,
+          })
+        }
+      }
+      return keys
+    },
+    getPrototypeOf(): object | null {
+      const value = get()
+      if (value == null) return null
+      return Object.getPrototypeOf(value as object) as object | null
+    },
+    getOwnPropertyDescriptor(_target, prop): PropertyDescriptor | undefined {
+      const value = get()
+      if (value == null) return undefined
+      const desc = Object.getOwnPropertyDescriptor(value as object, prop)
+      if (desc) {
+        Object.defineProperty(target, prop, {
+          ...desc,
+          configurable: true,
+        })
+        return { ...desc, configurable: true }
+      }
+      return undefined
+    },
+  })
 
   const provider: ValueProvider = {
     provide: token,
