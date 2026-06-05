@@ -35,24 +35,24 @@ export class RouteModelBindingModule {
    * @param config Configuration for route model binding behavior with sensible defaults
    * @returns A DynamicModule configuration for the RouteModelBindingModule
    */
-  public static forRoot(config?: RouteModelBindingConfig): DynamicModule {
-    const resolvedConfig: RouteModelBindingConfig = {
-      ...config,
-      defaultResolver: config?.defaultResolver ?? DEFAULT_RESOLVER,
-    }
+  public static forRoot({
+    defaultResolver = DEFAULT_RESOLVER,
+    ...rest
+  }: RouteModelBindingConfig = {}): DynamicModule {
+    const config: RouteModelBindingConfig = { defaultResolver, ...rest }
 
     const providers: Provider[] = [
       {
         provide: ROUTE_MODEL_BINDING_CONFIG,
-        useValue: resolvedConfig,
+        useValue: config,
       },
       RouteModelBindingMiddleware,
     ]
 
-    if (resolvedConfig.scope?.accessor) {
+    if (config.scope?.accessor) {
       providers.push({
         provide: SCOPE_ACCESSOR,
-        useClass: resolvedConfig.scope.accessor,
+        useClass: config.scope.accessor,
       })
     }
 
@@ -60,7 +60,7 @@ export class RouteModelBindingModule {
       Provider | symbol | typeof RouteModelBindingMiddleware
     > = [RouteModelBindingMiddleware, ROUTE_MODEL_BINDING_CONFIG]
 
-    if (resolvedConfig.scope?.accessor) {
+    if (config.scope?.accessor) {
       moduleExports.push(SCOPE_ACCESSOR)
     }
 
