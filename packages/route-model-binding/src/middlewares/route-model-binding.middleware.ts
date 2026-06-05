@@ -43,7 +43,7 @@ export class RouteModelBindingMiddleware implements NestMiddleware {
   public constructor(
     @InjectDataSource() private readonly ds: DataSource,
     @Inject(ROUTE_MODEL_BINDING_CONFIG)
-    private readonly config: RouteModelBindingConfig,
+    private readonly config: Required<RouteModelBindingConfig>,
     @Optional()
     @Inject(SCOPE_ACCESSOR)
     private readonly scopeAccessor?: ScopeAccessor,
@@ -93,7 +93,7 @@ export class RouteModelBindingMiddleware implements NestMiddleware {
       }
 
       const resolver =
-        this.config.paramResolvers?.[lowerName] ?? this.config.defaultResolver!
+        this.config.paramResolvers?.[lowerName] ?? this.config.defaultResolver
 
       const entity = await repo.findOne({
         where: await resolver({

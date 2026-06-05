@@ -349,13 +349,13 @@ describe("RouteModelBindingMiddleware", () => {
 
       beforeEach(async () => {
         mockAccessor = { canAccess: jest.fn().mockReturnValue(true) }
+        const ds = await managedDatasourceInstance(["e2e/app/**/*.entity.ts"])
         scopedMiddleware = await createMiddleware(
-          await managedDatasourceInstance(["e2e/app/**/*.entity.ts"]),
+          ds,
           { defaultResolver: DEFAULT_RESOLVER },
           mockAccessor,
         )
 
-        const ds = await managedDatasourceInstance(["e2e/app/**/*.entity.ts"])
         await ds.getRepository(User).save([user])
         await ds.getRepository(Post).save([post])
       })
