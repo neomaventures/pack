@@ -13,6 +13,7 @@ The monorepo for the **`@neomaventures/*`** family — a pack of NestJS building
 | [`@neomaventures/minio`](packages/minio) | MinIO test fixture — an S3-compatible object-storage container with a bucket created on start and Jest setup/teardown drop-ins. |
 | [`@neomaventures/storage`](packages/storage) | NestJS-idiomatic file storage for S3-compatible backends — upload, persist, presigned download. |
 | [`@neomaventures/auth`](packages/auth) | Authentication & authorization for NestJS — magic links, Google OAuth, cookie/bearer sessions, and wildcard permissions. |
+| [`@neomaventures/billing`](packages/billing) | Stripe-backed billing for NestJS — plans, subscriptions, webhook verification, and entitlement mapping. |
 | [`@neomaventures/features`](packages/features) | Feature flagging for NestJS controllers — gate routes behind binary on/off flags. |
 | [`@neomaventures/route-model-binding`](packages/route-model-binding) | Laravel-inspired route model binding for NestJS — resolve database models from route parameters automatically. |
 | [`@neomaventures/audit`](packages/audit) | NestJS-idiomatic audit trails for TypeORM — `@CreatedBy` / `@UpdatedBy` decorators that record who changed your entities. |

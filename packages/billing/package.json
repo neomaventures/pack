@@ -1,0 +1,48 @@
+{
+  "name": "@neomaventures/billing",
+  "version": "0.0.0",
+  "description": "Stripe-backed plans, subscriptions, webhooks, and entitlement mapping for NestJS applications.",
+  "author": "Shipdventures",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neomaventures/pack",
+    "directory": "packages/billing"
+  },
+  "bugs": {
+    "url": "https://github.com/neomaventures/pack/issues"
+  },
+  "homepage": "https://github.com/neomaventures/pack/tree/main/packages/billing#readme",
+  "keywords": [
+    "nestjs",
+    "neoma",
+    "billing",
+    "stripe",
+    "subscriptions",
+    "entitlements"
+  ],
+  "private": false,
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "!**/*.json",
+    "!**/*.tsbuildinfo"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc -p ./tsconfig.lib.json",
+    "test": "jest --runInBand --passWithNoTests",
+    "lint": "eslint ."
+  },
+  "peerDependencies": {
+    "@nestjs/common": "11.x",
+    "@nestjs/core": "11.x",
+    "reflect-metadata": ">=0.2",
+    "rxjs": ">=7"
+  }
+}
