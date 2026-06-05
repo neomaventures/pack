@@ -5,11 +5,8 @@ import {
 import { Injectable } from "@nestjs/common"
 
 @Injectable()
-export class SpyAccessor implements ScopeAccessor {
-  public static calls: ScopeContext[] = []
-
+export class DenyPostAccessor implements ScopeAccessor {
   public canAccess(context: ScopeContext): boolean {
-    SpyAccessor.calls.push(context)
-    return true
+    return context.name !== "post"
   }
 }

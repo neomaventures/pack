@@ -5,7 +5,7 @@ import {
 import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
 
-import { SpyAccessor } from "./accessors/spy.accessor"
+import { DenyPostAccessor } from "./accessors/deny-post.accessor"
 import { AppController } from "./app.controller"
 
 @Module({
@@ -18,12 +18,12 @@ import { AppController } from "./app.controller"
     }),
     RouteModelBindingModule.forRoot({
       defaultResolver: ({ id }) => ({ id }),
-      scope: { accessor: SpyAccessor },
+      scope: { accessor: DenyPostAccessor },
     }),
   ],
   controllers: [AppController],
 })
-export class ScopeMultiParamModule implements NestModule {
+export class ScopeDenyPostModule implements NestModule {
   public configure(consumer: MiddlewareConsumer): void {
     consumer
       .apply(RouteModelBindingMiddleware)
