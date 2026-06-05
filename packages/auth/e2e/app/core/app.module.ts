@@ -11,7 +11,6 @@ import { LogoutController } from "./logout.controller"
 import { MagicLinkController } from "./magic-link.controller"
 import { MeController } from "./me.controller"
 import { AdminController, ProtectedController } from "./protected.controller"
-import { WebhookController } from "./webhook.controller"
 
 @Module({
   imports: [
@@ -52,9 +51,6 @@ import { WebhookController } from "./webhook.controller"
         redirectUri: process.env.GOOGLE_REDIRECT_URI!,
         tokenEndpoint: process.env.GOOGLE_TOKEN_ENDPOINT,
       },
-      webhook: {
-        secret: process.env.WEBHOOK_SECRET!,
-      },
     }),
   ],
   controllers: [
@@ -64,7 +60,6 @@ import { WebhookController } from "./webhook.controller"
     MeController,
     ProtectedController,
     AdminController,
-    WebhookController,
   ],
 })
 export class AppModule {}

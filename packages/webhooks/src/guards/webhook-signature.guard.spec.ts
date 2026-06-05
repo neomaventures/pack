@@ -1,5 +1,3 @@
-import { createHmac } from "crypto"
-
 import { executionContext, express } from "@neomaventures/fixtures"
 import {
   type ExecutionContext,
@@ -7,48 +5,16 @@ import {
   UnauthorizedException,
 } from "@nestjs/common"
 import { Test, type TestingModule } from "@nestjs/testing"
+import { computeSignature } from "fixtures/crypto"
 
-import { type AuthOptions, AUTH_OPTIONS } from "../auth.options"
+import { WEBHOOKS_OPTIONS } from "../webhooks.options"
 
 import { WebhookSignatureGuard } from "./webhook-signature.guard"
-
-/**
- * Computes a valid Svix-standard HMAC-SHA256 signature for the given
- * parameters, returning the full `v1,<base64>` string.
- */
-const computeSignature = (
-  secret: string,
-  svixId: string,
-  svixTimestamp: string,
-  body: string,
-): string => {
-  const keyBase64 = secret.startsWith("whsec_") ? secret.slice(6) : secret
-  const key = Buffer.from(keyBase64, "base64")
-  const signedContent = `${svixId}.${svixTimestamp}.${body}`
-  const signature = createHmac("sha256", key)
-    .update(signedContent)
-    .digest("base64")
-  return `v1,${signature}`
-}
 
 const TEST_SECRET = "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw"
 const SVIX_ID = "msg_2Lx0r7Gmz1lL7dK3n4y5j"
 const SVIX_TIMESTAMP = "1713200000"
 const BODY = JSON.stringify({ type: "user.created", data: { id: "usr_123" } })
-
-class User {
-  public id!: string
-  public email!: string
-}
-
-const DEFAULT_OPTIONS: AuthOptions = {
-  secret: "jwt-secret",
-  expiresIn: "1h",
-  entity: User,
-  // Agent, why don't we have a type here?
-  magicLink: { mailer: {} as any },
-  webhook: { secret: TEST_SECRET },
-}
 
 describe("WebhookSignatureGuard", () => {
   describe("When the request has a valid signature", () => {
@@ -58,7 +24,7 @@ describe("WebhookSignatureGuard", () => {
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           WebhookSignatureGuard,
-          { provide: AUTH_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
+          { provide: WEBHOOKS_OPTIONS, useValue: { secret: TEST_SECRET } },
         ],
       }).compile()
 
@@ -96,7 +62,7 @@ describe("WebhookSignatureGuard", () => {
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           WebhookSignatureGuard,
-          { provide: AUTH_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
+          { provide: WEBHOOKS_OPTIONS, useValue: { secret: TEST_SECRET } },
         ],
       }).compile()
 
@@ -135,7 +101,7 @@ describe("WebhookSignatureGuard", () => {
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           WebhookSignatureGuard,
-          { provide: AUTH_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
+          { provide: WEBHOOKS_OPTIONS, useValue: { secret: TEST_SECRET } },
         ],
       }).compile()
 
@@ -177,7 +143,7 @@ describe("WebhookSignatureGuard", () => {
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           WebhookSignatureGuard,
-          { provide: AUTH_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
+          { provide: WEBHOOKS_OPTIONS, useValue: { secret: TEST_SECRET } },
         ],
       }).compile()
 
@@ -218,7 +184,7 @@ describe("WebhookSignatureGuard", () => {
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           WebhookSignatureGuard,
-          { provide: AUTH_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
+          { provide: WEBHOOKS_OPTIONS, useValue: { secret: TEST_SECRET } },
         ],
       }).compile()
 
@@ -255,7 +221,7 @@ describe("WebhookSignatureGuard", () => {
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           WebhookSignatureGuard,
-          { provide: AUTH_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
+          { provide: WEBHOOKS_OPTIONS, useValue: { secret: TEST_SECRET } },
         ],
       }).compile()
 
@@ -292,7 +258,7 @@ describe("WebhookSignatureGuard", () => {
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           WebhookSignatureGuard,
-          { provide: AUTH_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
+          { provide: WEBHOOKS_OPTIONS, useValue: { secret: TEST_SECRET } },
         ],
       }).compile()
 
@@ -329,7 +295,7 @@ describe("WebhookSignatureGuard", () => {
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           WebhookSignatureGuard,
-          { provide: AUTH_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
+          { provide: WEBHOOKS_OPTIONS, useValue: { secret: TEST_SECRET } },
         ],
       }).compile()
 
@@ -364,7 +330,7 @@ describe("WebhookSignatureGuard", () => {
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           WebhookSignatureGuard,
-          { provide: AUTH_OPTIONS, useValue: { ...DEFAULT_OPTIONS } },
+          { provide: WEBHOOKS_OPTIONS, useValue: { secret: TEST_SECRET } },
         ],
       }).compile()
 
@@ -397,23 +363,20 @@ describe("WebhookSignatureGuard", () => {
     })
   })
 
-  describe("When webhook config is not provided", () => {
+  describe("When webhook secret is not provided", () => {
     it("then it should throw an Error during construction", async () => {
       await expect(
         Test.createTestingModule({
           providers: [
             WebhookSignatureGuard,
             {
-              provide: AUTH_OPTIONS,
-              useValue: {
-                ...DEFAULT_OPTIONS,
-                webhook: undefined,
-              },
+              provide: WEBHOOKS_OPTIONS,
+              useValue: { secret: "" },
             },
           ],
         }).compile(),
       ).rejects.toThrow(
-        "WebhookSignatureGuard requires webhook.secret to be configured in AuthModule options.",
+        "WebhookSignatureGuard requires secret to be configured in WebhooksModule options.",
       )
     })
   })

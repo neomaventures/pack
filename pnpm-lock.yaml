@@ -849,6 +849,58 @@ importers:
         specifier: ^0.3.20
         version: 0.3.29(sqlite3@5.1.7)(ts-node@10.9.2(@types/node@25.8.0)(typescript@6.0.3))
 
+  packages/webhooks:
+    dependencies:
+      '@nestjs/common':
+        specifier: 11.x
+        version: 11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      rxjs:
+        specifier: '>=7'
+        version: 7.8.2
+    devDependencies:
+      '@faker-js/faker':
+        specifier: ^9.6.0
+        version: 9.9.0
+      '@neomaventures/fixtures':
+        specifier: workspace:*
+        version: link:../fixtures
+      '@neomaventures/managed-app':
+        specifier: workspace:*
+        version: link:../managed-app
+      '@nestjs/core':
+        specifier: ^11.1.18
+        version: 11.1.21(@nestjs/common@11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.21)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/platform-express':
+        specifier: ^11.1.18
+        version: 11.1.21(@nestjs/common@11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.21)
+      '@nestjs/testing':
+        specifier: ^11.1.18
+        version: 11.1.21(@nestjs/common@11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.21(@nestjs/common@11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.21)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.21(@nestjs/common@11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.21))
+      '@types/jest':
+        specifier: ^30.0.0
+        version: 30.0.0
+      '@types/supertest':
+        specifier: ^6.0.2
+        version: 6.0.3
+      jest:
+        specifier: ^30.3.0
+        version: 30.4.2(@types/node@25.8.0)(ts-node@10.9.2(@types/node@25.8.0)(typescript@6.0.3))
+      jest-extended:
+        specifier: ^7.0.0
+        version: 7.0.0(jest@30.4.2(@types/node@25.8.0)(ts-node@10.9.2(@types/node@25.8.0)(typescript@6.0.3)))(typescript@6.0.3)
+      reflect-metadata:
+        specifier: ^0.2.2
+        version: 0.2.2
+      supertest:
+        specifier: ^7.0.0
+        version: 7.2.2
+      ts-jest:
+        specifier: ^29.4.9
+        version: 29.4.9(@babel/core@7.29.0)(@jest/transform@30.4.1)(@jest/types@30.4.1)(babel-jest@30.4.1(@babel/core@7.29.0))(jest-util@30.4.1)(jest@30.4.2(@types/node@25.8.0)(ts-node@10.9.2(@types/node@25.8.0)(typescript@6.0.3)))(typescript@6.0.3)
+      typescript:
+        specifier: ^6.0.2
+        version: 6.0.3
+
 packages:
 
   '@aws-crypto/crc32@5.2.0':

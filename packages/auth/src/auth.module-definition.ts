@@ -41,9 +41,8 @@ export const {
     ],
     // Services are exported so consumers can inject them directly
     // (e.g. AuthenticationService, SessionService).
-    // AUTH_OPTIONS is exported so that guards resolved on-demand
-    // (e.g. WebhookSignatureGuard) can access the configuration
-    // via @Inject(AUTH_OPTIONS).
+    // AUTH_OPTIONS is exported so that guards and services resolved
+    // on-demand can access the configuration via @Inject(AUTH_OPTIONS).
     // CurrentPrincipal is exported so consumers can inject the
     // per-request principal via @Inject(CurrentPrincipal).
     exports: [

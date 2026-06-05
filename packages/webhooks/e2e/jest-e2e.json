@@ -1,0 +1,16 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "setupFiles": ["<rootDir>/build.setup.ts"],
+  "setupFilesAfterEnv": ["jest-extended/all", "@neomaventures/fixtures/matchers"],
+  "transform": {
+    "^.+\\.tsx?$": "ts-jest"
+  },
+  "moduleNameMapper": {
+    "fixtures/(.*)$": "<rootDir>/../fixtures/$1",
+    "^@neomaventures/webhooks$": "<rootDir>/../dist/index.js",
+    "^@neomaventures/webhooks/(.*)$": "<rootDir>/../dist/$1"
+  }
+}

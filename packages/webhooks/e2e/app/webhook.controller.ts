@@ -1,4 +1,4 @@
-import { WebhookSignatureGuard } from "@neomaventures/auth"
+import { WebhookSignatureGuard } from "@neomaventures/webhooks"
 import {
   Controller,
   HttpCode,

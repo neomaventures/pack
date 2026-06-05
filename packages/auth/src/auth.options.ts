@@ -84,19 +84,6 @@ export interface GoogleAuthOptions {
 }
 
 /**
- * Configuration options for webhook signature verification.
- */
-export interface WebhookOptions {
-  /**
-   * The webhook signing secret in Svix format: `whsec_` prefix followed
-   * by a base64-encoded key.
-   *
-   * @example "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw"
-   */
-  secret: string
-}
-
-/**
  * Base configuration options shared by all auth strategies.
  *
  * @typeParam T - The entity class implementing Authenticatable
@@ -110,8 +97,6 @@ interface AuthBaseOptions<T extends Authenticatable = Authenticatable> {
   entity: new () => T
   /** Session cookie configuration */
   cookie?: CookieOptions
-  /** Webhook signature verification configuration */
-  webhook?: WebhookOptions
 }
 
 /**
