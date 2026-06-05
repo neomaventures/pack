@@ -1,6 +1,6 @@
 {
   "name": "@neomaventures/webhooks",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Webhook signature verification for NestJS — Svix-standard HMAC-SHA256 guard.",
   "author": "Shipdventures",
   "repository": {
