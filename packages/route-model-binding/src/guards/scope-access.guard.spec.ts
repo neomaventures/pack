@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   NotFoundException,
   type ExecutionContext,
+  type Provider,
 } from "@nestjs/common"
 import { Test } from "@nestjs/testing"
 
@@ -30,17 +31,14 @@ const resolveGuard = async (
   accessor?: ScopeAccessor,
   config?: RouteModelBindingConfig,
 ): Promise<ScopeAccessGuard> => {
-  const providers = [ScopeAccessGuard]
+  const providers: Provider[] = [ScopeAccessGuard]
 
   if (accessor) {
-    providers.push({ provide: SCOPE_ACCESSOR, useValue: accessor } as any)
+    providers.push({ provide: SCOPE_ACCESSOR, useValue: accessor })
   }
 
   if (config) {
-    providers.push({
-      provide: ROUTE_MODEL_BINDING_CONFIG,
-      useValue: config,
-    } as any)
+    providers.push({ provide: ROUTE_MODEL_BINDING_CONFIG, useValue: config })
   }
 
   const moduleRef = await Test.createTestingModule({ providers }).compile()
