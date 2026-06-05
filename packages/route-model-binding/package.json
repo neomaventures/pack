@@ -48,6 +48,7 @@
   },
   "devDependencies": {
     "@neomaventures/fixtures": "workspace:*",
+    "@neomaventures/managed-app": "workspace:^",
     "@neomaventures/managed-database": "workspace:*",
     "@nestjs/core": "^11.1.18",
     "@nestjs/platform-express": "^11.1.18",
