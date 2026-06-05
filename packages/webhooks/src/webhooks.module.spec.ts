@@ -4,7 +4,7 @@ import {
   WebhookSignatureGuard,
   type WebhooksOptions,
 } from "@neomaventures/webhooks"
-import { Controller, Inject, Module, UseGuards } from "@nestjs/common"
+import { Controller, Inject, Module } from "@nestjs/common"
 import { Test } from "@nestjs/testing"
 
 const TEST_SECRET = "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw"
@@ -62,8 +62,9 @@ describe("WebhooksModule", () => {
 
     it("should make WebhookSignatureGuard available to child modules that do not import WebhooksModule", async () => {
       @Controller()
-      @UseGuards(WebhookSignatureGuard)
-      class ChildController {}
+      class ChildController {
+        public constructor(public readonly guard: WebhookSignatureGuard) {}
+      }
 
       @Module({
         controllers: [ChildController],
@@ -79,8 +80,8 @@ describe("WebhooksModule", () => {
         ],
       }).compile()
 
-      const guard = module.get(WebhookSignatureGuard)
-      expect(guard).toBeInstanceOf(WebhookSignatureGuard)
+      const controller = module.get(ChildController)
+      expect(controller.guard).toBeInstanceOf(WebhookSignatureGuard)
     })
   })
 })
