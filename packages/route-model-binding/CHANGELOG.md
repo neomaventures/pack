@@ -1,5 +1,11 @@
 # @neomaventures/route-model-binding
 
+## 0.3.0
+
+### Minor Changes
+
+- 9f39b31: **BREAKING**: Middleware no longer throws `NotFoundException` for missing entities. It assigns `null` to `req.routeModels[name]` and always populates `req.routeModelMeta`. The `@RouteModel()` param decorator now throws `NotFoundException` after all guards have run. `ScopeAccessGuard` skips null entities.
+
 ## 0.2.1
 
 ### Patch Changes
