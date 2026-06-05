@@ -46,6 +46,10 @@ export class ScopeAccessGuard implements CanActivate {
    * Checks whether the current request context is allowed to access
    * each resolved route model entity.
    *
+   * Entities that resolved to `null` (i.e. not found in the database)
+   * are skipped — the downstream `@RouteModel()` decorator is
+   * responsible for throwing `NotFoundException` for missing entities.
+   *
    * @param context - The current execution context
    * @returns `true` if all entities are accessible
    * @throws {NotFoundException} When `canAccess` returns `false` and
@@ -67,6 +71,10 @@ export class ScopeAccessGuard implements CanActivate {
     }
 
     for (const [name, entity] of Object.entries(models)) {
+      if (entity == null) {
+        continue
+      }
+
       const { id, entityName } = meta[name]
 
       const allowed = await this.scopeAccessor.canAccess({

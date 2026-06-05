@@ -1,4 +1,4 @@
-import { Inject, NestMiddleware, NotFoundException } from "@nestjs/common"
+import { Inject, type NestMiddleware } from "@nestjs/common"
 import { InjectDataSource } from "@nestjs/typeorm"
 import { NextFunction, Request, Response } from "express"
 import { DataSource } from "typeorm"
@@ -43,10 +43,16 @@ export class RouteModelBindingMiddleware implements NestMiddleware {
    * Middleware function to bind route parameters to model instances.
    *
    * Loops over all req.params and attempts to find a corresponding model instance
-   * in the database. If found, it assigns the instance to req.routeModels under the
-   * same key as the route parameter. If not found, it throws a NotFoundException.
+   * in the database. If found, it assigns the instance to `req.routeModels`
+   * under the same key as the route parameter. If the entity is not found, it
+   * assigns `null` to `req.routeModels[name]` — the downstream `@RouteModel()`
+   * decorator is responsible for throwing `NotFoundException` when it encounters
+   * a `null` value.
    *
-   * @throws NotFoundException if a model instance cannot be found for a route parameter.
+   * Metadata (`id` and `entityName`) is always populated on
+   * `req.routeModelMeta[name]` regardless of whether the entity was found, so
+   * that downstream consumers can produce meaningful error messages.
+   *
    * @throws Error if a route parameter id is not valid.
    * @throws Error if the repository for a route parameter cannot be found.
    *
@@ -89,13 +95,7 @@ export class RouteModelBindingMiddleware implements NestMiddleware {
         }),
       })
 
-      if (!entity) {
-        throw new NotFoundException(
-          `Could not find ${repo.metadata.name} with id ${id}`,
-        )
-      }
-
-      models[name] = entity
+      models[name] = entity ?? null
       meta[name] = { id, entityName: repo.metadata.name }
     }
 

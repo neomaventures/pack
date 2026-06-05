@@ -182,6 +182,70 @@ describe("ScopeAccessGuard", () => {
     })
   })
 
+  describe("Given a null entity in routeModels", () => {
+    it("should skip it and allow access", async () => {
+      const accessor: ScopeAccessor = {
+        canAccess: jest.fn().mockReturnValue(true),
+      }
+      const guard = await resolveGuard(accessor)
+      const req = buildRequest(
+        { user: null },
+        { user: { id: userId, entityName: "User" } },
+      )
+
+      const result = await guard.canActivate(
+        executionContext(req) as ExecutionContext,
+      )
+
+      expect(result).toBeTrue()
+    })
+
+    it("should not call canAccess for the null entity", async () => {
+      const accessor: ScopeAccessor = {
+        canAccess: jest.fn().mockReturnValue(true),
+      }
+      const guard = await resolveGuard(accessor)
+      const req = buildRequest(
+        { user: null },
+        { user: { id: userId, entityName: "User" } },
+      )
+
+      await guard.canActivate(executionContext(req) as ExecutionContext)
+
+      expect(accessor.canAccess).not.toHaveBeenCalled()
+    })
+
+    describe("And another entity is denied", () => {
+      it("should throw for the denied entity and never call canAccess for the null one", async () => {
+        const accessor: ScopeAccessor = {
+          canAccess: jest.fn().mockReturnValue(false),
+        }
+        const guard = await resolveGuard(accessor)
+        const req = buildRequest(
+          { user: null, post: postEntity },
+          {
+            user: { id: userId, entityName: "User" },
+            post: { id: postId, entityName: "Post" },
+          },
+        )
+
+        await expect(
+          guard.canActivate(executionContext(req) as ExecutionContext),
+        ).rejects.toMatchError(NotFoundException, {
+          message: `Could not find Post with id ${postId}`,
+        })
+
+        expect(accessor.canAccess).toHaveBeenCalledTimes(1)
+        expect(accessor.canAccess).toHaveBeenCalledWith({
+          entity: postEntity,
+          id: postId,
+          name: "post",
+          req,
+        })
+      })
+    })
+  })
+
   describe("Given multi-param route with scope accessor", () => {
     describe("And all entities are allowed", () => {
       it("should allow access and call canAccess per entity", async () => {
