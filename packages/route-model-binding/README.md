@@ -318,6 +318,45 @@ export class AppModule {}
 - Custom query logic for specific models
 - Mixed public/private entity resolution
 
+### Scope Accessor
+
+Use the `scope` option to add a post-load access check to every resolved entity. After the entity is loaded from the database, the configured `ScopeAccessor` decides whether the current request context is allowed to access it.
+
+```typescript
+import { ScopeAccessor, ScopeContext } from "@neomaventures/route-model-binding"
+import { Injectable } from "@nestjs/common"
+import { getPrincipal } from "@neomaventures/auth"
+
+@Injectable()
+export class PrincipalAccessor implements ScopeAccessor {
+  public canAccess({ entity }: ScopeContext): boolean {
+    const principal = getPrincipal()
+    return (entity as any).user?.id === principal?.id
+  }
+}
+```
+
+Register it in `forRoot`:
+
+```typescript
+RouteModelBindingModule.forRoot({
+  scope: {
+    accessor: PrincipalAccessor,
+    deny: 404, // or 403
+  },
+})
+```
+
+**How it works:**
+
+- After each entity is resolved, `canAccess` is called with a `ScopeContext` containing the `entity`, the route parameter `name` and `id`, and the Express `req` object.
+- If `canAccess` returns `false`, the middleware throws based on the `deny` setting:
+  - `404` (default) — `NotFoundException`, hides entity existence
+  - `403` — `ForbiddenException`, reveals the entity exists but access is denied
+- The accessor is resolved via DI, so it can inject dependencies like `CurrentPrincipal`.
+- On multi-param routes (e.g. `/users/:user/posts/:post`), the accessor is called once per entity.
+- `canAccess` can return `boolean` or `Promise<boolean>` for async checks.
+
 ### Error Handling
 
 When an entity is not found, the middleware throws a NestJS `NotFoundException` with a message like:
