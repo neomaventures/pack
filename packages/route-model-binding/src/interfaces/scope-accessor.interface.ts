@@ -23,7 +23,7 @@ export interface ScopeContext {
 /**
  * Post-load scoping hook for route-model-binding.
  *
- * After an entity is resolved from the database, the middleware calls
+ * After an entity is resolved from the database, the scope guard calls
  * `canAccess` to determine whether the current context (principal, tenant,
  * etc.) is allowed to access the entity. The accessor is a pure check — it
  * does not throw or decide which HTTP status results from denial.

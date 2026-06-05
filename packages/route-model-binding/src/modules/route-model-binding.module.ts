@@ -1,10 +1,12 @@
 import { DynamicModule, Module, type Provider } from "@nestjs/common"
+import { APP_GUARD } from "@nestjs/core"
 import { FindOptionsWhere } from "typeorm"
 
 import {
   ROUTE_MODEL_BINDING_CONFIG,
   SCOPE_ACCESSOR,
 } from "../constants/injection-tokens"
+import { ScopeAccessGuard } from "../guards/scope-access.guard"
 import { RouteModelBindingConfig } from "../interfaces/route-model-binding-config.interface"
 import { RouteModelBindingMiddleware } from "../middlewares/route-model-binding.middleware"
 
@@ -50,10 +52,16 @@ export class RouteModelBindingModule {
     ]
 
     if (config.scope?.accessor) {
-      providers.push({
-        provide: SCOPE_ACCESSOR,
-        useClass: config.scope.accessor,
-      })
+      providers.push(
+        {
+          provide: SCOPE_ACCESSOR,
+          useClass: config.scope.accessor,
+        },
+        {
+          provide: APP_GUARD,
+          useClass: ScopeAccessGuard,
+        },
+      )
     }
 
     const moduleExports: Array<

@@ -2,6 +2,7 @@ import "./types/express"
 
 export * from "./modules/route-model-binding.module"
 export * from "./middlewares/route-model-binding.middleware"
+export * from "./guards/scope-access.guard"
 export * from "./decorators/route-model.decorator"
 export * from "./interfaces/route-model-binding-config.interface"
 export * from "./interfaces/scope-accessor.interface"
