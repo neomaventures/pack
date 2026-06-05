@@ -2,4 +2,4 @@
 "@neomaventures/webhooks": minor
 ---
 
-`WebhooksModule.forRoot()` and `forRootAsync()` now register the module globally, making `WEBHOOKS_OPTIONS` and `WebhookSignatureGuard` available to sibling modules without re-importing.
+**BREAKING:** `WebhooksModule.forRoot()` and `forRootAsync()` now register the module globally, making `WEBHOOKS_OPTIONS` and `WebhookSignatureGuard` available to sibling modules without re-importing.
