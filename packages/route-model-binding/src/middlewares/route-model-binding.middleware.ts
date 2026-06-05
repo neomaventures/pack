@@ -93,7 +93,7 @@ export class RouteModelBindingMiddleware implements NestMiddleware {
       }
 
       const resolver =
-        this.config.paramResolvers?.[lowerName] ?? this.config.defaultResolver
+        this.config.paramResolvers?.[lowerName] ?? this.config.defaultResolver!
 
       const entity = await repo.findOne({
         where: await resolver({

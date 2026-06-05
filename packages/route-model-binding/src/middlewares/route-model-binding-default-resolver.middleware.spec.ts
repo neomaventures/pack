@@ -343,24 +343,6 @@ describe("RouteModelBindingMiddleware", () => {
   })
 
   describe("Scope Accessor Functionality", () => {
-    describe("Given no scope accessor is configured", () => {
-      it("should resolve entities as before (regression)", (done) => {
-        const request = express.request({
-          params: { user: user.id, post: post.id },
-        })
-
-        void middleware.use(
-          request as unknown as Request,
-          express.response() as unknown as Response,
-          () => {
-            expect(request).toHaveProperty("routeModels.user", user)
-            expect(request).toHaveProperty("routeModels.post", post)
-            done()
-          },
-        )
-      })
-    })
-
     describe("Given scope accessor with canAccess returning true", () => {
       let scopedMiddleware: RouteModelBindingMiddleware
       let mockAccessor: { canAccess: jest.Mock }

@@ -17,7 +17,6 @@ import { AppController } from "./app.controller"
       synchronize: true,
     }),
     RouteModelBindingModule.forRoot({
-      defaultResolver: ({ id }) => ({ id }),
       scope: { accessor: DenyAllAccessor, deny: 404 },
     }),
   ],

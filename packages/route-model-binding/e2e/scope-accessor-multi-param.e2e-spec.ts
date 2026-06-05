@@ -46,7 +46,7 @@ describe("Scope Accessor — Multi-param", () => {
         await ds.getRepository(Post).save([post])
       })
 
-      it("should short-circuit and deny access with 404 for the user", () => {
+      it("should deny access with 404 for the user", () => {
         return request(app.getHttpServer())
           .get(`/users/${user.id}/posts/${post.id}`)
           .expect(HttpStatus.NOT_FOUND)

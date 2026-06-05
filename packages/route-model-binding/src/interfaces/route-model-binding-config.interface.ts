@@ -65,12 +65,13 @@ export interface ScopeConfig {
 export interface RouteModelBindingConfig {
   /**
    * Default resolver function applied to all route parameters
-   * unless overridden by a specific resolver.
+   * unless overridden by a specific resolver. When omitted,
+   * entities are resolved by `{ id }`.
    *
    * @example
    * defaultResolver: ({ id }) => ({ id, deletedAt: null })
    */
-  defaultResolver: ResolverFunction
+  defaultResolver?: ResolverFunction
 
   /**
    * Optional mapping of specific route parameters to custom resolver functions.
