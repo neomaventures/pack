@@ -1,14 +1,14 @@
 import { WebhooksModule } from "@neomaventures/webhooks"
 import { Module } from "@nestjs/common"
 
-import { WebhookController } from "./webhook.controller"
+import { WebhookModule } from "./webhook.module"
 
 @Module({
   imports: [
     WebhooksModule.forRoot({
       secret: "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw",
     }),
+    WebhookModule,
   ],
-  controllers: [WebhookController],
 })
 export class AppModule {}
