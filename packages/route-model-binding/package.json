@@ -1,6 +1,6 @@
 {
   "name": "@neomaventures/route-model-binding",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Laravel-inspired route model binding for NestJS — automatically resolve database models from route parameters.",
   "author": "Daniel Bruce",
   "repository": {
