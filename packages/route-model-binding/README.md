@@ -350,7 +350,7 @@ RouteModelBindingModule.forRoot({
 **How it works:**
 
 - After each entity is resolved, `canAccess` is called with a `ScopeContext` containing the `entity`, the route parameter `name` and `id`, and the Express `req` object.
-- If `canAccess` returns `false`, the middleware throws based on the `deny` setting:
+- If `canAccess` returns `false`, the module throws based on the `deny` setting:
   - `404` (default) — `NotFoundException`, hides entity existence
   - `403` — `ForbiddenException`, reveals the entity exists but access is denied
 - The accessor is resolved via DI, so it can inject dependencies like `CurrentPrincipal`.

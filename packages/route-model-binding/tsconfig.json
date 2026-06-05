@@ -1,7 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "types": ["node", "jest", "@neomaventures/fixtures/matchers"],
+    "types": ["node", "jest", "jest-extended", "@neomaventures/fixtures/matchers"],
     "paths": {
       "@neomaventures/route-model-binding": ["./src"],
       "@neomaventures/route-model-binding/*": ["./src/*"],

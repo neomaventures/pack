@@ -1,10 +1,6 @@
 import { express, type MockRequest } from "@neomaventures/fixtures"
 import { managedDatasourceInstance } from "@neomaventures/managed-database"
-import {
-  ForbiddenException,
-  NotFoundException,
-  type Provider,
-} from "@nestjs/common"
+import { NotFoundException, type Provider } from "@nestjs/common"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { getDataSourceToken } from "@nestjs/typeorm"
 import { type Request, type Response } from "express"
@@ -15,12 +11,8 @@ import { Post } from "src/post.entity"
 import { User } from "src/user.entity"
 import { type DataSource } from "typeorm"
 
-import {
-  ROUTE_MODEL_BINDING_CONFIG,
-  SCOPE_ACCESSOR,
-} from "../constants/injection-tokens"
+import { ROUTE_MODEL_BINDING_CONFIG } from "../constants/injection-tokens"
 import { type RouteModelBindingConfig } from "../interfaces/route-model-binding-config.interface"
-import { type ScopeAccessor } from "../interfaces/scope-accessor.interface"
 import { DEFAULT_RESOLVER } from "../modules/route-model-binding.module"
 
 import { RouteModelBindingMiddleware } from "./route-model-binding.middleware"
@@ -34,7 +26,6 @@ describe("RouteModelBindingMiddleware", () => {
   const createMiddleware = async (
     datasource: DataSource,
     config?: RouteModelBindingConfig,
-    scopeAccessor?: ScopeAccessor,
   ): Promise<RouteModelBindingMiddleware> => {
     const providers: Provider[] = [
       RouteModelBindingMiddleware,
@@ -47,13 +38,6 @@ describe("RouteModelBindingMiddleware", () => {
         useValue: config ?? { defaultResolver: DEFAULT_RESOLVER },
       },
     ]
-
-    if (scopeAccessor) {
-      providers.push({
-        provide: SCOPE_ACCESSOR,
-        useValue: scopeAccessor,
-      })
-    }
 
     const app: TestingModule = await Test.createTestingModule({
       providers,
@@ -342,294 +326,53 @@ describe("RouteModelBindingMiddleware", () => {
     })
   })
 
-  describe("Scope Accessor Functionality", () => {
-    describe("Given scope accessor with canAccess returning true", () => {
-      let scopedMiddleware: RouteModelBindingMiddleware
-      let mockAccessor: { canAccess: jest.Mock }
+  describe("Route Model Metadata", () => {
+    describe("Given a single-param route", () => {
+      let request: MockRequest
 
-      beforeEach(async () => {
-        mockAccessor = { canAccess: jest.fn().mockReturnValue(true) }
-        const ds = await managedDatasourceInstance(["e2e/app/**/*.entity.ts"])
-        scopedMiddleware = await createMiddleware(
-          ds,
-          { defaultResolver: DEFAULT_RESOLVER },
-          mockAccessor,
-        )
-
-        await ds.getRepository(User).save([user])
-        await ds.getRepository(Post).save([post])
-      })
-
-      it("should store entity on req.routeModels", (done) => {
-        const request = express.request({
+      beforeEach((done) => {
+        request = express.request({
           params: { user: user.id },
         })
 
-        void scopedMiddleware.use(
+        void middleware.use(
           request as unknown as Request,
           express.response() as unknown as Response,
-          () => {
-            expect(request).toHaveProperty("routeModels.user", user)
-            done()
-          },
+          done,
         )
       })
-    })
 
-    describe("Given scope accessor with deny: 404 and canAccess returning false", () => {
-      let scopedMiddleware: RouteModelBindingMiddleware
-      let mockAccessor: { canAccess: jest.Mock }
-
-      beforeEach(async () => {
-        mockAccessor = { canAccess: jest.fn().mockReturnValue(false) }
-        const ds = await managedDatasourceInstance(["e2e/app/**/*.entity.ts"])
-        scopedMiddleware = await createMiddleware(
-          ds,
-          {
-            defaultResolver: DEFAULT_RESOLVER,
-            scope: { accessor: class {} as any, deny: 404 },
-          },
-          mockAccessor,
-        )
-
-        await ds.getRepository(User).save([user])
-      })
-
-      it("should throw NotFoundException", () => {
-        return expect(
-          scopedMiddleware.use(
-            express.request({
-              params: { user: user.id },
-            }) as unknown as Request,
-            express.response() as unknown as Response,
-            () => {},
-          ),
-        ).rejects.toMatchError(NotFoundException, {
-          message: `Could not find User with id ${user.id}`,
+      it("should populate routeModelMeta with id and entityName", () => {
+        expect(request).toHaveProperty("routeModelMeta.user", {
+          id: user.id,
+          entityName: "User",
         })
       })
     })
 
-    describe("Given scope accessor with deny: 403 and canAccess returning false", () => {
-      let scopedMiddleware: RouteModelBindingMiddleware
-      let mockAccessor: { canAccess: jest.Mock }
+    describe("Given a multi-param route", () => {
+      let request: MockRequest
 
-      beforeEach(async () => {
-        mockAccessor = { canAccess: jest.fn().mockReturnValue(false) }
-        const ds = await managedDatasourceInstance(["e2e/app/**/*.entity.ts"])
-        scopedMiddleware = await createMiddleware(
-          ds,
-          {
-            defaultResolver: DEFAULT_RESOLVER,
-            scope: { accessor: class {} as any, deny: 403 },
-          },
-          mockAccessor,
-        )
-
-        await ds.getRepository(User).save([user])
-      })
-
-      it("should throw ForbiddenException", () => {
-        return expect(
-          scopedMiddleware.use(
-            express.request({
-              params: { user: user.id },
-            }) as unknown as Request,
-            express.response() as unknown as Response,
-            () => {},
-          ),
-        ).rejects.toMatchError(ForbiddenException, {
-          message: `Access denied to User with id ${user.id}`,
-        })
-      })
-    })
-
-    describe("Given scope accessor with no explicit deny and canAccess returning false", () => {
-      let scopedMiddleware: RouteModelBindingMiddleware
-      let mockAccessor: { canAccess: jest.Mock }
-
-      beforeEach(async () => {
-        mockAccessor = { canAccess: jest.fn().mockReturnValue(false) }
-        const ds = await managedDatasourceInstance(["e2e/app/**/*.entity.ts"])
-        scopedMiddleware = await createMiddleware(
-          ds,
-          {
-            defaultResolver: DEFAULT_RESOLVER,
-            scope: { accessor: class {} as any },
-          },
-          mockAccessor,
-        )
-
-        await ds.getRepository(User).save([user])
-      })
-
-      it("should default to NotFoundException", () => {
-        return expect(
-          scopedMiddleware.use(
-            express.request({
-              params: { user: user.id },
-            }) as unknown as Request,
-            express.response() as unknown as Response,
-            () => {},
-          ),
-        ).rejects.toMatchError(NotFoundException, {
-          message: `Could not find User with id ${user.id}`,
-        })
-      })
-    })
-
-    describe("Given async accessor returning Promise<false>", () => {
-      let scopedMiddleware: RouteModelBindingMiddleware
-      let mockAccessor: { canAccess: jest.Mock }
-
-      beforeEach(async () => {
-        mockAccessor = {
-          canAccess: jest.fn().mockResolvedValue(false),
-        }
-        const ds = await managedDatasourceInstance(["e2e/app/**/*.entity.ts"])
-        scopedMiddleware = await createMiddleware(
-          ds,
-          {
-            defaultResolver: DEFAULT_RESOLVER,
-            scope: { accessor: class {} as any, deny: 404 },
-          },
-          mockAccessor,
-        )
-
-        await ds.getRepository(User).save([user])
-      })
-
-      it("should throw NotFoundException", () => {
-        return expect(
-          scopedMiddleware.use(
-            express.request({
-              params: { user: user.id },
-            }) as unknown as Request,
-            express.response() as unknown as Response,
-            () => {},
-          ),
-        ).rejects.toMatchError(NotFoundException, {
-          message: `Could not find User with id ${user.id}`,
-        })
-      })
-    })
-
-    describe("Given multi-param route with scope accessor", () => {
-      let scopedMiddleware: RouteModelBindingMiddleware
-      let mockAccessor: { canAccess: jest.Mock }
-
-      beforeEach(async () => {
-        mockAccessor = { canAccess: jest.fn().mockReturnValue(true) }
-        const ds = await managedDatasourceInstance(["e2e/app/**/*.entity.ts"])
-        scopedMiddleware = await createMiddleware(
-          ds,
-          { defaultResolver: DEFAULT_RESOLVER },
-          mockAccessor,
-        )
-
-        await ds.getRepository(User).save([user])
-        await ds.getRepository(Post).save([post])
-      })
-
-      it("should call canAccess once per resolved entity with correct context", (done) => {
-        const request = express.request({
+      beforeEach((done) => {
+        request = express.request({
           params: { user: user.id, post: post.id },
         })
 
-        void scopedMiddleware.use(
+        void middleware.use(
           request as unknown as Request,
           express.response() as unknown as Response,
-          () => {
-            expect(mockAccessor.canAccess).toHaveBeenCalledTimes(2)
-            expect(mockAccessor.canAccess).toHaveBeenNthCalledWith(1, {
-              entity: user,
-              id: user.id,
-              name: "user",
-              req: request,
-            })
-            expect(mockAccessor.canAccess).toHaveBeenNthCalledWith(2, {
-              entity: post,
-              id: post.id,
-              name: "post",
-              req: request,
-            })
-            done()
-          },
+          done,
         )
       })
-    })
 
-    describe("Given multi-param route where user is allowed but post is denied", () => {
-      let scopedMiddleware: RouteModelBindingMiddleware
-
-      beforeEach(async () => {
-        const accessor = {
-          canAccess: jest
-            .fn()
-            .mockImplementation(
-              (ctx: { name: string }): boolean => ctx.name !== "post",
-            ),
-        }
-        const ds = await managedDatasourceInstance(["e2e/app/**/*.entity.ts"])
-        scopedMiddleware = await createMiddleware(
-          ds,
-          {
-            defaultResolver: DEFAULT_RESOLVER,
-            scope: { accessor: class {} as any },
-          },
-          accessor,
-        )
-
-        await ds.getRepository(User).save([user])
-        await ds.getRepository(Post).save([post])
-      })
-
-      it("should throw NotFoundException for the post", () => {
-        return expect(
-          scopedMiddleware.use(
-            express.request({
-              params: { user: user.id, post: post.id },
-            }) as unknown as Request,
-            express.response() as unknown as Response,
-            () => {},
-          ),
-        ).rejects.toMatchError(NotFoundException, {
-          message: `Could not find Post with id ${post.id}`,
+      it("should populate routeModelMeta for each parameter", () => {
+        expect(request).toHaveProperty("routeModelMeta.user", {
+          id: user.id,
+          entityName: "User",
         })
-      })
-    })
-
-    describe("Given multi-param route where user is denied", () => {
-      let scopedMiddleware: RouteModelBindingMiddleware
-      let mockAccessor: { canAccess: jest.Mock }
-
-      beforeEach(async () => {
-        mockAccessor = { canAccess: jest.fn().mockReturnValue(false) }
-        const ds = await managedDatasourceInstance(["e2e/app/**/*.entity.ts"])
-        scopedMiddleware = await createMiddleware(
-          ds,
-          {
-            defaultResolver: DEFAULT_RESOLVER,
-            scope: { accessor: class {} as any },
-          },
-          mockAccessor,
-        )
-
-        await ds.getRepository(User).save([user])
-        await ds.getRepository(Post).save([post])
-      })
-
-      it("should throw NotFoundException for the user and not check the post", () => {
-        return expect(
-          scopedMiddleware.use(
-            express.request({
-              params: { user: user.id, post: post.id },
-            }) as unknown as Request,
-            express.response() as unknown as Response,
-            () => {},
-          ),
-        ).rejects.toMatchError(NotFoundException, {
-          message: `Could not find User with id ${user.id}`,
+        expect(request).toHaveProperty("routeModelMeta.post", {
+          id: post.id,
+          entityName: "Post",
         })
       })
     })
