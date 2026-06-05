@@ -20,6 +20,7 @@ The monorepo for the **`@neomaventures/*`** family — a pack of NestJS building
 | [`@neomaventures/logging`](packages/logging) | Great logging for NestJS — Pino-backed application + request-scoped loggers, with per-request trace IDs and field redaction. |
 | [`@neomaventures/exceptions`](packages/exceptions) | Automatic, Laravel-inspired exception handling for NestJS — consistent error responses, status-aware logging, and HTML content negotiation. |
 | [`@neomaventures/request-context`](packages/request-context) | Per-request context (AsyncLocalStorage) for NestJS — read the current request anywhere, no request scope. |
+| [`@neomaventures/webhooks`](packages/webhooks) | Webhook signature verification for NestJS -- Svix-standard HMAC-SHA256 guard. |
 | [`@neomaventures/managed-app`](packages/managed-app) | Boots a NestJS app from a module path — an e2e harness for the `@neomaventures/*` packages. |
 | [`@neomaventures/managed-database`](packages/managed-database) | In-memory SQLite `datasource` fixture for tests. |
 

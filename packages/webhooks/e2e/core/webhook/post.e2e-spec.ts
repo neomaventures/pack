@@ -1,34 +1,18 @@
-import { createHmac } from "crypto"
-
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
+import { computeSignature } from "fixtures/crypto"
 import request from "supertest"
 
 const { OK, UNAUTHORIZED, INTERNAL_SERVER_ERROR } = HttpStatus
 
-const TEST_SECRET = process.env.WEBHOOK_SECRET!
+const TEST_SECRET = "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw"
 const SVIX_ID = "msg_2Lx0r7Gmz1lL7dK3n4y5j"
 const SVIX_TIMESTAMP = "1713200000"
 const BODY = { type: "user.created", data: { id: "usr_123" } }
 
-const computeSignature = (
-  secret: string,
-  svixId: string,
-  svixTimestamp: string,
-  body: string,
-): string => {
-  const keyBase64 = secret.startsWith("whsec_") ? secret.slice(6) : secret
-  const key = Buffer.from(keyBase64, "base64")
-  const signedContent = `${svixId}.${svixTimestamp}.${body}`
-  const signature = createHmac("sha256", key)
-    .update(signedContent)
-    .digest("base64")
-  return `v1,${signature}`
-}
-
 const appModules: [string, string][] = [
-  ["forRoot", "e2e/app/core/app.module.ts#AppModule"],
-  ["forRootAsync", "e2e/app/core/app.async.module.ts#AsyncAppModule"],
+  ["forRoot", "e2e/app/app.module.ts#AppModule"],
+  ["forRootAsync", "e2e/app/app.async.module.ts#AsyncAppModule"],
 ]
 
 appModules.forEach(([name, modulePath]) => {
@@ -160,7 +144,7 @@ describe("POST /webhooks (rawBody disabled)", () => {
 
   beforeEach(async () => {
     app = await managedAppInstance({
-      module: "e2e/app/core/app.module.ts#AppModule",
+      module: "e2e/app/app.module.ts#AppModule",
     })
   })
 

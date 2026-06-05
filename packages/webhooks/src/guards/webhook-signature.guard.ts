@@ -9,13 +9,13 @@ import {
   UnauthorizedException,
 } from "@nestjs/common"
 
-import { AuthOptions, AUTH_OPTIONS } from "../auth.options"
+import { WEBHOOKS_OPTIONS, type WebhooksOptions } from "../webhooks.options"
 
 /**
  * Guard that verifies Svix-standard webhook signatures.
  *
  * Validates the HMAC-SHA256 signature in the `svix-signature` header against
- * the request's raw body using the secret configured in `AuthOptions.webhook`.
+ * the request's raw body using the secret configured in `WebhooksOptions`.
  *
  * Requires `rawBody: true` on the NestJS application factory so that
  * `req.rawBody` is available.
@@ -29,7 +29,7 @@ import { AuthOptions, AUTH_OPTIONS } from "../auth.options"
  * }
  * ```
  *
- * @throws {Error} If `webhook.secret` is not configured in AuthModule options
+ * @throws {Error} If `secret` is not configured in WebhooksModule options
  * (boot-time configuration error).
  * @throws {InternalServerErrorException} If rawBody is unavailable (server
  * misconfiguration).
@@ -38,18 +38,18 @@ import { AuthOptions, AUTH_OPTIONS } from "../auth.options"
 @Injectable()
 export class WebhookSignatureGuard implements CanActivate {
   /**
-   * Validates that `webhook.secret` is configured and fails fast during
+   * Validates that `secret` is configured and fails fast during
    * module initialisation if it is missing.
    *
-   * @param options - The Auth module options injected via DI
-   * @throws {Error} If `webhook.secret` is not configured in AuthModule options
+   * @param options - The Webhooks module options injected via DI
+   * @throws {Error} If `secret` is not configured in WebhooksModule options
    */
   public constructor(
-    @Inject(AUTH_OPTIONS) private readonly options: AuthOptions,
+    @Inject(WEBHOOKS_OPTIONS) private readonly options: WebhooksOptions,
   ) {
-    if (!this.options.webhook?.secret) {
+    if (!this.options.secret) {
       throw new Error(
-        "WebhookSignatureGuard requires webhook.secret to be configured in AuthModule options.",
+        "WebhookSignatureGuard requires secret to be configured in WebhooksModule options.",
       )
     }
   }
@@ -66,7 +66,7 @@ export class WebhookSignatureGuard implements CanActivate {
    */
   public canActivate(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest()
-    const webhookSecret = this.options.webhook!.secret
+    const webhookSecret = this.options.secret
 
     // 1. Verify rawBody is available
     if (!req.rawBody) {

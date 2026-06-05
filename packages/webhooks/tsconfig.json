@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node", "jest", "jest-extended", "@neomaventures/fixtures/matchers"],
+    "paths": {
+      "@neomaventures/webhooks": ["./src"],
+      "@neomaventures/webhooks/*": ["./src/*"],
+      "fixtures/*": ["./fixtures/*"]
+    }
+  },
+  "include": ["src/**/*", "fixtures/**/*", "e2e/**/*"]
+}

@@ -34,7 +34,6 @@ export * from "./interceptors/google-callback.interceptor"
 // Guards used directly by consumers
 export * from "./guards/authenticated.guard"
 export * from "./guards/requires-permission.guard"
-export * from "./guards/webhook-signature.guard"
 
 // Exceptions consumers may catch or reference in filters
 export * from "./exceptions/email-not-verified.exception"
