@@ -7,11 +7,13 @@ import {
 import { Controller, Inject, Module, UseGuards } from "@nestjs/common"
 import { Test } from "@nestjs/testing"
 
+const TEST_SECRET = "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw"
+
 describe("WebhooksModule", () => {
   describe("forRoot()", () => {
     it("should return a global dynamic module", () => {
       const module = WebhooksModule.forRoot({
-        secret: "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw",
+        secret: TEST_SECRET,
       })
       expect(module).toHaveProperty("global", true)
     })
@@ -21,7 +23,7 @@ describe("WebhooksModule", () => {
     it("should return a global dynamic module", () => {
       const module = WebhooksModule.forRootAsync({
         useFactory: (): WebhooksOptions => ({
-          secret: "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw",
+          secret: TEST_SECRET,
         }),
       })
       expect(module).toHaveProperty("global", true)
@@ -46,7 +48,7 @@ describe("WebhooksModule", () => {
       const module = await Test.createTestingModule({
         imports: [
           WebhooksModule.forRoot({
-            secret: "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw",
+            secret: TEST_SECRET,
           }),
           ChildModule,
         ],
@@ -54,7 +56,7 @@ describe("WebhooksModule", () => {
 
       const controller = module.get(ChildController)
       expect(controller.options).toEqual({
-        secret: "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw",
+        secret: TEST_SECRET,
       })
     })
 
@@ -71,7 +73,7 @@ describe("WebhooksModule", () => {
       const module = await Test.createTestingModule({
         imports: [
           WebhooksModule.forRoot({
-            secret: "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw",
+            secret: TEST_SECRET,
           }),
           ChildModule,
         ],
