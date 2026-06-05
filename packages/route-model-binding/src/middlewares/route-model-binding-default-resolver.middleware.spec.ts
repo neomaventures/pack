@@ -576,6 +576,81 @@ describe("RouteModelBindingMiddleware", () => {
         )
       })
     })
+
+    describe("Given multi-param route where user is allowed but post is denied", () => {
+      let scopedMiddleware: RouteModelBindingMiddleware
+
+      beforeEach(async () => {
+        const accessor = {
+          canAccess: jest
+            .fn()
+            .mockImplementation(
+              (ctx: { name: string }): boolean => ctx.name !== "post",
+            ),
+        }
+        const ds = await managedDatasourceInstance(["e2e/app/**/*.entity.ts"])
+        scopedMiddleware = await createMiddleware(
+          ds,
+          {
+            defaultResolver: DEFAULT_RESOLVER,
+            scope: { accessor: class {} as any },
+          },
+          accessor,
+        )
+
+        await ds.getRepository(User).save([user])
+        await ds.getRepository(Post).save([post])
+      })
+
+      it("should throw NotFoundException for the post", () => {
+        return expect(
+          scopedMiddleware.use(
+            express.request({
+              params: { user: user.id, post: post.id },
+            }) as unknown as Request,
+            express.response() as unknown as Response,
+            () => {},
+          ),
+        ).rejects.toMatchError(NotFoundException, {
+          message: `Could not find Post with id ${post.id}`,
+        })
+      })
+    })
+
+    describe("Given multi-param route where user is denied", () => {
+      let scopedMiddleware: RouteModelBindingMiddleware
+      let mockAccessor: { canAccess: jest.Mock }
+
+      beforeEach(async () => {
+        mockAccessor = { canAccess: jest.fn().mockReturnValue(false) }
+        const ds = await managedDatasourceInstance(["e2e/app/**/*.entity.ts"])
+        scopedMiddleware = await createMiddleware(
+          ds,
+          {
+            defaultResolver: DEFAULT_RESOLVER,
+            scope: { accessor: class {} as any },
+          },
+          mockAccessor,
+        )
+
+        await ds.getRepository(User).save([user])
+        await ds.getRepository(Post).save([post])
+      })
+
+      it("should throw NotFoundException for the user and not check the post", () => {
+        return expect(
+          scopedMiddleware.use(
+            express.request({
+              params: { user: user.id, post: post.id },
+            }) as unknown as Request,
+            express.response() as unknown as Response,
+            () => {},
+          ),
+        ).rejects.toMatchError(NotFoundException, {
+          message: `Could not find User with id ${user.id}`,
+        })
+      })
+    })
   })
 
   describe("Parameter Resolver Functionality", () => {
