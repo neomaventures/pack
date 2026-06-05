@@ -1,8 +1,11 @@
-import { express } from "@neomaventures/fixtures"
-import { ForbiddenException, NotFoundException } from "@nestjs/common"
-import { type ExecutionContext } from "@nestjs/common"
 import { faker } from "@faker-js/faker"
-import { type Request } from "express"
+import { executionContext, express } from "@neomaventures/fixtures"
+import {
+  ForbiddenException,
+  NotFoundException,
+  type ExecutionContext,
+} from "@nestjs/common"
+import { Test } from "@nestjs/testing"
 
 import {
   ROUTE_MODEL_BINDING_CONFIG,
@@ -13,12 +16,36 @@ import { type ScopeAccessor } from "../interfaces/scope-accessor.interface"
 
 import { ScopeAccessGuard } from "./scope-access.guard"
 
-const createExecutionContext = (req: unknown): ExecutionContext =>
-  ({
-    switchToHttp: (): { getRequest: () => unknown } => ({
-      getRequest: (): unknown => req,
-    }),
-  }) as ExecutionContext
+const buildRequest = (
+  models: Record<string, unknown>,
+  meta: Record<string, { id: string; entityName: string }>,
+): ReturnType<typeof express.request> =>
+  express.request({
+    params: {},
+    routeModels: models,
+    routeModelMeta: meta,
+  })
+
+const resolveGuard = async (
+  accessor?: ScopeAccessor,
+  config?: RouteModelBindingConfig,
+): Promise<ScopeAccessGuard> => {
+  const providers = [ScopeAccessGuard]
+
+  if (accessor) {
+    providers.push({ provide: SCOPE_ACCESSOR, useValue: accessor } as any)
+  }
+
+  if (config) {
+    providers.push({
+      provide: ROUTE_MODEL_BINDING_CONFIG,
+      useValue: config,
+    } as any)
+  }
+
+  const moduleRef = await Test.createTestingModule({ providers }).compile()
+  return moduleRef.get(ScopeAccessGuard)
+}
 
 describe("ScopeAccessGuard", () => {
   const userId = faker.string.uuid()
@@ -26,27 +53,19 @@ describe("ScopeAccessGuard", () => {
   const userEntity = { id: userId, username: faker.internet.username() }
   const postEntity = { id: postId, content: faker.lorem.sentence() }
 
-  const buildRequest = (
-    models: Record<string, unknown>,
-    meta: Record<string, { id: string; entityName: string }>,
-  ): unknown => {
-    const req = express.request({ params: {} })
-    ;(req as any).routeModels = models
-    ;(req as any).routeModelMeta = meta
-    return req
-  }
-
   describe("Given no scope accessor is configured", () => {
     it("should allow access", async () => {
-      const guard = new ScopeAccessGuard()
+      const guard = await resolveGuard()
       const req = buildRequest(
         { user: userEntity },
         { user: { id: userId, entityName: "User" } },
       )
 
-      const result = await guard.canActivate(createExecutionContext(req))
+      const result = await guard.canActivate(
+        executionContext(req) as ExecutionContext,
+      )
 
-      expect(result).toBe(true)
+      expect(result).toBeTrue()
     })
   })
 
@@ -55,14 +74,14 @@ describe("ScopeAccessGuard", () => {
       const accessor: ScopeAccessor = {
         canAccess: jest.fn().mockReturnValue(true),
       }
-      const guard = new ScopeAccessGuard(accessor)
+      const guard = await resolveGuard(accessor)
       const req = express.request({ params: {} })
 
       const result = await guard.canActivate(
-        createExecutionContext(req),
+        executionContext(req) as ExecutionContext,
       )
 
-      expect(result).toBe(true)
+      expect(result).toBeTrue()
     })
   })
 
@@ -71,54 +90,53 @@ describe("ScopeAccessGuard", () => {
       const accessor: ScopeAccessor = {
         canAccess: jest.fn().mockReturnValue(true),
       }
-      const guard = new ScopeAccessGuard(accessor)
+      const guard = await resolveGuard(accessor)
       const req = buildRequest(
         { user: userEntity },
         { user: { id: userId, entityName: "User" } },
       )
 
-      const result = await guard.canActivate(createExecutionContext(req))
+      const result = await guard.canActivate(
+        executionContext(req) as ExecutionContext,
+      )
 
-      expect(result).toBe(true)
+      expect(result).toBeTrue()
     })
   })
 
   describe("Given scope accessor with canAccess returning false", () => {
-    describe("And deny defaults to 404", () => {
-      it("should throw NotFoundException", async () => {
-        const accessor: ScopeAccessor = {
-          canAccess: jest.fn().mockReturnValue(false),
-        }
-        const guard = new ScopeAccessGuard(accessor)
-        const req = buildRequest(
-          { user: userEntity },
-          { user: { id: userId, entityName: "User" } },
-        )
+    it("should throw NotFoundException", async () => {
+      const accessor: ScopeAccessor = {
+        canAccess: jest.fn().mockReturnValue(false),
+      }
+      const guard = await resolveGuard(accessor)
+      const req = buildRequest(
+        { user: userEntity },
+        { user: { id: userId, entityName: "User" } },
+      )
 
-        await expect(
-          guard.canActivate(createExecutionContext(req)),
-        ).rejects.toMatchError(NotFoundException, {
-          message: `Could not find User with id ${userId}`,
-        })
+      await expect(
+        guard.canActivate(executionContext(req) as ExecutionContext),
+      ).rejects.toMatchError(NotFoundException, {
+        message: `Could not find User with id ${userId}`,
       })
     })
 
-    describe("And deny is 404", () => {
+    describe("And deny is explicitly set to 404", () => {
       it("should throw NotFoundException", async () => {
         const accessor: ScopeAccessor = {
           canAccess: jest.fn().mockReturnValue(false),
         }
-        const config: RouteModelBindingConfig = {
+        const guard = await resolveGuard(accessor, {
           scope: { accessor: class {} as any, deny: 404 },
-        }
-        const guard = new ScopeAccessGuard(accessor, config)
+        })
         const req = buildRequest(
           { user: userEntity },
           { user: { id: userId, entityName: "User" } },
         )
 
         await expect(
-          guard.canActivate(createExecutionContext(req)),
+          guard.canActivate(executionContext(req) as ExecutionContext),
         ).rejects.toMatchError(NotFoundException, {
           message: `Could not find User with id ${userId}`,
         })
@@ -130,17 +148,16 @@ describe("ScopeAccessGuard", () => {
         const accessor: ScopeAccessor = {
           canAccess: jest.fn().mockReturnValue(false),
         }
-        const config: RouteModelBindingConfig = {
+        const guard = await resolveGuard(accessor, {
           scope: { accessor: class {} as any, deny: 403 },
-        }
-        const guard = new ScopeAccessGuard(accessor, config)
+        })
         const req = buildRequest(
           { user: userEntity },
           { user: { id: userId, entityName: "User" } },
         )
 
         await expect(
-          guard.canActivate(createExecutionContext(req)),
+          guard.canActivate(executionContext(req) as ExecutionContext),
         ).rejects.toMatchError(ForbiddenException, {
           message: `Access denied to User with id ${userId}`,
         })
@@ -153,14 +170,14 @@ describe("ScopeAccessGuard", () => {
       const accessor: ScopeAccessor = {
         canAccess: jest.fn().mockResolvedValue(false),
       }
-      const guard = new ScopeAccessGuard(accessor)
+      const guard = await resolveGuard(accessor)
       const req = buildRequest(
         { user: userEntity },
         { user: { id: userId, entityName: "User" } },
       )
 
       await expect(
-        guard.canActivate(createExecutionContext(req)),
+        guard.canActivate(executionContext(req) as ExecutionContext),
       ).rejects.toMatchError(NotFoundException, {
         message: `Could not find User with id ${userId}`,
       })
@@ -173,7 +190,7 @@ describe("ScopeAccessGuard", () => {
         const accessor: ScopeAccessor = {
           canAccess: jest.fn().mockReturnValue(true),
         }
-        const guard = new ScopeAccessGuard(accessor)
+        const guard = await resolveGuard(accessor)
         const req = buildRequest(
           { user: userEntity, post: postEntity },
           {
@@ -182,9 +199,11 @@ describe("ScopeAccessGuard", () => {
           },
         )
 
-        const result = await guard.canActivate(createExecutionContext(req))
+        const result = await guard.canActivate(
+          executionContext(req) as ExecutionContext,
+        )
 
-        expect(result).toBe(true)
+        expect(result).toBeTrue()
         expect(accessor.canAccess).toHaveBeenCalledTimes(2)
         expect(accessor.canAccess).toHaveBeenCalledWith({
           entity: userEntity,
@@ -210,7 +229,7 @@ describe("ScopeAccessGuard", () => {
               (ctx: { name: string }): boolean => ctx.name !== "post",
             ),
         }
-        const guard = new ScopeAccessGuard(accessor)
+        const guard = await resolveGuard(accessor)
         const req = buildRequest(
           { user: userEntity, post: postEntity },
           {
@@ -220,7 +239,7 @@ describe("ScopeAccessGuard", () => {
         )
 
         await expect(
-          guard.canActivate(createExecutionContext(req)),
+          guard.canActivate(executionContext(req) as ExecutionContext),
         ).rejects.toMatchError(NotFoundException, {
           message: `Could not find Post with id ${postId}`,
         })
@@ -232,7 +251,7 @@ describe("ScopeAccessGuard", () => {
         const accessor: ScopeAccessor = {
           canAccess: jest.fn().mockReturnValue(false),
         }
-        const guard = new ScopeAccessGuard(accessor)
+        const guard = await resolveGuard(accessor)
         const req = buildRequest(
           { user: userEntity, post: postEntity },
           {
@@ -242,7 +261,7 @@ describe("ScopeAccessGuard", () => {
         )
 
         await expect(
-          guard.canActivate(createExecutionContext(req)),
+          guard.canActivate(executionContext(req) as ExecutionContext),
         ).rejects.toMatchError(NotFoundException, {
           message: `Could not find User with id ${userId}`,
         })
