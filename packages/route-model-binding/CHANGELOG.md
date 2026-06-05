@@ -1,5 +1,11 @@
 # @neomaventures/route-model-binding
 
+## 0.2.1
+
+### Patch Changes
+
+- a82453d: Move ScopeAccessor check from middleware to guard so scope denial exceptions flow through the controller's decorator chain, enabling consumer exception filters like @ErrorTemplate to intercept them.
+
 ## 0.2.0
 
 ### Minor Changes
