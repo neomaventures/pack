@@ -14,7 +14,13 @@ export const {
   .setClassMethodName("forRoot")
   .setExtras({}, (definition) => ({
     ...definition,
+    // global: true — guard needs DI resolution in consumer controller modules
+    global: true,
     providers: [...(definition.providers ?? []), WebhookSignatureGuard],
-    exports: [...(definition.exports ?? []), WEBHOOKS_OPTIONS],
+    exports: [
+      ...(definition.exports ?? []),
+      WEBHOOKS_OPTIONS,
+      WebhookSignatureGuard,
+    ],
   }))
   .build()

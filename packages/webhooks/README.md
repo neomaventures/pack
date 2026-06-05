@@ -12,6 +12,9 @@ npm install @neomaventures/webhooks
 
 ### 1. Import the module
 
+Register `WebhooksModule` once in your root module — it registers globally, so
+the guard and options are available to all modules without re-importing.
+
 ```typescript
 import { WebhooksModule } from "@neomaventures/webhooks"
 
@@ -38,6 +41,8 @@ WebhooksModule.forRootAsync({
 ```
 
 ### 2. Apply the guard to webhook endpoints
+
+The guard can be used in any module — no need to import `WebhooksModule` again.
 
 ```typescript
 import { WebhookSignatureGuard } from "@neomaventures/webhooks"
@@ -69,6 +74,8 @@ const app = await NestFactory.create(AppModule, { rawBody: true })
 |--------|-------------|
 | `forRoot(options)` | Static configuration with a `WebhooksOptions` object |
 | `forRootAsync(options)` | Async configuration via `useFactory`, `useClass`, or `useExisting` |
+
+Both methods register the module globally.
 
 ### `WebhooksOptions`
 
