@@ -32,12 +32,19 @@ jobs:
       - run: echo "Gate passed"
 
   # ── Lint ─────────────────────────────────────────────────────────────
+  # Depends on build because type-aware ESLint rules (e.g.
+  # no-unsafe-argument) need cross-package .d.ts files to resolve types.
   lint:
-    needs: gate
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
 
       - name: Lint
         run: pnpm lint
