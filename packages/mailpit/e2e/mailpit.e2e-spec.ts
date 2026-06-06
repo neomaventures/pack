@@ -1,6 +1,5 @@
-import { createTransport } from "nodemailer"
-
 import { MailpitClient } from "@neomaventures/mailpit"
+import { createTransport } from "nodemailer"
 
 /**
  * End-to-end check against a real container, consuming the package the way
