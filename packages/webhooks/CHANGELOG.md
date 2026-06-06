@@ -1,5 +1,11 @@
 # @neomaventures/webhooks
 
+## 0.1.0
+
+### Minor Changes
+
+- c98445f: **BREAKING:** `WebhooksModule.forRoot()` and `forRootAsync()` now register the module globally, making `WEBHOOKS_OPTIONS` and `WebhookSignatureGuard` available to sibling modules without re-importing.
+
 ## 0.0.1
 
 ### Patch Changes
