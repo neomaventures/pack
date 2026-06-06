@@ -97,7 +97,7 @@ jobs:
           if [ "${{ github.ref }}" = "refs/heads/main" ]; then
             pnpm turbo test
           else
-            pnpm --filter '...[origin/main]' test
+            pnpm --filter '...[origin/main]' --if-present test
           fi
 
   # ── E2E tests ───────────────────────────────────────────────────────
@@ -122,7 +122,7 @@ jobs:
           if [ "${{ github.ref }}" = "refs/heads/main" ]; then
             pnpm turbo test:e2e
           else
-            pnpm --filter '...[origin/main]' test:e2e
+            pnpm --filter '...[origin/main]' --if-present test:e2e
           fi
 
   # ── Release ──────────────────────────────────────────────────────────
