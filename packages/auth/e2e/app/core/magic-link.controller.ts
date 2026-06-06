@@ -11,7 +11,7 @@ import {
   UsePipes,
   ValidationPipe,
 } from "@nestjs/common"
-import { Response } from "express"
+import { type Response } from "express"
 
 import { User } from "../user.entity"
 
