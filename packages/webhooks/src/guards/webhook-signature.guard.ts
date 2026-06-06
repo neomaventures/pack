@@ -5,10 +5,10 @@ import {
   ExecutionContext,
   Inject,
   Injectable,
-  InternalServerErrorException,
   UnauthorizedException,
 } from "@nestjs/common"
 
+import { WebhookRawBodyException } from "../exceptions/webhook-raw-body.exception"
 import { WEBHOOKS_OPTIONS, type WebhooksOptions } from "../webhooks.options"
 
 /**
@@ -31,7 +31,7 @@ import { WEBHOOKS_OPTIONS, type WebhooksOptions } from "../webhooks.options"
  *
  * @throws {Error} If `secret` is not configured in WebhooksModule options
  * (boot-time configuration error).
- * @throws {InternalServerErrorException} If rawBody is unavailable (server
+ * @throws {WebhookRawBodyException} If rawBody is unavailable (server
  * misconfiguration).
  * @throws {UnauthorizedException} If headers are missing or signature is invalid.
  */
@@ -59,7 +59,7 @@ export class WebhookSignatureGuard implements CanActivate {
    *
    * @param context - Execution context providing access to the request
    * @returns true if the signature is valid
-   * @throws {InternalServerErrorException} If rawBody is not available
+   * @throws {WebhookRawBodyException} If rawBody is not available
    * (server misconfiguration)
    * @throws {UnauthorizedException} If required headers are missing or the
    * signature is invalid
@@ -70,7 +70,7 @@ export class WebhookSignatureGuard implements CanActivate {
 
     // 1. Verify rawBody is available
     if (!req.rawBody) {
-      throw new InternalServerErrorException("Internal server error")
+      throw new WebhookRawBodyException()
     }
 
     // 2. Extract required headers

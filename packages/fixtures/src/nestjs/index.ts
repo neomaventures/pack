@@ -1,4 +1,9 @@
-import { type ExecutionContext, type LoggerService } from "@nestjs/common"
+import {
+  type CallHandler,
+  type ExecutionContext,
+  type LoggerService,
+} from "@nestjs/common"
+import { of } from "rxjs"
 
 import { type MockRequest, type MockResponse, express } from "../express"
 
@@ -24,6 +29,15 @@ export class MockLoggerService implements LoggerService {
   public warn = jest.fn()
   public setLogLevels = jest.fn()
 }
+
+/**
+ * Creates a CallHandler that emits the given value via an RxJS observable.
+ *
+ * @param returnValue - The value the handler should emit. Defaults to `{ ok: true }`.
+ * @returns A CallHandler whose `handle()` returns `of(returnValue)`.
+ */
+export const callHandler = (returnValue: any = { ok: true }): CallHandler =>
+  ({ handle: () => of(returnValue) }) as CallHandler
 
 /**
  * Creates a partial ExecutionContext with a switchToHttp method that then allows

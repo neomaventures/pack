@@ -1,12 +1,9 @@
 import { executionContext, express } from "@neomaventures/fixtures"
-import {
-  type ExecutionContext,
-  InternalServerErrorException,
-  UnauthorizedException,
-} from "@nestjs/common"
+import { type ExecutionContext, UnauthorizedException } from "@nestjs/common"
 import { Test, type TestingModule } from "@nestjs/testing"
-import { computeSignature } from "fixtures/crypto"
+import * as svix from "fixtures/svix"
 
+import { WebhookRawBodyException } from "../exceptions/webhook-raw-body.exception"
 import { WEBHOOKS_OPTIONS } from "../webhooks.options"
 
 import { WebhookSignatureGuard } from "./webhook-signature.guard"
@@ -15,6 +12,7 @@ const TEST_SECRET = "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw"
 const SVIX_ID = "msg_2Lx0r7Gmz1lL7dK3n4y5j"
 const SVIX_TIMESTAMP = "1713200000"
 const BODY = JSON.stringify({ type: "user.created", data: { id: "usr_123" } })
+const SIGNATURE = svix.signature(TEST_SECRET, SVIX_ID, SVIX_TIMESTAMP, BODY)
 
 describe("WebhookSignatureGuard", () => {
   describe("When the request has a valid signature", () => {
@@ -32,19 +30,13 @@ describe("WebhookSignatureGuard", () => {
     })
 
     it("then it should return true", () => {
-      const signature = computeSignature(
-        TEST_SECRET,
-        SVIX_ID,
-        SVIX_TIMESTAMP,
-        BODY,
-      )
       const request = express.request({
         method: "POST",
         body: JSON.parse(BODY),
         headers: {
           "svix-id": SVIX_ID,
           "svix-timestamp": SVIX_TIMESTAMP,
-          "svix-signature": signature,
+          "svix-signature": SIGNATURE,
           "content-type": "application/json",
         },
       })
@@ -70,20 +62,13 @@ describe("WebhookSignatureGuard", () => {
     })
 
     it("then it should return true", () => {
-      const validSig = computeSignature(
-        TEST_SECRET,
-        SVIX_ID,
-        SVIX_TIMESTAMP,
-        BODY,
-      )
-      const invalidSig = "v1,aW52YWxpZHNpZ25hdHVyZQ=="
       const request = express.request({
         method: "POST",
         body: JSON.parse(BODY),
         headers: {
           "svix-id": SVIX_ID,
           "svix-timestamp": SVIX_TIMESTAMP,
-          "svix-signature": `${invalidSig} ${validSig}`,
+          "svix-signature": `v1,aW52YWxpZHNpZ25hdHVyZQ== ${SIGNATURE}`,
           "content-type": "application/json",
         },
       })
@@ -109,20 +94,18 @@ describe("WebhookSignatureGuard", () => {
     })
 
     it("then it should throw UnauthorizedException", () => {
-      const wrongSecret = "whsec_dGhpc2lzYXdyb25nc2VjcmV0"
-      const wrongSig = computeSignature(
-        wrongSecret,
-        SVIX_ID,
-        SVIX_TIMESTAMP,
-        BODY,
-      )
       const request = express.request({
         method: "POST",
         body: JSON.parse(BODY),
         headers: {
           "svix-id": SVIX_ID,
           "svix-timestamp": SVIX_TIMESTAMP,
-          "svix-signature": wrongSig,
+          "svix-signature": svix.signature(
+            svix.secret(),
+            SVIX_ID,
+            SVIX_TIMESTAMP,
+            BODY,
+          ),
           "content-type": "application/json",
         },
       })
@@ -151,19 +134,13 @@ describe("WebhookSignatureGuard", () => {
     })
 
     it("then it should throw UnauthorizedException", () => {
-      const signature = computeSignature(
-        TEST_SECRET,
-        SVIX_ID,
-        SVIX_TIMESTAMP,
-        BODY,
-      )
       const request = express.request({
         method: "POST",
         body: JSON.parse(BODY),
         headers: {
           "svix-id": SVIX_ID,
           "svix-timestamp": SVIX_TIMESTAMP,
-          "svix-signature": signature,
+          "svix-signature": SIGNATURE,
           "content-type": "application/json",
         },
       })
@@ -337,28 +314,25 @@ describe("WebhookSignatureGuard", () => {
       guard = module.get(WebhookSignatureGuard)
     })
 
-    it("then it should throw InternalServerErrorException", () => {
-      const signature = computeSignature(
-        TEST_SECRET,
-        SVIX_ID,
-        SVIX_TIMESTAMP,
-        BODY,
-      )
+    it("then it should throw WebhookRawBodyException", () => {
       const request = express.request({
         method: "POST",
         body: JSON.parse(BODY),
         headers: {
           "svix-id": SVIX_ID,
           "svix-timestamp": SVIX_TIMESTAMP,
-          "svix-signature": signature,
+          "svix-signature": SIGNATURE,
           "content-type": "application/json",
         },
       })
 
       const ctx = executionContext(request, express.response())
       expect(() => guard.canActivate(<ExecutionContext>ctx)).toThrowMatching(
-        InternalServerErrorException,
-        { message: "Internal server error" },
+        WebhookRawBodyException,
+        {
+          message:
+            "rawBody is not available. Enable rawBody: true in NestFactory.create() options.",
+        },
       )
     })
   })

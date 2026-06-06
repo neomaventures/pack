@@ -1,14 +1,17 @@
+import { faker } from "@faker-js/faker"
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
-import { computeSignature } from "fixtures/crypto"
+import * as svix from "fixtures/svix"
 import request from "supertest"
 
 const { OK, UNAUTHORIZED, INTERNAL_SERVER_ERROR } = HttpStatus
 
-const TEST_SECRET = "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw"
-const SVIX_ID = "msg_2Lx0r7Gmz1lL7dK3n4y5j"
-const SVIX_TIMESTAMP = "1713200000"
+const SECRET = "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw"
+const SVIX_ID = svix.id()
+const SVIX_TIMESTAMP = svix.timestamp()
 const BODY = { type: "user.created", data: { id: "usr_123" } }
+const BODY_STRING = JSON.stringify(BODY)
+const SIGNATURE = svix.signature(SECRET, SVIX_ID, SVIX_TIMESTAMP, BODY_STRING)
 
 const appModules: [string, string][] = [
   ["forRoot", "e2e/app/app.module.ts#AppModule"],
@@ -28,19 +31,11 @@ appModules.forEach(([name, modulePath]) => {
 
     describe("When a request is made with a valid signature", () => {
       it("then it should respond with HTTP 200", async () => {
-        const bodyString = JSON.stringify(BODY)
-        const signature = computeSignature(
-          TEST_SECRET,
-          SVIX_ID,
-          SVIX_TIMESTAMP,
-          bodyString,
-        )
-
         await request(app.getHttpServer())
           .post("/webhooks")
           .set("svix-id", SVIX_ID)
           .set("svix-timestamp", SVIX_TIMESTAMP)
-          .set("svix-signature", signature)
+          .set("svix-signature", SIGNATURE)
           .send(BODY)
           .expect(OK)
           .expect({ received: true })
@@ -53,7 +48,10 @@ appModules.forEach(([name, modulePath]) => {
           .post("/webhooks")
           .set("svix-id", SVIX_ID)
           .set("svix-timestamp", SVIX_TIMESTAMP)
-          .set("svix-signature", "v1,aW52YWxpZHNpZ25hdHVyZQ==")
+          .set(
+            "svix-signature",
+            svix.signature(svix.secret(), SVIX_ID, SVIX_TIMESTAMP, BODY_STRING),
+          )
           .send(BODY)
           .expect(UNAUTHORIZED)
           .expect({
@@ -101,7 +99,16 @@ appModules.forEach(([name, modulePath]) => {
           .post("/webhooks")
           .set("svix-id", SVIX_ID)
           .set("svix-timestamp", SVIX_TIMESTAMP)
-          .set("svix-signature", "noprefixsignature")
+          .set(
+            "svix-signature",
+            svix.signature(
+              SECRET,
+              SVIX_ID,
+              SVIX_TIMESTAMP,
+              BODY_STRING,
+              faker.hacker.ingverb(),
+            ),
+          )
           .send(BODY)
           .expect(UNAUTHORIZED)
           .expect({
@@ -114,19 +121,11 @@ appModules.forEach(([name, modulePath]) => {
 
     describe("When a request is made with a tampered body", () => {
       it("then it should respond with HTTP 401", async () => {
-        const originalBody = JSON.stringify(BODY)
-        const signature = computeSignature(
-          TEST_SECRET,
-          SVIX_ID,
-          SVIX_TIMESTAMP,
-          originalBody,
-        )
-
         await request(app.getHttpServer())
           .post("/webhooks")
           .set("svix-id", SVIX_ID)
           .set("svix-timestamp", SVIX_TIMESTAMP)
-          .set("svix-signature", signature)
+          .set("svix-signature", SIGNATURE)
           .send({ tampered: true })
           .expect(UNAUTHORIZED)
           .expect({
@@ -150,24 +149,17 @@ describe("POST /webhooks (rawBody disabled)", () => {
 
   describe("When a validly-signed request is made without rawBody enabled", () => {
     it("then it should respond with HTTP 500", async () => {
-      const bodyString = JSON.stringify(BODY)
-      const signature = computeSignature(
-        TEST_SECRET,
-        SVIX_ID,
-        SVIX_TIMESTAMP,
-        bodyString,
-      )
-
       await request(app.getHttpServer())
         .post("/webhooks")
         .set("svix-id", SVIX_ID)
         .set("svix-timestamp", SVIX_TIMESTAMP)
-        .set("svix-signature", signature)
+        .set("svix-signature", SIGNATURE)
         .send(BODY)
         .expect(INTERNAL_SERVER_ERROR)
         .expect({
           statusCode: INTERNAL_SERVER_ERROR,
-          message: "Internal server error",
+          message:
+            "rawBody is not available. Enable rawBody: true in NestFactory.create() options.",
           error: "Internal Server Error",
         })
     })

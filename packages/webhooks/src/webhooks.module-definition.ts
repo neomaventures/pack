@@ -1,6 +1,7 @@
 import { ConfigurableModuleBuilder } from "@nestjs/common"
 
 import { WebhookSignatureGuard } from "./guards/webhook-signature.guard"
+import { WebhookInterceptor } from "./interceptors/webhook.interceptor"
 import { WEBHOOKS_OPTIONS, type WebhooksOptions } from "./webhooks.options"
 
 export const {
@@ -14,13 +15,18 @@ export const {
   .setClassMethodName("forRoot")
   .setExtras({}, (definition) => ({
     ...definition,
-    // global: true — guard needs DI resolution in consumer controller modules
+    // global: true — guard and interceptor need DI resolution in consumer controller modules
     global: true,
-    providers: [...(definition.providers ?? []), WebhookSignatureGuard],
+    providers: [
+      ...(definition.providers ?? []),
+      WebhookSignatureGuard,
+      WebhookInterceptor,
+    ],
     exports: [
       ...(definition.exports ?? []),
       WEBHOOKS_OPTIONS,
       WebhookSignatureGuard,
+      WebhookInterceptor,
     ],
   }))
   .build()
