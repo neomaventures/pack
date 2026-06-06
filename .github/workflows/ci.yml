@@ -75,11 +75,15 @@ jobs:
           retention-days: 1
 
   # ── Unit tests ───────────────────────────────────────────────────────
+  # On branches, only test packages changed since main (plus their
+  # dependents). On main itself, test everything.
   unit-test:
     needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: ./.github/actions/setup
 
       - name: Download build artifacts
@@ -89,14 +93,22 @@ jobs:
           path: packages/
 
       - name: Unit tests
-        run: pnpm turbo test
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            pnpm turbo test
+          else
+            pnpm --filter '...[origin/main]' test
+          fi
 
   # ── E2E tests ───────────────────────────────────────────────────────
+  # Same affected-only strategy as unit tests.
   e2e:
     needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: ./.github/actions/setup
 
       - name: Download build artifacts
@@ -106,7 +118,12 @@ jobs:
           path: packages/
 
       - name: E2E tests
-        run: pnpm turbo test:e2e
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            pnpm turbo test:e2e
+          else
+            pnpm --filter '...[origin/main]' test:e2e
+          fi
 
   # ── Release ──────────────────────────────────────────────────────────
   # Gated on lint + unit-test + e2e, so we never open a Version Packages
