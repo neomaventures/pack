@@ -75,7 +75,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: dist
-          path: packages/
 
       - name: Unit tests
         run: pnpm -r test
@@ -92,7 +91,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: dist
-          path: packages/
 
       - name: E2E tests
         run: pnpm -r test:e2e
