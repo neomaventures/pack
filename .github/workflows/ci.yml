@@ -47,8 +47,11 @@ jobs:
           name: dist
           path: packages/
 
-      - name: Lint
-        run: pnpm lint
+      - name: Lint packages
+        run: turbo lint
+
+      - name: Lint YAML
+        run: pnpm lint:yaml
 
       - name: Check README package list
         run: node scripts/check-readme-packages.mjs
@@ -62,7 +65,7 @@ jobs:
       - uses: ./.github/actions/setup
 
       - name: Build
-        run: pnpm -r build
+        run: turbo build
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -86,7 +89,7 @@ jobs:
           path: packages/
 
       - name: Unit tests
-        run: pnpm -r test
+        run: turbo test
 
   # ── E2E tests ───────────────────────────────────────────────────────
   e2e:
@@ -103,7 +106,7 @@ jobs:
           path: packages/
 
       - name: E2E tests
-        run: pnpm -r test:e2e
+        run: turbo test:e2e
 
   # ── Release ──────────────────────────────────────────────────────────
   # Gated on lint + unit-test + e2e, so we never open a Version Packages
