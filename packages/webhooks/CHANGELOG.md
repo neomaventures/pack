@@ -1,5 +1,11 @@
 # @neomaventures/webhooks
 
+## 0.2.0
+
+### Minor Changes
+
+- 970bdf1: Add idempotent webhook ingestion via `@WebhookHandler(provider)` decorator. Persists unique events, short-circuits duplicates with HTTP 204, and emits `webhook.received` / `webhook.duplicate` domain events.
+
 ## 0.1.0
 
 ### Minor Changes
