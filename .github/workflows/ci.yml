@@ -5,8 +5,9 @@ on:
     branches: ["**"] # every branch, once per push (not tags)
   # Fork PRs don't push to this repo, so the push trigger never sees them.
   # pull_request gives them pre-merge CI — with no access to secrets and a
-  # read-only token (unlike pull_request_target). The `ci` job below runs this
-  # only for forks; internal-branch PRs are already covered by their push run.
+  # read-only token (unlike pull_request_target). The `gate` job below runs
+  # this only for forks; internal-branch PRs are already covered by their
+  # push run.
   pull_request: {}
 
 concurrency:
@@ -20,52 +21,103 @@ permissions:
   contents: read
 
 jobs:
-  ci:
-    # Every push; on pull_request only for forks (internal-branch PRs already
-    # ran via their push, so we don't double-run them).
+  # ── Guard ────────────────────────────────────────────────────────────
+  # Central fork-PR condition so downstream jobs don't repeat it.
+  gate:
+    # Every push; on pull_request only for forks (internal-branch PRs
+    # already ran via their push, so we don't double-run them).
     if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.fork }}
     runs-on: ubuntu-latest
     steps:
+      - run: echo "Gate passed"
+
+  # ── Lint ─────────────────────────────────────────────────────────────
+  # Depends on build because type-aware ESLint rules (e.g.
+  # no-unsafe-argument) need cross-package .d.ts files to resolve types.
+  lint:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Use Node.js
-        uses: actions/setup-node@v4
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
         with:
-          node-version: 22.x
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Check README package list
-        run: node scripts/check-readme-packages.mjs
-
-      - name: Build
-        run: pnpm -r build
+          name: dist
+          path: packages/
 
       - name: Lint
         run: pnpm lint
 
+      - name: Check README package list
+        run: node scripts/check-readme-packages.mjs
+
+  # ── Build ────────────────────────────────────────────────────────────
+  build:
+    needs: gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+
+      - name: Build
+        run: pnpm -r build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: packages/*/dist/
+          retention-days: 1
+
+  # ── Unit tests ───────────────────────────────────────────────────────
+  unit-test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: packages/
+
       - name: Unit tests
         run: pnpm -r test
+
+  # ── E2E tests ───────────────────────────────────────────────────────
+  e2e:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: packages/
 
       - name: E2E tests
         run: pnpm -r test:e2e
 
-  # Gated on `ci` via `needs`, so we never open a Version Packages PR or publish
-  # from a commit whose build/lint/test/e2e hasn't gone green. Runs only on
-  # main; skipped on every other branch.
+  # ── Release ──────────────────────────────────────────────────────────
+  # Gated on lint + unit-test + e2e, so we never open a Version Packages
+  # PR or publish from a commit whose checks haven't gone green. Runs
+  # only on main; skipped on every other branch.
   #
-  # Packages publish to GitHub Packages (per each package's `publishConfig`),
-  # not the public npm registry. Access is controlled by GitHub org
-  # membership; GITHUB_TOKEN with `packages: write` is sufficient.
+  # Packages publish to GitHub Packages (per each package's
+  # `publishConfig`), not the public npm registry. Access is controlled
+  # by GitHub org membership; GITHUB_TOKEN with `packages: write` is
+  # sufficient.
   release:
-    needs: ci
-    # Only on a push to main — never on a pull_request. Fork PRs can never
-    # reach this job.
+    needs: [lint, unit-test, e2e]
+    # Only on a push to main — never on a pull_request. Fork PRs can
+    # never reach this job.
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     permissions:
@@ -80,10 +132,10 @@ jobs:
 
       # `registry-url` + `scope` here writes the GitHub Packages registry
       # mapping into ~/.npmrc, so `npm publish` can authenticate via
-      # NODE_AUTH_TOKEN below. (This is the GHP-specific equivalent of the
-      # NPM_TOKEN setup we removed — for the public npm registry the same
-      # mechanism would shadow Changesets' own auth, but for GHP it's the
-      # correct path.)
+      # NODE_AUTH_TOKEN below. (This is the GHP-specific equivalent of
+      # the NPM_TOKEN setup we removed — for the public npm registry the
+      # same mechanism would shadow Changesets' own auth, but for GHP
+      # it's the correct path.)
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
@@ -95,9 +147,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # If there are changesets on main → opens/updates the "Version Packages" PR.
-      # If versions were just bumped (that PR merged) → runs `pnpm release` to
-      # publish to GitHub Packages.
+      # If there are changesets on main → opens/updates the "Version
+      # Packages" PR. If versions were just bumped (that PR merged) →
+      # runs `pnpm release` to publish to GitHub Packages.
       - name: Create Release PR or Publish
         uses: changesets/action@v1
         with:
