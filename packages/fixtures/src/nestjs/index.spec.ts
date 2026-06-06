@@ -1,6 +1,8 @@
+import { lastValueFrom } from "rxjs"
+
 import { express } from "../express"
 
-import { MockLoggerService, executionContext } from "./index"
+import { callHandler, MockLoggerService, executionContext } from "./index"
 
 describe("executionContext", () => {
   it("should return switchToHttp with req and res", () => {
@@ -57,6 +59,23 @@ describe("executionContext", () => {
 
     expect(ctx.getHandler!()).toBe(UserController.prototype.findAll)
     expect(ctx.getClass!()).toBe(UserController)
+  })
+})
+
+describe("callHandler", () => {
+  it("should return the default value when no argument is provided", async () => {
+    const next = callHandler()
+    const result = await lastValueFrom(next.handle())
+
+    expect(result).toEqual({ ok: true })
+  })
+
+  it("should return the provided value", async () => {
+    const expected = { handled: true }
+    const next = callHandler(expected)
+    const result = await lastValueFrom(next.handle())
+
+    expect(result).toEqual(expected)
   })
 })
 
