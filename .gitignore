@@ -11,3 +11,4 @@ coverage/
 !.env.test
 !.env.e2e
 .npmrc
+.turbo
