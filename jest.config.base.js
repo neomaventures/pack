@@ -9,8 +9,8 @@
  *   const base = require("../../jest.config.base.js")
  *   module.exports = { ...base, globalSetup: "..." }
  *
- * The transform matches `.ts` only — never `.js` — so @swc/jest never tries
- * to recompile a dependency's already-built compiled output (which pnpm
+ * The transform matches `.ts`/`.tsx` only — never `.js` — so @swc/jest never
+ * tries to recompile a dependency's already-built compiled output (which pnpm
  * symlinks to a package's dist dir, outside node_modules). `<rootDir>`
  * resolves to each consuming package's directory.
  *
