@@ -1,12 +1,36 @@
 {
-  "moduleFileExtensions": ["js", "json", "ts"],
+  "moduleFileExtensions": [
+    "js",
+    "json",
+    "ts"
+  ],
   "rootDir": ".",
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
-  "setupFiles": ["<rootDir>/build.setup.ts"],
-  "setupFilesAfterEnv": ["jest-extended/all", "@neomaventures/fixtures/matchers"],
+  "setupFiles": [
+    "<rootDir>/build.setup.ts"
+  ],
+  "setupFilesAfterEnv": [
+    "jest-extended/all",
+    "@neomaventures/fixtures/matchers"
+  ],
   "transform": {
-    "^.+\\.tsx?$": "ts-jest"
+    "^.+\\.tsx?$": [
+      "@swc/jest",
+      {
+        "jsc": {
+          "parser": {
+            "syntax": "typescript",
+            "decorators": true,
+            "dynamicImport": true
+          },
+          "transform": {
+            "legacyDecorator": true,
+            "decoratorMetadata": true
+          }
+        }
+      }
+    ]
   },
   "moduleNameMapper": {
     "fixtures/(.*)$": "<rootDir>/../fixtures/$1",

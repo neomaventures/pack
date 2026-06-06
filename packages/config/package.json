@@ -54,7 +54,6 @@
     "@types/jest": "^30.0.0",
     "jest": "^30.3.0",
     "jest-extended": "^7.0.0",
-    "reflect-metadata": "^0.2.2",
-    "ts-jest": "^29.4.9"
+    "reflect-metadata": "^0.2.2"
   }
 }

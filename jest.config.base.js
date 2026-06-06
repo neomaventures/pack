@@ -9,13 +9,10 @@
  *   const base = require("../../jest.config.base.js")
  *   module.exports = { ...base, globalSetup: "..." }
  *
- * The transform matches `.ts` only — never `.js` — so ts-jest never tries to
- * recompile a dependency's already-built compiled output (which pnpm symlinks
- * to a package's dist dir, outside node_modules). That's what produced the
- * recurring "Unable to process … falling back to original file content"
- * warnings; with a .ts-only transform there's nothing to ignore, so no
- * transformIgnorePatterns is needed. `<rootDir>` resolves to each consuming
- * package's directory.
+ * The transform matches `.ts`/`.tsx` only — never `.js` — so @swc/jest never
+ * tries to recompile a dependency's already-built compiled output (which pnpm
+ * symlinks to a package's dist dir, outside node_modules). `<rootDir>`
+ * resolves to each consuming package's directory.
  *
  * @type {import('jest').Config}
  */
@@ -24,7 +21,22 @@ module.exports = {
   rootDir: ".",
   testRegex: ".*\\.spec\\.ts$",
   transform: {
-    "^.+\\.tsx?$": ["ts-jest", { tsconfig: "<rootDir>/tsconfig.json" }],
+    "^.+\\.tsx?$": [
+      "@swc/jest",
+      {
+        jsc: {
+          parser: {
+            syntax: "typescript",
+            decorators: true,
+            dynamicImport: true,
+          },
+          transform: {
+            legacyDecorator: true,
+            decoratorMetadata: true,
+          },
+        },
+      },
+    ],
   },
   testEnvironment: "node",
   roots: ["<rootDir>/src/"],
