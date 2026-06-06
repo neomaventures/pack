@@ -48,7 +48,7 @@ jobs:
           path: packages/
 
       - name: Lint packages
-        run: turbo lint
+        run: pnpm turbo lint
 
       - name: Lint YAML
         run: pnpm lint:yaml
@@ -65,7 +65,7 @@ jobs:
       - uses: ./.github/actions/setup
 
       - name: Build
-        run: turbo build
+        run: pnpm turbo build
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -89,7 +89,7 @@ jobs:
           path: packages/
 
       - name: Unit tests
-        run: turbo test
+        run: pnpm turbo test
 
   # ── E2E tests ───────────────────────────────────────────────────────
   e2e:
@@ -106,7 +106,7 @@ jobs:
           path: packages/
 
       - name: E2E tests
-        run: turbo test:e2e
+        run: pnpm turbo test:e2e
 
   # ── Release ──────────────────────────────────────────────────────────
   # Gated on lint + unit-test + e2e, so we never open a Version Packages
