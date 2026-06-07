@@ -9,9 +9,13 @@
   <body>
     <main class="hero">
       <h1 class="hero-title">Something went wrong</h1>
-      <p class="hero-subtitle">
-        We're sorry, please try again later.
-      </p>
+      <% if (typeof exception !== 'undefined' && exception) { %>
+        <p class="hero-subtitle"><%= exception.statusCode %> — <%= exception.message %></p>
+      <% } else { %>
+        <p class="hero-subtitle">
+          We're sorry, please try again later.
+        </p>
+      <% } %>
       <a href="/" class="demo-button" style="display: inline-block; text-decoration: none;">
         Back to home
       </a>

@@ -876,6 +876,9 @@ importers:
       '@neomaventures/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@neomaventures/exceptions':
+        specifier: workspace:*
+        version: link:../../packages/exceptions
       '@neomaventures/logging':
         specifier: workspace:*
         version: link:../../packages/logging
