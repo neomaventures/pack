@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker"
-import { MagicLinkService } from "@neomaventures/auth"
+import { ConfigService } from "@neomaventures/config"
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
 import request from "supertest"
@@ -69,20 +69,27 @@ describe("POST /auth/register", () => {
           .send({ email })
 
         const message = await mailpit.findByRecipient(email)
+        // TODO : We should test the content of the email.
         expect(message).toBeDefined()
       })
     })
   })
 
-  describe("Given the magic link service fails to send", () => {
+  describe("Given SMTP is misconfigured", () => {
     let app: Awaited<ReturnType<typeof managedAppInstance>>
 
     beforeEach(async () => {
       app = await managedAppInstance({
         configure: configureViewEngine,
         build: (builder) =>
-          builder.overrideProvider(MagicLinkService).useValue({
-            send: jest.fn().mockRejectedValue(new Error("SMTP failed")),
+          builder.overrideProvider(ConfigService).useValue({
+            smtpHost: "localhost",
+            smtpPort: "19999",
+            smtpUser: "",
+            smtpPass: "",
+            mailFrom: "noreply@localhost",
+            jwtSecret: "test-secret",
+            appUrl: "http://localhost:3000",
           }),
       })
     })
