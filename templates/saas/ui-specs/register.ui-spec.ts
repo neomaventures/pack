@@ -31,10 +31,9 @@ test.describe("Registration Page", () => {
       await expect(googleButton).toBeDisabled()
     })
 
-    test("should display a back link to the homepage", async ({ page }) => {
-      const backLink = page.getByRole("link", { name: /back/i })
-      await expect(backLink).toBeVisible()
-      await expect(backLink).toHaveAttribute("href", "/")
+    test("should navigate to / when back link is clicked", async ({ page }) => {
+      await page.getByRole("link", { name: /back/i }).click()
+      await expect(page).toHaveURL("/")
     })
   })
 })
