@@ -2,8 +2,8 @@ import { expect, test } from "@playwright/test"
 
 test.describe("Error Page (render mode)", () => {
   test.describe("When a visitor navigates to /error?type=render", () => {
-    test.beforeEach(({ page }) => {
-      return page.goto("/error?type=render")
+    test.beforeEach(async ({ page }) => {
+      await page.goto("/error?type=render")
     })
 
     test("should display the error heading", async ({ page }) => {

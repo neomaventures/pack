@@ -1,3 +1,5 @@
+import { ErrorTemplate } from "@neomaventures/exceptions"
+import { ApplicationLoggerService } from "@neomaventures/logging"
 import {
   BadRequestException,
   Controller,
@@ -6,9 +8,6 @@ import {
   Query,
   Render,
 } from "@nestjs/common"
-
-import { ErrorTemplate } from "@neomaventures/exceptions"
-import { ApplicationLoggerService } from "@neomaventures/logging"
 
 /**
  * Handles top-level routes for the SaaS template application.
@@ -46,6 +45,9 @@ export class ApplicationController {
     if (type === "redirect") {
       throw new BadRequestException("Invalid input")
     }
-    throw new InternalServerErrorException("Something went wrong")
+    if (type === "render") {
+      throw new InternalServerErrorException("Something went wrong")
+    }
+    throw new BadRequestException(`Unknown error type: ${type}`)
   }
 }
