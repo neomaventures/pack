@@ -24,7 +24,9 @@ async function bootstrap(): Promise<void> {
   app.setBaseViewsDir(join(process.cwd(), "views"))
   app.setViewEngine("ejs")
 
-  await app.listen(process.env.PORT ? parseInt(process.env.PORT, 10) : 3000)
+  const port = Number(process.env.PORT) || 3000
+
+  await app.listen(port)
 }
 
 void bootstrap()

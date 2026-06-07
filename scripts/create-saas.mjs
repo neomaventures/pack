@@ -12,7 +12,7 @@
  * ```
  */
 
-import { cpSync, readdirSync, readFileSync, statSync, writeFileSync } from "fs"
+import { cpSync, existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "fs"
 import { basename, extname, join, resolve } from "path"
 import { fileURLToPath } from "url"
 
@@ -128,6 +128,12 @@ if (!KEBAB_CASE_REGEX.test(projectName)) {
 const targetDir = targetArg
   ? resolve(targetArg)
   : resolve(PACK_ROOT, "..", projectName)
+
+if (existsSync(targetDir)) {
+  console.error(`Error: "${targetDir}" already exists.`)
+  console.error("  Remove it first or choose a different target directory.")
+  process.exit(1)
+}
 
 const appName = toDisplayName(projectName)
 
