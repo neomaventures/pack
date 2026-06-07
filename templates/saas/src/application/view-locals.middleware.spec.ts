@@ -21,7 +21,7 @@ describe("ViewLocalsMiddleware", () => {
         middleware.use(req, res, next)
 
         expect(res.locals).toMatchObject({
-          appName: "SaaS Template",
+          appName: "__APP_NAME__",
           version,
         })
       })
@@ -49,7 +49,7 @@ describe("ViewLocalsMiddleware", () => {
         middleware.use(req, res, next)
 
         expect(res.locals).toMatchObject({
-          appName: "SaaS Template",
+          appName: "__APP_NAME__",
           version: "0.0.0",
         })
 

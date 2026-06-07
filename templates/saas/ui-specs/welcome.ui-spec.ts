@@ -12,7 +12,7 @@ test.describe("Welcome Page", () => {
 
     test("should display the app name in the heading", async ({ page }) => {
       const headline = page.getByRole("heading", { level: 1 })
-      await expect(headline).toHaveText("Welcome to SaaS Template")
+      await expect(headline).toHaveText("Welcome to __APP_NAME__")
     })
 
     test("should display the subtitle", async ({ page }) => {
@@ -25,7 +25,7 @@ test.describe("Welcome Page", () => {
     test("should display the app name in the header brand", async ({
       page,
     }) => {
-      const brand = page.getByText("SaaS Template", { exact: true }).first()
+      const brand = page.getByText("__APP_NAME__", { exact: true }).first()
       await expect(brand).toBeVisible()
     })
 

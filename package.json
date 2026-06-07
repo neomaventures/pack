@@ -12,7 +12,8 @@
     "lint:yaml": "eslint \"**/*.{yml,yaml}\"",
     "release": "pnpm -r build && changeset publish",
     "new-package": "bash scripts/new-package.sh",
-    "check:readme": "node scripts/check-readme-packages.mjs"
+    "check:readme": "node scripts/check-readme-packages.mjs",
+    "create:saas": "node scripts/create-saas.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0",

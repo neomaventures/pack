@@ -37,7 +37,7 @@ describe("GET /", () => {
         "utf-8",
       )
       const expectedHtml = ejs.render(template, {
-        appName: "SaaS Template",
+        appName: "__APP_NAME__",
         version,
       })
 
