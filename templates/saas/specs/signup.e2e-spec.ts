@@ -54,7 +54,7 @@ describe("POST /signup", () => {
       expect(response.headers["content-type"]).toMatch(/text\/html/)
       expect(response.text).toContain("Sign up")
       expect(response.text).toContain(invalidEmail)
-      expect(response.text).toContain("email must be an email")
+      expect(response.text).toContain("Please enter a valid email address.")
     })
   })
 
