@@ -19,6 +19,9 @@
   },
   "dependencies": {
     "@neomaventures/config": "workspace:*",
+    "@neomaventures/exceptions": "workspace:*",
+    "@neomaventures/logging": "workspace:*",
+    "@neomaventures/request-context": "workspace:*",
     "@nestjs/common": "^11.1.18",
     "@nestjs/core": "^11.1.18",
     "@nestjs/platform-express": "^11.1.18",
