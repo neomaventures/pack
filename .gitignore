@@ -9,8 +9,8 @@ coverage/
 .env.*
 !.env.example
 !.env.test
-!.env.e2e
-!.env.unit
+!.env.spec
+!.env.e2e-spec
 !.env.ui-spec
 !.env.development
 playwright-report/

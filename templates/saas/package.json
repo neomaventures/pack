@@ -13,8 +13,8 @@
     "dev": "node --env-file=.env.development node_modules/@nestjs/cli/bin/nest.js start --watch",
     "typecheck": "tsc --noEmit",
     "start:prod": "node dist/main",
-    "test": "node --env-file=.env.unit --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.json",
-    "test:e2e": "node --env-file=.env.e2e --experimental-vm-modules node_modules/jest/bin/jest.js --config ./specs/jest-e2e.json --runInBand",
+    "test": "node --env-file=.env.spec --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.json",
+    "test:e2e": "node --env-file=.env.e2e-spec --experimental-vm-modules node_modules/jest/bin/jest.js --config ./specs/jest-e2e.json --runInBand",
     "test:ui": "node --env-file=.env.ui-spec node_modules/@playwright/test/cli.js test"
   },
   "dependencies": {
