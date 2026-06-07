@@ -9,6 +9,5 @@ minimumReleaseAge: 10080
 allowBuilds:
   "@nestjs/core": true
   "@swc/core": true
-  better-sqlite3: true
   sqlite3: true
   unrs-resolver: true
