@@ -1,13 +1,23 @@
+import { readFileSync } from "fs"
+import { join } from "path"
+
 import { faker } from "@faker-js/faker"
 import { ConfigService } from "@neomaventures/config"
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
+import ejs from "ejs"
 import request from "supertest"
 
 import { configureViewEngine } from "~fixtures/configure-view-engine"
 import { mailpit } from "~fixtures/email/mailpit"
+import { npmPackageName, npmPackageVersion } from "~fixtures/package-version"
 
 const { BAD_REQUEST, FOUND, SEE_OTHER } = HttpStatus
+
+const registerTemplate = readFileSync(
+  join(process.cwd(), "views", "auth", "register.ejs"),
+  "utf-8",
+)
 
 describe("POST /auth/register", () => {
   describe("Given the magic link service is operational", () => {
@@ -20,32 +30,48 @@ describe("POST /auth/register", () => {
     })
 
     describe("Given an invalid email", () => {
-      it(`should respond with HTTP ${BAD_REQUEST} and re-render the form with an error`, async () => {
+      it(`should respond with HTTP ${BAD_REQUEST} and re-render the form with the error`, async () => {
         const invalidEmail = faker.string.alpha(10)
 
-        const response = await request(app.getHttpServer())
+        const expectedHtml = ejs.render(registerTemplate, {
+          npmPackageName,
+          npmPackageVersion,
+          exception: {
+            email: {
+              value: invalidEmail,
+              error: "Please enter a valid email address.",
+            },
+          },
+        })
+
+        await request(app.getHttpServer())
           .post("/auth/register")
           .send({ email: invalidEmail })
           .set("Accept", "text/html")
           .expect(BAD_REQUEST)
-
-        expect(response.headers["content-type"]).toMatch(/text\/html/)
-        expect(response.text).toContain("Sign up")
-        expect(response.text).toContain(invalidEmail)
-        expect(response.text).toContain("Please enter a valid email address.")
+          .expect(expectedHtml)
       })
     })
 
     describe("Given an empty body", () => {
-      it(`should respond with HTTP ${BAD_REQUEST} and re-render the form with an error`, async () => {
-        const response = await request(app.getHttpServer())
+      it(`should respond with HTTP ${BAD_REQUEST} and re-render the form with the error`, async () => {
+        const expectedHtml = ejs.render(registerTemplate, {
+          npmPackageName,
+          npmPackageVersion,
+          exception: {
+            email: {
+              value: undefined,
+              error: "Please enter your email address.",
+            },
+          },
+        })
+
+        await request(app.getHttpServer())
           .post("/auth/register")
           .send({})
           .set("Accept", "text/html")
           .expect(BAD_REQUEST)
-
-        expect(response.headers["content-type"]).toMatch(/text\/html/)
-        expect(response.text).toContain("Sign up")
+          .expect(expectedHtml)
       })
     })
 
