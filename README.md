@@ -24,6 +24,12 @@ The monorepo for the **`@neomaventures/*`** family — a pack of NestJS building
 | [`@neomaventures/managed-app`](packages/managed-app) | Boots a NestJS app from a module path — an e2e harness for the `@neomaventures/*` packages. |
 | [`@neomaventures/managed-database`](packages/managed-database) | In-memory SQLite `datasource` fixture for tests. |
 
+## Templates
+
+| Template | Description |
+|----------|-------------|
+| [`saas`](templates/saas) | SaaS starter template — integration test bed and starter kit. EJS + htmx + Alpine.js, wires `@neomaventures/*` packages into a working app. |
+
 Each package is versioned, changelogged, and published on its own cadence — **privately, to GitHub Packages** (not the public npm registry). When a package proves itself in production, it graduates to public npm publishing (see [Versioning](#versioning) for the graduation flow).
 
 ## Getting started

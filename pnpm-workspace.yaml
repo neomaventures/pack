@@ -1,5 +1,6 @@
 packages:
   - "packages/*"
+  - "templates/*"
 
 # Supply-chain: refuse dependencies published within the last 7 days.
 minimumReleaseAge: 10080
