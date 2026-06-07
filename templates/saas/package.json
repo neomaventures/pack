@@ -6,14 +6,16 @@
   "license": "MIT",
   "type": "commonjs",
   "engines": {
-    "node": ">=22.0.0",
-    "pnpm": ">=11.0.0"
+    "node": ">=22.0.0"
   },
   "scripts": {
     "build": "nest build",
     "dev": "nest start --watch",
     "typecheck": "tsc --noEmit",
-    "start:prod": "node dist/main"
+    "start:prod": "node dist/main",
+    "test": "node --env-file=.env.unit --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.json",
+    "test:e2e": "node --env-file=.env.e2e --experimental-vm-modules node_modules/jest/bin/jest.js --config ./specs/jest-e2e.json --runInBand",
+    "test:ui": "node --env-file=.env.ui-spec node_modules/@playwright/test/cli.js test"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.18",
@@ -24,11 +26,20 @@
     "rxjs": "^7.8.2"
   },
   "devDependencies": {
+    "@faker-js/faker": "^9.9.0",
     "@nestjs/cli": "^11.0.16",
+    "@nestjs/testing": "^11.1.18",
+    "@playwright/test": "^1.58.2",
     "@swc/cli": "^0.7.10",
     "@swc/core": "^1.12.1",
+    "@swc/jest": "^0.2.39",
+    "@types/ejs": "^3.1.5",
     "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
     "@types/node": "^25.5.2",
+    "@types/supertest": "^7.2.0",
+    "jest": "^30.3.0",
+    "supertest": "^7.2.2",
     "typescript": "^6.0.2"
   }
 }

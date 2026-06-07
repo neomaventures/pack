@@ -10,5 +10,9 @@ coverage/
 !.env.example
 !.env.test
 !.env.e2e
+!.env.unit
+!.env.ui-spec
+playwright-report/
+test-results/
 .npmrc
 .turbo

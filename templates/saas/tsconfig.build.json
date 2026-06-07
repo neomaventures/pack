@@ -3,5 +3,5 @@
   "compilerOptions": {
     "rootDir": "./src"
   },
-  "exclude": ["node_modules", "dist", "specs", "ui-specs", "**/*.spec.ts", "**/*.e2e-spec.ts"]
+  "exclude": ["node_modules", "dist", "fixtures", "specs", "ui-specs", "playwright.config.ts", "**/*.spec.ts", "**/*.e2e-spec.ts"]
 }

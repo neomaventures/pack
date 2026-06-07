@@ -22,8 +22,10 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
+    "types": ["jest", "node"],
     "paths": {
-      "~*": ["./src/*"]
+      "~*": ["./src/*"],
+      "~fixtures/*": ["./fixtures/*"]
     }
   }
 }
