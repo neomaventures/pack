@@ -1,12 +1,15 @@
-import { EmailDto } from "@neomaventures/auth"
+import { EmailDto, MagicLinkService } from "@neomaventures/auth"
 import { ErrorTemplate } from "@neomaventures/exceptions"
 import { ApplicationLoggerService } from "@neomaventures/logging"
 import {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- used in JSDoc {@link}
+  type BadRequestException,
   Body,
   Controller,
   Get,
   HttpStatus,
   Post,
+  Query,
   Redirect,
   Render,
 } from "@nestjs/common"
@@ -17,7 +20,10 @@ import {
  */
 @Controller("auth")
 export class AuthController {
-  public constructor(private readonly logger: ApplicationLoggerService) {}
+  public constructor(
+    private readonly logger: ApplicationLoggerService,
+    private readonly magicLinkService: MagicLinkService,
+  ) {}
 
   /**
    * Renders the registration page.
@@ -33,15 +39,38 @@ export class AuthController {
    *
    * Validates the email via {@link EmailDto}. On validation failure,
    * the exception filter re-renders the registration form with the
-   * error. On success, redirects to `/` (placeholder until magic
-   * link sending is wired).
+   * error via {@link BadRequestException}. On success, sends a magic
+   * link email and redirects to the confirmation page.
    *
    * @param email - The validated email address from the form body.
+   *
+   * @returns The redirect URL for the confirmation page.
    */
   @Post("register")
   @ErrorTemplate({ BadRequestException: "auth/register", default: "/error" })
-  @Redirect("/", HttpStatus.FOUND)
-  public submitRegister(@Body() { email }: EmailDto): void {
+  @Redirect("", HttpStatus.FOUND)
+  public async submitRegister(
+    @Body() { email }: EmailDto,
+  ): Promise<{ url: string }> {
     this.logger.log(`Registration submitted for ${email}`)
+    await this.magicLinkService.send(email)
+    return { url: `/auth/magic-link/sent?email=${encodeURIComponent(email)}` }
+  }
+
+  /**
+   * Renders the "check your email" confirmation page.
+   *
+   * Validates the email query parameter to prevent rendering
+   * malicious input. Invalid emails redirect to `/auth/register`.
+   *
+   * @param email - The validated email address from the query string.
+   *
+   * @returns The email address to display in the template.
+   */
+  @ErrorTemplate({ default: "/auth/register" })
+  @Get("magic-link/sent")
+  @Render("auth/magic-link-sent")
+  public magicLinkSent(@Query() { email }: EmailDto): { email: string } {
+    return { email }
   }
 }

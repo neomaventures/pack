@@ -931,6 +931,9 @@ importers:
       '@neomaventures/fixtures':
         specifier: workspace:*
         version: link:../../packages/fixtures
+      '@neomaventures/mailpit':
+        specifier: workspace:*
+        version: link:../../packages/mailpit
       '@neomaventures/managed-app':
         specifier: workspace:*
         version: link:../../packages/managed-app

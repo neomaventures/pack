@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Check your email - <%= npmPackageName %></title>
+    <link rel="stylesheet" href="/stylesheets/main.css" />
+  </head>
+  <body>
+    <main class="auth-card">
+      <h1 class="auth-title">Check your email</h1>
+
+      <p class="auth-description">
+        We've sent a magic link to
+        <span class="auth-email"><%= email %></span>
+      </p>
+
+      <p class="auth-hint">
+        Click the link in the email to sign in. If you don't see it, check
+        your spam folder.
+      </p>
+
+      <div class="auth-actions">
+        <p class="auth-retry-text">Didn't receive the email?</p>
+        <a href="/auth/register" class="auth-back-link">Try again</a>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <span>v<%= npmPackageVersion %></span>
+    </footer>
+  </body>
+</html>
