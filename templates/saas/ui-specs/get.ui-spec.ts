@@ -34,7 +34,9 @@ test.describe("Welcome Page", () => {
       await expect(versionMark).toBeVisible()
     })
 
-    test("should navigate to /auth/register when Sign in is clicked", async ({ page }) => {
+    test("should navigate to /auth/register when Sign in is clicked", async ({
+      page,
+    }) => {
       await page.getByRole("link", { name: "Sign in" }).click()
       await expect(page).toHaveURL("/auth/register")
     })
