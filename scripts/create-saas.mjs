@@ -19,6 +19,7 @@ import { fileURLToPath } from "url"
 const __filename = fileURLToPath(import.meta.url)
 const PACK_ROOT = resolve(__filename, "..", "..")
 const TEMPLATE_DIR = join(PACK_ROOT, "templates", "saas")
+const PACKAGES_DIR = join(PACK_ROOT, "packages")
 
 const KEBAB_CASE_REGEX = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
 
@@ -134,6 +135,19 @@ cpSync(TEMPLATE_DIR, targetDir, {
 replaceTokensInDir(targetDir, {
   __PACKAGE_NAME__: projectName,
 })
+
+// Replace workspace:* with published versions
+const targetPkg = JSON.parse(readFileSync(join(targetDir, "package.json"), "utf-8"))
+for (const depGroup of ["dependencies", "devDependencies"]) {
+  if (!targetPkg[depGroup]) continue
+  for (const [name, version] of Object.entries(targetPkg[depGroup])) {
+    if (version !== "workspace:*") continue
+    const pkgName = name.replace("@neomaventures/", "")
+    const pkgJson = JSON.parse(readFileSync(join(PACKAGES_DIR, pkgName, "package.json"), "utf-8"))
+    targetPkg[depGroup][name] = `^${pkgJson.version}`
+  }
+}
+writeFileSync(join(targetDir, "package.json"), JSON.stringify(targetPkg, null, 2) + "\n", "utf-8")
 
 console.log("Done! Next steps:")
 console.log("")
