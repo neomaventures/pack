@@ -140,8 +140,16 @@ Both modes require the request to accept `text/html` (content negotiation). JSON
 })
 ```
 
-- `GET /error?type=render` — throws a 500, rendered as EJS error page
-- `GET /error?type=redirect` — throws a 400, redirected to `/`
+Try these in a browser (`pnpm dev` then visit):
+
+| URL | What happens |
+|---|---|
+| `http://localhost:3000/error?type=render` | 500 — renders EJS error page with status code and message |
+| `http://localhost:3000/error?type=redirect` | 400 — redirects to `/` (BadRequestException maps to `/` prefix) |
+| `http://localhost:3000/error?type=foo` | 400 — unknown type, also redirects (BadRequestException) |
+| `http://localhost:3000/error` | 400 — no type, same as unknown |
+
+Browsers send `Accept: text/html` by default, so you see the HTML error handling. `curl` without an Accept header gets JSON instead (content negotiation).
 
 ## Tests
 
