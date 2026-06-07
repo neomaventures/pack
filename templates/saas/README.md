@@ -2,23 +2,11 @@
 
 A working NestJS SaaS application that serves two purposes: a **starter kit** for new projects and an **integration test bed** that proves `@neomaventures/*` packages compose correctly in a real app.
 
-The template renders server-side HTML — not JSON. Controllers render views, htmx handles dynamic interactions, and Alpine.js manages client-side state. No SPA framework.
-
-| Layer | Technology |
-|---|---|
-| Templating | EJS |
-| Dynamic interactions | htmx |
-| Client-side state | Alpine.js |
-
-## Why this exists
-
-Every `@neomaventures/*` package has its own specs, but package-level tests cannot catch integration bugs: guard ordering across packages, `forRoot` / `forRootAsync` wiring conflicts, middleware composition, DI resolution in a fully assembled app. These bugs surface in consumer apps (usually at the worst time).
-
-The template catches them in pack's CI, before they reach any consumer. It also means new SaaS projects start with a working app instead of 200 lines of boilerplate.
+The template renders server-side HTML via EJS. No SPA framework.
 
 ## Creating a new app
 
-Generate a new project from the template:
+From the pack monorepo root:
 
 ```bash
 pnpm create:saas <project-name> [target-directory]
@@ -33,9 +21,28 @@ pnpm install
 pnpm dev
 ```
 
-The setup script copies the template, replaces placeholder tokens with your project name, and resolves `workspace:*` dependencies to the latest published `@neomaventures/*` versions so the generated app installs from the registry. The target directory defaults to `../<project-name>` relative to the pack root if omitted.
+The setup script:
+- Copies the template to the target directory
+- Sets the package name in `package.json` (from your project name)
+- Resolves `workspace:*` dependencies to the latest published `@neomaventures/*` versions
 
-`GET http://localhost:3000` renders a welcome page with your app name.
+The target directory defaults to `../<project-name>` relative to the pack root if omitted.
+
+### Prerequisites
+
+The generated app installs `@neomaventures/*` packages from GitHub Packages. You need a `GITHUB_TOKEN` with `read:packages` scope in your `~/.npmrc`:
+
+```
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```
+
+The template includes an `.npmrc` that scopes `@neomaventures` to the GitHub Packages registry.
+
+### How the app name works
+
+The welcome page displays the package name from `package.json`. `ViewLocalsMiddleware` reads `NPM_PACKAGE_NAME` and `NPM_PACKAGE_VERSION` (auto-set by pnpm from `package.json`) via `@neomaventures/config` and injects them into every EJS template as `npmPackageName` and `npmPackageVersion`.
+
+No separate `APP_NAME` env var is needed — the name comes from `package.json`.
 
 ## Running the template in-repo
 
@@ -55,9 +62,9 @@ templates/saas/
 ├── src/
 │   ├── main.ts                              # Bootstrap
 │   └── application/
-│       ├── application.module.ts            # Root module
+│       ├── application.module.ts            # Root module (wires ConfigModule)
 │       ├── application.controller.ts        # Welcome page controller
-│       └── view-locals.middleware.ts         # Injects appName + version into res.locals
+│       └── view-locals.middleware.ts         # Injects npmPackageName + npmPackageVersion into res.locals
 ├── views/
 │   ├── welcome.ejs                          # Welcome page
 │   └── errors/
@@ -70,36 +77,40 @@ templates/saas/
 ├── ui-specs/                                # UI specs (Playwright)
 │   └── welcome.ui-spec.ts
 ├── fixtures/                                # Test fixtures and setup
+│   ├── configure-view-engine.ts
+│   └── package-version.ts
 ├── package.json
 ├── tsconfig.json
 ├── tsconfig.build.json
 ├── nest-cli.json
 ├── jest.config.json
 ├── playwright.config.ts
-├── .env.unit
-├── .env.e2e
+├── .npmrc
+├── .env.development
+├── .env.spec
+├── .env.e2e-spec
 └── .env.ui-spec
 ```
 
 ## Tests
 
-The template has three test layers, matching the spec ownership model used across Neoma projects:
+Three test layers, matching the spec ownership model used across Neoma projects:
 
 | Layer | What it proves | Command |
 |---|---|---|
 | Unit | Individual pieces work (e.g. `ViewLocalsMiddleware` sets `res.locals`) | `pnpm test` |
-| E2E | HTTP responses are correct (e.g. `GET /` returns 200 with the app name) | `pnpm test:e2e` |
-| UI | Pages render correctly in a browser (e.g. heading visible, scripts loaded) | `pnpm test:ui` |
+| E2E | HTTP responses are correct (e.g. `GET /` returns 200 with the package name) | `pnpm test:e2e` |
+| UI | Pages render correctly in a browser (e.g. heading visible, version shown) | `pnpm test:ui` |
 
-Template specs test **wiring and composition**, not package internals. They prove that NestJS renders the correct view, middleware injects the right locals, and packages compose without conflict. Package-level behaviour is tested in the packages themselves.
+Template specs test **wiring and composition**, not package internals.
 
 ## Wired packages
 
-The template starts as a minimal scaffold. Packages are wired incrementally as their integration is implemented and tested:
-
 | Package | Status |
 |---|---|
-| `@neomaventures/config` | Planned |
+| `@neomaventures/config` | Wired |
+| `@neomaventures/fixtures` | Wired (test) |
+| `@neomaventures/managed-app` | Wired (test) |
 | `@neomaventures/request-context` | Planned |
 | `@neomaventures/logging` | Planned |
 | `@neomaventures/exceptions` | Planned |
@@ -108,13 +119,11 @@ The template starts as a minimal scaffold. Packages are wired incrementally as t
 | `@neomaventures/webhooks` | Planned |
 | `@neomaventures/route-model-binding` | Planned |
 
-Each package integration lands with integration specs that prove it composes correctly with everything already wired.
-
 ## Local vs generated apps
 
 | Concern | In-repo (local dev) | Generated app (copy-out) |
 |---|---|---|
-| `@neomaventures/*` resolution | `workspace:*` — bleeding edge, unpublished changes | `^0.x.y` — latest published, from registry |
+| `@neomaventures/*` resolution | `workspace:*` — bleeding edge | `^0.x.y` — latest published, from registry |
 | Purpose | Integration test bed, CI | Starter kit for a new project |
 | Package changes reflected | Immediately | After publish + `pnpm update` |
 
