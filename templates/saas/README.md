@@ -61,12 +61,22 @@ When running in-repo, `@neomaventures/*` packages resolve via `workspace:*` — 
 templates/saas/
 ├── src/
 │   ├── main.ts                              # Bootstrap
-│   └── application/
-│       ├── application.module.ts            # Root module (wires Neoma packages)
-│       ├── application.controller.ts        # Welcome page + error exercise routes
-│       └── view-locals.middleware.ts         # Injects npmPackageName + npmPackageVersion into res.locals
+│   ├── application/
+│   │   ├── application.module.ts            # Root module (wires Neoma packages)
+│   │   ├── application.controller.ts        # Welcome page + error exercise routes
+│   │   └── view-locals.middleware.ts         # Injects npmPackageName + npmPackageVersion into res.locals
+│   ├── auth/
+│   │   ├── auth.module.ts                   # Auth module (magic link strategy, controllers)
+│   │   └── auth.controller.ts               # Magic link request, callback, logout routes
+│   ├── dashboard/
+│   │   ├── dashboard.module.ts              # Dashboard module
+│   │   └── dashboard.controller.ts          # Protected dashboard route (@Authenticated + @Principal)
+│   └── user/
+│       └── user.entity.ts                   # User entity (id, email, permissions)
 ├── views/
 │   ├── welcome.ejs                          # Welcome page
+│   ├── signup.ejs                           # Sign up page (magic link form + disabled Google button)
+│   ├── dashboard.ejs                        # Authenticated dashboard
 │   └── errors/
 │       └── generic.ejs                      # Error page
 ├── public/
@@ -151,15 +161,74 @@ Try these in a browser (`pnpm dev` then visit):
 
 Browsers send `Accept: text/html` by default, so you see the HTML error handling. `curl` without an Accept header gets JSON instead (content negotiation).
 
+## Authentication
+
+`@neomaventures/auth` provides magic link login with stateless JWT cookie sessions. No `express-session` or server-side session store is needed — the auth package manages everything via signed cookies.
+
+### How it works
+
+1. User visits `/signup` and enters their email
+2. `POST /auth/magic-link` sends a magic link email to the address
+3. User clicks the link in their email, which hits `GET /auth/magic-link/callback`
+4. The callback verifies the token, creates or finds the user, sets a JWT session cookie, and redirects to `/dashboard`
+5. Subsequent requests include the cookie — the user is authenticated
+
+### Protecting routes
+
+Apply `@Authenticated("/signup")` to any route that requires a logged-in user. Unauthenticated requests are redirected to the given URL (the sign up page in this case):
+
+```ts
+@Controller("dashboard")
+export class DashboardController {
+  @Get()
+  @Render("dashboard")
+  @Authenticated("/signup")
+  public index(@Principal() user: User): { email: string } {
+    return { email: user.email }
+  }
+}
+```
+
+`@Principal()` is a parameter decorator that resolves the authenticated user from the JWT session. It returns the `User` entity for the current session.
+
+### Auth routes
+
+Auth routes live in `src/auth/`, dashboard in `src/dashboard/`, and the User entity in `src/user/`.
+
+| Route | What it does |
+|---|---|
+| `GET /signup` | Renders the sign up page with a magic link form and a disabled Google OAuth button ("coming soon") |
+| `POST /auth/magic-link` | Accepts an email address, sends a magic link email |
+| `GET /auth/magic-link/callback` | Verifies the magic link token, creates a JWT session cookie, redirects to `/dashboard` |
+| `GET /dashboard` | Protected — renders the dashboard with the authenticated user's email. Redirects to `/signup` if unauthenticated |
+| `POST /auth/logout` | Clears the session cookie, redirects to `/` |
+
+### Google OAuth
+
+The sign up page includes a disabled Google OAuth button marked "coming soon". Google login is planned but deferred until the magic link flow stabilises.
+
+### Testing the auth flow
+
+Try the full flow in a browser (`pnpm dev` then visit):
+
+| URL | What happens |
+|---|---|
+| `http://localhost:3000/signup` | Sign up page with magic link form and disabled Google button |
+| `POST /auth/magic-link` with email | Sends a magic link email (check Mailpit in development) |
+| `http://localhost:3000/dashboard` | Protected — redirects to `/signup` if not authenticated |
+| `POST /auth/logout` | Clears session, redirects to `/` |
+
+E2e specs use Mailpit to capture the magic link email and complete the full authentication lifecycle programmatically.
+
 ## Tests
 
 Three test layers, matching the spec ownership model used across Neoma projects:
 
 | Layer | What it proves | Command |
 |---|---|---|
-| Unit | Individual pieces work (e.g. `ViewLocalsMiddleware` sets `res.locals`) | `pnpm test` |
-| E2E | HTTP responses are correct (e.g. `GET /` returns 200 with the package name) | `pnpm test:e2e` |
-| UI | Pages render correctly in a browser (e.g. heading visible, version shown) | `pnpm test:ui` |
+| Unit | Individual pieces work (e.g. `ViewLocalsMiddleware` sets `res.locals`, `User` entity constraints) | `pnpm test` |
+| E2E | HTTP responses are correct (e.g. `GET /` returns 200 with the package name, magic link flow creates a session) | `pnpm test:e2e` |
+| UI | Pages render correctly in a browser (e.g. heading visible, sign up form present, dashboard shows email) | `pnpm test:ui` |
 
 Template specs test **wiring and composition**, not package internals.
 
@@ -171,9 +240,11 @@ Template specs test **wiring and composition**, not package internals.
 | `@neomaventures/request-context` | Wired |
 | `@neomaventures/logging` | Wired |
 | `@neomaventures/exceptions` | Wired |
+| `@neomaventures/auth` | Wired |
 | `@neomaventures/fixtures` | Wired (test) |
 | `@neomaventures/managed-app` | Wired (test) |
-| `@neomaventures/auth` | Planned |
+| `@neomaventures/managed-database` | Wired (test) |
+| `@neomaventures/mailpit` | Wired (test) |
 | `@neomaventures/storage` | Planned |
 | `@neomaventures/webhooks` | Planned |
 | `@neomaventures/route-model-binding` | Planned |
