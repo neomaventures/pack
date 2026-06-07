@@ -26,6 +26,15 @@ export class ApplicationController {
   }
 
   /**
+   * Renders the sign-up page.
+   */
+  @Get("signup")
+  @Render("signup")
+  public signup(): void {
+    this.logger.log("Sign up page requested")
+  }
+
+  /**
    * Exercises both modes of the exception filter via `@ErrorTemplate`.
    *
    * - `GET /error?type=render` — throws a 500, rendered as EJS error page

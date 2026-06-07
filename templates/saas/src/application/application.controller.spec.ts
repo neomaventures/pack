@@ -20,6 +20,14 @@ describe("ApplicationController", () => {
     })
   })
 
+  describe("signup()", () => {
+    it("should log that the sign up page was requested", () => {
+      controller.signup()
+
+      expect(logger.log).toHaveBeenCalledWith("Sign up page requested")
+    })
+  })
+
   describe("error()", () => {
     describe("Given type is 'redirect'", () => {
       it("should throw a BadRequestException", () => {

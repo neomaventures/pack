@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign up - <%= npmPackageName %></title>
+    <link rel="stylesheet" href="/stylesheets/main.css" />
+  </head>
+  <body>
+    <main class="auth-card">
+      <h1 class="auth-title">Sign up</h1>
+
+      <form class="auth-form" action="/auth/magic-link" method="POST">
+        <label class="auth-label" for="email">Email address</label>
+        <input
+          class="auth-input"
+          id="email"
+          name="email"
+          type="email"
+          placeholder="you@example.com"
+          required
+        />
+        <button class="auth-button" type="submit">Continue with email</button>
+      </form>
+
+      <div class="auth-divider"><span>or</span></div>
+
+      <button class="auth-button auth-button--google" type="button" disabled>
+        Continue with Google
+      </button>
+
+      <a href="/" class="auth-back-link">&larr; Back to home</a>
+    </main>
+
+    <footer class="footer">
+      <span>v<%= npmPackageVersion %></span>
+    </footer>
+  </body>
+</html>
