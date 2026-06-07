@@ -1,17 +1,21 @@
 import { faker } from "@faker-js/faker"
-import { MagicLinkService } from "@neomaventures/auth"
+import { MagicLinkService, SessionService } from "@neomaventures/auth"
 import { MockLoggerService } from "@neomaventures/fixtures"
 import { ApplicationLoggerService } from "@neomaventures/logging"
 import { Test, type TestingModule } from "@nestjs/testing"
+import { type Response } from "express"
 
 import { AuthController } from "./auth.controller"
 
 const email = faker.internet.email()
+const token = faker.string.alphanumeric(32)
+const entity = { id: faker.string.uuid(), email, permissions: [] }
 
 describe("AuthController", () => {
   let controller: AuthController
   let logger: MockLoggerService
-  let magicLinkService: { send: jest.Mock }
+  let magicLinkService: { send: jest.Mock; verify: jest.Mock }
+  let sessionService: { create: jest.Mock }
 
   beforeEach(async () => {
     logger = new MockLoggerService()
@@ -22,12 +26,22 @@ describe("AuthController", () => {
         }
         throw new Error(`Unexpected email: ${submitted}`)
       }),
+      verify: jest.fn().mockImplementation((submitted: string) => {
+        if (submitted === token) {
+          return Promise.resolve({ entity, isNewUser: true })
+        }
+        throw new Error(`Unexpected token: ${submitted}`)
+      }),
+    }
+    sessionService = {
+      create: jest.fn().mockReturnValue({ token: "session-token" }),
     }
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [
         { provide: ApplicationLoggerService, useValue: logger },
         { provide: MagicLinkService, useValue: magicLinkService },
+        { provide: SessionService, useValue: sessionService },
       ],
     }).compile()
 
@@ -57,6 +71,35 @@ describe("AuthController", () => {
     describe("Given a valid email query param", () => {
       it("should return the email for the template", () => {
         expect(controller.magicLinkSent({ email })).toMatchObject({ email })
+      })
+    })
+  })
+
+  describe("callback()", () => {
+    describe("Given a valid token", () => {
+      it("should verify the token, create a session, and return redirect to /", async () => {
+        const res = {
+          cookie: jest.fn().mockReturnThis(),
+          setHeader: jest.fn().mockReturnThis(),
+        } as unknown as Response
+
+        const result = await controller.callback(token, res)
+
+        expect(sessionService.create).toHaveBeenCalledWith(res, entity)
+        expect(result).toMatchObject({ url: "/" })
+      })
+    })
+
+    describe("Given the magic link service throws", () => {
+      it("should propagate the error", async () => {
+        const res = {
+          cookie: jest.fn().mockReturnThis(),
+          setHeader: jest.fn().mockReturnThis(),
+        } as unknown as Response
+
+        await expect(
+          controller.callback("invalid-token", res),
+        ).rejects.toThrow("Unexpected token: invalid-token")
       })
     })
   })

@@ -1,4 +1,4 @@
-import { EmailDto, MagicLinkService } from "@neomaventures/auth"
+import { EmailDto, MagicLinkService, SessionService } from "@neomaventures/auth"
 import { ErrorTemplate } from "@neomaventures/exceptions"
 import { ApplicationLoggerService } from "@neomaventures/logging"
 import {
@@ -12,7 +12,9 @@ import {
   Query,
   Redirect,
   Render,
+  Res,
 } from "@nestjs/common"
+import { type Response } from "express"
 
 /**
  * Handles the authentication ceremony: registration form,
@@ -23,6 +25,7 @@ export class AuthController {
   public constructor(
     private readonly logger: ApplicationLoggerService,
     private readonly magicLinkService: MagicLinkService,
+    private readonly sessionService: SessionService,
   ) {}
 
   /**
@@ -69,8 +72,31 @@ export class AuthController {
    */
   @ErrorTemplate({ default: "/auth/register" })
   @Get("magic-link/sent")
-  @Render("auth/magic-link-sent")
+  @Render("auth/magic-link/sent")
   public magicLinkSent(@Query() { email }: EmailDto): { email: string } {
     return { email }
+  }
+
+  /**
+   * Verifies a magic link token, creates a session, and redirects
+   * to the home page.
+   *
+   * Invalid or expired tokens redirect to `/auth/register`.
+   *
+   * @param token - The magic link JWT from the query string.
+   * @param res - The Express response, used by SessionService to set the session cookie.
+   *
+   * @returns The redirect URL for the home page.
+   */
+  @ErrorTemplate({ default: "/auth/register" })
+  @Get("magic-link/callback")
+  @Redirect("", HttpStatus.FOUND)
+  public async callback(
+    @Query("token") token: string,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ url: string }> {
+    const { entity } = await this.magicLinkService.verify(token)
+    this.sessionService.create(res, entity)
+    return { url: "/" }
   }
 }

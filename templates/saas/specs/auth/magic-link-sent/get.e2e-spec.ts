@@ -12,7 +12,7 @@ import { npmPackageName, npmPackageVersion } from "~fixtures/package-version"
 
 const { OK, SEE_OTHER } = HttpStatus
 const template = readFileSync(
-  join(process.cwd(), "views", "auth", "magic-link-sent.ejs"),
+  join(process.cwd(), "views", "auth", "magic-link", "sent.ejs"),
   "utf-8",
 )
 

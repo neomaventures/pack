@@ -13,10 +13,6 @@ interface ViewConfig {
 
 /**
  * Sets shared view locals available to all EJS templates.
- *
- * Injects the following variables into `res.locals` on every request:
- * - `appName` — the package name from `NPM_PACKAGE_NAME`
- * - `version` — the application version from `NPM_PACKAGE_VERSION`
  */
 @Injectable()
 export class ViewLocalsMiddleware implements NestMiddleware {
