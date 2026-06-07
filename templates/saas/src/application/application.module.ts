@@ -9,6 +9,7 @@ import { RequestContextModule } from "@neomaventures/request-context"
 
 import { ApplicationController } from "~application/application.controller"
 import { ViewLocalsMiddleware } from "~application/view-locals.middleware"
+import { SaasAuthModule } from "~auth/auth.module"
 import { Account } from "~account/account.entity"
 
 /** Config properties used by the application module. */
@@ -36,7 +37,7 @@ interface AppConfig {
     TypeOrmModule.forRoot({
       type: "sqlite",
       database: ":memory:",
-      entities: [Account],
+      autoLoadEntities: true,
       synchronize: true,
     }),
     AuthModule.forRootAsync({
@@ -66,6 +67,7 @@ interface AppConfig {
       }),
       inject: [ConfigService],
     }),
+    SaasAuthModule,
   ],
   controllers: [ApplicationController],
   providers: [ViewLocalsMiddleware],

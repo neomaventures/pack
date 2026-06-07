@@ -10,17 +10,17 @@ import request from "supertest"
 import { configureViewEngine } from "~fixtures/configure-view-engine"
 import { npmPackageName, npmPackageVersion } from "~fixtures/package-version"
 
-const { BAD_REQUEST, OK } = HttpStatus
+const { BAD_REQUEST, FOUND, OK } = HttpStatus
 
-describe("GET /signup", () => {
-  describe("When a request is made to the sign up page", () => {
-    it(`should respond with HTTP ${OK} and the signup template`, async () => {
+describe("GET /auth/register", () => {
+  describe("When a request is made to the registration page", () => {
+    it(`should respond with HTTP ${OK} and the register template`, async () => {
       const app = await managedAppInstance({
         configure: configureViewEngine,
       })
 
       const template = readFileSync(
-        join(process.cwd(), "views", "signup.ejs"),
+        join(process.cwd(), "views", "auth", "register.ejs"),
         "utf-8",
       )
       const expectedHtml = ejs.render(template, {
@@ -29,16 +29,16 @@ describe("GET /signup", () => {
       })
 
       await request(app.getHttpServer())
-        .get("/signup")
+        .get("/auth/register")
         .expect(OK)
         .expect(expectedHtml)
     })
   })
 })
 
-describe("POST /signup", () => {
+describe("POST /auth/register", () => {
   describe("Given an invalid email", () => {
-    it(`should respond with HTTP ${BAD_REQUEST} and re-render the signup form with an error message`, async () => {
+    it(`should respond with HTTP ${BAD_REQUEST} and re-render the form with an error`, async () => {
       const app = await managedAppInstance({
         configure: configureViewEngine,
       })
@@ -46,7 +46,7 @@ describe("POST /signup", () => {
       const invalidEmail = faker.string.alpha(10)
 
       const response = await request(app.getHttpServer())
-        .post("/signup")
+        .post("/auth/register")
         .send({ email: invalidEmail })
         .set("Accept", "text/html")
         .expect(BAD_REQUEST)
@@ -59,13 +59,13 @@ describe("POST /signup", () => {
   })
 
   describe("Given an empty body", () => {
-    it(`should respond with HTTP ${BAD_REQUEST} and re-render the signup form with an error message`, async () => {
+    it(`should respond with HTTP ${BAD_REQUEST} and re-render the form with an error`, async () => {
       const app = await managedAppInstance({
         configure: configureViewEngine,
       })
 
       const response = await request(app.getHttpServer())
-        .post("/signup")
+        .post("/auth/register")
         .send({})
         .set("Accept", "text/html")
         .expect(BAD_REQUEST)
@@ -76,15 +76,15 @@ describe("POST /signup", () => {
   })
 
   describe("Given a valid email", () => {
-    it("should redirect to /", async () => {
+    it(`should redirect to /`, async () => {
       const app = await managedAppInstance({
         configure: configureViewEngine,
       })
 
       await request(app.getHttpServer())
-        .post("/signup")
+        .post("/auth/register")
         .send({ email: faker.internet.email() })
-        .expect(HttpStatus.FOUND)
+        .expect(FOUND)
         .expect("Location", "/")
     })
   })

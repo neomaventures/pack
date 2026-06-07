@@ -1,4 +1,3 @@
-import { faker } from "@faker-js/faker"
 import { MockLoggerService } from "@neomaventures/fixtures"
 import { BadRequestException, InternalServerErrorException } from "@nestjs/common"
 
@@ -18,24 +17,6 @@ describe("ApplicationController", () => {
       controller.index()
 
       expect(logger.log).toHaveBeenCalledWith("Welcome page requested")
-    })
-  })
-
-  describe("signup()", () => {
-    it("should log that the sign up page was requested", () => {
-      controller.signup()
-
-      expect(logger.log).toHaveBeenCalledWith("Sign up page requested")
-    })
-  })
-
-  describe("submitSignup()", () => {
-    it("should log the submitted email", () => {
-      const email = faker.internet.email()
-
-      controller.submitSignup({ email })
-
-      expect(logger.log).toHaveBeenCalledWith(`Sign up submitted for ${email}`)
     })
   })
 

@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test"
 
-test.describe("Sign Up Page", () => {
-  test.describe("When a visitor navigates to the sign up page", () => {
-    test.beforeEach(({ page }) => {
-      return page.goto("/signup")
+test.describe("Registration Page", () => {
+  test.describe("When a visitor navigates to /auth/register", () => {
+    test.beforeEach(async ({ page }) => {
+      await page.goto("/auth/register")
     })
 
     test("should display the page heading", async ({ page }) => {

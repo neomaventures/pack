@@ -1,16 +1,11 @@
-import { EmailDto } from "@neomaventures/auth"
 import { ErrorTemplate } from "@neomaventures/exceptions"
 import { ApplicationLoggerService } from "@neomaventures/logging"
 import {
   BadRequestException,
-  Body,
   Controller,
   Get,
-  HttpStatus,
   InternalServerErrorException,
-  Post,
   Query,
-  Redirect,
   Render,
 } from "@nestjs/common"
 
@@ -28,32 +23,6 @@ export class ApplicationController {
   @Render("welcome")
   public index(): void {
     this.logger.log("Welcome page requested")
-  }
-
-  /**
-   * Renders the sign-up page.
-   */
-  @Get("signup")
-  @Render("signup")
-  public signup(): void {
-    this.logger.log("Sign up page requested")
-  }
-
-  /**
-   * Handles the sign-up form submission.
-   *
-   * Validates the email via {@link EmailDto} (from `@neomaventures/auth`).
-   * On validation failure, the exception filter re-renders the signup
-   * template with the error via {@link ErrorTemplate}. On success,
-   * redirects to `/` (placeholder until magic link flow is wired).
-   *
-   * @param email - The validated email address from the form body.
-   */
-  @Post("signup")
-  @ErrorTemplate({ BadRequestException: "signup", default: "/error" })
-  @Redirect("/", HttpStatus.FOUND)
-  public submitSignup(@Body() { email }: EmailDto): void {
-    this.logger.log(`Sign up submitted for ${email}`)
   }
 
   /**
