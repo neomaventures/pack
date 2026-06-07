@@ -9,8 +9,8 @@ import { RequestContextModule } from "@neomaventures/request-context"
 
 import { ApplicationController } from "~application/application.controller"
 import { ViewLocalsMiddleware } from "~application/view-locals.middleware"
+import { Account } from "~auth/account.entity"
 import { SaasAuthModule } from "~auth/auth.module"
-import { Account } from "~account/account.entity"
 
 /** Config properties used by the application module. */
 interface AppConfig {

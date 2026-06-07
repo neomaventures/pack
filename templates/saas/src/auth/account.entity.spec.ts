@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker"
 import { managedDatasourceInstance } from "@neomaventures/managed-database"
 import { type DataSource, type Repository } from "typeorm"
 
-import { Account } from "~account/account.entity"
+import { Account } from "~auth/account.entity"
 
 describe("Account", () => {
   let datasource: DataSource
