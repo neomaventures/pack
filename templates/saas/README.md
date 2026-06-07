@@ -62,13 +62,13 @@ templates/saas/
 ├── src/
 │   ├── main.ts                              # Bootstrap
 │   └── application/
-│       ├── application.module.ts            # Root module (wires ConfigModule)
-│       ├── application.controller.ts        # Welcome page controller
+│       ├── application.module.ts            # Root module (wires Neoma packages)
+│       ├── application.controller.ts        # Welcome page + error exercise routes
 │       └── view-locals.middleware.ts         # Injects npmPackageName + npmPackageVersion into res.locals
 ├── views/
 │   ├── welcome.ejs                          # Welcome page
 │   └── errors/
-│       └── generic.ejs                      # Error page (placeholder)
+│       └── generic.ejs                      # Error page
 ├── public/
 │   └── stylesheets/
 │       └── main.css                         # Styles
@@ -92,6 +92,47 @@ templates/saas/
 └── .env.ui-spec
 ```
 
+## Logging
+
+`ApplicationLoggerService` from `@neomaventures/logging` is the structured logger for application code. Inject it into services and controllers to emit structured log entries:
+
+```ts
+@Controller()
+export class ApplicationController {
+  public constructor(
+    private readonly logger: ApplicationLoggerService,
+  ) {}
+
+  @Get()
+  @Render("welcome")
+  public index(): void {
+    this.logger.log("Rendering welcome page")
+  }
+}
+```
+
+`ApplicationLoggerService` automatically enriches each log entry with the current request context (request ID, method, path) via `@neomaventures/request-context`. No manual threading is needed.
+
+Nest's own framework logs (module init, route registration, etc.) continue to use the default `ConsoleLogger`. The template does not call `app.useLogger()` — the two loggers serve different purposes.
+
+## Error handling
+
+`@neomaventures/exceptions` provides an exception filter that handles errors thrown from controller routes. It supports two modes:
+
+### Render mode
+
+Decorate a route with `@ErrorTemplate({ default: 'errors/generic' })`. When an exception is thrown, the filter renders `views/errors/generic.ejs` with the exception data (status code, message) instead of returning JSON.
+
+### Redirect mode
+
+When the thrown exception implements `getRedirect()`, the filter issues a 303 redirect to the returned URL instead of rendering a template. This is useful for form submissions where the user should be sent back to the form with an error message.
+
+Both modes require the request to accept `text/html` (content negotiation). JSON-accepting clients receive the standard NestJS JSON error response.
+
+### Exercise route
+
+`GET /?error=true` exercises the render-mode error path. Visit it in a browser to see the EJS error template in action.
+
 ## Tests
 
 Three test layers, matching the spec ownership model used across Neoma projects:
@@ -109,11 +150,11 @@ Template specs test **wiring and composition**, not package internals.
 | Package | Status |
 |---|---|
 | `@neomaventures/config` | Wired |
+| `@neomaventures/request-context` | Wired |
+| `@neomaventures/logging` | Wired |
+| `@neomaventures/exceptions` | Wired |
 | `@neomaventures/fixtures` | Wired (test) |
 | `@neomaventures/managed-app` | Wired (test) |
-| `@neomaventures/request-context` | Planned |
-| `@neomaventures/logging` | Planned |
-| `@neomaventures/exceptions` | Planned |
 | `@neomaventures/auth` | Planned |
 | `@neomaventures/storage` | Planned |
 | `@neomaventures/webhooks` | Planned |
