@@ -1,18 +1,24 @@
 /**
- * @file This file is used to mock the package version for testing purposes.
- * It sets a random version before each test and restores the original version after each test.
+ * @file Sets npm package metadata env vars for testing.
+ * Sets random values before each test and restores originals after.
  *
- * @exports version - The mocked package version.
+ * @exports npmPackageName - The mocked package name.
+ * @exports npmPackageVersion - The mocked package version.
  */
 import { faker } from "@faker-js/faker"
 
-export const version = faker.system.semver()
+export const npmPackageName = faker.word.noun()
+export const npmPackageVersion = faker.system.semver()
+
+const originalName = process.env.npm_package_name
 const originalVersion = process.env.npm_package_version
 
 beforeEach(() => {
-  process.env.npm_package_version = version
+  process.env.npm_package_name = npmPackageName
+  process.env.npm_package_version = npmPackageVersion
 })
 
 afterEach(() => {
+  process.env.npm_package_name = originalName
   process.env.npm_package_version = originalVersion
 })

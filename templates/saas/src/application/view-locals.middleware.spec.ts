@@ -1,59 +1,32 @@
+import { express } from "@neomaventures/fixtures"
 import { type Request, type Response } from "express"
-
-import { version } from "~fixtures/package-version"
 
 import { ViewLocalsMiddleware } from "./view-locals.middleware"
 
 describe("ViewLocalsMiddleware", () => {
+  const npmPackageName = "my-cool-app"
+  const npmPackageVersion = "1.2.3"
+
   let middleware: ViewLocalsMiddleware
 
   beforeEach(() => {
-    middleware = new ViewLocalsMiddleware()
+    middleware = new ViewLocalsMiddleware({ npmPackageName, npmPackageVersion } as any)
   })
 
   describe("use()", () => {
     describe("Given a request passes through the middleware", () => {
-      it("should set appName and version on res.locals", () => {
-        const req = {} as Request
-        const res = { locals: {} } as Response
-        const next = jest.fn()
+      it("should set npmPackageName and npmPackageVersion on res.locals", (done) => {
+        const req = express.request() as unknown as Request
+        const res = express.response() as unknown as Response
 
-        middleware.use(req, res, next)
-
-        expect(res.locals).toMatchObject({
-          appName: "__APP_NAME__",
-          version,
+        middleware.use(req, res, (err) => {
+          expect(err).toBeUndefined()
+          expect(res.locals).toMatchObject({
+            npmPackageName,
+            npmPackageVersion,
+          })
+          done()
         })
-      })
-
-      it("should call next to pass control", () => {
-        const req = {} as Request
-        const res = { locals: {} } as Response
-        const next = jest.fn()
-
-        middleware.use(req, res, next)
-
-        expect(next).toHaveBeenCalledTimes(1)
-      })
-    })
-
-    describe("Given npm_package_version is not set", () => {
-      it("should default version to 0.0.0", () => {
-        const original = process.env.npm_package_version
-        delete process.env.npm_package_version
-
-        const req = {} as Request
-        const res = { locals: {} } as Response
-        const next = jest.fn()
-
-        middleware.use(req, res, next)
-
-        expect(res.locals).toMatchObject({
-          appName: "__APP_NAME__",
-          version: "0.0.0",
-        })
-
-        process.env.npm_package_version = original
       })
     })
   })

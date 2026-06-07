@@ -10,7 +10,7 @@
   },
   "scripts": {
     "build": "nest build",
-    "dev": "nest start --watch",
+    "dev": "node --env-file=.env.development node_modules/@nestjs/cli/bin/nest.js start --watch",
     "typecheck": "tsc --noEmit",
     "start:prod": "node dist/main",
     "test": "node --env-file=.env.unit --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.json",
@@ -18,6 +18,7 @@
     "test:ui": "node --env-file=.env.ui-spec node_modules/@playwright/test/cli.js test"
   },
   "dependencies": {
+    "@neomaventures/config": "workspace:*",
     "@nestjs/common": "^11.1.18",
     "@nestjs/core": "^11.1.18",
     "@nestjs/platform-express": "^11.1.18",
@@ -27,6 +28,8 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^9.9.0",
+    "@neomaventures/fixtures": "workspace:*",
+    "@neomaventures/managed-app": "workspace:*",
     "@nestjs/cli": "^11.0.16",
     "@nestjs/testing": "^11.1.18",
     "@playwright/test": "^1.58.2",

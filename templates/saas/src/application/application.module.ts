@@ -1,5 +1,7 @@
 import { type MiddlewareConsumer, Module, type NestModule } from "@nestjs/common"
 
+import { ConfigModule } from "@neomaventures/config"
+
 import { ApplicationController } from "~application/application.controller"
 import { ViewLocalsMiddleware } from "~application/view-locals.middleware"
 
@@ -11,6 +13,7 @@ import { ViewLocalsMiddleware } from "~application/view-locals.middleware"
  * injection container.
  */
 @Module({
+  imports: [ConfigModule.forRoot()],
   controllers: [ApplicationController],
   providers: [ViewLocalsMiddleware],
 })

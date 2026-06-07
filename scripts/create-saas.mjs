@@ -37,21 +37,6 @@ const TEXT_EXTENSIONS = new Set([
 const SKIP_DIRS = new Set(["node_modules", "dist", "playwright-report", "test-results"])
 
 /**
- * Converts a kebab-case project name to a display name.
- * "saasquatch" -> "Saasquatch"
- * "my-app" -> "My App"
- *
- * @param {string} name - The kebab-case project name.
- * @returns {string} The display name.
- */
-function toDisplayName(name) {
-  return name
-    .split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ")
-}
-
-/**
  * Determines whether a file should have token replacement applied.
  *
  * @param {string} filePath - The absolute path to the file.
@@ -135,9 +120,7 @@ if (existsSync(targetDir)) {
   process.exit(1)
 }
 
-const appName = toDisplayName(projectName)
-
-console.log(`Creating "${appName}" at ${targetDir}...`)
+console.log(`Creating "${projectName}" at ${targetDir}...`)
 console.log("")
 
 cpSync(TEMPLATE_DIR, targetDir, {
@@ -149,7 +132,6 @@ cpSync(TEMPLATE_DIR, targetDir, {
 })
 
 replaceTokensInDir(targetDir, {
-  __APP_NAME__: appName,
   __PACKAGE_NAME__: projectName,
 })
 

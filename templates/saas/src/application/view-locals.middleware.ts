@@ -1,25 +1,33 @@
+import { InjectConfig, type TypedConfig } from "@neomaventures/config"
 import { Injectable, type NestMiddleware } from "@nestjs/common"
 import { type NextFunction, type Request, type Response } from "express"
+
+/** Environment variables used by view templates. */
+interface ViewConfig {
+  /** Package name from npm package metadata. */
+  npmPackageName: string
+
+  /** Application version from npm package metadata. */
+  npmPackageVersion: string
+}
 
 /**
  * Sets shared view locals available to all EJS templates.
  *
  * Injects the following variables into `res.locals` on every request:
- * - `appName` — the application display name
- * - `version` — the application version from `package.json`
+ * - `appName` — the package name from `NPM_PACKAGE_NAME`
+ * - `version` — the application version from `NPM_PACKAGE_VERSION`
  */
 @Injectable()
 export class ViewLocalsMiddleware implements NestMiddleware {
-  /**
-   * Attaches shared template variables to the response locals.
-   *
-   * @param _req - The incoming request (unused).
-   * @param res - The outgoing response whose locals are populated.
-   * @param next - Callback to pass control to the next middleware.
-   */
+  public constructor(
+    @InjectConfig()
+    private readonly config: TypedConfig<ViewConfig>,
+  ) {}
+
   public use(_req: Request, res: Response, next: NextFunction): void {
-    res.locals.appName = "__APP_NAME__"
-    res.locals.version = process.env.npm_package_version ?? "0.0.0"
+    res.locals.npmPackageName = this.config.npmPackageName
+    res.locals.npmPackageVersion = this.config.npmPackageVersion
     next()
   }
 }
