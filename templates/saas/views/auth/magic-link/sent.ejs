@@ -7,23 +7,16 @@
     <link rel="stylesheet" href="/stylesheets/main.css" />
   </head>
   <body>
-    <main class="auth-card">
-      <h1 class="auth-title">Check your email</h1>
-
-      <p class="auth-description">
-        We've sent a magic link to
-        <span class="auth-email"><%= email %></span>
+    <main class="hero">
+      <h1 class="hero-title">Check your email</h1>
+      <p class="hero-subtitle">
+        We've sent a magic link to <strong><%= email %></strong>
       </p>
-
-      <p class="auth-hint">
-        Click the link in the email to sign in. If you don't see it, check
-        your spam folder.
+      <p class="hero-subtitle">
+        Click the link in the email to sign in.
+        If you don't see it, check your spam folder.
       </p>
-
-      <div class="auth-actions">
-        <p class="auth-retry-text">Didn't receive the email?</p>
-        <a href="/auth/register" class="auth-back-link">Try again</a>
-      </div>
+      <a href="/auth/register" class="auth-back-link">Didn't receive it? Try again</a>
     </main>
 
     <footer class="footer">
