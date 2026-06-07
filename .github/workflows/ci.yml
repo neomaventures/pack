@@ -75,11 +75,17 @@ jobs:
           retention-days: 1
 
   # ── Unit tests ───────────────────────────────────────────────────────
+  # On branches, only test packages changed since main (plus their
+  # dependents). On main itself, test everything. If shared root config
+  # changed (jest, tsconfig, eslint, lockfile, etc.), fall back to full
+  # suite since those affect all packages.
   unit-test:
     needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: ./.github/actions/setup
 
       - name: Download build artifacts
@@ -89,14 +95,29 @@ jobs:
           path: packages/
 
       - name: Unit tests
-        run: pnpm turbo test
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            pnpm turbo test
+          else
+            # Check for changes outside packages/ (root config, CI, lockfile, etc.)
+            ROOT_CHANGES=$(git diff --name-only origin/main...HEAD | grep -vE '^(\.claude/|packages/)' || true)
+            if [ -n "$ROOT_CHANGES" ]; then
+              echo "Root/CI config changed — running full test suite"
+              pnpm turbo test
+            else
+              pnpm --filter '...[origin/main]' --filter '!neoma-pack' -r --if-present run test
+            fi
+          fi
 
   # ── E2E tests ───────────────────────────────────────────────────────
+  # Same affected-only strategy as unit tests.
   e2e:
     needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: ./.github/actions/setup
 
       - name: Download build artifacts
@@ -106,7 +127,19 @@ jobs:
           path: packages/
 
       - name: E2E tests
-        run: pnpm turbo test:e2e
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            pnpm turbo test:e2e
+          else
+            # Check for changes outside packages/ (root config, CI, lockfile, etc.)
+            ROOT_CHANGES=$(git diff --name-only origin/main...HEAD | grep -vE '^(\.claude/|packages/)' || true)
+            if [ -n "$ROOT_CHANGES" ]; then
+              echo "Root/CI config changed — running full e2e suite"
+              pnpm turbo test:e2e
+            else
+              pnpm --filter '...[origin/main]' --filter '!neoma-pack' -r --if-present run test:e2e
+            fi
+          fi
 
   # ── Release ──────────────────────────────────────────────────────────
   # Gated on lint + unit-test + e2e, so we never open a Version Packages
