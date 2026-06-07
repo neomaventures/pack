@@ -29,6 +29,7 @@ describe("POST /auth/register", () => {
           .set("Accept", "text/html")
           .expect(BAD_REQUEST)
 
+        // TODO : We can just render the template with the error.
         expect(response.headers["content-type"]).toMatch(/text\/html/)
         expect(response.text).toContain("Sign up")
         expect(response.text).toContain(invalidEmail)
@@ -63,14 +64,15 @@ describe("POST /auth/register", () => {
           )
       })
 
-      it("should send a magic link email to the submitted address", async () => {
+      it("should send a magic link email with a callback URL", async () => {
         await request(app.getHttpServer())
           .post("/auth/register")
           .send({ email })
 
         const message = await mailpit.findByRecipient(email)
-        // TODO : We should test the content of the email.
-        expect(message).toBeDefined()
+
+        expect(message.Subject).toMatch(/welcome/i)
+        expect(message.HTML).toContain("/auth/magic-link/callback?token=")
       })
     })
   })
@@ -87,9 +89,9 @@ describe("POST /auth/register", () => {
             smtpPort: "19999",
             smtpUser: "",
             smtpPass: "",
-            mailFrom: "noreply@localhost",
-            jwtSecret: "test-secret",
-            appUrl: "http://localhost:3000",
+            mailFrom: faker.internet.email(),
+            jwtSecret: faker.string.alphanumeric(32),
+            appUrl: faker.internet.url(),
           }),
       })
     })
