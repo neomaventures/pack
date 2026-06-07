@@ -98,16 +98,15 @@ jobs:
         run: |
           if [ "${{ github.ref }}" = "refs/heads/main" ]; then
             pnpm turbo test
-          elif git diff --name-only origin/main...HEAD | grep -qvE '^(\.github/|\.claude/)'; then
-            ROOT_CHANGES=$(git diff --name-only origin/main...HEAD | grep -vE '^(\.github/|\.claude/|packages/)' || true)
+          else
+            # Check for changes outside packages/ (root config, CI, lockfile, etc.)
+            ROOT_CHANGES=$(git diff --name-only origin/main...HEAD | grep -vE '^(\.claude/|packages/)' || true)
             if [ -n "$ROOT_CHANGES" ]; then
-              echo "Root config changed — running full test suite"
+              echo "Root/CI config changed — running full test suite"
               pnpm turbo test
             else
               pnpm --filter '...[origin/main]' --filter '!neoma-pack' -r --if-present run test
             fi
-          else
-            echo "Only CI/config files changed — skipping tests"
           fi
 
   # ── E2E tests ───────────────────────────────────────────────────────
@@ -131,16 +130,15 @@ jobs:
         run: |
           if [ "${{ github.ref }}" = "refs/heads/main" ]; then
             pnpm turbo test:e2e
-          elif git diff --name-only origin/main...HEAD | grep -qvE '^(\.github/|\.claude/)'; then
-            ROOT_CHANGES=$(git diff --name-only origin/main...HEAD | grep -vE '^(\.github/|\.claude/|packages/)' || true)
+          else
+            # Check for changes outside packages/ (root config, CI, lockfile, etc.)
+            ROOT_CHANGES=$(git diff --name-only origin/main...HEAD | grep -vE '^(\.claude/|packages/)' || true)
             if [ -n "$ROOT_CHANGES" ]; then
-              echo "Root config changed — running full e2e suite"
+              echo "Root/CI config changed — running full e2e suite"
               pnpm turbo test:e2e
             else
               pnpm --filter '...[origin/main]' --filter '!neoma-pack' -r --if-present run test:e2e
             fi
-          else
-            echo "Only CI/config files changed — skipping e2e tests"
           fi
 
   # ── Release ──────────────────────────────────────────────────────────
