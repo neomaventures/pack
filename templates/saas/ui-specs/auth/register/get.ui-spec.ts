@@ -39,6 +39,17 @@ test.describe("Registration Page", () => {
     })
   })
 
+  test.describe("When a visitor submits a valid email", () => {
+    test("should navigate to the magic-link-sent page", async ({ page }) => {
+      await page.goto("/auth/register")
+
+      await page.getByLabel("Email address").fill("test@example.com")
+      await page.getByRole("button", { name: "Continue with email" }).click()
+
+      await expect(page).toHaveURL(/\/auth\/magic-link\/sent/)
+    })
+  })
+
   test.describe("When a visitor submits an invalid email", () => {
     test("should re-render the form with an error message visible", async ({
       page,
