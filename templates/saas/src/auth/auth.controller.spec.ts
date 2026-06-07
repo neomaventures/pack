@@ -1,5 +1,7 @@
 import { faker } from "@faker-js/faker"
 import { MockLoggerService } from "@neomaventures/fixtures"
+import { ApplicationLoggerService } from "@neomaventures/logging"
+import { Test, type TestingModule } from "@nestjs/testing"
 
 import { AuthController } from "./auth.controller"
 
@@ -7,9 +9,17 @@ describe("AuthController", () => {
   let controller: AuthController
   let logger: MockLoggerService
 
-  beforeEach(() => {
+  beforeEach(async () => {
     logger = new MockLoggerService()
-    controller = new AuthController(logger as any)
+
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [AuthController],
+      providers: [
+        { provide: ApplicationLoggerService, useValue: logger },
+      ],
+    }).compile()
+
+    controller = module.get<AuthController>(AuthController)
   })
 
   describe("register()", () => {
@@ -26,7 +36,9 @@ describe("AuthController", () => {
 
       controller.submitRegister({ email })
 
-      expect(logger.log).toHaveBeenCalledWith(`Registration submitted for ${email}`)
+      expect(logger.log).toHaveBeenCalledWith(
+        `Registration submitted for ${email}`,
+      )
     })
   })
 })

@@ -1,5 +1,10 @@
 import { MockLoggerService } from "@neomaventures/fixtures"
-import { BadRequestException, InternalServerErrorException } from "@nestjs/common"
+import { ApplicationLoggerService } from "@neomaventures/logging"
+import {
+  BadRequestException,
+  InternalServerErrorException,
+} from "@nestjs/common"
+import { Test, type TestingModule } from "@nestjs/testing"
 
 import { ApplicationController } from "./application.controller"
 
@@ -7,9 +12,17 @@ describe("ApplicationController", () => {
   let controller: ApplicationController
   let logger: MockLoggerService
 
-  beforeEach(() => {
+  beforeEach(async () => {
     logger = new MockLoggerService()
-    controller = new ApplicationController(logger as any)
+
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [ApplicationController],
+      providers: [
+        { provide: ApplicationLoggerService, useValue: logger },
+      ],
+    }).compile()
+
+    controller = module.get<ApplicationController>(ApplicationController)
   })
 
   describe("index()", () => {
@@ -29,7 +42,9 @@ describe("ApplicationController", () => {
 
     describe("Given type is 'render'", () => {
       it("should throw an InternalServerErrorException", () => {
-        expect(() => controller.error("render")).toThrow(InternalServerErrorException)
+        expect(() => controller.error("render")).toThrow(
+          InternalServerErrorException,
+        )
       })
     })
 
