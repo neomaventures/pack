@@ -125,13 +125,14 @@ Decorate a route with `@ErrorTemplate({ default: 'errors/generic' })`. When an e
 
 ### Redirect mode
 
-When the thrown exception implements `getRedirect()`, the filter issues a 303 redirect to the returned URL instead of rendering a template. This is useful for form submissions where the user should be sent back to the form with an error message.
+When the `@ErrorTemplate` value starts with `/`, the filter issues a 303 redirect to that path instead of rendering a template. For example, `@ErrorTemplate({ default: '/' })` redirects to the welcome page on error. This is useful for form submissions where the user should be sent back to the form.
 
 Both modes require the request to accept `text/html` (content negotiation). JSON-accepting clients receive the standard NestJS JSON error response.
 
-### Exercise route
+### Exercise routes
 
-`GET /?error=true` exercises the render-mode error path. Visit it in a browser to see the EJS error template in action.
+- `GET /?error=true` — exercises render mode (EJS error template)
+- `GET /redirect-error` — exercises redirect mode (303 back to `/`)
 
 ## Tests
 

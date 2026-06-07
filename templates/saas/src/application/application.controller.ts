@@ -9,8 +9,6 @@ import {
 import { ErrorTemplate } from "@neomaventures/exceptions"
 import { ApplicationLoggerService } from "@neomaventures/logging"
 
-import { RedirectErrorException } from "~application/redirect-error.exception"
-
 /**
  * Handles top-level routes for the SaaS template application.
  */
@@ -38,13 +36,15 @@ export class ApplicationController {
   }
 
   /**
-   * Throws a {@link RedirectErrorException} to exercise the exception
-   * filter's redirect mode. The filter catches the exception and issues
-   * a 303 redirect to the URL returned by `getRedirect()`.
+   * Exercises the exception filter's redirect mode.
+   *
+   * When `@ErrorTemplate` resolves to a path starting with `/`, the
+   * filter issues a 303 redirect instead of rendering a template.
    */
   @Get("redirect-error")
+  @ErrorTemplate({ default: "/" })
   public redirectError(): void {
-    throw new RedirectErrorException()
+    throw new InternalServerErrorException("Redirecting back home")
   }
 
   /**
