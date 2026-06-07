@@ -2,19 +2,19 @@ import { type Authenticatable, type AuthenticatableProfile } from "@neomaventure
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
 
 /**
- * Represents an authenticated user in the application.
+ * Represents an authenticated account in the application.
  *
  * Implements {@link Authenticatable} so that `@neomaventures/auth` can
- * resolve, create, and authorise users via magic-link or OAuth flows.
+ * resolve, create, and authorise accounts via magic-link or OAuth flows.
  *
  * @example
  * ```typescript
- * const user = repository.create({ email: "alice@example.com" })
- * await repository.save(user)
+ * const account = repository.create({ email: "alice@example.com" })
+ * await repository.save(account)
  * ```
  */
 @Entity()
-export class User implements Authenticatable {
+export class Account implements Authenticatable {
   /** UUID primary key, auto-generated on insert. */
   @PrimaryGeneratedColumn("uuid")
   public id!: string

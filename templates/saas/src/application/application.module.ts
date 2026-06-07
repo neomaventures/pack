@@ -9,7 +9,7 @@ import { RequestContextModule } from "@neomaventures/request-context"
 
 import { ApplicationController } from "~application/application.controller"
 import { ViewLocalsMiddleware } from "~application/view-locals.middleware"
-import { User } from "~user/user.entity"
+import { Account } from "~account/account.entity"
 
 /** Config properties used by the application module. */
 interface AppConfig {
@@ -34,16 +34,16 @@ interface AppConfig {
     LoggingModule.forRoot(),
     ExceptionHandlerModule,
     TypeOrmModule.forRoot({
-      type: "better-sqlite3",
+      type: "sqlite",
       database: ":memory:",
-      entities: [User],
+      entities: [Account],
       synchronize: true,
     }),
     AuthModule.forRootAsync({
       useFactory: (config: TypedConfig<AppConfig>) => ({
         secret: config.jwtSecret,
         expiresIn: "7d",
-        entity: User,
+        entity: Account,
         cookie: {
           secure: false,
           sameSite: "lax" as const,
