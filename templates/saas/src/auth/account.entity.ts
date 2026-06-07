@@ -1,4 +1,7 @@
-import { type Authenticatable, type AuthenticatableProfile } from "@neomaventures/auth"
+import {
+  type Authenticatable,
+  type AuthenticatableProfile,
+} from "@neomaventures/auth"
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
 
 /**

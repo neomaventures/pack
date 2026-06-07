@@ -17,9 +17,7 @@ describe("ApplicationController", () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ApplicationController],
-      providers: [
-        { provide: ApplicationLoggerService, useValue: logger },
-      ],
+      providers: [{ provide: ApplicationLoggerService, useValue: logger }],
     }).compile()
 
     controller = module.get<ApplicationController>(ApplicationController)

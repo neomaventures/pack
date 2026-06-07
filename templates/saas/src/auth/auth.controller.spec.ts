@@ -6,6 +6,8 @@ import { Test, type TestingModule } from "@nestjs/testing"
 
 import { AuthController } from "./auth.controller"
 
+const email = faker.internet.email()
+
 describe("AuthController", () => {
   let controller: AuthController
   let logger: MockLoggerService
@@ -14,9 +16,13 @@ describe("AuthController", () => {
   beforeEach(async () => {
     logger = new MockLoggerService()
     magicLinkService = {
-      send: jest.fn().mockResolvedValue(undefined),
+      send: jest.fn().mockImplementation((submitted: string) => {
+        if (submitted === email) {
+          return Promise.resolve(undefined)
+        }
+        throw new Error(`Unexpected email: ${submitted}`)
+      }),
     }
-
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [
@@ -31,26 +37,16 @@ describe("AuthController", () => {
   describe("register()", () => {
     it("should log that the registration page was requested", () => {
       controller.register()
-
       expect(logger.log).toHaveBeenCalledWith("Registration page requested")
     })
   })
 
   describe("submitRegister()", () => {
     describe("Given a valid email", () => {
-      it("should call magicLinkService.send() with the email and return the redirect URL", async () => {
-        const email = faker.internet.email()
-
-        magicLinkService.send.mockImplementation((submitted: string) => {
-          if (submitted === email) {
-            return Promise.resolve(undefined)
-          }
-          throw new Error(`Unexpected email: ${submitted}`)
-        })
-
-        const result = await controller.submitRegister({ email })
-
-        expect(result).toMatchObject({
+      it("should call magicLinkService.send() with the email and return the redirect URL", () => {
+        return expect(
+          controller.submitRegister({ email }),
+        ).resolves.toMatchObject({
           url: `/auth/magic-link/sent?email=${encodeURIComponent(email)}`,
         })
       })
@@ -60,11 +56,7 @@ describe("AuthController", () => {
   describe("magicLinkSent()", () => {
     describe("Given a valid email query param", () => {
       it("should return the email for the template", () => {
-        const email = faker.internet.email()
-
-        const result = controller.magicLinkSent({ email })
-
-        expect(result).toMatchObject({ email })
+        expect(controller.magicLinkSent({ email })).toMatchObject({ email })
       })
     })
   })

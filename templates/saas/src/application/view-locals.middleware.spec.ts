@@ -1,5 +1,5 @@
-import { express } from "@neomaventures/fixtures"
 import { ConfigService } from "@neomaventures/config"
+import { express } from "@neomaventures/fixtures"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { type Request, type Response } from "express"
 
@@ -15,7 +15,10 @@ describe("ViewLocalsMiddleware", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ViewLocalsMiddleware,
-        { provide: ConfigService, useValue: { npmPackageName, npmPackageVersion } },
+        {
+          provide: ConfigService,
+          useValue: { npmPackageName, npmPackageVersion },
+        },
       ],
     }).compile()
 

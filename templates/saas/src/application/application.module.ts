@@ -1,11 +1,18 @@
-import { type MiddlewareConsumer, Module, type NestModule } from "@nestjs/common"
-import { TypeOrmModule } from "@nestjs/typeorm"
-
 import { AuthModule } from "@neomaventures/auth"
-import { ConfigModule, ConfigService, type TypedConfig } from "@neomaventures/config"
+import {
+  ConfigModule,
+  ConfigService,
+  type TypedConfig,
+} from "@neomaventures/config"
 import { ExceptionHandlerModule } from "@neomaventures/exceptions"
 import { LoggingModule } from "@neomaventures/logging"
 import { RequestContextModule } from "@neomaventures/request-context"
+import {
+  type MiddlewareConsumer,
+  Module,
+  type NestModule,
+} from "@nestjs/common"
+import { TypeOrmModule } from "@nestjs/typeorm"
 
 import { ApplicationController } from "~application/application.controller"
 import { ViewLocalsMiddleware } from "~application/view-locals.middleware"
