@@ -129,10 +129,19 @@ When the `@ErrorTemplate` value starts with `/`, the filter issues a 303 redirec
 
 Both modes require the request to accept `text/html` (content negotiation). JSON-accepting clients receive the standard NestJS JSON error response.
 
-### Exercise routes
+### Exercise route
 
-- `GET /?error=true` — exercises render mode (EJS error template)
-- `GET /redirect-error` — exercises redirect mode (303 back to `/`)
+`GET /error` exercises both modes via a single `@ErrorTemplate` that maps exception classes to strategies:
+
+```ts
+@ErrorTemplate({
+  BadRequestException: "/",          // 4xx → redirect to /
+  default: "errors/generic",         // everything else → render template
+})
+```
+
+- `GET /error?type=render` — throws a 500, rendered as EJS error page
+- `GET /error?type=redirect` — throws a 400, redirected to `/`
 
 ## Tests
 

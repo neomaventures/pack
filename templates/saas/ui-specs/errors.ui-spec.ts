@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test"
 
 test.describe("Error Page (render mode)", () => {
-  test.describe("When a visitor navigates to /?error=true", () => {
+  test.describe("When a visitor navigates to /error?type=render", () => {
     test.beforeEach(({ page }) => {
-      return page.goto("/?error=true")
+      return page.goto("/error?type=render")
     })
 
     test("should display the error heading", async ({ page }) => {
@@ -11,9 +11,9 @@ test.describe("Error Page (render mode)", () => {
       await expect(heading).toHaveText("Something went wrong")
     })
 
-    test("should display the status code and message", async ({ page }) => {
-      const subtitle = page.getByText("500")
-      await expect(subtitle).toBeVisible()
+    test("should display the status code", async ({ page }) => {
+      const statusCode = page.getByText("500")
+      await expect(statusCode).toBeVisible()
     })
 
     test("should display a back to home link", async ({ page }) => {
@@ -23,10 +23,10 @@ test.describe("Error Page (render mode)", () => {
   })
 })
 
-test.describe("Redirect Error (redirect mode)", () => {
-  test.describe("When a visitor navigates to /redirect-error", () => {
+test.describe("Error Redirect (redirect mode)", () => {
+  test.describe("When a visitor navigates to /error?type=redirect", () => {
     test("should redirect to the welcome page", async ({ page }) => {
-      await page.goto("/redirect-error")
+      await page.goto("/error?type=redirect")
       await expect(page).toHaveURL("/")
 
       const heading = page.getByRole("heading", { level: 1 })

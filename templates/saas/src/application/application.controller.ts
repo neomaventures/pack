@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   Get,
   InternalServerErrorException,
@@ -18,39 +19,33 @@ export class ApplicationController {
 
   /**
    * Renders the welcome page.
-   *
-   * When the `error` query parameter is set to `"true"`, throws an
-   * {@link InternalServerErrorException} to exercise the exception
-   * filter's render mode via {@link ErrorTemplate}.
-   *
-   * @param error - Optional query parameter to trigger an error.
    */
   @Get()
   @Render("welcome")
-  @ErrorTemplate({ default: "errors/generic" })
-  public index(@Query("error") error?: string): void {
-    if (error === "true") {
-      throw new InternalServerErrorException("Something went wrong")
-    }
+  public index(): void {
     this.logger.log("Welcome page requested")
   }
 
   /**
-   * Exercises the exception filter's redirect mode.
+   * Exercises both modes of the exception filter via `@ErrorTemplate`.
    *
-   * When `@ErrorTemplate` resolves to a path starting with `/`, the
-   * filter issues a 303 redirect instead of rendering a template.
-   */
-  @Get("redirect-error")
-  @ErrorTemplate({ default: "/" })
-  public redirectError(): void {
-    throw new InternalServerErrorException("Redirecting back home")
-  }
-
-  /**
-   * Renders the generic error page.
+   * - `GET /error?type=render` — throws a 500, rendered as EJS error page
+   * - `GET /error?type=redirect` — throws a 400, redirected to `/`
+   *
+   * Demonstrates per-exception routing: different exception classes
+   * map to different error handling strategies on the same route.
+   *
+   * @param type - The error type to trigger ("render" or "redirect").
    */
   @Get("error")
-  @Render("errors/generic")
-  public error(): void {}
+  @ErrorTemplate({
+    BadRequestException: "/",
+    default: "errors/generic",
+  })
+  public error(@Query("type") type?: string): void {
+    if (type === "redirect") {
+      throw new BadRequestException("Invalid input")
+    }
+    throw new InternalServerErrorException("Something went wrong")
+  }
 }
