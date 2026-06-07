@@ -38,6 +38,22 @@ The generated app installs `@neomaventures/*` packages from GitHub Packages. You
 
 The template includes an `.npmrc` that scopes `@neomaventures` to the GitHub Packages registry.
 
+### Configuration
+
+The app reads configuration from environment variables via `@neomaventures/config`. Each environment has its own `.env` file (`.env.development`, `.env.spec`, `.env.e2e-spec`, `.env.ui-spec`), loaded automatically by the corresponding `pnpm` script.
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `JWT_SECRET` | Secret key for signing JWT session cookies | `dev-secret-change-me` |
+| `SMTP_HOST` | SMTP server for magic link emails | `localhost` |
+| `SMTP_PORT` | SMTP port | `1025` |
+| `MAIL_FROM` | From address for magic link emails | `noreply@localhost` |
+| `APP_URL` | Base URL for magic link callback URLs | `http://localhost:3000` |
+
+For local development, the defaults work out of the box with [Mailpit](https://mailpit.axllent.org/) running on port 1025. In production, set `JWT_SECRET` to a strong random value and configure a real SMTP provider.
+
+`@neomaventures/config` maps camelCase property names to SCREAMING_SNAKE_CASE env vars automatically — no manual `process.env` reads needed.
+
 ### How the app name works
 
 The welcome page displays the package name from `package.json`. `ViewLocalsMiddleware` reads `NPM_PACKAGE_NAME` and `NPM_PACKAGE_VERSION` (auto-set by pnpm from `package.json`) via `@neomaventures/config` and injects them into every EJS template as `npmPackageName` and `npmPackageVersion`.
