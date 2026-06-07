@@ -2,10 +2,6 @@ packages:
   - "packages/*"
   - "templates/*"
 
-# Disable auto-install of peer deps to prevent unwanted optional peers
-# (e.g. better-sqlite3 from TypeORM). See pnpm/pnpm#11155.
-autoInstallPeers: false
-
 # Supply-chain: refuse dependencies published within the last 7 days.
 minimumReleaseAge: 10080
 
