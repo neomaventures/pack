@@ -873,6 +873,9 @@ importers:
 
   templates/saas:
     dependencies:
+      '@neomaventures/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@neomaventures/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -894,6 +897,9 @@ importers:
       '@nestjs/platform-express':
         specifier: ^11.1.18
         version: 11.1.21(@nestjs/common@11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.21)
+      '@nestjs/typeorm':
+        specifier: ^11.0.0
+        version: 11.0.1(@nestjs/common@11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.21(@nestjs/common@11.1.21(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.21)(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.29(sqlite3@5.1.7)(ts-node@10.9.2(@swc/core@1.15.40)(@types/node@25.8.0)(typescript@6.0.3)))
       ejs:
         specifier: ^3.1.10
         version: 3.1.10
@@ -903,6 +909,12 @@ importers:
       rxjs:
         specifier: ^7.8.2
         version: 7.8.2
+      sqlite3:
+        specifier: ^5.1.7
+        version: 5.1.7
+      typeorm:
+        specifier: ^0.3.20
+        version: 0.3.29(sqlite3@5.1.7)(ts-node@10.9.2(@swc/core@1.15.40)(@types/node@25.8.0)(typescript@6.0.3))
     devDependencies:
       '@faker-js/faker':
         specifier: ^9.9.0
@@ -913,6 +925,9 @@ importers:
       '@neomaventures/managed-app':
         specifier: workspace:*
         version: link:../../packages/managed-app
+      '@neomaventures/managed-database':
+        specifier: workspace:*
+        version: link:../../packages/managed-database
       '@nestjs/cli':
         specifier: ^11.0.16
         version: 11.0.21(@swc/cli@0.7.10(@swc/core@1.15.40)(chokidar@4.0.3))(@swc/core@1.15.40)(@types/node@25.8.0)(prettier@3.8.3)

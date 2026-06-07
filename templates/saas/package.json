@@ -18,6 +18,7 @@
     "test:ui": "node --env-file=.env.ui-spec node_modules/@playwright/test/cli.js test"
   },
   "dependencies": {
+    "@neomaventures/auth": "workspace:*",
     "@neomaventures/config": "workspace:*",
     "@neomaventures/exceptions": "workspace:*",
     "@neomaventures/logging": "workspace:*",
@@ -25,14 +26,18 @@
     "@nestjs/common": "^11.1.18",
     "@nestjs/core": "^11.1.18",
     "@nestjs/platform-express": "^11.1.18",
+    "@nestjs/typeorm": "^11.0.0",
     "ejs": "^3.1.10",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.2"
+    "rxjs": "^7.8.2",
+    "sqlite3": "^5.1.7",
+    "typeorm": "^0.3.20"
   },
   "devDependencies": {
     "@faker-js/faker": "^9.9.0",
     "@neomaventures/fixtures": "workspace:*",
     "@neomaventures/managed-app": "workspace:*",
+    "@neomaventures/managed-database": "workspace:*",
     "@nestjs/cli": "^11.0.16",
     "@nestjs/testing": "^11.1.18",
     "@playwright/test": "^1.58.2",
