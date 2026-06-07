@@ -10,7 +10,7 @@
     <main class="hero">
       <h1 class="hero-title">Something went wrong</h1>
       <% if (typeof exception !== 'undefined' && exception) { %>
-        <p class="hero-subtitle"><%= exception.statusCode %> — <%= Array.isArray(exception.message) ? exception.message.join(', ') : exception.message %></p>
+        <p class="hero-subtitle"><%= exception.statusCode %> — <%= exception.message %></p>
       <% } else { %>
         <p class="hero-subtitle">
           We're sorry, please try again later.
