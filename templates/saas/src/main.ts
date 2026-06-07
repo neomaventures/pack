@@ -1,5 +1,6 @@
 import { join } from "path"
 
+import { ValidationPipe } from "@nestjs/common"
 import { NestFactory } from "@nestjs/core"
 import { type NestExpressApplication } from "@nestjs/platform-express"
 
@@ -19,6 +20,13 @@ async function bootstrap(): Promise<void> {
   })
 
   app.enableShutdownHooks()
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      stopAtFirstError: true,
+    }),
+  )
 
   app.useStaticAssets(join(process.cwd(), "public"))
   app.setBaseViewsDir(join(process.cwd(), "views"))
