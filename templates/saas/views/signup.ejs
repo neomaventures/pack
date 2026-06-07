@@ -10,7 +10,15 @@
     <main class="auth-card">
       <h1 class="auth-title">Sign up</h1>
 
-      <form class="auth-form" action="/auth/magic-link" method="POST">
+      <% if (typeof errors !== "undefined" && errors.length > 0) { %>
+        <ul class="auth-errors">
+          <% errors.forEach(function(err) { %>
+            <li><%= err %></li>
+          <% }) %>
+        </ul>
+      <% } %>
+
+      <form class="auth-form" action="/signup" method="POST">
         <label class="auth-label" for="email">Email address</label>
         <input
           class="auth-input"
@@ -18,7 +26,7 @@
           name="email"
           type="email"
           placeholder="you@example.com"
-          required
+          value="<%= typeof email !== 'undefined' ? email : '' %>"
         />
         <button class="auth-button" type="submit">Continue with email</button>
       </form>

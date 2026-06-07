@@ -2,12 +2,22 @@ import { ErrorTemplate } from "@neomaventures/exceptions"
 import { ApplicationLoggerService } from "@neomaventures/logging"
 import {
   BadRequestException,
+  Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   InternalServerErrorException,
+  Post,
   Query,
   Render,
+  Res,
 } from "@nestjs/common"
+import { plainToInstance } from "class-transformer"
+import { validate } from "class-validator"
+import { type Response } from "express"
+
+import { SignupDto } from "~application/signup.dto"
 
 /**
  * Handles top-level routes for the SaaS template application.
@@ -32,6 +42,40 @@ export class ApplicationController {
   @Render("signup")
   public signup(): void {
     this.logger.log("Sign up page requested")
+  }
+
+  /**
+   * Handles the sign-up form submission.
+   *
+   * Validates the email address from the form body. On validation failure,
+   * re-renders the sign-up page with the error messages and the submitted
+   * email preserved. On success, redirects to the home page.
+   *
+   * @param body - The raw form body containing the email field.
+   * @param res - The Express response object for rendering and redirecting.
+   */
+  @Post("signup")
+  @HttpCode(HttpStatus.BAD_REQUEST)
+  public async submitSignup(
+    @Body() body: Record<string, unknown>,
+    @Res() res: Response,
+  ): Promise<void> {
+    const dto = plainToInstance(SignupDto, body)
+    const errors = await validate(dto, { stopAtFirstError: true })
+
+    if (errors.length > 0) {
+      const messages = errors.flatMap((e) => Object.values(e.constraints ?? {}))
+
+      this.logger.log("Sign up validation failed")
+      res.status(HttpStatus.BAD_REQUEST).render("signup", {
+        errors: messages,
+        email: typeof body.email === "string" ? body.email : "",
+      })
+      return
+    }
+
+    this.logger.log("Sign up submitted")
+    res.redirect(HttpStatus.FOUND, "/")
   }
 
   /**
