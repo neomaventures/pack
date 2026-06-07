@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Error - <%= npmPackageName %></title>
+    <link rel="stylesheet" href="/stylesheets/main.css" />
+  </head>
+  <body>
+    <main class="hero">
+      <h1 class="hero-title">Something went wrong</h1>
+      <p class="hero-subtitle">
+        We're sorry, please try again later.
+      </p>
+      <a href="/" class="demo-button" style="display: inline-block; text-decoration: none;">
+        Back to home
+      </a>
+    </main>
+
+    <footer class="footer">
+      <span>v<%= npmPackageVersion %></span>
+    </footer>
+  </body>
+</html>

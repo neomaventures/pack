@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= npmPackageName %></title>
+    <link rel="stylesheet" href="/stylesheets/main.css" />
+  </head>
+  <body>
+    <header class="header">
+      <span class="header-brand"><%= npmPackageName %></span>
+    </header>
+
+    <main class="hero">
+      <h1 class="hero-title">Welcome to <%= npmPackageName %></h1>
+      <p class="hero-subtitle">
+        A modern SaaS starter built with NestJS and EJS.
+      </p>
+    </main>
+
+    <footer class="footer">
+      <span>v<%= npmPackageVersion %></span>
+    </footer>
+  </body>
+</html>

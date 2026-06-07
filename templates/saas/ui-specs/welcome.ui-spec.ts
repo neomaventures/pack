@@ -1,0 +1,37 @@
+import { readFileSync } from "fs"
+
+import { expect, test } from "@playwright/test"
+
+const { version } = JSON.parse(readFileSync("package.json", "utf-8"))
+
+test.describe("Welcome Page", () => {
+  test.describe("When a visitor navigates to the homepage", () => {
+    test.beforeEach(({ page }) => {
+      return page.goto("/")
+    })
+
+    test("should display the app name in the heading", async ({ page }) => {
+      const headline = page.getByRole("heading", { level: 1 })
+      await expect(headline).toHaveText("Welcome to __PACKAGE_NAME__")
+    })
+
+    test("should display the subtitle", async ({ page }) => {
+      const subtitle = page.getByText(
+        "A modern SaaS starter built with NestJS and EJS.",
+      )
+      await expect(subtitle).toBeVisible()
+    })
+
+    test("should display the app name in the header brand", async ({
+      page,
+    }) => {
+      const brand = page.getByText("__PACKAGE_NAME__", { exact: true }).first()
+      await expect(brand).toBeVisible()
+    })
+
+    test("should display the version number", async ({ page }) => {
+      const versionMark = page.getByText(`v${version}`)
+      await expect(versionMark).toBeVisible()
+    })
+  })
+})
