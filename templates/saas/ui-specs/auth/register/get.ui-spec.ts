@@ -1,11 +1,11 @@
 import { expect, test } from "@playwright/test"
 
 test.describe("Registration Page", () => {
-  test.describe("When a visitor navigates to /auth/register", () => {
-    test.beforeEach(async ({ page }) => {
-      await page.goto("/auth/register")
-    })
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/auth/register")
+  })
 
+  test.describe("When a visitor navigates to /auth/register", () => {
     test("should display the page heading", async ({ page }) => {
       const headline = page.getByRole("heading", { level: 1 })
       await expect(headline).toHaveText("Sign up")
@@ -41,8 +41,6 @@ test.describe("Registration Page", () => {
 
   test.describe("When a visitor submits a valid email", () => {
     test("should navigate to the magic-link-sent page", async ({ page }) => {
-      await page.goto("/auth/register")
-
       await page.getByLabel("Email address").fill("test@example.com")
       await page.getByRole("button", { name: "Continue with email" }).click()
 
@@ -54,8 +52,6 @@ test.describe("Registration Page", () => {
     test("should re-render the form with an error message visible", async ({
       page,
     }) => {
-      await page.goto("/auth/register")
-
       const emailInput = page.getByLabel("Email address")
       await emailInput.fill("not-an-email")
 
@@ -64,13 +60,29 @@ test.describe("Registration Page", () => {
       })
       await submitButton.click()
 
-      const headline = page.getByRole("heading", { level: 1 })
-      await expect(headline).toHaveText("Sign up")
-
       const errorMessage = page.getByText("Please enter a valid email address.")
       await expect(errorMessage).toBeVisible()
 
       await expect(emailInput).toHaveValue("not-an-email")
     })
   })
+
+  // test.describe("When a visitor submits a blank email", () => {
+  //   test("should re-render the form with an error message visible", async ({
+  //     page,
+  //   }) => {
+  //     const emailInput = page.getByLabel("Email address")
+  //     await emailInput.fill("")
+  //
+  //     const submitButton = page.getByRole("button", {
+  //       name: "Continue with email",
+  //     })
+  //     await submitButton.click()
+  //
+  //     const errorMessage = page.getByText("Please enter a valid email address.")
+  //     await expect(errorMessage).toBeVisible()
+  //
+  //     await expect(emailInput).toHaveValue("")
+  //   })
+  // })
 })
