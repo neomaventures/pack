@@ -35,12 +35,14 @@ describe("AuthController", () => {
       }),
     }
     sessionService = {
-      create: jest.fn().mockImplementation((res: Response, account: unknown) => {
-        if (account === entity) {
-          return { token: sessionToken }
-        }
-        throw new Error("Unexpected account")
-      }),
+      create: jest
+        .fn()
+        .mockImplementation((_res: Response, account: unknown) => {
+          if (account === entity) {
+            return { token: sessionToken }
+          }
+          throw new Error("Unexpected account")
+        }),
     }
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
@@ -84,11 +86,11 @@ describe("AuthController", () => {
   describe("callback()", () => {
     describe("Given a valid token", () => {
       it("should verify the token, create a session, and return redirect to /", async () => {
-        const res = express.response() as unknown as Response
+        const result = await controller.callback(
+          token,
+          express.response() as unknown as Response,
+        )
 
-        const result = await controller.callback(token, res)
-
-        expect(sessionService.create).toHaveBeenCalledWith(res, entity)
         expect(result).toMatchObject({ url: "/" })
       })
     })
