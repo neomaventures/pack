@@ -29,7 +29,6 @@ describe("POST /auth/register", () => {
           .set("Accept", "text/html")
           .expect(BAD_REQUEST)
 
-        // TODO : We can just render the template with the error.
         expect(response.headers["content-type"]).toMatch(/text\/html/)
         expect(response.text).toContain("Sign up")
         expect(response.text).toContain(invalidEmail)
