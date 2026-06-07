@@ -12,6 +12,7 @@ coverage/
 !.env.e2e
 !.env.unit
 !.env.ui-spec
+!.env.development
 playwright-report/
 test-results/
 .npmrc
