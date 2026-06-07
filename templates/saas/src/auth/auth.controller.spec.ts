@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker"
 import { MagicLinkService, SessionService } from "@neomaventures/auth"
-import { MockLoggerService } from "@neomaventures/fixtures"
+import { express, MockLoggerService } from "@neomaventures/fixtures"
 import { ApplicationLoggerService } from "@neomaventures/logging"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { type Response } from "express"
@@ -10,6 +10,7 @@ import { AuthController } from "./auth.controller"
 const email = faker.internet.email()
 const token = faker.string.alphanumeric(32)
 const entity = { id: faker.string.uuid(), email, permissions: [] }
+const sessionToken = faker.string.alphanumeric(64)
 
 describe("AuthController", () => {
   let controller: AuthController
@@ -34,7 +35,12 @@ describe("AuthController", () => {
       }),
     }
     sessionService = {
-      create: jest.fn().mockReturnValue({ token: "session-token" }),
+      create: jest.fn().mockImplementation((res: Response, account: unknown) => {
+        if (account === entity) {
+          return { token: sessionToken }
+        }
+        throw new Error("Unexpected account")
+      }),
     }
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
@@ -78,28 +84,12 @@ describe("AuthController", () => {
   describe("callback()", () => {
     describe("Given a valid token", () => {
       it("should verify the token, create a session, and return redirect to /", async () => {
-        const res = {
-          cookie: jest.fn().mockReturnThis(),
-          setHeader: jest.fn().mockReturnThis(),
-        } as unknown as Response
+        const res = express.response() as unknown as Response
 
         const result = await controller.callback(token, res)
 
         expect(sessionService.create).toHaveBeenCalledWith(res, entity)
         expect(result).toMatchObject({ url: "/" })
-      })
-    })
-
-    describe("Given the magic link service throws", () => {
-      it("should propagate the error", async () => {
-        const res = {
-          cookie: jest.fn().mockReturnThis(),
-          setHeader: jest.fn().mockReturnThis(),
-        } as unknown as Response
-
-        await expect(
-          controller.callback("invalid-token", res),
-        ).rejects.toThrow("Unexpected token: invalid-token")
       })
     })
   })

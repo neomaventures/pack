@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker"
 import { MailpitClient } from "@neomaventures/mailpit"
 import { expect, test } from "@playwright/test"
 
-const mailpit = new MailpitClient(process.env.MAILPIT_API ?? "http://localhost:8025")
+const mailpit = new MailpitClient(process.env.MAILPIT_API!)
 
 /**
  * Extracts the callback URL from the magic link email HTML.
@@ -23,9 +23,7 @@ test.describe("Magic Link Callback", () => {
   test.describe("When a visitor completes the magic link flow", () => {
     const email = faker.internet.email()
 
-    test("should authenticate the user and redirect to /", async ({
-      page,
-    }) => {
+    test("should authenticate the user and redirect to /", async ({ page }) => {
       await page.goto("/auth/register")
       await page.getByLabel("Email address").fill(email)
       await page.getByRole("button", { name: "Continue with email" }).click()
@@ -42,7 +40,6 @@ test.describe("Magic Link Callback", () => {
   test.describe("When an invalid token is used", () => {
     test("should redirect to the registration page", async ({ page }) => {
       await page.goto("/auth/magic-link/callback?token=invalid-token")
-
       await expect(page).toHaveURL("/auth/register")
     })
   })
