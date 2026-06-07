@@ -1,4 +1,6 @@
 import { express } from "@neomaventures/fixtures"
+import { ConfigService } from "@neomaventures/config"
+import { Test, type TestingModule } from "@nestjs/testing"
 import { type Request, type Response } from "express"
 
 import { ViewLocalsMiddleware } from "./view-locals.middleware"
@@ -9,8 +11,15 @@ describe("ViewLocalsMiddleware", () => {
 
   let middleware: ViewLocalsMiddleware
 
-  beforeEach(() => {
-    middleware = new ViewLocalsMiddleware({ npmPackageName, npmPackageVersion } as any)
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ViewLocalsMiddleware,
+        { provide: ConfigService, useValue: { npmPackageName, npmPackageVersion } },
+      ],
+    }).compile()
+
+    middleware = module.get<ViewLocalsMiddleware>(ViewLocalsMiddleware)
   })
 
   describe("use()", () => {
