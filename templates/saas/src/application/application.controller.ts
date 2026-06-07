@@ -1,4 +1,4 @@
-import { Controller, Get } from "@nestjs/common"
+import { Controller, Get, Render } from "@nestjs/common"
 
 /**
  * Handles top-level routes for the SaaS template application.
@@ -6,12 +6,16 @@ import { Controller, Get } from "@nestjs/common"
 @Controller()
 export class ApplicationController {
   /**
-   * Returns a simple greeting to confirm the app is running.
-   *
-   * @returns A welcome message string.
+   * Renders the welcome page.
    */
   @Get()
-  public index(): string {
-    return "Hello World"
-  }
+  @Render("welcome")
+  public index(): void {}
+
+  /**
+   * Renders the generic error page.
+   */
+  @Get("error")
+  @Render("errors/generic")
+  public error(): void {}
 }
