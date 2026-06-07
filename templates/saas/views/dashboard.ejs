@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard - <%= npmPackageName %></title>
+    <link rel="stylesheet" href="/stylesheets/main.css" />
+  </head>
+  <body>
+    <header class="header">
+      <span class="header-brand"><%= npmPackageName %></span>
+      <nav class="header-nav">
+        <form method="post" action="/auth/logout">
+          <button type="submit" class="header-link">Sign out</button>
+        </form>
+      </nav>
+    </header>
+
+    <main class="dashboard">
+      <h1 class="dashboard-title">Dashboard</h1>
+      <p class="dashboard-subtitle">You are signed in.</p>
+    </main>
+
+    <footer class="footer">
+      <span>v<%= npmPackageVersion %></span>
+    </footer>
+  </body>
+</html>

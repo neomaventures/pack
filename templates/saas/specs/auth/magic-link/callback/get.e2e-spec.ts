@@ -35,7 +35,7 @@ describe("GET /auth/magic-link/callback", () => {
   describe("When a request is made with a valid token for a new email address", () => {
     const email = faker.internet.email()
 
-    it(`should respond with an HTTP ${FOUND} redirect to / and set a session cookie`, async () => {
+    it(`should respond with an HTTP ${FOUND} redirect to /dashboard and set a session cookie`, async () => {
       await request(app.getHttpServer())
         .post("/auth/register")
         .send({ email })
@@ -47,7 +47,7 @@ describe("GET /auth/magic-link/callback", () => {
         .get("/auth/magic-link/callback")
         .query({ token })
         .expect(FOUND)
-        .expect("Location", "/")
+        .expect("Location", "/dashboard")
         .expect("Set-Cookie", SESSION_COOKIE_REGEX)
     })
   })

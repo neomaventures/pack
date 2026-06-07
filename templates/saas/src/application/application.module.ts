@@ -18,6 +18,7 @@ import { ApplicationController } from "~application/application.controller"
 import { ViewLocalsMiddleware } from "~application/view-locals.middleware"
 import { Account } from "~auth/account.entity"
 import { SaasAuthModule } from "~auth/auth.module"
+import { DashboardModule } from "~dashboard/dashboard.module"
 
 /** Config properties used by the application module. */
 interface AppConfig {
@@ -75,6 +76,7 @@ interface AppConfig {
       inject: [ConfigService],
     }),
     SaasAuthModule,
+    DashboardModule,
   ],
   controllers: [ApplicationController],
   providers: [ViewLocalsMiddleware],

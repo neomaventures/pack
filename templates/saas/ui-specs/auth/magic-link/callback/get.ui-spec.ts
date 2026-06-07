@@ -23,7 +23,7 @@ test.describe("Magic Link Callback", () => {
   test.describe("When a visitor completes the magic link flow", () => {
     const email = faker.internet.email()
 
-    test("should authenticate the user and redirect to /", async ({ page }) => {
+    test("should authenticate the user and redirect to /dashboard", async ({ page }) => {
       await page.goto("/auth/register")
       await page.getByLabel("Email address").fill(email)
       await page.getByRole("button", { name: "Continue with email" }).click()
@@ -33,7 +33,7 @@ test.describe("Magic Link Callback", () => {
       const callbackUrl = extractCallbackUrl(message)
       await page.goto(callbackUrl.toString())
 
-      await expect(page).toHaveURL("/")
+      await expect(page).toHaveURL("/dashboard")
     })
   })
 

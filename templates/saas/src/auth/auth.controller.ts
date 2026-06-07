@@ -16,6 +16,8 @@ import {
 } from "@nestjs/common"
 import { type Response } from "express"
 
+const { FOUND, SEE_OTHER } = HttpStatus
+
 /**
  * Handles the authentication ceremony: registration form,
  * magic link sending, verification, and logout.
@@ -51,7 +53,7 @@ export class AuthController {
    */
   @Post("register")
   @ErrorTemplate({ BadRequestException: "auth/register", default: "/error" })
-  @Redirect("", HttpStatus.FOUND)
+  @Redirect("", FOUND)
   public async submitRegister(
     @Body() { email }: EmailDto,
   ): Promise<{ url: string }> {
@@ -90,13 +92,24 @@ export class AuthController {
    */
   @ErrorTemplate({ default: "/auth/register" })
   @Get("magic-link/callback")
-  @Redirect("", HttpStatus.FOUND)
+  @Redirect("", FOUND)
   public async callback(
     @Query("token") token: string,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ url: string }> {
     const { entity } = await this.magicLinkService.verify(token)
     this.sessionService.create(res, entity)
-    return { url: "/" }
+    return { url: "/dashboard" }
+  }
+
+  /**
+   * Clears the session cookie and redirects to the home page.
+   *
+   * @param res - The Express response, used to clear the session cookie.
+   */
+  @Post("logout")
+  @Redirect("/", SEE_OTHER)
+  public logout(@Res({ passthrough: true }) res: Response): void {
+    this.sessionService.clear(res)
   }
 }

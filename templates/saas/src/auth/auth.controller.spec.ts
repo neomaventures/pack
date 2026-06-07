@@ -16,7 +16,7 @@ describe("AuthController", () => {
   let controller: AuthController
   let logger: MockLoggerService
   let magicLinkService: { send: jest.Mock; verify: jest.Mock }
-  let sessionService: { create: jest.Mock }
+  let sessionService: { create: jest.Mock; clear: jest.Mock }
 
   beforeEach(async () => {
     logger = new MockLoggerService()
@@ -43,6 +43,7 @@ describe("AuthController", () => {
           }
           throw new Error("Unexpected account")
         }),
+      clear: jest.fn(),
     }
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
@@ -85,13 +86,25 @@ describe("AuthController", () => {
 
   describe("callback()", () => {
     describe("Given a valid token", () => {
-      it("should verify the token, create a session, and return redirect to /", async () => {
+      it("should verify the token, create a session, and return redirect to /dashboard", async () => {
         const result = await controller.callback(
           token,
           express.response() as unknown as Response,
         )
 
-        expect(result).toMatchObject({ url: "/" })
+        expect(result).toMatchObject({ url: "/dashboard" })
+      })
+    })
+  })
+
+  describe("logout()", () => {
+    describe("When called", () => {
+      it("should clear the session", () => {
+        const res = express.response() as unknown as Response
+
+        controller.logout(res)
+
+        expect(sessionService.clear).toHaveBeenCalledWith(res)
       })
     })
   })
