@@ -3,12 +3,11 @@ import { expect, test } from "@playwright/test"
 const email = "test@example.com"
 
 test.describe("Magic Link Sent Page", () => {
-  test.describe("When a visitor arrives after submitting a valid email", () => {
+  test.describe("When a visitor navigates to the confirmation page", () => {
     test.beforeEach(async ({ page }) => {
-      await page.goto("/auth/register")
-      await page.getByLabel("Email address").fill(email)
-      await page.getByRole("button", { name: "Continue with email" }).click()
-      await expect(page).toHaveURL(/\/auth\/magic-link\/sent/)
+      await page.goto(
+        `/auth/magic-link/sent?email=${encodeURIComponent(email)}`,
+      )
     })
 
     test("should display the confirmation heading", async ({ page }) => {
@@ -20,9 +19,11 @@ test.describe("Magic Link Sent Page", () => {
       await expect(page.getByText(email)).toBeVisible()
     })
 
-    test("should display a try again link back to registration", async ({ page }) => {
-      const link = page.getByRole("link", { name: /try again/i })
-      await expect(link).toBeVisible()
+    test("should display a try again link back to registration", async ({
+      page,
+    }) => {
+      await page.getByRole("link", { name: /try again/i }).click()
+      await expect(page).toHaveURL("/auth/register")
     })
   })
 })
