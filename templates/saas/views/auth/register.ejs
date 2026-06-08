@@ -13,7 +13,7 @@
       <form class="flex flex-col w-full" action="/auth/register" method="POST" novalidate>
         <label class="text-sm font-medium mb-1.5" for="email">Email address</label>
         <input
-          class="px-3 py-2.5 border border-slate-200 rounded-md text-sm font-sans mb-3 outline-none focus:border-slate-800<%= typeof exception !== 'undefined' && exception.email ? ' border-red-600' : '' %>"
+          class="px-3 py-2.5 border rounded-md text-sm font-sans mb-3 outline-none focus:border-slate-800 <%= typeof exception !== 'undefined' && exception.email ? 'border-red-600' : 'border-slate-200' %>"
           id="email"
           name="email"
           type="email"
