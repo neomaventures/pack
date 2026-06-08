@@ -6,17 +6,25 @@
     <title>Check your email - <%= npmPackageName %></title>
     <link rel="stylesheet" href="/stylesheets/main.css" />
   </head>
-  <body class="min-h-screen flex flex-col bg-slate-50 text-slate-800 font-sans">
-    <main class="flex-1 flex flex-col items-center justify-center text-center px-6 py-16">
-      <h1 class="text-4xl font-extrabold tracking-tight text-slate-800">Check your email</h1>
-      <p class="mt-3 text-lg text-slate-500 max-w-lg">
+  <body class="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-800">
+    <main
+      class="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center"
+    >
+      <h1 class="text-4xl font-extrabold tracking-tight text-slate-800">
+        Check your email
+      </h1>
+      <p class="mt-3 max-w-lg text-lg text-slate-500">
         We've sent a magic link to <strong><%= email %></strong>
       </p>
-      <p class="mt-3 text-lg text-slate-500 max-w-lg">
-        Click the link in the email to sign in.
-        If you don't see it, check your spam folder.
+      <p class="mt-3 max-w-lg text-lg text-slate-500">
+        Click the link in the email to sign in. If you don't see it, check your
+        spam folder.
       </p>
-      <a href="/auth/register" class="mt-6 text-sm text-slate-500 no-underline hover:text-slate-800">Didn't receive it? Try again</a>
+      <a
+        href="/auth/register"
+        class="mt-6 text-sm text-slate-500 no-underline hover:text-slate-800"
+        >Didn't receive it? Try again</a
+      >
     </main>
 
     <footer class="px-8 py-4 text-right text-xs text-slate-500">
