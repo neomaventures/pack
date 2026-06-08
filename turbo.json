@@ -13,6 +13,10 @@
       "dependsOn": ["build"],
       "cache": false
     },
+    "test:ui": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
     "lint": {
       "dependsOn": ["^build"]
     }

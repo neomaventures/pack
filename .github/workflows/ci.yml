@@ -141,8 +141,43 @@ jobs:
             fi
           fi
 
+  # ── UI tests ────────────────────────────────────────────────────────
+  # Playwright browser tests against a running NestJS server.
+  # Same affected-only strategy as unit/e2e tests.
+  ui-test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: packages/
+
+      - name: Install Playwright browsers
+        run: pnpm --filter __PACKAGE_NAME__ exec playwright install --with-deps chromium
+
+      - name: UI tests
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            pnpm turbo test:ui
+          else
+            ROOT_CHANGES=$(git diff --name-only origin/main...HEAD | grep -vE '^(\.claude/|packages/)' || true)
+            if [ -n "$ROOT_CHANGES" ]; then
+              echo "Root/CI config changed — running full ui test suite"
+              pnpm turbo test:ui
+            else
+              pnpm --filter '...[origin/main]' --filter '!neoma-pack' -r --if-present run test:ui
+            fi
+          fi
+
   # ── Release ──────────────────────────────────────────────────────────
-  # Gated on lint + unit-test + e2e, so we never open a Version Packages
+  # Gated on lint + unit-test + e2e + ui-test, so we never open a Version Packages
   # PR or publish from a commit whose checks haven't gone green. Runs
   # only on main; skipped on every other branch.
   #
@@ -151,7 +186,7 @@ jobs:
   # by GitHub org membership; GITHUB_TOKEN with `packages: write` is
   # sufficient.
   release:
-    needs: [lint, unit-test, e2e]
+    needs: [lint, unit-test, e2e, ui-test]
     # Only on a push to main — never on a pull_request. Fork PRs can
     # never reach this job.
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
