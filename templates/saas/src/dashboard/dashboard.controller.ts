@@ -1,22 +1,31 @@
-import { Controller, Get, Render } from "@nestjs/common"
+import {
+  type Authenticatable,
+  Authenticated,
+  Principal,
+} from "@neomaventures/auth"
+import { Controller, Get, Render, UseGuards } from "@nestjs/common"
 
 /**
  * Handles the dashboard page.
  *
  * Renders `views/dashboard.ejs` for authenticated users.
- * Authentication guard will be added in a future slice (#155).
+ * Unauthenticated visitors are redirected to `/auth/register`.
  */
 @Controller()
 export class DashboardController {
   /**
-   * Renders the dashboard page.
+   * Renders the dashboard page for the authenticated user.
    *
-   * @returns An empty object — the template reads `npmPackageName`
-   * and `npmPackageVersion` from `res.locals`.
+   * @param principal - The authenticated user, injected via the `@Principal()` decorator.
+   *
+   * @returns The user's email address for display in the template.
    */
   @Get("dashboard")
+  @UseGuards(new Authenticated("/auth/register"))
   @Render("dashboard")
-  public index(): void {
-    // Template variables provided via res.locals by ViewLocalsMiddleware
+  public index(
+    @Principal() principal: Authenticatable,
+  ): { email: string } {
+    return { email: principal.email }
   }
 }
