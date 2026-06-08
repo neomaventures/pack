@@ -22,7 +22,7 @@ export default defineConfig({
   ],
   webServer: {
     command:
-      "node --env-file=.env.ui-spec node_modules/@nestjs/cli/bin/nest.js start --watch",
+      "npx @tailwindcss/cli -i src/styles/input.css -o public/stylesheets/main.css --minify && node --env-file=.env.ui-spec node_modules/@nestjs/cli/bin/nest.js start --watch",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 30000,

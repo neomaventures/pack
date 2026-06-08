@@ -1,0 +1,17 @@
+node_modules/
+dist/
+
+# Environment files (keep .env.example)
+.env*
+!.env.example
+!.env.development
+!.env.spec
+!.env.e2e-spec
+!.env.ui-spec
+
+# Test artifacts
+playwright-report/
+test-results/
+
+# Generated CSS (built from src/styles/input.css)
+public/stylesheets/main.css

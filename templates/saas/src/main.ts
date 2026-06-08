@@ -14,9 +14,12 @@ import { ApplicationModule } from "~application/application.module"
  * (defaults to 3000).
  */
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create<NestExpressApplication>(ApplicationModule, {
-    bufferLogs: true,
-  })
+  const app = await NestFactory.create<NestExpressApplication>(
+    ApplicationModule,
+    {
+      bufferLogs: true,
+    },
+  )
 
   app.enableShutdownHooks()
 

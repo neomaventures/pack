@@ -9,15 +9,16 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "build": "nest build",
+    "build": "npx @tailwindcss/cli -i src/styles/input.css -o public/stylesheets/main.css --minify && nest build",
     "predev": "lsof -ti:3000 | xargs kill -9 2>/dev/null; docker start saas-mailpit 2>/dev/null || docker run -d --name saas-mailpit -p 1025:1025 -p 8025:8025 axllent/mailpit",
-    "dev": "node --env-file=.env.development node_modules/@nestjs/cli/bin/nest.js start --watch",
+    "dev": "concurrently -n nest,css -c blue,magenta \"node --env-file=.env.development node_modules/@nestjs/cli/bin/nest.js start --watch\" \"npx @tailwindcss/cli -i src/styles/input.css -o public/stylesheets/main.css --watch\"",
     "postdev": "docker stop saas-mailpit",
+    "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
     "start:prod": "node dist/main",
     "test": "node --env-file=.env.spec --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.json",
     "test:e2e": "node --env-file=.env.e2e-spec --experimental-vm-modules node_modules/jest/bin/jest.js --config ./specs/jest-e2e.json --runInBand",
-    "test:ui": "node --env-file=.env.ui-spec node_modules/@playwright/test/cli.js test"
+    "test:ui": "npx @tailwindcss/cli -i src/styles/input.css -o public/stylesheets/main.css --minify && node --env-file=.env.ui-spec node_modules/@playwright/test/cli.js test"
   },
   "dependencies": {
     "@neomaventures/auth": "workspace:*",
@@ -50,12 +51,14 @@
     "@swc/cli": "^0.7.10",
     "@swc/core": "^1.12.1",
     "@swc/jest": "^0.2.39",
+    "@tailwindcss/cli": "^4.1.11",
     "@types/ejs": "^3.1.5",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.5.2",
     "@types/supertest": "^7.2.0",
+    "concurrently": "^9.1.2",
     "jest": "^30.3.0",
     "jsonwebtoken": "^9.0.2",
     "supertest": "^7.2.2",
