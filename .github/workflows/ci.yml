@@ -143,14 +143,13 @@ jobs:
 
   # ── UI tests ────────────────────────────────────────────────────────
   # Playwright browser tests against a running NestJS server.
-  # Same affected-only strategy as unit/e2e tests.
+  # Always runs via turbo (not pnpm --filter) because Playwright
+  # requires stable cwd-relative module resolution.
   ui-test:
     needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - uses: ./.github/actions/setup
 
       - name: Download build artifacts
@@ -163,18 +162,7 @@ jobs:
         run: pnpm --filter __PACKAGE_NAME__ exec playwright install --with-deps chromium
 
       - name: UI tests
-        run: |
-          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            pnpm turbo test:ui
-          else
-            ROOT_CHANGES=$(git diff --name-only origin/main...HEAD | grep -vE '^(\.claude/|packages/)' || true)
-            if [ -n "$ROOT_CHANGES" ]; then
-              echo "Root/CI config changed — running full ui test suite"
-              pnpm turbo test:ui
-            else
-              pnpm --filter '...[origin/main]' --filter '!neoma-pack' -r --if-present run test:ui
-            fi
-          fi
+        run: pnpm turbo test:ui
 
   # ── Release ──────────────────────────────────────────────────────────
   # Gated on lint + unit-test + e2e + ui-test, so we never open a Version Packages
