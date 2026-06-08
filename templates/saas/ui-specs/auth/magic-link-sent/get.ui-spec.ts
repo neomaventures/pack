@@ -1,6 +1,7 @@
+import { faker } from "@faker-js/faker"
 import { expect, test } from "@playwright/test"
 
-const email = "test@example.com"
+const email = faker.internet.email()
 
 test.describe("Magic Link Sent Page", () => {
   test.describe("When a visitor navigates to the confirmation page", () => {

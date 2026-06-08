@@ -1,3 +1,4 @@
+import { faker } from "@faker-js/faker"
 import { expect, test } from "@playwright/test"
 
 test.describe("Registration Page", () => {
@@ -41,7 +42,7 @@ test.describe("Registration Page", () => {
 
   test.describe("When a visitor submits a valid email", () => {
     test("should navigate to the magic-link-sent page", async ({ page }) => {
-      await page.getByLabel("Email address").fill("test@example.com")
+      await page.getByLabel("Email address").fill(faker.internet.email())
       await page.getByRole("button", { name: "Continue with email" }).click()
 
       await expect(page).toHaveURL(/\/auth\/magic-link\/sent/)
@@ -66,23 +67,4 @@ test.describe("Registration Page", () => {
       await expect(emailInput).toHaveValue("not-an-email")
     })
   })
-
-  // test.describe("When a visitor submits a blank email", () => {
-  //   test("should re-render the form with an error message visible", async ({
-  //     page,
-  //   }) => {
-  //     const emailInput = page.getByLabel("Email address")
-  //     await emailInput.fill("")
-  //
-  //     const submitButton = page.getByRole("button", {
-  //       name: "Continue with email",
-  //     })
-  //     await submitButton.click()
-  //
-  //     const errorMessage = page.getByText("Please enter a valid email address.")
-  //     await expect(errorMessage).toBeVisible()
-  //
-  //     await expect(emailInput).toHaveValue("")
-  //   })
-  // })
 })

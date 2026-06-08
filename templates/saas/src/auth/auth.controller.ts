@@ -24,6 +24,11 @@ const { FOUND, SEE_OTHER } = HttpStatus
  */
 @Controller("auth")
 export class AuthController {
+  /**
+   * @param logger - Structured logger for auth events.
+   * @param magicLinkService - Sends and verifies magic link tokens.
+   * @param sessionService - Creates and clears JWT session cookies.
+   */
   public constructor(
     private readonly logger: ApplicationLoggerService,
     private readonly magicLinkService: MagicLinkService,

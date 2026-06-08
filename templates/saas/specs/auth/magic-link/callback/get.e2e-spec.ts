@@ -5,24 +5,10 @@ import * as jwt from "jsonwebtoken"
 import request from "supertest"
 
 import { configureViewEngine } from "~fixtures/configure-view-engine"
+import { extractCallbackUrl, SESSION_COOKIE_REGEX } from "~fixtures/email/content"
 import { mailpit } from "~fixtures/email/mailpit"
 
 const { FOUND, SEE_OTHER } = HttpStatus
-
-/**
- * Extracts the callback URL from the magic link email HTML.
- */
-function extractCallbackUrl(message: { HTML: string }): URL {
-  const href = message.HTML.match(/href="([^"]*callback[^"]*)"/)?.[1]
-  if (!href) {
-    throw new Error("No callback URL found in email HTML")
-  }
-  return new URL(href)
-}
-
-/** Regex matching a valid session cookie in a Set-Cookie header. */
-const SESSION_COOKIE_REGEX =
-  /auth\.sid=.+; Max-Age=\d+; Path=\/; HttpOnly; SameSite=Lax/
 
 describe("GET /auth/magic-link/callback", () => {
   let app: Awaited<ReturnType<typeof managedAppInstance>>

@@ -10,13 +10,13 @@
     <main class="auth-card">
       <h1 class="auth-title">Sign up</h1>
 
-      <form class="auth-form" action="/auth/register" method="POST">
+      <form class="auth-form" action="/auth/register" method="POST" novalidate>
         <label class="auth-label" for="email">Email address</label>
         <input
           class="auth-input<%= typeof exception !== 'undefined' && exception.email ? ' auth-input--error' : '' %>"
           id="email"
           name="email"
-          type="text"
+          type="email"
           placeholder="you@example.com"
           value="<%= typeof exception !== 'undefined' && exception.email ? exception.email.value : '' %>"
         />

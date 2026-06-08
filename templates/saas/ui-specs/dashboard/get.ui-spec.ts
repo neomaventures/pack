@@ -2,18 +2,9 @@ import { faker } from "@faker-js/faker"
 import { MailpitClient } from "@neomaventures/mailpit"
 import { expect, test } from "@playwright/test"
 
-const mailpit = new MailpitClient(process.env.MAILPIT_API!)
+import { extractCallbackUrl } from "../../fixtures/email/content"
 
-/**
- * Extracts the callback URL from the magic link email HTML.
- */
-function extractCallbackUrl(message: { HTML: string }): URL {
-  const href = message.HTML.match(/href="([^"]*callback[^"]*)"/)?.[1]
-  if (!href) {
-    throw new Error("No callback URL found in email HTML")
-  }
-  return new URL(href)
-}
+const mailpit = new MailpitClient(process.env.MAILPIT_API!)
 
 test.describe("Dashboard Page", () => {
   test.describe("When an unauthenticated visitor navigates to the dashboard", () => {

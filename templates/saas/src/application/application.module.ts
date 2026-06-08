@@ -54,7 +54,7 @@ interface AppConfig {
         expiresIn: "7d",
         entity: Account,
         cookie: {
-          secure: false,
+          secure: config.appUrl.startsWith("https"),
           sameSite: "lax" as const,
         },
         magicLink: {

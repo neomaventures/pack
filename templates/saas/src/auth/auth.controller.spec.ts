@@ -10,7 +10,6 @@ import { AuthController } from "./auth.controller"
 const email = faker.internet.email()
 const token = faker.string.alphanumeric(32)
 const entity = { id: faker.string.uuid(), email, permissions: [] }
-const sessionToken = faker.string.alphanumeric(64)
 
 describe("AuthController", () => {
   let controller: AuthController
@@ -39,7 +38,7 @@ describe("AuthController", () => {
         .fn()
         .mockImplementation((_res: Response, account: unknown) => {
           if (account === entity) {
-            return { token: sessionToken }
+            return { token: faker.string.alphanumeric(32) }
           }
           throw new Error("Unexpected account")
         }),
