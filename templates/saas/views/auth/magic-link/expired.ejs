@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Link expired - <%= npmPackageName %></title>
+    <link rel="stylesheet" href="/stylesheets/main.css" />
+  </head>
+  <body>
+    <main class="hero">
+      <h1 class="hero-title">Link expired</h1>
+      <p class="hero-subtitle">
+        This magic link is invalid or has expired.
+      </p>
+      <a href="/auth/register" class="auth-back-link">Try again</a>
+    </main>
+
+    <footer class="footer">
+      <span>v<%= npmPackageVersion %></span>
+    </footer>
+  </body>
+</html>

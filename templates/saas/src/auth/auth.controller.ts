@@ -83,14 +83,14 @@ export class AuthController {
    * Verifies a magic link token, creates a session, and redirects
    * to the home page.
    *
-   * Invalid or expired tokens redirect to `/auth/register`.
+   * Invalid or expired tokens render the "link expired" page.
    *
    * @param token - The magic link JWT from the query string.
    * @param res - The Express response, used by SessionService to set the session cookie.
    *
    * @returns The redirect URL for the home page.
    */
-  @ErrorTemplate({ default: "/auth/register" })
+  @ErrorTemplate({ default: "auth/magic-link/expired" })
   @Get("magic-link/callback")
   @Redirect("", FOUND)
   public async callback(

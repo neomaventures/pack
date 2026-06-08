@@ -38,9 +38,10 @@ test.describe("Magic Link Callback", () => {
   })
 
   test.describe("When an invalid token is used", () => {
-    test("should redirect to the registration page", async ({ page }) => {
+    test("should display the link expired page", async ({ page }) => {
       await page.goto("/auth/magic-link/callback?token=invalid-token")
-      await expect(page).toHaveURL("/auth/register")
+      const heading = page.getByRole("heading", { level: 1 })
+      await expect(heading).toHaveText("Link expired")
     })
   })
 })
