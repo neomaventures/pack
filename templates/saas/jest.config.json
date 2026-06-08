@@ -13,8 +13,8 @@
     "^~fixtures/(.*)$": "<rootDir>/../fixtures/$1",
     "^~(.*)$": "<rootDir>/../src/$1"
   },
-  "globalSetup": "<rootDir>/../fixtures/unit/global-setup.ts",
-  "globalTeardown": "<rootDir>/../fixtures/unit/global-teardown.ts",
+  "globalSetup": "<rootDir>/../fixtures/spec/global-setup.ts",
+  "globalTeardown": "<rootDir>/../fixtures/spec/global-teardown.ts",
   "testEnvironment": "node",
   "maxWorkers": 1
 }

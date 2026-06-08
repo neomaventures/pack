@@ -2,7 +2,7 @@ import { readFileSync } from "fs"
 
 import { expect, test } from "@playwright/test"
 
-const { version } = JSON.parse(readFileSync("package.json", "utf-8"))
+const { version, name } = JSON.parse(readFileSync("package.json", "utf-8"))
 
 test.describe("Welcome Page", () => {
   test.describe("When a visitor navigates to the homepage", () => {
@@ -12,7 +12,7 @@ test.describe("Welcome Page", () => {
 
     test("should display the app name in the heading", async ({ page }) => {
       const headline = page.getByRole("heading", { level: 1 })
-      await expect(headline).toHaveText("Welcome to __PACKAGE_NAME__")
+      await expect(headline).toHaveText(`Welcome to ${name}`)
     })
 
     test("should display the subtitle", async ({ page }) => {
@@ -25,13 +25,20 @@ test.describe("Welcome Page", () => {
     test("should display the app name in the header brand", async ({
       page,
     }) => {
-      const brand = page.getByText("__PACKAGE_NAME__", { exact: true }).first()
+      const brand = page.getByText(name as string, { exact: true }).first()
       await expect(brand).toBeVisible()
     })
 
     test("should display the version number", async ({ page }) => {
       const versionMark = page.getByText(`v${version}`)
       await expect(versionMark).toBeVisible()
+    })
+
+    test("should navigate to /auth/register when Sign in is clicked", async ({
+      page,
+    }) => {
+      await page.getByRole("link", { name: "Sign in" }).click()
+      await expect(page).toHaveURL("/auth/register")
     })
   })
 })

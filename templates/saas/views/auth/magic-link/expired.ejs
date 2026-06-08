@@ -3,22 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><%= npmPackageName %></title>
+    <title>Link expired - <%= npmPackageName %></title>
     <link rel="stylesheet" href="/stylesheets/main.css" />
   </head>
   <body>
-    <header class="header">
-      <span class="header-brand"><%= npmPackageName %></span>
-      <nav class="header-nav">
-        <a href="/auth/register" class="header-link">Sign in</a>
-      </nav>
-    </header>
-
     <main class="hero">
-      <h1 class="hero-title">Welcome to <%= npmPackageName %></h1>
+      <h1 class="hero-title">Link expired</h1>
       <p class="hero-subtitle">
-        A modern SaaS starter built with NestJS and EJS.
+        This magic link is invalid or has expired.
       </p>
+      <a href="/auth/register" class="auth-back-link">Try again</a>
     </main>
 
     <footer class="footer">

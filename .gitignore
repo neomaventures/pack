@@ -15,6 +15,6 @@ coverage/
 !.env.development
 playwright-report/
 test-results/
-.npmrc
+!/.npmrc
 !templates/**/.npmrc
 .turbo

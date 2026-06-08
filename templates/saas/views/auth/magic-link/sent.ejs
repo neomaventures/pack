@@ -3,22 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><%= npmPackageName %></title>
+    <title>Check your email - <%= npmPackageName %></title>
     <link rel="stylesheet" href="/stylesheets/main.css" />
   </head>
   <body>
-    <header class="header">
-      <span class="header-brand"><%= npmPackageName %></span>
-      <nav class="header-nav">
-        <a href="/auth/register" class="header-link">Sign in</a>
-      </nav>
-    </header>
-
     <main class="hero">
-      <h1 class="hero-title">Welcome to <%= npmPackageName %></h1>
+      <h1 class="hero-title">Check your email</h1>
       <p class="hero-subtitle">
-        A modern SaaS starter built with NestJS and EJS.
+        We've sent a magic link to <strong><%= email %></strong>
       </p>
+      <p class="hero-subtitle">
+        Click the link in the email to sign in.
+        If you don't see it, check your spam folder.
+      </p>
+      <a href="/auth/register" class="auth-back-link">Didn't receive it? Try again</a>
     </main>
 
     <footer class="footer">
