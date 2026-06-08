@@ -23,9 +23,7 @@ export class DashboardController {
   @Get("dashboard")
   @UseGuards(new Authenticated("/auth/register"))
   @Render("dashboard")
-  public index(
-    @Principal() principal: Authenticatable,
-  ): { email: string } {
+  public index(@Principal() principal: Authenticatable): { email: string } {
     return { email: principal.email }
   }
 }

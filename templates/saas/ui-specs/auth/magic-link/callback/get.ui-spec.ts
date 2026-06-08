@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker"
 import { MailpitClient } from "@neomaventures/mailpit"
 import { expect, test } from "@playwright/test"
 
-import { extractCallbackUrl } from "../../../fixtures/email/content"
+import { extractCallbackUrl } from "../../../../fixtures/email/content"
 
 const mailpit = new MailpitClient(process.env.MAILPIT_API!)
 

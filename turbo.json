@@ -3,13 +3,17 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**", "public/stylesheets/main.css"]
     },
     "test": {
       "dependsOn": ["build"],
       "cache": false
     },
     "test:e2e": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "test:ui": {
       "dependsOn": ["build"],
       "cache": false
     },

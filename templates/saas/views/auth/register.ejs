@@ -6,14 +6,23 @@
     <title>Sign up - <%= npmPackageName %></title>
     <link rel="stylesheet" href="/stylesheets/main.css" />
   </head>
-  <body>
-    <main class="auth-card">
-      <h1 class="auth-title">Sign up</h1>
+  <body class="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-800">
+    <main
+      class="mx-auto flex w-full max-w-sm flex-1 flex-col items-center justify-center px-6 py-16"
+    >
+      <h1 class="mb-8 text-2xl font-extrabold tracking-tight">Sign up</h1>
 
-      <form class="auth-form" action="/auth/register" method="POST" novalidate>
-        <label class="auth-label" for="email">Email address</label>
+      <form
+        class="flex w-full flex-col"
+        action="/auth/register"
+        method="POST"
+        novalidate
+      >
+        <label class="mb-1.5 text-sm font-medium" for="email"
+          >Email address</label
+        >
         <input
-          class="auth-input<%= typeof exception !== 'undefined' && exception.email ? ' auth-input--error' : '' %>"
+          class="<%= typeof exception !== 'undefined' && exception.email ? 'border-red-600' : 'border-slate-200' %> mb-3 rounded-md border px-3 py-2.5 font-sans text-sm outline-none focus:border-slate-800"
           id="email"
           name="email"
           type="email"
@@ -21,21 +30,40 @@
           value="<%= typeof exception !== 'undefined' && exception.email ? exception.email.value : '' %>"
         />
         <% if (typeof exception !== "undefined" && exception.email) { %>
-          <p class="auth-error"><%= exception.email.error %></p>
+        <p class="-mt-2 mb-3 text-[0.8125rem] text-red-600">
+          <%= exception.email.error %>
+        </p>
         <% } %>
-        <button class="auth-button" type="submit">Continue with email</button>
+        <button
+          class="w-full cursor-pointer rounded-md border border-slate-200 bg-slate-800 px-4 py-2.5 font-sans text-sm font-medium text-white hover:opacity-90"
+          type="submit"
+        >
+          Continue with email
+        </button>
       </form>
 
-      <div class="auth-divider"><span>or</span></div>
+      <div
+        class="my-5 flex w-full items-center text-xs text-slate-500 before:flex-1 before:border-b before:border-slate-200 after:flex-1 after:border-b after:border-slate-200"
+      >
+        <span class="px-3">or</span>
+      </div>
 
-      <button class="auth-button auth-button--google" type="button" disabled>
+      <button
+        class="w-full cursor-pointer rounded-md border border-slate-200 bg-white px-4 py-2.5 font-sans text-sm font-medium text-slate-800 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+        type="button"
+        disabled
+      >
         Continue with Google (coming soon)
       </button>
 
-      <a href="/" class="auth-back-link">&larr; Back to home</a>
+      <a
+        href="/"
+        class="mt-6 text-sm text-slate-500 no-underline hover:text-slate-800"
+        >&larr; Back to home</a
+      >
     </main>
 
-    <footer class="footer">
+    <footer class="px-8 py-4 text-right text-xs text-slate-500">
       <span>v<%= npmPackageVersion %></span>
     </footer>
   </body>

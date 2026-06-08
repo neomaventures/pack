@@ -2,7 +2,7 @@
 
 A working NestJS SaaS application that serves two purposes: a **starter kit** for new projects and an **integration test bed** that proves `@neomaventures/*` packages compose correctly in a real app.
 
-The template renders server-side HTML via EJS. No SPA framework.
+The template renders server-side HTML via EJS with [Tailwind CSS v4](https://tailwindcss.com/docs) for styling. No SPA framework.
 
 ## Creating a new app
 
@@ -71,6 +71,21 @@ pnpm dev
 
 When running in-repo, `@neomaventures/*` packages resolve via `workspace:*` — changes to packages are tested against the template immediately, without publishing.
 
+## Styling
+
+The template uses [Tailwind CSS v4](https://tailwindcss.com/docs) with the CSS-first configuration approach (no `tailwind.config.js`). CSS is compiled from `src/styles/input.css` to `public/stylesheets/main.css`, which is a git-ignored build artifact.
+
+### Development
+
+`pnpm dev` uses `concurrently` to run two processes in parallel:
+
+- **nest** — NestJS in watch mode (hot-reload on TypeScript changes)
+- **css** — Tailwind CLI in watch mode (recompiles CSS on template changes)
+
+### Production build
+
+`pnpm build` runs a one-shot Tailwind build (minified) before `nest build`.
+
 ## Project structure
 
 ```
@@ -85,9 +100,11 @@ templates/saas/
 │   │   ├── auth.module.ts                   # Auth module (magic link controllers)
 │   │   ├── auth.controller.ts               # Register, magic link, callback, logout
 │   │   └── account.entity.ts               # Account entity (id, email, permissions)
-│   └── dashboard/
-│       ├── dashboard.module.ts              # Dashboard module
-│       └── dashboard.controller.ts          # Protected dashboard (@Authenticated + @Principal)
+│   ├── dashboard/
+│   │   ├── dashboard.module.ts              # Dashboard module
+│   │   └── dashboard.controller.ts          # Protected dashboard (@Authenticated + @Principal)
+│   └── styles/
+│       └── input.css                        # Tailwind CSS entry point
 ├── views/
 │   ├── welcome.ejs                          # Welcome page
 │   ├── dashboard.ejs                        # Authenticated dashboard
@@ -100,7 +117,7 @@ templates/saas/
 │       └── generic.ejs                      # Error page
 ├── public/
 │   └── stylesheets/
-│       └── main.css                         # Styles
+│       └── main.css                         # Compiled CSS (git-ignored build artifact)
 ├── specs/                                   # E2E specs (supertest)
 │   └── welcome.e2e-spec.ts
 ├── ui-specs/                                # UI specs (Playwright)
