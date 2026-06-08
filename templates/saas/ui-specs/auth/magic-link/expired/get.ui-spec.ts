@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test"
 
 test.describe("Magic Link Expired Page", () => {
-  test.describe("When a visitor uses an invalid magic link token", () => {
+  test.describe("When a visitor navigates to the expired page", () => {
     test.beforeEach(async ({ page }) => {
-      await page.goto("/auth/magic-link/callback?token=invalid-token")
+      await page.goto("/auth/magic-link/expired")
     })
 
     test("should display the expired heading", async ({ page }) => {
@@ -12,9 +12,7 @@ test.describe("Magic Link Expired Page", () => {
     })
 
     test("should display an explanation message", async ({ page }) => {
-      await expect(
-        page.getByText(/invalid or has expired/i),
-      ).toBeVisible()
+      await expect(page.getByText(/invalid or has expired/i)).toBeVisible()
     })
 
     test("should display a try again link back to registration", async ({
