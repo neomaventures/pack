@@ -82,17 +82,20 @@ templates/saas/
 │   │   ├── application.controller.ts        # Welcome page + error exercise routes
 │   │   └── view-locals.middleware.ts         # Injects npmPackageName + npmPackageVersion into res.locals
 │   ├── auth/
-│   │   ├── auth.module.ts                   # Auth module (magic link strategy, controllers)
-│   │   └── auth.controller.ts               # Magic link request, callback, logout routes
-│   ├── dashboard/
-│   │   ├── dashboard.module.ts              # Dashboard module
-│   │   └── dashboard.controller.ts          # Protected dashboard route (@Authenticated + @Principal)
-│   └── user/
-│       └── user.entity.ts                   # User entity (id, email, permissions)
+│   │   ├── auth.module.ts                   # Auth module (magic link controllers)
+│   │   ├── auth.controller.ts               # Register, magic link, callback, logout
+│   │   └── account.entity.ts               # Account entity (id, email, permissions)
+│   └── dashboard/
+│       ├── dashboard.module.ts              # Dashboard module
+│       └── dashboard.controller.ts          # Protected dashboard (@Authenticated + @Principal)
 ├── views/
 │   ├── welcome.ejs                          # Welcome page
-│   ├── signup.ejs                           # Sign up page (magic link form + disabled Google button)
 │   ├── dashboard.ejs                        # Authenticated dashboard
+│   ├── auth/
+│   │   ├── register.ejs                     # Registration form (magic link + Google)
+│   │   └── magic-link/
+│   │       ├── sent.ejs                     # Check your email confirmation
+│   │       └── expired.ejs                  # Link expired error page
 │   └── errors/
 │       └── generic.ejs                      # Error page
 ├── public/
@@ -183,40 +186,43 @@ Browsers send `Accept: text/html` by default, so you see the HTML error handling
 
 ### How it works
 
-1. User visits `/signup` and enters their email
-2. `POST /auth/magic-link` sends a magic link email to the address
-3. User clicks the link in their email, which hits `GET /auth/magic-link/callback`
-4. The callback verifies the token, creates or finds the user, sets a JWT session cookie, and redirects to `/dashboard`
-5. Subsequent requests include the cookie — the user is authenticated
+1. User visits `/auth/register` and enters their email
+2. `POST /auth/register` validates the email and sends a magic link
+3. User is redirected to `/auth/magic-link/sent` ("check your email")
+4. User clicks the link in their email, which hits `GET /auth/magic-link/callback`
+5. The callback verifies the token, creates or finds the account, sets a JWT session cookie, and redirects to `/dashboard`
+6. Subsequent requests include the cookie — the user is authenticated
 
 ### Protecting routes
 
-Apply `@Authenticated("/signup")` to any route that requires a logged-in user. Unauthenticated requests are redirected to the given URL (the sign up page in this case):
+Apply `@UseGuards(new Authenticated("/auth/register"))` to any route that requires a logged-in user. Unauthenticated requests are redirected to the given URL:
 
 ```ts
 @Controller("dashboard")
 export class DashboardController {
   @Get()
   @Render("dashboard")
-  @Authenticated("/signup")
-  public index(@Principal() user: User): { email: string } {
-    return { email: user.email }
+  @UseGuards(new Authenticated("/auth/register"))
+  public index(@Principal() principal: Account): { email: string } {
+    return { email: principal.email }
   }
 }
 ```
 
-`@Principal()` is a parameter decorator that resolves the authenticated user from the JWT session. It returns the `User` entity for the current session.
+`@Principal()` is a parameter decorator that resolves the authenticated account from the JWT session.
 
 ### Auth routes
 
-Auth routes live in `src/auth/`, dashboard in `src/dashboard/`, and the User entity in `src/user/`.
+Auth routes live in `src/auth/`, dashboard in `src/dashboard/`, and the Account entity in `src/auth/`.
 
 | Route | What it does |
 |---|---|
-| `GET /signup` | Renders the sign up page with a magic link form and a disabled Google OAuth button ("coming soon") |
-| `POST /auth/magic-link` | Accepts an email address, sends a magic link email |
+| `GET /auth/register` | Renders the registration page with a magic link form and a disabled Google OAuth button |
+| `POST /auth/register` | Validates the email, sends a magic link, redirects to `/auth/magic-link/sent` |
+| `GET /auth/magic-link/sent` | "Check your email" confirmation page |
 | `GET /auth/magic-link/callback` | Verifies the magic link token, creates a JWT session cookie, redirects to `/dashboard` |
-| `GET /dashboard` | Protected — renders the dashboard with the authenticated user's email. Redirects to `/signup` if unauthenticated |
+| `GET /auth/magic-link/expired` | Error page for invalid or expired magic links |
+| `GET /dashboard` | Protected — renders the dashboard with the authenticated account's email. Redirects to `/auth/register` if unauthenticated |
 | `POST /auth/logout` | Clears the session cookie, redirects to `/` |
 
 ### Google OAuth
@@ -229,10 +235,11 @@ Try the full flow in a browser (`pnpm dev` then visit):
 
 | URL | What happens |
 |---|---|
-| `http://localhost:3000/signup` | Sign up page with magic link form and disabled Google button |
-| `POST /auth/magic-link` with email | Sends a magic link email (check Mailpit in development) |
-| `http://localhost:3000/dashboard` | Protected — redirects to `/signup` if not authenticated |
-| `POST /auth/logout` | Clears session, redirects to `/` |
+| `http://localhost:3000/auth/register` | Registration page with magic link form and disabled Google button |
+| Submit an email on the form | Sends a magic link email, redirects to "check your email" page |
+| Check Mailpit at `http://localhost:8025` | Click the magic link in the captured email |
+| `http://localhost:3000/dashboard` | Protected — redirects to `/auth/register` if not authenticated |
+| `POST /auth/logout` (Sign out button) | Clears session, redirects to `/` |
 
 E2e specs use Mailpit to capture the magic link email and complete the full authentication lifecycle programmatically.
 
@@ -242,7 +249,7 @@ Three test layers, matching the spec ownership model used across Neoma projects:
 
 | Layer | What it proves | Command |
 |---|---|---|
-| Unit | Individual pieces work (e.g. `ViewLocalsMiddleware` sets `res.locals`, `User` entity constraints) | `pnpm test` |
+| Unit | Individual pieces work (e.g. `ViewLocalsMiddleware` sets `res.locals`, `Account` entity constraints) | `pnpm test` |
 | E2E | HTTP responses are correct (e.g. `GET /` returns 200 with the package name, magic link flow creates a session) | `pnpm test:e2e` |
 | UI | Pages render correctly in a browser (e.g. heading visible, sign up form present, dashboard shows email) | `pnpm test:ui` |
 

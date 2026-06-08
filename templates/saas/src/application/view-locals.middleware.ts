@@ -22,8 +22,6 @@ export class ViewLocalsMiddleware implements NestMiddleware {
    * @param config - The configuration object containing view-related environment variables.
    * @param config.npmPackageName - The package name from npm package metadata.
    * @param config.npmPackageVersion - The application version from npm package metadata.
-   *
-   * @returns a new instance of `ViewLocalsMiddleware` with the provided configuration.
    */
   public constructor(
     @InjectConfig()
