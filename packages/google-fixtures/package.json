@@ -1,0 +1,64 @@
+{
+  "name": "@neomaventures/google-fixtures",
+  "version": "0.1.0",
+  "description": "Test fixtures for mocking Google OAuth APIs on top of @neomaventures/mockserver.",
+  "author": "Daniel Bruce",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neomaventures/pack",
+    "directory": "packages/google-fixtures"
+  },
+  "bugs": {
+    "url": "https://github.com/neomaventures/pack/issues"
+  },
+  "homepage": "https://github.com/neomaventures/pack/tree/main/packages/google-fixtures#readme",
+  "keywords": [
+    "neoma",
+    "testing",
+    "google",
+    "oauth",
+    "mockserver",
+    "jest"
+  ],
+  "private": false,
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "!**/*.json",
+    "!**/*.tsbuildinfo"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc -p ./tsconfig.lib.json",
+    "test": "jest --runInBand --passWithNoTests",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@faker-js/faker": "^9.6.0",
+    "jsonwebtoken": "^9.0.0"
+  },
+  "peerDependencies": {
+    "@neomaventures/mockserver": ">=0.2.0"
+  },
+  "devDependencies": {
+    "@neomaventures/docker": "workspace:*",
+    "@neomaventures/mockserver": "workspace:*",
+    "@types/jest": "^30.0.0",
+    "@types/jsonwebtoken": "^9.0.0",
+    "jest": "^30.3.0",
+    "jest-extended": "^7.0.0",
+    "reflect-metadata": "^0.2.2"
+  }
+}

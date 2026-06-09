@@ -10,9 +10,9 @@ pnpm add -D @neomaventures/google-fixtures
 
 ### Dependencies
 
-- `@neomaventures/mockserver` — MockServer client and container lifecycle
 - `@faker-js/faker` — randomized test data
 - `jsonwebtoken` — ID token signing
+- `@neomaventures/mockserver` (peer) — MockServer client and container lifecycle
 
 ## Usage
 

@@ -411,6 +411,37 @@ importers:
         specifier: ^0.2.2
         version: 0.2.2
 
+  packages/google-fixtures:
+    dependencies:
+      '@faker-js/faker':
+        specifier: ^9.6.0
+        version: 9.9.0
+      jsonwebtoken:
+        specifier: ^9.0.0
+        version: 9.0.3
+    devDependencies:
+      '@neomaventures/docker':
+        specifier: workspace:*
+        version: link:../docker
+      '@neomaventures/mockserver':
+        specifier: workspace:*
+        version: link:../mockserver
+      '@types/jest':
+        specifier: ^30.0.0
+        version: 30.0.0
+      '@types/jsonwebtoken':
+        specifier: ^9.0.0
+        version: 9.0.10
+      jest:
+        specifier: ^30.3.0
+        version: 30.4.2(@types/node@25.9.1)(ts-node@10.9.2(@swc/core@1.15.40)(@types/node@25.9.1)(typescript@6.0.3))
+      jest-extended:
+        specifier: ^7.0.0
+        version: 7.0.0(jest@30.4.2(@types/node@25.9.1)(ts-node@10.9.2(@swc/core@1.15.40)(@types/node@25.9.1)(typescript@6.0.3)))(typescript@6.0.3)
+      reflect-metadata:
+        specifier: ^0.2.2
+        version: 0.2.2
+
   packages/logging:
     dependencies:
       pino:
