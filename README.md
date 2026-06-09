@@ -1,5 +1,7 @@
 # pack 🐺
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/93e550820b964faaac2eceb091bdcf0b)](https://app.codacy.com/gh/neomaventures/pack?utm_source=github.com&utm_medium=referral&utm_content=neomaventures/pack&utm_campaign=Badge_Grade)
+
 The monorepo for the **`@neomaventures/*`** family — a pack of NestJS building blocks, each privately published to GitHub Packages for use across Neoma projects.
 
 ## Packages
