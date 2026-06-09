@@ -1,14 +1,16 @@
 import { faker } from "@faker-js/faker"
-import { google as googleFakes, GoogleOAuthClient } from "@neomaventures/google-fixtures"
+import {
+  google as googleFakes,
+  GoogleOAuthClient,
+} from "@neomaventures/google-fixtures"
 import { MockServerClient } from "@neomaventures/mockserver"
 import { DynamicModule } from "@nestjs/common"
 import { EventEmitter2 } from "@nestjs/event-emitter"
 import { Test, TestingModule } from "@nestjs/testing"
 import { getRepositoryToken, TypeOrmModule } from "@nestjs/typeorm"
+import { google } from "fixtures/fakes/google"
 import * as jwt from "jsonwebtoken"
 import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm"
-
-import { google } from "fixtures/fakes/google"
 
 import { AuthModule } from "../auth.module"
 import { AuthOptions } from "../auth.options"
