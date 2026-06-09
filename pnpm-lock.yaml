@@ -159,6 +159,9 @@ importers:
       '@neomaventures/fixtures':
         specifier: workspace:*
         version: link:../fixtures
+      '@neomaventures/google-fixtures':
+        specifier: workspace:*
+        version: link:../google-fixtures
       '@neomaventures/logging':
         specifier: workspace:*
         version: link:../logging
