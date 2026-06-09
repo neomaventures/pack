@@ -24,14 +24,14 @@ test.describe("Registration Page", () => {
       await expect(submitButton).toBeVisible()
     })
 
-    test("should display the Google sign-in link as enabled", async ({
+    test("should navigate to Google when the Google sign-in link is clicked", async ({
       page,
     }) => {
       const googleLink = page.getByRole("link", {
         name: "Continue with Google",
       })
-      await expect(googleLink).toBeVisible()
-      await expect(googleLink).toHaveAttribute("href", /accounts\.google\.com/)
+      await googleLink.click()
+      await expect(page).toHaveURL(/accounts\.google\.com/)
     })
 
     test("should navigate to / when the back link is clicked", async ({

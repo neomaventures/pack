@@ -6,8 +6,8 @@ import { MockServerClient } from "@neomaventures/mockserver"
  * MockServer instance. The `MOCKSERVER_URL` environment variable
  * must be set by the e2e global setup.
  *
- * Also resets all MockServer expectations via a `beforeEach` hook
- * when running inside a Jest test environment.
+ * Callers are responsible for resetting MockServer expectations
+ * (e.g. `await mockServerClient.reset()`) in their own `beforeEach`.
  */
 export function createGoogleOAuthClient(): {
   mockServerClient: MockServerClient
