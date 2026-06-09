@@ -1,6 +1,6 @@
 {
   "name": "@neomaventures/mockserver",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "MockServer test fixture for @neomaventures/* — a reusable client plus Docker container lifecycle and Jest setup/teardown drop-ins.",
   "author": "Daniel Bruce",
   "repository": {
