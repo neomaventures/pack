@@ -31,7 +31,7 @@ appModules.forEach(([name, modulePath]) => {
 
     beforeEach(async () => {
       mockServerClient = new MockServerClient(mockserverUrl)
-      googleOAuth = new GoogleOAuthClient(mockServerClient, mockserverUrl)
+      googleOAuth = new GoogleOAuthClient(mockServerClient)
       app = await managedAppInstance(modulePath)
       datasource = app.get(DataSource)
     })

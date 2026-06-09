@@ -21,7 +21,7 @@ describe("GoogleOAuthClient", () => {
     config = await startContainer({ prefix, port })
     const managementUrl = `http://localhost:${config.port}/mockserver`
     mockServerClient = new MockServerClient(managementUrl)
-    googleOAuth = new GoogleOAuthClient(mockServerClient, managementUrl)
+    googleOAuth = new GoogleOAuthClient(mockServerClient)
     baseUrl = `http://localhost:${config.port}`
   }, 60_000)
 

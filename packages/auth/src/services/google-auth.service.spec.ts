@@ -49,7 +49,7 @@ class UserWithProfile implements Authenticatable {
 
 const mockserverUrl = process.env.MOCKSERVER_URL!
 const client = new MockServerClient(mockserverUrl)
-const googleOAuthClient = new GoogleOAuthClient(client, mockserverUrl)
+const googleOAuthClient = new GoogleOAuthClient(client)
 
 const googleAuth = google.authOptions({
   tokenEndpoint: googleOAuthClient.tokenEndpoint(),

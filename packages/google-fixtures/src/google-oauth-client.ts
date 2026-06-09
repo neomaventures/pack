@@ -37,14 +37,8 @@ import {
 export class GoogleOAuthClient {
   /**
    * @param client - A {@link MockServerClient} connected to the running instance
-   * @param mockserverBaseUrl - The MockServer management URL
-   *   (e.g. `http://localhost:1080/mockserver`). Used to derive the token
-   *   endpoint URL via {@link tokenEndpoint}.
    */
-  public constructor(
-    private readonly client: MockServerClient,
-    private readonly mockserverBaseUrl: string,
-  ) {}
+  public constructor(private readonly client: MockServerClient) {}
 
   /**
    * Returns the mock token endpoint URL that your app should use
@@ -59,7 +53,7 @@ export class GoogleOAuthClient {
    * ```
    */
   public tokenEndpoint(): string {
-    return `${this.mockserverBaseUrl.replace(/\/mockserver$/, "")}/token`
+    return `${this.client.baseUrl.replace(/\/mockserver$/, "")}/token`
   }
 
   /**

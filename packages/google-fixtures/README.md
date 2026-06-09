@@ -51,7 +51,7 @@ import { google, GoogleOAuthClient } from "@neomaventures/google-fixtures"
 import { MockServerClient } from "@neomaventures/mockserver"
 
 const mockserver = new MockServerClient("http://localhost:1080/mockserver")
-const googleOAuth = new GoogleOAuthClient(mockserver, "http://localhost:1080/mockserver")
+const googleOAuth = new GoogleOAuthClient(mockserver)
 
 // Mock successful code exchange
 const tokens = await googleOAuth.mockCodeExchange({
