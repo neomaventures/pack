@@ -10,6 +10,7 @@ import request from "supertest"
 
 import { configureViewEngine } from "~fixtures/configure-view-engine"
 import { mailpit } from "~fixtures/email/mailpit"
+import { buildGoogleAuthorizeUrl } from "~fixtures/google/authorize-url"
 import { npmPackageName, npmPackageVersion } from "~fixtures/package-version"
 
 const { BAD_REQUEST, FOUND, SEE_OTHER } = HttpStatus
@@ -36,6 +37,7 @@ describe("POST /auth/register", () => {
         const expectedHtml = ejs.render(registerTemplate, {
           npmPackageName,
           npmPackageVersion,
+          googleAuthorizeUrl: buildGoogleAuthorizeUrl(),
           exception: {
             email: {
               value: invalidEmail,
@@ -58,6 +60,7 @@ describe("POST /auth/register", () => {
         const expectedHtml = ejs.render(registerTemplate, {
           npmPackageName,
           npmPackageVersion,
+          googleAuthorizeUrl: buildGoogleAuthorizeUrl(),
           exception: {
             email: {
               value: undefined,
@@ -118,6 +121,8 @@ describe("POST /auth/register", () => {
             mailFrom: faker.internet.email(),
             jwtSecret: faker.string.alphanumeric(32),
             appUrl: faker.internet.url(),
+            googleClientId: "",
+            googleClientSecret: "",
           }),
       })
     })

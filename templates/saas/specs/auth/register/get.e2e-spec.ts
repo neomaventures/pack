@@ -7,6 +7,7 @@ import ejs from "ejs"
 import request from "supertest"
 
 import { configureViewEngine } from "~fixtures/configure-view-engine"
+import { buildGoogleAuthorizeUrl } from "~fixtures/google/authorize-url"
 import { npmPackageName, npmPackageVersion } from "~fixtures/package-version"
 
 const { OK } = HttpStatus
@@ -25,6 +26,7 @@ describe("GET /auth/register", () => {
       const expectedHtml = ejs.render(template, {
         npmPackageName,
         npmPackageVersion,
+        googleAuthorizeUrl: buildGoogleAuthorizeUrl(),
       })
 
       await request(app.getHttpServer())
