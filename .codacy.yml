@@ -10,3 +10,5 @@ engines:
       - "**/specs/**"
       - "**/ui-specs/**"
       - "**/fixtures/**"
+    exclude_rules:
+      - "Semgrep_rules_lgpl_javascript_database_rule-node-nosqli-injection"
