@@ -110,7 +110,7 @@ registrations.forEach(([name, register]) => {
       })
 
       it("should throw TokenFailedVerificationException for a token with wrong signature", () => {
-        const token = jwt.sign({ sub: "test" }, "wrong-secret")
+        const token = jwt.sign({ sub: "test" }, faker.internet.password())
 
         expect(() => service.verify(token)).toThrowMatching(
           TokenFailedVerificationException,

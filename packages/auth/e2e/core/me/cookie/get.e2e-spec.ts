@@ -111,7 +111,7 @@ appModules.forEach(([name, modulePath]) => {
       it("should respond with HTTP UNAUTHORIZED", async () => {
         const token = jwt.sign(
           { sub: v4(), aud: SESSION_AUDIENCE },
-          "wrong-secret",
+          faker.internet.password(),
           { expiresIn: "1h" },
         )
 
