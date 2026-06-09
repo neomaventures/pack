@@ -147,7 +147,7 @@ appModules.forEach(([name, modulePath]) => {
       it("should respond with HTTP 401", async () => {
         const token = jwt.sign(
           { email: faker.internet.email(), aud: MAGIC_LINK_AUDIENCE },
-          faker.internet.password(),
+          "wrong-secret",
           { expiresIn: "15m" },
         )
 
