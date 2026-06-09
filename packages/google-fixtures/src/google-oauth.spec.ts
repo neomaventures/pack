@@ -261,7 +261,7 @@ describe("GoogleOAuth", () => {
         const clientId = GoogleOAuth.clientId()
         const clientSecret = GoogleOAuth.clientSecret()
         const redirectUri = faker.internet.url()
-        const customToken = GoogleOAuth.idToken({ email: "test@example.com" })
+        const customToken = GoogleOAuth.idToken({ email: faker.internet.email() })
 
         const response = await GoogleOAuth.mockCodeExchange(client, {
           code,

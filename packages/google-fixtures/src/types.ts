@@ -1,8 +1,9 @@
 /**
  * Claims embedded in a Google ID token JWT.
  *
- * All fields are optional so callers can override only the claims they care
- * about when generating test tokens via {@link GoogleOAuth.idToken}.
+ * Used with `Partial<GoogleIdTokenClaims>` in {@link GoogleOAuth.idToken} —
+ * callers override only the claims they care about; defaults are generated
+ * for any omitted fields.
  *
  * @see https://developers.google.com/identity/protocols/oauth2/openid-connect#an-id-tokens-payload
  */
@@ -39,10 +40,14 @@ export type GoogleOAuthCodeExchangeResponse = {
   scope: string
   /** The ID token containing user profile claims */
   id_token: string
+  /** The refresh token — only present on first consent or with prompt=consent */
+  refresh_token?: string
 }
 
 /**
- * Shape of an error response from Google's token endpoint.
+ * Fixture return type combining the HTTP status code and error body
+ * from Google's token endpoint. Not a direct Google API type — the
+ * `statusCode` is the HTTP status, and `body` is the JSON payload.
  */
 export type GoogleOAuthCodeExchangeError = {
   /** The HTTP status code */

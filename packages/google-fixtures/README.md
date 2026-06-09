@@ -5,7 +5,7 @@ Test fixtures for mocking Google OAuth APIs on top of `@neomaventures/mockserver
 ## Installation
 
 ```bash
-pnpm add -D @neomaventures/google-fixtures
+pnpm add -D @neomaventures/google-fixtures @neomaventures/mockserver
 ```
 
 ### Dependencies
@@ -33,7 +33,7 @@ const tokens = await GoogleOAuth.mockCodeExchange(client, {
   idToken: GoogleOAuth.idToken({ email: "dan@example.com" }),
 })
 
-// tokens.access_token, tokens.id_token, tokens.refresh_token, etc.
+// tokens.access_token, tokens.id_token, etc.
 ```
 
 The expectation uses strict form parameter matching (`code`, `client_id`, `client_secret`, `redirect_uri`, `grant_type`) and defaults to `times: { remainingTimes: 1 }` — matching Google's single-use authorization codes.
@@ -68,13 +68,13 @@ Pass this value as the `tokenEndpoint` option when configuring your auth module 
 `GoogleOAuth` exposes static methods for generating realistic test data:
 
 ```typescript
-GoogleOAuth.clientId()       // "123456789.apps.googleusercontent.com"
-GoogleOAuth.clientSecret()   // "GOCSPX-..."
-GoogleOAuth.code()           // "4/0AX4XfW..."
+GoogleOAuth.clientId()       // "12345678901-abc...xyz.apps.googleusercontent.com"
+GoogleOAuth.clientSecret()   // "abcdef-1234567890abcdefgh..."
+GoogleOAuth.code()           // "4/MTYzMjM0NTY3..."
 GoogleOAuth.idToken(claims?) // signed JWT with Google-shaped claims
-GoogleOAuth.accessToken()    // "ya29.a0AfH..."
-GoogleOAuth.refreshToken()   // "1//0eXy..."
-GoogleOAuth.scopes()         // ["openid", "email", "profile"]
+GoogleOAuth.accessToken()    // "1/MTYzMjM0NTY3..."
+GoogleOAuth.refreshToken()   // "1//MTYzMjM0NTY3..."
+GoogleOAuth.scopes()         // ["https://www.googleapis.com/auth/userinfo.email", ...]
 ```
 
 `idToken()` accepts optional claims to override defaults:
@@ -97,7 +97,7 @@ const token = GoogleOAuth.idToken({
 
 - **Stateless.** `MockServerClient` is passed explicitly to every call — no shared state. Works identically in Jest and Playwright.
 - **Single-use by default.** Expectations are created with `remainingTimes: 1` because OAuth authorization codes are single-use. Override `times` if your test needs different behaviour.
-- **Strict matching.** Every form parameter (`code`, `client_id`, `client_secret`, `redirect_uri`, `grant_type`) must match. A misconfigured test fails with a clear "no matching expectation" error rather than silently succeeding.
+- **Strict matching.** `mockCodeExchange` matches all five form parameters (`code`, `client_id`, `client_secret`, `redirect_uri`, `grant_type`) so a misconfigured test fails loudly. Error and network helpers match on `code` only, since the app may not send credentials for invalid codes.
 
 ## License
 

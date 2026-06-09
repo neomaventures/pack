@@ -4,10 +4,11 @@ import { GoogleOAuth } from "@neomaventures/google-fixtures"
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { MockServerClient } from "@neomaventures/mockserver"
 import { HttpStatus } from "@nestjs/common"
-import { authenticateViaEmail } from "fixtures/fakes/magic-link"
 import * as jwt from "jsonwebtoken"
 import request from "supertest"
 import { DataSource } from "typeorm"
+
+import { authenticateViaEmail } from "fixtures/fakes/magic-link"
 
 const { OK, UNAUTHORIZED, FORBIDDEN, BAD_GATEWAY } = HttpStatus
 

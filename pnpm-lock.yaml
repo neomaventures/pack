@@ -423,9 +423,6 @@ importers:
         specifier: ^9.0.0
         version: 9.0.3
     devDependencies:
-      '@neomaventures/docker':
-        specifier: workspace:*
-        version: link:../docker
       '@neomaventures/mockserver':
         specifier: workspace:*
         version: link:../mockserver

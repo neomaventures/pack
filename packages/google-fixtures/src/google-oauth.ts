@@ -175,7 +175,7 @@ export class GoogleOAuth {
   public static idToken(claims: Partial<GoogleIdTokenClaims> = {}): string {
     const defaults = {
       iss: "https://accounts.google.com",
-      sub: string.numeric(7),
+      sub: string.numeric(10),
       aud: GoogleOAuth.aud(),
       email: internet.email(),
       name: person.fullName(),
@@ -283,6 +283,9 @@ export class GoogleOAuth {
       token_type: "Bearer",
       scope: GoogleOAuth.scopes().join(" "),
       id_token: params.idToken ?? GoogleOAuth.idToken(),
+      ...(params.refreshToken !== undefined && {
+        refresh_token: params.refreshToken,
+      }),
     }
 
     await client.createExpectation({

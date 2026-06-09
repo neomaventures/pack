@@ -35,7 +35,6 @@
   "files": [
     "dist",
     "README.md",
-    "LICENSE",
     "!**/*.json",
     "!**/*.tsbuildinfo"
   ],
@@ -53,7 +52,6 @@
     "@neomaventures/mockserver": ">=0.2.0"
   },
   "devDependencies": {
-    "@neomaventures/docker": "workspace:*",
     "@neomaventures/mockserver": "workspace:*",
     "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.0",
