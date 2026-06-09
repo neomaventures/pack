@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker"
-import { GoogleOAuth } from "@neomaventures/google-fixtures"
+import { google as googleFakes, GoogleOAuthClient } from "@neomaventures/google-fixtures"
 import { MockServerClient } from "@neomaventures/mockserver"
 import { DynamicModule } from "@nestjs/common"
 import { EventEmitter2 } from "@nestjs/event-emitter"
@@ -49,9 +49,10 @@ class UserWithProfile implements Authenticatable {
 
 const mockserverUrl = process.env.MOCKSERVER_URL!
 const client = new MockServerClient(mockserverUrl)
+const googleOAuthClient = new GoogleOAuthClient(client, mockserverUrl)
 
 const googleAuth = google.authOptions({
-  tokenEndpoint: GoogleOAuth.tokenEndpoint(mockserverUrl),
+  tokenEndpoint: googleOAuthClient.tokenEndpoint(),
 })
 
 async function buildModule<T extends Authenticatable>(
@@ -83,7 +84,7 @@ async function mockSuccess(
   code: string,
   options: { id_token?: string } = {},
 ): Promise<void> {
-  await GoogleOAuth.mockCodeExchange(client, {
+  await googleOAuthClient.mockCodeExchange({
     code,
     clientId: googleAuth.clientId,
     clientSecret: googleAuth.clientSecret,
@@ -97,7 +98,7 @@ async function mockHttpError(
   code: string,
   options: { statusCode?: number } = {},
 ): Promise<void> {
-  await GoogleOAuth.mockCodeExchangeHttpError(client, {
+  await googleOAuthClient.mockCodeExchangeHttpError({
     code,
     statusCode: options.statusCode,
     times: { unlimited: true },
@@ -105,7 +106,7 @@ async function mockHttpError(
 }
 
 async function mockNetworkError(code: string): Promise<void> {
-  await GoogleOAuth.mockCodeExchangeNetworkError(client, {
+  await googleOAuthClient.mockCodeExchangeNetworkError({
     code,
     times: { unlimited: true },
   })
@@ -142,7 +143,7 @@ registrations.forEach(([name, register]) => {
         it("should create a new user entity", async () => {
           const code = faker.string.alphanumeric(20)
           const email = faker.internet.email()
-          const idToken = GoogleOAuth.idToken({ email })
+          const idToken = googleFakes.idToken({ email })
           await mockSuccess(code, { id_token: idToken })
 
           await service.authenticate(code)
@@ -155,7 +156,7 @@ registrations.forEach(([name, register]) => {
         it("should return the new entity with isNewUser: true", async () => {
           const code = faker.string.alphanumeric(20)
           const email = faker.internet.email()
-          const idToken = GoogleOAuth.idToken({ email })
+          const idToken = googleFakes.idToken({ email })
           await mockSuccess(code, { id_token: idToken })
 
           const result = await service.authenticate<User>(code)
@@ -168,7 +169,7 @@ registrations.forEach(([name, register]) => {
         it("should emit a RegisteredEvent with provider 'google'", async () => {
           const code = faker.string.alphanumeric(20)
           const email = faker.internet.email()
-          const idToken = GoogleOAuth.idToken({ email })
+          const idToken = googleFakes.idToken({ email })
           await mockSuccess(code, { id_token: idToken })
           const emitSpy = jest.spyOn(eventEmitter, "emit")
 
@@ -183,7 +184,7 @@ registrations.forEach(([name, register]) => {
         it("should not emit a AuthenticatedEvent", async () => {
           const code = faker.string.alphanumeric(20)
           const email = faker.internet.email()
-          const idToken = GoogleOAuth.idToken({ email })
+          const idToken = googleFakes.idToken({ email })
           await mockSuccess(code, { id_token: idToken })
           const emitSpy = jest.spyOn(eventEmitter, "emit")
 
@@ -200,7 +201,7 @@ registrations.forEach(([name, register]) => {
           const sub = faker.string.numeric(10)
           const googleName = faker.person.fullName()
           const picture = faker.image.avatar()
-          const idToken = GoogleOAuth.idToken({
+          const idToken = googleFakes.idToken({
             email: faker.internet.email(),
             sub,
             name: googleName,
@@ -234,7 +235,7 @@ registrations.forEach(([name, register]) => {
 
         it("should return the existing entity with isNewUser: false", async () => {
           const code = faker.string.alphanumeric(20)
-          const idToken = GoogleOAuth.idToken({ email: existingUser.email })
+          const idToken = googleFakes.idToken({ email: existingUser.email })
           await mockSuccess(code, { id_token: idToken })
 
           const result = await service.authenticate<User>(code)
@@ -246,7 +247,7 @@ registrations.forEach(([name, register]) => {
 
         it("should not create a new user", async () => {
           const code = faker.string.alphanumeric(20)
-          const idToken = GoogleOAuth.idToken({ email: existingUser.email })
+          const idToken = googleFakes.idToken({ email: existingUser.email })
           await mockSuccess(code, { id_token: idToken })
 
           await service.authenticate(code)
@@ -257,7 +258,7 @@ registrations.forEach(([name, register]) => {
 
         it("should emit a AuthenticatedEvent with provider 'google'", async () => {
           const code = faker.string.alphanumeric(20)
-          const idToken = GoogleOAuth.idToken({ email: existingUser.email })
+          const idToken = googleFakes.idToken({ email: existingUser.email })
           await mockSuccess(code, { id_token: idToken })
           const emitSpy = jest.spyOn(eventEmitter, "emit")
 
@@ -271,7 +272,7 @@ registrations.forEach(([name, register]) => {
 
         it("should not emit a RegisteredEvent", async () => {
           const code = faker.string.alphanumeric(20)
-          const idToken = GoogleOAuth.idToken({ email: existingUser.email })
+          const idToken = googleFakes.idToken({ email: existingUser.email })
           await mockSuccess(code, { id_token: idToken })
           const emitSpy = jest.spyOn(eventEmitter, "emit")
 
@@ -302,7 +303,7 @@ registrations.forEach(([name, register]) => {
           const googleName = faker.person.fullName()
           const picture = faker.image.avatar()
           const email = faker.internet.email()
-          const idToken = GoogleOAuth.idToken({
+          const idToken = googleFakes.idToken({
             email,
             sub,
             name: googleName,
@@ -330,7 +331,7 @@ registrations.forEach(([name, register]) => {
 
         it("should not throw (profile writing is skipped gracefully)", async () => {
           const code = faker.string.alphanumeric(20)
-          const idToken = GoogleOAuth.idToken({ email: faker.internet.email() })
+          const idToken = googleFakes.idToken({ email: faker.internet.email() })
           await mockSuccess(code, { id_token: idToken })
 
           await expect(service.authenticate(code)).resolves.not.toThrow()
@@ -350,7 +351,7 @@ registrations.forEach(([name, register]) => {
         it("should store email as lowercase regardless of Google ID token case", async () => {
           const code = faker.string.alphanumeric(20)
           const email = "Test.User@EXAMPLE.COM"
-          const idToken = GoogleOAuth.idToken({ email })
+          const idToken = googleFakes.idToken({ email })
           await mockSuccess(code, { id_token: idToken })
 
           const result = await service.authenticate<User>(code)
@@ -364,7 +365,7 @@ registrations.forEach(([name, register]) => {
           const existingUser = repository.create({ email })
           await repository.save(existingUser)
 
-          const idToken = GoogleOAuth.idToken({
+          const idToken = googleFakes.idToken({
             email: "EXISTING@EXAMPLE.COM",
           })
           await mockSuccess(code, { id_token: idToken })
@@ -491,7 +492,7 @@ registrations.forEach(([name, register]) => {
         it("should throw EmailNotVerifiedException", async () => {
           const code = faker.string.alphanumeric(20)
           const email = faker.internet.email()
-          const idToken = GoogleOAuth.idToken({ email, email_verified: false })
+          const idToken = googleFakes.idToken({ email, email_verified: false })
           await mockSuccess(code, { id_token: idToken })
 
           await expect(service.authenticate(code)).rejects.toBeInstanceOf(
@@ -502,7 +503,7 @@ registrations.forEach(([name, register]) => {
         it("should include the email on the exception", async () => {
           const code = faker.string.alphanumeric(20)
           const email = faker.internet.email()
-          const idToken = GoogleOAuth.idToken({ email, email_verified: false })
+          const idToken = googleFakes.idToken({ email, email_verified: false })
           await mockSuccess(code, { id_token: idToken })
 
           await expect(service.authenticate(code)).rejects.toMatchObject({
@@ -522,7 +523,7 @@ registrations.forEach(([name, register]) => {
         it("should not throw and proceed normally", async () => {
           const code = faker.string.alphanumeric(20)
           const email = faker.internet.email()
-          const idToken = GoogleOAuth.idToken({ email, email_verified: true })
+          const idToken = googleFakes.idToken({ email, email_verified: true })
           await mockSuccess(code, { id_token: idToken })
 
           await expect(service.authenticate(code)).resolves.not.toThrow()
@@ -540,7 +541,7 @@ registrations.forEach(([name, register]) => {
         it("should not throw and proceed normally", async () => {
           const code = faker.string.alphanumeric(20)
           const email = faker.internet.email()
-          const idToken = GoogleOAuth.idToken({ email })
+          const idToken = googleFakes.idToken({ email })
           await mockSuccess(code, { id_token: idToken })
 
           await expect(service.authenticate(code)).resolves.not.toThrow()

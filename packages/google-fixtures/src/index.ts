@@ -1,5 +1,8 @@
-// Data generators and MockServer helpers
-export { GoogleOAuth } from "./google-oauth"
+// Data generators
+export { google } from "./google"
+
+// MockServer helpers
+export { GoogleOAuthClient } from "./google-oauth-client"
 
 // Types
 export type {

@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker"
 import { SESSION_AUDIENCE } from "@neomaventures/auth"
-import { GoogleOAuth } from "@neomaventures/google-fixtures"
+import { google, GoogleOAuthClient } from "@neomaventures/google-fixtures"
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { MockServerClient } from "@neomaventures/mockserver"
 import { HttpStatus } from "@nestjs/common"
@@ -27,9 +27,11 @@ appModules.forEach(([name, modulePath]) => {
     let app: Awaited<ReturnType<typeof managedAppInstance>>
     let datasource: DataSource
     let mockServerClient: MockServerClient
+    let googleOAuth: GoogleOAuthClient
 
     beforeEach(async () => {
       mockServerClient = new MockServerClient(mockserverUrl)
+      googleOAuth = new GoogleOAuthClient(mockServerClient, mockserverUrl)
       app = await managedAppInstance(modulePath)
       datasource = app.get(DataSource)
     })
@@ -48,16 +50,16 @@ appModules.forEach(([name, modulePath]) => {
       emailCases.forEach(({ desc, email }) => {
         describe(`with ${desc} email: ${email}`, () => {
           it("should respond with HTTP 200, normalized email, isNewUser: true, and a valid session token", async () => {
-            const code = GoogleOAuth.code()
-            const sub = GoogleOAuth.sub()
+            const code = google.code()
+            const sub = google.sub()
             const googleName = faker.person.fullName()
 
-            await GoogleOAuth.mockCodeExchange(mockServerClient, {
+            await googleOAuth.mockCodeExchange({
               code,
               clientId,
               clientSecret,
               redirectUri,
-              idToken: GoogleOAuth.idToken({ email, sub, name: googleName }),
+              idToken: google.idToken({ email, sub, name: googleName }),
             })
 
             const response = await request(app.getHttpServer())
@@ -97,13 +99,13 @@ appModules.forEach(([name, modulePath]) => {
         const existingUser = repo.create({ email })
         await repo.save(existingUser)
 
-        const code = GoogleOAuth.code()
-        await GoogleOAuth.mockCodeExchange(mockServerClient, {
+        const code = google.code()
+        await googleOAuth.mockCodeExchange({
           code,
           clientId,
           clientSecret,
           redirectUri,
-          idToken: GoogleOAuth.idToken({ email }),
+          idToken: google.idToken({ email }),
         })
 
         const response = await request(app.getHttpServer())
@@ -127,14 +129,14 @@ appModules.forEach(([name, modulePath]) => {
         const existingUser = repo.create({ email })
         await repo.save(existingUser)
 
-        const code = GoogleOAuth.code()
+        const code = google.code()
         // Google returns UPPERCASE email
-        await GoogleOAuth.mockCodeExchange(mockServerClient, {
+        await googleOAuth.mockCodeExchange({
           code,
           clientId,
           clientSecret,
           redirectUri,
-          idToken: GoogleOAuth.idToken({ email: "EXISTING@EXAMPLE.COM" }),
+          idToken: google.idToken({ email: "EXISTING@EXAMPLE.COM" }),
         })
 
         const response = await request(app.getHttpServer())
@@ -153,8 +155,8 @@ appModules.forEach(([name, modulePath]) => {
 
     describe("When Google returns a 4xx HTTP error (invalid code)", () => {
       it("should respond with HTTP 401", async () => {
-        const code = GoogleOAuth.code()
-        await GoogleOAuth.mockCodeExchangeHttpError(mockServerClient, {
+        const code = google.code()
+        await googleOAuth.mockCodeExchangeHttpError({
           code,
           statusCode: 400,
         })
@@ -175,8 +177,8 @@ appModules.forEach(([name, modulePath]) => {
 
     describe("When Google returns a 5xx HTTP error", () => {
       it("should respond with HTTP 502", async () => {
-        const code = GoogleOAuth.code()
-        await GoogleOAuth.mockCodeExchangeHttpError(mockServerClient, {
+        const code = google.code()
+        await googleOAuth.mockCodeExchangeHttpError({
           code,
           statusCode: 500,
         })
@@ -197,8 +199,8 @@ appModules.forEach(([name, modulePath]) => {
 
     describe("When Google returns a network error", () => {
       it("should respond with HTTP 502", async () => {
-        const code = GoogleOAuth.code()
-        await GoogleOAuth.mockCodeExchangeNetworkError(mockServerClient, {
+        const code = google.code()
+        await googleOAuth.mockCodeExchangeNetworkError({
           code,
         })
 
@@ -227,19 +229,19 @@ appModules.forEach(([name, modulePath]) => {
 
     describe("When the Google ID token is missing the sub claim", () => {
       it("should respond with HTTP 401", async () => {
-        const code = GoogleOAuth.code()
+        const code = google.code()
         const secret = faker.string.alphanumeric(32)
         const idTokenWithoutSub = jwt.sign(
           {
             iss: "https://accounts.google.com",
-            aud: GoogleOAuth.aud(),
+            aud: google.aud(),
             email: faker.internet.email(),
             name: faker.person.fullName(),
           },
           secret,
         )
 
-        await GoogleOAuth.mockCodeExchange(mockServerClient, {
+        await googleOAuth.mockCodeExchange({
           code,
           clientId,
           clientSecret,
@@ -263,20 +265,20 @@ appModules.forEach(([name, modulePath]) => {
 
     describe("When the ID token is missing the email claim", () => {
       it("should respond with HTTP 401 with reason 'missing email in ID token'", async () => {
-        const code = GoogleOAuth.code()
+        const code = google.code()
         // Create an ID token with no email claim
         const secret = faker.string.alphanumeric(32)
         const idTokenWithoutEmail = jwt.sign(
           {
             iss: "https://accounts.google.com",
-            sub: GoogleOAuth.sub(),
-            aud: GoogleOAuth.aud(),
+            sub: google.sub(),
+            aud: google.aud(),
             name: faker.person.fullName(),
           },
           secret,
         )
 
-        await GoogleOAuth.mockCodeExchange(mockServerClient, {
+        await googleOAuth.mockCodeExchange({
           code,
           clientId,
           clientSecret,
@@ -301,14 +303,14 @@ appModules.forEach(([name, modulePath]) => {
     describe("When the Google ID token has email_verified: false", () => {
       it("should respond with HTTP 403", async () => {
         const email = faker.internet.email()
-        const code = GoogleOAuth.code()
+        const code = google.code()
 
-        await GoogleOAuth.mockCodeExchange(mockServerClient, {
+        await googleOAuth.mockCodeExchange({
           code,
           clientId,
           clientSecret,
           redirectUri,
-          idToken: GoogleOAuth.idToken({ email, email_verified: false }),
+          idToken: google.idToken({ email, email_verified: false }),
         })
 
         const response = await request(app.getHttpServer())
@@ -329,17 +331,17 @@ appModules.forEach(([name, modulePath]) => {
       describe("When a user authenticates with Google, then authenticates with magic link using the same email", () => {
         it("should return the same user and preserve Google profile data", async () => {
           const email = faker.internet.email().toLowerCase()
-          const googleSub = GoogleOAuth.sub()
+          const googleSub = google.sub()
           const googleName = faker.person.fullName()
 
           // Step 1: Authenticate via Google
-          const code = GoogleOAuth.code()
-          await GoogleOAuth.mockCodeExchange(mockServerClient, {
+          const code = google.code()
+          await googleOAuth.mockCodeExchange({
             code,
             clientId,
             clientSecret,
             redirectUri,
-            idToken: GoogleOAuth.idToken({
+            idToken: google.idToken({
               email,
               sub: googleSub,
               name: googleName,
@@ -385,7 +387,7 @@ appModules.forEach(([name, modulePath]) => {
       describe("When a user authenticates with magic link, then authenticates with Google using the same email", () => {
         it("should return the same user and write Google profile data", async () => {
           const email = faker.internet.email().toLowerCase()
-          const googleSub = GoogleOAuth.sub()
+          const googleSub = google.sub()
           const googleName = faker.person.fullName()
 
           // Step 1: Authenticate via magic link first
@@ -393,13 +395,13 @@ appModules.forEach(([name, modulePath]) => {
           const magicLinkUserId = magicLinkResult.user.id
 
           // Step 2: Authenticate via Google with the same email
-          const code = GoogleOAuth.code()
-          await GoogleOAuth.mockCodeExchange(mockServerClient, {
+          const code = google.code()
+          await googleOAuth.mockCodeExchange({
             code,
             clientId,
             clientSecret,
             redirectUri,
-            idToken: GoogleOAuth.idToken({
+            idToken: google.idToken({
               email,
               sub: googleSub,
               name: googleName,

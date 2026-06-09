@@ -3,7 +3,7 @@ import {
   type GoogleAuthOptions,
   type GoogleAuthResult,
 } from "@neomaventures/auth"
-import { GoogleOAuth } from "@neomaventures/google-fixtures"
+import { google as googleFakes } from "@neomaventures/google-fixtures"
 
 const { internet, person, string } = faker
 
@@ -55,8 +55,8 @@ export const google = {
    */
   authOptions(overrides: Partial<GoogleAuthOptions> = {}): GoogleAuthOptions {
     return {
-      clientId: GoogleOAuth.clientId(),
-      clientSecret: GoogleOAuth.clientSecret(),
+      clientId: googleFakes.clientId(),
+      clientSecret: googleFakes.clientSecret(),
       redirectUri: internet.url(),
       tokenEndpoint: "https://oauth2.googleapis.com/token",
       ...overrides,
