@@ -12,19 +12,21 @@ import {
   Module,
   type NestModule,
 } from "@nestjs/common"
-import { TypeOrmModule } from "@nestjs/typeorm"
 
 import { ApplicationController } from "~application/application.controller"
 import { ViewLocalsMiddleware } from "~application/view-locals.middleware"
 import { Account } from "~auth/account.entity"
 import { SaasAuthModule } from "~auth/auth.module"
 import { DashboardModule } from "~dashboard/dashboard.module"
+import { DatabaseModule } from "~database/database.module"
 
 /** Config properties used by the application module. */
 interface AppConfig {
   jwtSecret: string
   smtpHost: string
   smtpPort: string
+  smtpUser: string
+  smtpPassword: string
   mailFrom: string
   appUrl: string
 }
@@ -42,12 +44,7 @@ interface AppConfig {
     RequestContextModule.forRoot(),
     LoggingModule.forRoot(),
     ExceptionHandlerModule,
-    TypeOrmModule.forRoot({
-      type: "sqlite",
-      database: ":memory:",
-      autoLoadEntities: true,
-      synchronize: true,
-    }),
+    DatabaseModule,
     AuthModule.forRootAsync({
       useFactory: (config: TypedConfig<AppConfig>) => ({
         secret: config.jwtSecret,
@@ -62,6 +59,9 @@ interface AppConfig {
             host: config.smtpHost,
             port: parseInt(config.smtpPort, 10),
             from: config.mailFrom,
+            auth: config.smtpUser
+              ? { user: config.smtpUser, pass: config.smtpPassword }
+              : undefined,
             welcome: {
               subject: "Welcome — confirm your email",
               html: `<p>Click <a href="${config.appUrl}/auth/magic-link/callback?token={{token}}">here</a> to sign in.</p>`,

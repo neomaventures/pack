@@ -1,5 +1,8 @@
+DATABASE_URI=:memory:
 JWT_SECRET=test-secret
 SMTP_HOST=localhost
 SMTP_PORT=1025
+SMTP_USER=
+SMTP_PASSWORD=
 MAIL_FROM=noreply@localhost
 APP_URL=http://localhost:3000

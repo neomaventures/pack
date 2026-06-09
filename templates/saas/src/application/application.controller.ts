@@ -26,6 +26,17 @@ export class ApplicationController {
   }
 
   /**
+   * Returns a health check response for liveness probes.
+   *
+   * Keyed by probe type so additional checks (e.g. `database`) can be
+   * added without a breaking change.
+   */
+  @Get("api/health")
+  public health(): { http: string } {
+    return { http: "ok" }
+  }
+
+  /**
    * Exercises both modes of the exception filter via `@ErrorTemplate`.
    *
    * - `GET /error?type=render` — throws a 500, rendered as EJS error page

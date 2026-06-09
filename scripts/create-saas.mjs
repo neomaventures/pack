@@ -12,7 +12,7 @@
  * ```
  */
 
-import { cpSync, existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "fs"
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "fs"
 import { basename, extname, join, resolve } from "path"
 import { fileURLToPath } from "url"
 
@@ -131,6 +131,15 @@ cpSync(TEMPLATE_DIR, targetDir, {
     return !SKIP_DIRS.has(name)
   },
 })
+
+// Move scaffold/deploy.yml to .github/workflows/deploy.yml
+const scaffoldDir = join(targetDir, "scaffold")
+if (existsSync(scaffoldDir)) {
+  const workflowsDir = join(targetDir, ".github", "workflows")
+  mkdirSync(workflowsDir, { recursive: true })
+  renameSync(join(scaffoldDir, "deploy.yml"), join(workflowsDir, "deploy.yml"))
+  rmSync(scaffoldDir, { recursive: true })
+}
 
 replaceTokensInDir(targetDir, {
   __PACKAGE_NAME__: projectName,

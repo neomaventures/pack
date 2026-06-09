@@ -4,53 +4,156 @@ A working NestJS SaaS application that serves two purposes: a **starter kit** fo
 
 The template renders server-side HTML via EJS with [Tailwind CSS v4](https://tailwindcss.com/docs) for styling. No SPA framework.
 
-## Creating a new app
+---
+
+## Prerequisites
+
+You need a **GitHub account** and a **personal access token** (classic) with `read:packages` scope. [Generate one here](https://github.com/settings/tokens) if you don't have one.
+
+Set it as `NPM_TOKEN` in your shell profile:
+
+```bash
+export NPM_TOKEN=ghp_your_token_here
+```
+
+This is used locally for `pnpm install` and on Render for building the app.
+
+---
+
+## Phase 1: Setup and local run
+
+### 1. Scaffold the app
 
 From the pack monorepo root:
 
 ```bash
-pnpm create:saas <project-name> [target-directory]
+pnpm create:saas my-app
 ```
 
-For example:
+The target directory defaults to `../my-app` — pass a second argument to override.
+
+### 2. Install and run locally
 
 ```bash
-pnpm create:saas saasquatch /path/to/saasquatch
-cd /path/to/saasquatch
+cd /path/to/my-app
+pnpm install
+pnpm approve-builds
 pnpm install
 pnpm dev
 ```
 
-The setup script:
-- Copies the template to the target directory
-- Sets the package name in `package.json` (from your project name)
-- Resolves `workspace:*` dependencies to the latest published `@neomaventures/*` versions
+`pnpm approve-builds` is a one-time step — pnpm 11 blocks postinstall scripts by default.
 
-The target directory defaults to `../<project-name>` relative to the pack root if omitted.
+Visit `http://localhost:3000` — you should see the welcome page. The app uses an in-memory SQLite database and [Mailpit](https://mailpit.axllent.org/) for email capture locally — no external services needed. Try the magic link login at `/auth/register` and check captured emails at `http://localhost:8025`.
 
-### Prerequisites
+---
 
-The generated app installs `@neomaventures/*` packages from GitHub Packages. You need a `GITHUB_TOKEN` with `read:packages` scope in your `~/.npmrc`:
+## Phase 2: Push to GitHub
 
+### 3. Create a GitHub repo and push
+
+```bash
+git init
+git add .
+git commit -m "init"
+gh repo create your-org/my-app --private --source . --push
 ```
-//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+
+---
+
+## Phase 3: Deploy
+
+### 4. Create a Render account
+
+Sign up at [render.com](https://render.com) if you don't have an account. Connect your GitHub account when prompted.
+
+### 5. Create a Blueprint
+
+1. Go to [dashboard.render.com/select-repo?type=blueprint](https://dashboard.render.com/select-repo?type=blueprint)
+2. Select your GitHub repo
+3. Render detects `render.yaml` and shows the services it will create (web service + Postgres database)
+4. You'll be prompted to fill in the `sync: false` values:
+   - `NPM_TOKEN` — your GitHub PAT from Prerequisites
+   - `JWT_SECRET` — generate with `openssl rand -base64 32`
+   - Leave the SMTP fields empty for now (Phase 4)
+5. Click **Apply**
+
+Render creates the web service and database, pulls your repo, builds, and deploys. Your app is live at `https://my-app.onrender.com`.
+
+### 6. Set up tag-based deploys
+
+Auto-deploy is disabled in `render.yaml`. To deploy on version tags:
+
+1. In the Render dashboard, go to your service's **Settings** and copy the **Deploy Hook** URL
+2. In your GitHub repo, go to **Settings > Secrets and variables > Actions > Secrets** and add:
+
+| Secret | Value |
+|---|---|
+| `RENDER_DEPLOY_HOOK` | _(the deploy hook URL you copied)_ |
+
+Now deploys are triggered by tagging:
+
+```bash
+npm version patch
+git push
+git push --tags
 ```
 
-The template includes an `.npmrc` that scopes `@neomaventures` to the GitHub Packages registry.
+---
 
-### Configuration
+## Phase 4: Configure email for magic link login
+
+The app deploys without email — you'll see the landing page but magic link login won't work until you configure an SMTP provider.
+
+### 7. Create a Resend account
+
+Sign up at [resend.com](https://resend.com) (3,000 emails/month free).
+
+> Other SMTP providers work too — [Postmark](https://postmarkapp.com), [Amazon SES](https://aws.amazon.com/ses/), [Mailgun](https://www.mailgun.com) — but Resend has the most generous free tier and the simplest setup.
+
+### 8. Add SMTP variables in Render
+
+Go to your service's **Environment** tab in the Render dashboard and set:
+
+| Key | Value |
+|---|---|
+| `SMTP_PASSWORD` | _(your Resend API key)_ |
+
+`SMTP_HOST`, `SMTP_USER`, and `MAIL_FROM` are already configured with Resend defaults. Save, and Render redeploys automatically. Magic link login is now live.
+
+Update `MAIL_FROM` to your own domain once you've verified it with Resend.
+
+---
+
+## Optional: Configure DNS
+
+By default, your app is available at `https://<your-app-name>.onrender.com`. To use a custom domain:
+
+1. In the Render dashboard, go to your service's **Custom Domains**
+2. Add your domain
+3. Create the DNS records Render provides (CNAME or A record)
+4. Wait for SSL provisioning (automatic via Let's Encrypt)
+
+Update the `APP_URL` environment variable in the Render dashboard to match your custom domain.
+
+---
+
+## Configuration
 
 The app reads configuration from environment variables via `@neomaventures/config`. Each environment has its own `.env` file (`.env.development`, `.env.spec`, `.env.e2e-spec`, `.env.ui-spec`), loaded automatically by the corresponding `pnpm` script.
 
 | Variable | Purpose | Default |
 |---|---|---|
+| `DATABASE_URI` | Database connection URI (`:memory:` for SQLite, `postgresql://...` for Postgres) | `:memory:` |
 | `JWT_SECRET` | Secret key for signing JWT session cookies | `dev-secret-change-me` |
 | `SMTP_HOST` | SMTP server for magic link emails | `localhost` |
 | `SMTP_PORT` | SMTP port | `1025` |
+| `SMTP_USER` | SMTP authentication username | _(empty)_ |
+| `SMTP_PASSWORD` | SMTP authentication password | _(empty)_ |
 | `MAIL_FROM` | From address for magic link emails | `noreply@localhost` |
 | `APP_URL` | Base URL for magic link callback URLs | `http://localhost:3000` |
 
-For local development, the defaults work out of the box with [Mailpit](https://mailpit.axllent.org/) running on port 1025. In production, set `JWT_SECRET` to a strong random value and configure a real SMTP provider.
+For local development, the defaults work out of the box with [Mailpit](https://mailpit.axllent.org/) running on port 1025.
 
 `@neomaventures/config` maps camelCase property names to SCREAMING_SNAKE_CASE env vars automatically — no manual `process.env` reads needed.
 
@@ -60,142 +163,26 @@ The welcome page displays the package name from `package.json`. `ViewLocalsMiddl
 
 No separate `APP_NAME` env var is needed — the name comes from `package.json`.
 
-## Running the template in-repo
+## Database Migrations
 
-The template is a workspace member of the pack monorepo. To run it directly:
+The app uses TypeORM migrations to manage the Postgres schema in production. Dev and test environments use SQLite with `synchronize: true`, so migrations only apply to Postgres deployments.
+
+### When to generate
+
+After any change to a `*.entity.ts` file (adding a column, renaming a field, changing a constraint), generate a new migration to capture the schema diff.
+
+### How to generate
 
 ```bash
-cd templates/saas
-pnpm dev
+pnpm migration:generate -- <DescriptiveName>
 ```
 
-When running in-repo, `@neomaventures/*` packages resolve via `workspace:*` — changes to packages are tested against the template immediately, without publishing.
+This requires Docker. The script spins up a temporary Postgres container, runs all existing migrations to establish the current schema, then diffs against your entity definitions to produce a new migration file in `typeorm/migrations/`.
 
-## Styling
+### Rules
 
-The template uses [Tailwind CSS v4](https://tailwindcss.com/docs) with the CSS-first configuration approach (no `tailwind.config.js`). CSS is compiled from `src/styles/input.css` to `public/stylesheets/main.css`, which is a git-ignored build artifact.
-
-### Development
-
-`pnpm dev` uses `concurrently` to run two processes in parallel:
-
-- **nest** — NestJS in watch mode (hot-reload on TypeScript changes)
-- **css** — Tailwind CLI in watch mode (recompiles CSS on template changes)
-
-### Production build
-
-`pnpm build` runs a one-shot Tailwind build (minified) before `nest build`.
-
-## Project structure
-
-```
-templates/saas/
-├── src/
-│   ├── main.ts                              # Bootstrap
-│   ├── application/
-│   │   ├── application.module.ts            # Root module (wires Neoma packages)
-│   │   ├── application.controller.ts        # Welcome page + error exercise routes
-│   │   └── view-locals.middleware.ts         # Injects npmPackageName + npmPackageVersion into res.locals
-│   ├── auth/
-│   │   ├── auth.module.ts                   # Auth module (magic link controllers)
-│   │   ├── auth.controller.ts               # Register, magic link, callback, logout
-│   │   └── account.entity.ts               # Account entity (id, email, permissions)
-│   ├── dashboard/
-│   │   ├── dashboard.module.ts              # Dashboard module
-│   │   └── dashboard.controller.ts          # Protected dashboard (@Authenticated + @Principal)
-│   └── styles/
-│       └── input.css                        # Tailwind CSS entry point
-├── views/
-│   ├── welcome.ejs                          # Welcome page
-│   ├── dashboard.ejs                        # Authenticated dashboard
-│   ├── auth/
-│   │   ├── register.ejs                     # Registration form (magic link + Google)
-│   │   └── magic-link/
-│   │       ├── sent.ejs                     # Check your email confirmation
-│   │       └── expired.ejs                  # Link expired error page
-│   └── errors/
-│       └── generic.ejs                      # Error page
-├── public/
-│   └── stylesheets/
-│       └── main.css                         # Compiled CSS (git-ignored build artifact)
-├── specs/                                   # E2E specs (supertest)
-│   └── welcome.e2e-spec.ts
-├── ui-specs/                                # UI specs (Playwright)
-│   └── welcome.ui-spec.ts
-├── fixtures/                                # Test fixtures and setup
-│   ├── configure-view-engine.ts
-│   └── package-version.ts
-├── package.json
-├── tsconfig.json
-├── tsconfig.build.json
-├── nest-cli.json
-├── jest.config.json
-├── playwright.config.ts
-├── .npmrc
-├── .env.development
-├── .env.spec
-├── .env.e2e-spec
-└── .env.ui-spec
-```
-
-## Logging
-
-`ApplicationLoggerService` from `@neomaventures/logging` is the structured logger for application code. Inject it into services and controllers to emit structured log entries:
-
-```ts
-@Controller()
-export class ApplicationController {
-  public constructor(
-    private readonly logger: ApplicationLoggerService,
-  ) {}
-
-  @Get()
-  @Render("welcome")
-  public index(): void {
-    this.logger.log("Rendering welcome page")
-  }
-}
-```
-
-`ApplicationLoggerService` automatically enriches each log entry with the current request context (request ID, method, path) via `@neomaventures/request-context`. No manual threading is needed.
-
-Nest's own framework logs (module init, route registration, etc.) continue to use the default `ConsoleLogger`. The template does not call `app.useLogger()` — the two loggers serve different purposes.
-
-## Error handling
-
-`@neomaventures/exceptions` provides an exception filter that handles errors thrown from controller routes. It supports two modes:
-
-### Render mode
-
-Decorate a route with `@ErrorTemplate({ default: 'errors/generic' })`. When an exception is thrown, the filter renders `views/errors/generic.ejs` with the exception data (status code, message) instead of returning JSON.
-
-### Redirect mode
-
-When the `@ErrorTemplate` value starts with `/`, the filter issues a 303 redirect to that path instead of rendering a template. For example, `@ErrorTemplate({ default: '/' })` redirects to the welcome page on error. This is useful for form submissions where the user should be sent back to the form.
-
-Both modes require the request to accept `text/html` (content negotiation). JSON-accepting clients receive the standard NestJS JSON error response.
-
-### Exercise route
-
-`GET /error` exercises both modes via a single `@ErrorTemplate` that maps exception classes to strategies:
-
-```ts
-@ErrorTemplate({
-  BadRequestException: "/",          // 4xx → redirect to /
-  default: "errors/generic",         // everything else → render template
-})
-```
-
-Try these in a browser (`pnpm dev` then visit):
-
-| URL | What happens |
-|---|---|
-| `http://localhost:3000/error?type=render` | 500 — renders EJS error page with status code and message |
-| `http://localhost:3000/error?type=redirect` | 400 — redirects to `/` (BadRequestException maps to `/` prefix) |
-| `http://localhost:3000/error?type=foo` | 400 — unknown type, also redirects (BadRequestException) |
-| `http://localhost:3000/error` | 400 — no type, same as unknown |
-
-Browsers send `Accept: text/html` by default, so you see the HTML error handling. `curl` without an Accept header gets JSON instead (content negotiation).
+- Never edit a migration that has already been deployed. If you need to change the schema, create a new migration.
+- Migration files are committed to the repo and reviewed like any other code change.
 
 ## Authentication
 
@@ -230,8 +217,6 @@ export class DashboardController {
 
 ### Auth routes
 
-Auth routes live in `src/auth/`, dashboard in `src/dashboard/`, and the Account entity in `src/auth/`.
-
 | Route | What it does |
 |---|---|
 | `GET /auth/register` | Renders the registration page with a magic link form and a disabled Google OAuth button |
@@ -246,20 +231,6 @@ Auth routes live in `src/auth/`, dashboard in `src/dashboard/`, and the Account 
 
 The sign up page includes a disabled Google OAuth button marked "coming soon". Google login is planned but deferred until the magic link flow stabilises.
 
-### Testing the auth flow
-
-Try the full flow in a browser (`pnpm dev` then visit):
-
-| URL | What happens |
-|---|---|
-| `http://localhost:3000/auth/register` | Registration page with magic link form and disabled Google button |
-| Submit an email on the form | Sends a magic link email, redirects to "check your email" page |
-| Check Mailpit at `http://localhost:8025` | Click the magic link in the captured email |
-| `http://localhost:3000/dashboard` | Protected — redirects to `/auth/register` if not authenticated |
-| `POST /auth/logout` (Sign out button) | Clears session, redirects to `/` |
-
-E2e specs use Mailpit to capture the magic link email and complete the full authentication lifecycle programmatically.
-
 ## Tests
 
 Three test layers, matching the spec ownership model used across Neoma projects:
@@ -271,6 +242,87 @@ Three test layers, matching the spec ownership model used across Neoma projects:
 | UI | Pages render correctly in a browser (e.g. heading visible, sign up form present, dashboard shows email) | `pnpm test:ui` |
 
 Template specs test **wiring and composition**, not package internals.
+
+## Styling
+
+The template uses [Tailwind CSS v4](https://tailwindcss.com/docs) with the CSS-first configuration approach (no `tailwind.config.js`). CSS is compiled from `src/styles/input.css` to `public/stylesheets/main.css`, which is a git-ignored build artifact.
+
+`pnpm dev` runs the Tailwind CLI in watch mode alongside NestJS. `pnpm build` runs a one-shot Tailwind build (minified) before `nest build`.
+
+## Logging
+
+`ApplicationLoggerService` from `@neomaventures/logging` is the structured logger for application code. It automatically enriches each log entry with the current request context (request ID, method, path) via `@neomaventures/request-context`. No manual threading is needed.
+
+Nest's own framework logs (module init, route registration, etc.) continue to use the default `ConsoleLogger`. The template does not call `app.useLogger()` — the two loggers serve different purposes.
+
+## Error handling
+
+`@neomaventures/exceptions` provides an exception filter that handles errors thrown from controller routes. It supports two modes:
+
+- **Render mode** — `@ErrorTemplate({ default: 'errors/generic' })` renders an EJS error page
+- **Redirect mode** — when the value starts with `/`, issues a 303 redirect instead of rendering
+
+Both modes require the request to accept `text/html` (content negotiation). JSON-accepting clients receive the standard NestJS JSON error response.
+
+## Project structure
+
+```
+my-app/
+├── render.yaml                               # Render Blueprint (infrastructure as code)
+├── .github/
+│   └── workflows/
+│       └── deploy.yml                        # Tag-triggered deploy via Render webhook
+├── src/
+│   ├── main.ts                              # Bootstrap
+│   ├── application/
+│   │   ├── application.module.ts            # Root module (wires Neoma packages)
+│   │   ├── application.controller.ts        # Welcome page, health check, error exercise
+│   │   └── view-locals.middleware.ts         # Injects npmPackageName + npmPackageVersion into res.locals
+│   ├── auth/
+│   │   ├── auth.module.ts                   # Auth module (magic link controllers)
+│   │   ├── auth.controller.ts               # Register, magic link, callback, logout
+│   │   └── account.entity.ts               # Account entity (id, email, permissions)
+│   ├── dashboard/
+│   │   ├── dashboard.module.ts              # Dashboard module
+│   │   └── dashboard.controller.ts          # Protected dashboard (@Authenticated + @Principal)
+│   ├── database/
+│   │   ├── database.module.ts              # Database config (SQLite dev / Postgres prod)
+│   │   └── database.module.spec.ts         # Unit tests for databaseOptions()
+│   └── styles/
+│       └── input.css                        # Tailwind CSS entry point
+├── views/
+│   ├── welcome.ejs                          # Welcome page
+│   ├── dashboard.ejs                        # Authenticated dashboard
+│   ├── auth/
+│   │   ├── register.ejs                     # Registration form (magic link + Google)
+│   │   └── magic-link/
+│   │       ├── sent.ejs                     # Check your email confirmation
+│   │       └── expired.ejs                  # Link expired error page
+│   └── errors/
+│       └── generic.ejs                      # Error page
+├── public/
+│   └── stylesheets/
+│       └── main.css                         # Compiled CSS (git-ignored build artifact)
+├── specs/                                   # E2E specs (supertest)
+├── ui-specs/                                # UI specs (Playwright)
+├── typeorm/                                 # TypeORM CLI config + migrations
+│   ├── datasource.ts                       # Standalone Postgres DataSource for CLI
+│   └── migrations/                         # Auto-generated migration files
+├── scripts/
+│   └── migration-generate.sh              # Docker-based migration generation
+├── fixtures/                                # Test fixtures and setup
+├── package.json
+├── tsconfig.json
+├── tsconfig.build.json
+├── nest-cli.json
+├── jest.config.json
+├── playwright.config.ts
+├── .npmrc
+├── .env.development
+├── .env.spec
+├── .env.e2e-spec
+└── .env.ui-spec
+```
 
 ## Wired packages
 
@@ -289,7 +341,16 @@ Template specs test **wiring and composition**, not package internals.
 | `@neomaventures/webhooks` | Planned |
 | `@neomaventures/route-model-binding` | Planned |
 
-## Local vs generated apps
+## Running the template in-repo
+
+The template is a workspace member of the pack monorepo. To run it directly:
+
+```bash
+cd templates/saas
+pnpm dev
+```
+
+When running in-repo, `@neomaventures/*` packages resolve via `workspace:*` — changes to packages are tested against the template immediately, without publishing.
 
 | Concern | In-repo (local dev) | Generated app (copy-out) |
 |---|---|---|
