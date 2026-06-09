@@ -26,15 +26,10 @@
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "exports": {
-    ".": {
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
-  },
   "files": [
     "dist",
     "README.md",
+    "LICENSE",
     "!**/*.json",
     "!**/*.tsbuildinfo"
   ],
@@ -45,13 +40,14 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@faker-js/faker": "^9.6.0",
     "jsonwebtoken": "^9.0.0"
   },
   "peerDependencies": {
+    "@faker-js/faker": ">=9.0.0",
     "@neomaventures/mockserver": ">=0.2.0"
   },
   "devDependencies": {
+    "@faker-js/faker": "^9.6.0",
     "@neomaventures/mockserver": "workspace:*",
     "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.0",

@@ -5,13 +5,13 @@ Test fixtures for mocking Google OAuth APIs on top of `@neomaventures/mockserver
 ## Installation
 
 ```bash
-pnpm add -D @neomaventures/google-fixtures @neomaventures/mockserver
+pnpm add -D @neomaventures/google-fixtures @neomaventures/mockserver @faker-js/faker
 ```
 
 ### Dependencies
 
-- `@faker-js/faker` — randomized test data
 - `jsonwebtoken` — ID token signing
+- `@faker-js/faker` (peer) — randomized test data
 - `@neomaventures/mockserver` (peer) — MockServer client and container lifecycle
 
 ## Usage

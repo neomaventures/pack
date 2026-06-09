@@ -1,7 +1,10 @@
 import { faker } from "@faker-js/faker"
 import * as jwt from "jsonwebtoken"
 
-import { type GoogleIdTokenClaims, type GoogleOAuthCodeExchangeResponse } from "./types"
+import {
+  type GoogleIdTokenClaims,
+  type GoogleOAuthCodeExchangeResponse,
+} from "./types"
 
 const { hacker, internet, person, string } = faker
 

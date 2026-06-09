@@ -11,7 +11,7 @@ const { internet, person, string } = faker
  * Auth-specific Google test helpers that depend on `@neomaventures/auth` types.
  *
  * Data generators (code, idToken, sub, etc.) have moved to
- * `@neomaventures/google-fixtures` — import {@link GoogleOAuth} instead.
+ * `@neomaventures/google-fixtures` — import `google` instead.
  */
 export const google = {
   /**

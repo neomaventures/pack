@@ -57,9 +57,7 @@ describe("google", () => {
     it("should return an array containing userinfo.email and userinfo.profile scopes", () => {
       const scopes = google.scopes()
 
-      expect(scopes).toContain(
-        "https://www.googleapis.com/auth/userinfo.email",
-      )
+      expect(scopes).toContain("https://www.googleapis.com/auth/userinfo.email")
       expect(scopes).toContain(
         "https://www.googleapis.com/auth/userinfo.profile",
       )
