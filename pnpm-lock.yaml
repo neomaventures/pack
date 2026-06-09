@@ -416,13 +416,13 @@ importers:
 
   packages/google-fixtures:
     dependencies:
-      '@faker-js/faker':
-        specifier: ^9.6.0
-        version: 9.9.0
       jsonwebtoken:
         specifier: ^9.0.0
         version: 9.0.3
     devDependencies:
+      '@faker-js/faker':
+        specifier: ^9.6.0
+        version: 9.9.0
       '@neomaventures/mockserver':
         specifier: workspace:*
         version: link:../mockserver
