@@ -54,6 +54,8 @@ describe("AuthController", () => {
         { provide: ApplicationLoggerService, useValue: logger },
         { provide: MagicLinkService, useValue: magicLinkService },
         { provide: SessionService, useValue: sessionService },
+        // GoogleAuthService is called by the @GoogleCallback() interceptor,
+        // not the controller. This mock only satisfies the DI container.
         { provide: GoogleAuthService, useValue: { authenticate: jest.fn() } },
       ],
     }).compile()

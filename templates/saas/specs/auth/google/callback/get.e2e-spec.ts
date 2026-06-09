@@ -149,4 +149,16 @@ describe("GET /auth/google/callback", () => {
         .expect((res) => expect(res.get("Set-Cookie")).toBeUndefined())
     })
   })
+
+  describe("Given Google returns an error query param (user denied consent)", () => {
+    it("should redirect to /auth/register with no session cookie", async () => {
+      await request(app.getHttpServer())
+        .get("/auth/google/callback")
+        .query({ error: "access_denied" })
+        .set("Accept", "text/html")
+        .expect(SEE_OTHER)
+        .expect("Location", "/auth/register")
+        .expect((res) => expect(res.get("Set-Cookie")).toBeUndefined())
+    })
+  })
 })
