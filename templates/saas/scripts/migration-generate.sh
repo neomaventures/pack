@@ -5,8 +5,7 @@ NAME="${1:?Usage: pnpm migration:generate -- <name>}"
 
 CONTAINER="__PACKAGE_NAME__-migration-gen"
 PORT=5434
-PASSWORD="migration"
-DATABASE_URI="postgresql://postgres:${PASSWORD}@localhost:${PORT}/__PACKAGE_NAME__"
+DATABASE_URI="postgresql://postgres@localhost:${PORT}/__PACKAGE_NAME__"
 
 cleanup() {
   docker rm -f "$CONTAINER" > /dev/null 2>&1 || true
@@ -17,7 +16,7 @@ cleanup
 
 docker run -d --name "$CONTAINER" \
   -p "${PORT}:5432" \
-  -e "POSTGRES_PASSWORD=${PASSWORD}" \
+  -e "POSTGRES_HOST_AUTH_METHOD=trust" \
   -e "POSTGRES_DB=__PACKAGE_NAME__" \
   postgres:17-alpine > /dev/null
 
