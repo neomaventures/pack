@@ -1,0 +1,11 @@
+---
+engines:
+  # Semgrep flags security issues (e.g. NoSQL injection) that are false
+  # positives in test files where queries are built with test data.
+  semgrep:
+    exclude_paths:
+      - "**/*.spec.ts"
+      - "**/*.e2e-spec.ts"
+      - "**/specs/**"
+      - "**/ui-specs/**"
+      - "**/fixtures/**"
