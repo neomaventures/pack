@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1
+
+### Patch Changes
+
+- cfeb742: Migrate Google OAuth test fixtures to `@neomaventures/google-fixtures`. No API changes — internal test refactor only.
+
 ## 0.3.0
 
 ### Minor Changes

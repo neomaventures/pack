@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- cfeb742: Make `MockServerClient.baseUrl` public readonly so consumers can derive URLs from the client instance.
+
 ## 0.2.0
 
 ### Minor Changes
