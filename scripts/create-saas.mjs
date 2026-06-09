@@ -33,6 +33,7 @@ const TEXT_EXTENSIONS = new Set([
   ".yaml",
   ".yml",
   ".mjs",
+  ".sh",
 ])
 
 const SKIP_DIRS = new Set(["node_modules", "dist", "playwright-report", "test-results"])

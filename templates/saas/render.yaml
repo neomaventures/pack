@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: starter
     region: frankfurt
-    buildCommand: NODE_ENV=development pnpm install --frozen-lockfile && pnpm build
+    buildCommand: NODE_ENV=development pnpm install --frozen-lockfile && NODE_ENV=production pnpm build
     startCommand: pnpm migration:run && pnpm start
     autoDeploy: false
     healthCheckPath: /api/health
