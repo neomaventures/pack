@@ -114,6 +114,7 @@ export const google = {
       sub: string.numeric(10),
       aud: google.aud(),
       email: internet.email(),
+      email_verified: true,
       name: person.fullName(),
       picture: internet.url(),
     }

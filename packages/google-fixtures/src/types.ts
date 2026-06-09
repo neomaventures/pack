@@ -1,7 +1,7 @@
 /**
  * Claims embedded in a Google ID token JWT.
  *
- * Used with `Partial<GoogleIdTokenClaims>` in {@link GoogleOAuth.idToken} —
+ * Used with `Partial<GoogleIdTokenClaims>` in {@link google.idToken} —
  * callers override only the claims they care about; defaults are generated
  * for any omitted fields.
  *
