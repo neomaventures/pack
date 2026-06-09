@@ -1,7 +1,8 @@
 ---
 engines:
-  # Semgrep flags security issues (e.g. NoSQL injection) that are false
-  # positives in test files where queries are built with test data.
+  # Exclude Semgrep rules from test packages which
+  # often have unchecked database queries, passwords
+  # etc in them.
   opengrep:
     exclude_paths:
       - "**/*.spec.ts"
@@ -10,5 +11,13 @@ engines:
       - "**/specs/**"
       - "**/ui-specs/**"
       - "**/fixtures/**"
+      - "packages/docker/**"
+      - "packages/fixtures/**"
+      - "packages/google-fixtures/**"
+      - "packages/mailpit/**"
+      - "packages/managed-app/**"
+      - "packages/managed-database/**"
+      - "packages/minio/**"
+      - "packages/mockserver/**"
     exclude_rules:
       - "Semgrep_rules_lgpl_javascript_database_rule-node-nosqli-injection"
