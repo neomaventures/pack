@@ -58,7 +58,7 @@ describe("GET /auth/magic-link/callback", () => {
     it(`should redirect to /auth/magic-link/expired`, async () => {
       const token = jwt.sign(
         { email: faker.internet.email(), aud: "magic-link" },
-        "wrong-secret",
+        faker.hacker.ingverb(),
         { expiresIn: "15m" },
       )
 
