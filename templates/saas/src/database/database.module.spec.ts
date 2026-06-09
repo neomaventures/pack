@@ -50,7 +50,9 @@ describe("DatabaseModule", () => {
         const uriWithSslMode = `${pgUri}?sslmode=require`
         const options = databaseOptions(uriWithSslMode)
 
-        expect((options as Record<string, unknown>).url).not.toContain("sslmode")
+        expect((options as Record<string, unknown>).url).not.toContain(
+          "sslmode",
+        )
       })
     })
 

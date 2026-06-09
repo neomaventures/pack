@@ -32,7 +32,7 @@ describe("ApplicationController", () => {
   })
 
   describe("health()", () => {
-    it("should return { http: \"ok\" }", () => {
+    it('should return { http: "ok" }', () => {
       expect(controller.health()).toEqual({ http: "ok" })
     })
   })

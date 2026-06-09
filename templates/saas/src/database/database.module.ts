@@ -69,10 +69,7 @@ export function databaseOptions(
   imports: [
     TypeOrmModule.forRootAsync({
       useFactory: (config: TypedConfig<DatabaseConfig>): TypeOrmModuleOptions =>
-        databaseOptions(
-          config.databaseUri,
-          config.databaseCaCert || undefined,
-        ),
+        databaseOptions(config.databaseUri, config.databaseCaCert || undefined),
       inject: [ConfigService],
     }),
   ],
