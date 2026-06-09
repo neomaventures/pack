@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "paths": {
+      "@neomaventures/google-fixtures": ["./src"],
+      "@neomaventures/google-fixtures/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*"]
+}

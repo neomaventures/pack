@@ -1,16 +1,14 @@
 import { faker } from "@faker-js/faker"
+import {
+  google as googleFakes,
+  GoogleOAuthClient,
+} from "@neomaventures/google-fixtures"
 import { MockServerClient } from "@neomaventures/mockserver"
 import { DynamicModule } from "@nestjs/common"
 import { EventEmitter2 } from "@nestjs/event-emitter"
 import { Test, TestingModule } from "@nestjs/testing"
 import { getRepositoryToken, TypeOrmModule } from "@nestjs/typeorm"
 import { google } from "fixtures/fakes/google"
-import {
-  getTokenEndpoint,
-  mockCodeExchangeApi,
-  mockCodeExchangeApiHttpError,
-  mockCodeExchangeApiNetworkError,
-} from "fixtures/google/oauth-api"
 import * as jwt from "jsonwebtoken"
 import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm"
 
@@ -51,7 +49,13 @@ class UserWithProfile implements Authenticatable {
   public authProfile?: AuthenticatableProfile
 }
 
-const googleAuth = google.authOptions({ tokenEndpoint: getTokenEndpoint() })
+const mockserverUrl = process.env.MOCKSERVER_URL!
+const client = new MockServerClient(mockserverUrl)
+const googleOAuthClient = new GoogleOAuthClient(client)
+
+const googleAuth = google.authOptions({
+  tokenEndpoint: googleOAuthClient.tokenEndpoint(),
+})
 
 async function buildModule<T extends Authenticatable>(
   entityClass: new () => T,
@@ -78,6 +82,38 @@ async function buildModule<T extends Authenticatable>(
   }).compile()
 }
 
+async function mockSuccess(
+  code: string,
+  options: { id_token?: string } = {},
+): Promise<void> {
+  await googleOAuthClient.mockCodeExchange({
+    code,
+    clientId: googleAuth.clientId,
+    clientSecret: googleAuth.clientSecret,
+    redirectUri: googleAuth.redirectUri,
+    idToken: options.id_token,
+    times: { unlimited: true },
+  })
+}
+
+async function mockHttpError(
+  code: string,
+  options: { statusCode?: number } = {},
+): Promise<void> {
+  await googleOAuthClient.mockCodeExchangeHttpError({
+    code,
+    statusCode: options.statusCode,
+    times: { unlimited: true },
+  })
+}
+
+async function mockNetworkError(code: string): Promise<void> {
+  await googleOAuthClient.mockCodeExchangeNetworkError({
+    code,
+    times: { unlimited: true },
+  })
+}
+
 const registrations: [string, (opts: AuthOptions) => DynamicModule][] = [
   ["forRoot", (opts): DynamicModule => AuthModule.forRoot(opts)],
   [
@@ -90,7 +126,7 @@ const registrations: [string, (opts: AuthOptions) => DynamicModule][] = [
 registrations.forEach(([name, register]) => {
   describe(`GoogleAuthService (${name})`, () => {
     afterEach(async () => {
-      await new MockServerClient(process.env.MOCKSERVER_URL!).reset()
+      await client.reset()
     })
 
     describe("authenticate", () => {
@@ -109,8 +145,8 @@ registrations.forEach(([name, register]) => {
         it("should create a new user entity", async () => {
           const code = faker.string.alphanumeric(20)
           const email = faker.internet.email()
-          const idToken = google.idToken({ email })
-          await mockCodeExchangeApi(code, { id_token: idToken })
+          const idToken = googleFakes.idToken({ email })
+          await mockSuccess(code, { id_token: idToken })
 
           await service.authenticate(code)
 
@@ -122,8 +158,8 @@ registrations.forEach(([name, register]) => {
         it("should return the new entity with isNewUser: true", async () => {
           const code = faker.string.alphanumeric(20)
           const email = faker.internet.email()
-          const idToken = google.idToken({ email })
-          await mockCodeExchangeApi(code, { id_token: idToken })
+          const idToken = googleFakes.idToken({ email })
+          await mockSuccess(code, { id_token: idToken })
 
           const result = await service.authenticate<User>(code)
 
@@ -135,8 +171,8 @@ registrations.forEach(([name, register]) => {
         it("should emit a RegisteredEvent with provider 'google'", async () => {
           const code = faker.string.alphanumeric(20)
           const email = faker.internet.email()
-          const idToken = google.idToken({ email })
-          await mockCodeExchangeApi(code, { id_token: idToken })
+          const idToken = googleFakes.idToken({ email })
+          await mockSuccess(code, { id_token: idToken })
           const emitSpy = jest.spyOn(eventEmitter, "emit")
 
           const result = await service.authenticate<User>(code)
@@ -150,8 +186,8 @@ registrations.forEach(([name, register]) => {
         it("should not emit a AuthenticatedEvent", async () => {
           const code = faker.string.alphanumeric(20)
           const email = faker.internet.email()
-          const idToken = google.idToken({ email })
-          await mockCodeExchangeApi(code, { id_token: idToken })
+          const idToken = googleFakes.idToken({ email })
+          await mockSuccess(code, { id_token: idToken })
           const emitSpy = jest.spyOn(eventEmitter, "emit")
 
           await service.authenticate(code)
@@ -167,13 +203,13 @@ registrations.forEach(([name, register]) => {
           const sub = faker.string.numeric(10)
           const googleName = faker.person.fullName()
           const picture = faker.image.avatar()
-          const idToken = google.idToken({
+          const idToken = googleFakes.idToken({
             email: faker.internet.email(),
             sub,
             name: googleName,
             picture,
           })
-          await mockCodeExchangeApi(code, { id_token: idToken })
+          await mockSuccess(code, { id_token: idToken })
 
           const result = await service.authenticate(code)
 
@@ -201,8 +237,8 @@ registrations.forEach(([name, register]) => {
 
         it("should return the existing entity with isNewUser: false", async () => {
           const code = faker.string.alphanumeric(20)
-          const idToken = google.idToken({ email: existingUser.email })
-          await mockCodeExchangeApi(code, { id_token: idToken })
+          const idToken = googleFakes.idToken({ email: existingUser.email })
+          await mockSuccess(code, { id_token: idToken })
 
           const result = await service.authenticate<User>(code)
 
@@ -213,8 +249,8 @@ registrations.forEach(([name, register]) => {
 
         it("should not create a new user", async () => {
           const code = faker.string.alphanumeric(20)
-          const idToken = google.idToken({ email: existingUser.email })
-          await mockCodeExchangeApi(code, { id_token: idToken })
+          const idToken = googleFakes.idToken({ email: existingUser.email })
+          await mockSuccess(code, { id_token: idToken })
 
           await service.authenticate(code)
 
@@ -224,8 +260,8 @@ registrations.forEach(([name, register]) => {
 
         it("should emit a AuthenticatedEvent with provider 'google'", async () => {
           const code = faker.string.alphanumeric(20)
-          const idToken = google.idToken({ email: existingUser.email })
-          await mockCodeExchangeApi(code, { id_token: idToken })
+          const idToken = googleFakes.idToken({ email: existingUser.email })
+          await mockSuccess(code, { id_token: idToken })
           const emitSpy = jest.spyOn(eventEmitter, "emit")
 
           await service.authenticate(code)
@@ -238,8 +274,8 @@ registrations.forEach(([name, register]) => {
 
         it("should not emit a RegisteredEvent", async () => {
           const code = faker.string.alphanumeric(20)
-          const idToken = google.idToken({ email: existingUser.email })
-          await mockCodeExchangeApi(code, { id_token: idToken })
+          const idToken = googleFakes.idToken({ email: existingUser.email })
+          await mockSuccess(code, { id_token: idToken })
           const emitSpy = jest.spyOn(eventEmitter, "emit")
 
           await service.authenticate(code)
@@ -269,13 +305,13 @@ registrations.forEach(([name, register]) => {
           const googleName = faker.person.fullName()
           const picture = faker.image.avatar()
           const email = faker.internet.email()
-          const idToken = google.idToken({
+          const idToken = googleFakes.idToken({
             email,
             sub,
             name: googleName,
             picture,
           })
-          await mockCodeExchangeApi(code, { id_token: idToken })
+          await mockSuccess(code, { id_token: idToken })
 
           const result = await service.authenticate<UserWithProfile>(code)
 
@@ -297,8 +333,8 @@ registrations.forEach(([name, register]) => {
 
         it("should not throw (profile writing is skipped gracefully)", async () => {
           const code = faker.string.alphanumeric(20)
-          const idToken = google.idToken({ email: faker.internet.email() })
-          await mockCodeExchangeApi(code, { id_token: idToken })
+          const idToken = googleFakes.idToken({ email: faker.internet.email() })
+          await mockSuccess(code, { id_token: idToken })
 
           await expect(service.authenticate(code)).resolves.not.toThrow()
         })
@@ -317,8 +353,8 @@ registrations.forEach(([name, register]) => {
         it("should store email as lowercase regardless of Google ID token case", async () => {
           const code = faker.string.alphanumeric(20)
           const email = "Test.User@EXAMPLE.COM"
-          const idToken = google.idToken({ email })
-          await mockCodeExchangeApi(code, { id_token: idToken })
+          const idToken = googleFakes.idToken({ email })
+          await mockSuccess(code, { id_token: idToken })
 
           const result = await service.authenticate<User>(code)
 
@@ -331,8 +367,10 @@ registrations.forEach(([name, register]) => {
           const existingUser = repository.create({ email })
           await repository.save(existingUser)
 
-          const idToken = google.idToken({ email: "EXISTING@EXAMPLE.COM" })
-          await mockCodeExchangeApi(code, { id_token: idToken })
+          const idToken = googleFakes.idToken({
+            email: "EXISTING@EXAMPLE.COM",
+          })
+          await mockSuccess(code, { id_token: idToken })
 
           const result = await service.authenticate<User>(code)
 
@@ -351,7 +389,7 @@ registrations.forEach(([name, register]) => {
 
         it("should throw GoogleCodeExchangeException", async () => {
           const code = faker.string.alphanumeric(20)
-          await mockCodeExchangeApiHttpError(code, { statusCode: 400 })
+          await mockHttpError(code, { statusCode: 400 })
 
           await expect(service.authenticate(code)).rejects.toBeInstanceOf(
             GoogleCodeExchangeException,
@@ -369,7 +407,7 @@ registrations.forEach(([name, register]) => {
 
         it("should throw GoogleServiceException", async () => {
           const code = faker.string.alphanumeric(20)
-          await mockCodeExchangeApiHttpError(code, { statusCode: 500 })
+          await mockHttpError(code, { statusCode: 500 })
 
           await expect(service.authenticate(code)).rejects.toBeInstanceOf(
             GoogleServiceException,
@@ -387,7 +425,7 @@ registrations.forEach(([name, register]) => {
 
         it("should throw GoogleNetworkException", async () => {
           const code = faker.string.alphanumeric(20)
-          await mockCodeExchangeApiNetworkError(code)
+          await mockNetworkError(code)
 
           await expect(service.authenticate(code)).rejects.toBeInstanceOf(
             GoogleNetworkException,
@@ -409,7 +447,7 @@ registrations.forEach(([name, register]) => {
             { email: faker.internet.email(), name: faker.person.fullName() },
             faker.string.alphanumeric(32),
           )
-          await mockCodeExchangeApi(code, { id_token: idToken })
+          await mockSuccess(code, { id_token: idToken })
 
           await expect(service.authenticate(code)).rejects.toMatchError(
             GoogleTokenException,
@@ -434,7 +472,7 @@ registrations.forEach(([name, register]) => {
             { sub: faker.string.numeric(10), name: faker.person.fullName() },
             faker.string.alphanumeric(32),
           )
-          await mockCodeExchangeApi(code, { id_token: idToken })
+          await mockSuccess(code, { id_token: idToken })
 
           await expect(service.authenticate(code)).rejects.toMatchError(
             GoogleTokenException,
@@ -456,8 +494,8 @@ registrations.forEach(([name, register]) => {
         it("should throw EmailNotVerifiedException", async () => {
           const code = faker.string.alphanumeric(20)
           const email = faker.internet.email()
-          const idToken = google.idToken({ email, email_verified: false })
-          await mockCodeExchangeApi(code, { id_token: idToken })
+          const idToken = googleFakes.idToken({ email, email_verified: false })
+          await mockSuccess(code, { id_token: idToken })
 
           await expect(service.authenticate(code)).rejects.toBeInstanceOf(
             EmailNotVerifiedException,
@@ -467,8 +505,8 @@ registrations.forEach(([name, register]) => {
         it("should include the email on the exception", async () => {
           const code = faker.string.alphanumeric(20)
           const email = faker.internet.email()
-          const idToken = google.idToken({ email, email_verified: false })
-          await mockCodeExchangeApi(code, { id_token: idToken })
+          const idToken = googleFakes.idToken({ email, email_verified: false })
+          await mockSuccess(code, { id_token: idToken })
 
           await expect(service.authenticate(code)).rejects.toMatchObject({
             email,
@@ -487,8 +525,8 @@ registrations.forEach(([name, register]) => {
         it("should not throw and proceed normally", async () => {
           const code = faker.string.alphanumeric(20)
           const email = faker.internet.email()
-          const idToken = google.idToken({ email, email_verified: true })
-          await mockCodeExchangeApi(code, { id_token: idToken })
+          const idToken = googleFakes.idToken({ email, email_verified: true })
+          await mockSuccess(code, { id_token: idToken })
 
           await expect(service.authenticate(code)).resolves.not.toThrow()
         })
@@ -505,8 +543,8 @@ registrations.forEach(([name, register]) => {
         it("should not throw and proceed normally", async () => {
           const code = faker.string.alphanumeric(20)
           const email = faker.internet.email()
-          const idToken = google.idToken({ email })
-          await mockCodeExchangeApi(code, { id_token: idToken })
+          const idToken = googleFakes.idToken({ email })
+          await mockSuccess(code, { id_token: idToken })
 
           await expect(service.authenticate(code)).resolves.not.toThrow()
         })

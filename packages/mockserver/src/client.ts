@@ -25,7 +25,7 @@ export class MockServerClient {
    * @param baseUrl - The base URL of the MockServer instance
    *   (e.g. `http://localhost:1080/mockserver`)
    */
-  public constructor(private readonly baseUrl: string) {}
+  public constructor(public readonly baseUrl: string) {}
 
   /**
    * Resets all expectations on the MockServer instance.
