@@ -1,5 +1,9 @@
 import { faker } from "@faker-js/faker"
-import { MagicLinkService, SessionService } from "@neomaventures/auth"
+import {
+  GoogleAuthService,
+  MagicLinkService,
+  SessionService,
+} from "@neomaventures/auth"
 import { express, MockLoggerService } from "@neomaventures/fixtures"
 import { ApplicationLoggerService } from "@neomaventures/logging"
 import { Test, type TestingModule } from "@nestjs/testing"
@@ -50,6 +54,7 @@ describe("AuthController", () => {
         { provide: ApplicationLoggerService, useValue: logger },
         { provide: MagicLinkService, useValue: magicLinkService },
         { provide: SessionService, useValue: sessionService },
+        { provide: GoogleAuthService, useValue: { authenticate: jest.fn() } },
       ],
     }).compile()
 
@@ -92,6 +97,24 @@ describe("AuthController", () => {
         )
 
         expect(result).toMatchObject({ url: "/dashboard" })
+      })
+    })
+  })
+
+  describe("googleCallback()", () => {
+    describe("Given a valid Google auth result", () => {
+      it("should create a session and return redirect to /dashboard", () => {
+        const res = express.response() as unknown as Response
+        const googleAuthResult = {
+          entity,
+          isNewUser: true,
+          profile: { sub: faker.string.numeric(10) },
+        }
+
+        const result = controller.googleCallback(googleAuthResult, res)
+
+        expect(result).toMatchObject({ url: "/dashboard" })
+        expect(sessionService.create).toHaveBeenCalledWith(res, entity)
       })
     })
   })

@@ -1,5 +1,6 @@
-import { stopContainer } from "@neomaventures/mailpit"
+import { stopContainer as stopMailpit } from "@neomaventures/mailpit"
+import { stopContainer as stopMockServer } from "@neomaventures/mockserver"
 
 export default async (): Promise<void> => {
-  await stopContainer()
+  await Promise.all([stopMailpit(), stopMockServer()])
 }

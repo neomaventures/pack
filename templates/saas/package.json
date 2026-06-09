@@ -48,9 +48,11 @@
   "devDependencies": {
     "@faker-js/faker": "^9.9.0",
     "@neomaventures/fixtures": "workspace:*",
+    "@neomaventures/google-fixtures": "workspace:*",
     "@neomaventures/mailpit": "workspace:*",
     "@neomaventures/managed-app": "workspace:*",
     "@neomaventures/managed-database": "workspace:*",
+    "@neomaventures/mockserver": "workspace:*",
     "@nestjs/cli": "^11.0.16",
     "@nestjs/testing": "^11.1.18",
     "@playwright/test": "^1.58.2",
