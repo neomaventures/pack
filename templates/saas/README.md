@@ -144,7 +144,8 @@ The app reads configuration from environment variables via `@neomaventures/confi
 
 | Variable | Purpose | Default |
 |---|---|---|
-| `DATABASE_URI` | Database connection URI (`:memory:` for SQLite, `postgresql://...` for Postgres). Falls back to `DATABASE_URL` if not set. | `:memory:` |
+| `DATABASE_URI` | Database connection URI (`:memory:` for SQLite, `postgresql://...` for Postgres) | `:memory:` |
+| `DATABASE_CA_CERT` | PEM-encoded CA certificate for SSL database connections | _(empty)_ |
 | `JWT_SECRET` | Secret key for signing JWT session cookies | `dev-secret-change-me` |
 | `SMTP_HOST` | SMTP server for magic link emails | `localhost` |
 | `SMTP_PORT` | SMTP port | `1025` |

@@ -59,9 +59,10 @@ interface AppConfig {
             host: config.smtpHost,
             port: parseInt(config.smtpPort, 10),
             from: config.mailFrom,
-            auth: config.smtpUser
-              ? { user: config.smtpUser, pass: config.smtpPassword }
-              : undefined,
+            auth:
+              config.smtpUser && config.smtpPassword
+                ? { user: config.smtpUser, pass: config.smtpPassword }
+                : undefined,
             welcome: {
               subject: "Welcome — confirm your email",
               html: `<p>Click <a href="${config.appUrl}/auth/magic-link/callback?token={{token}}">here</a> to sign in.</p>`,
