@@ -4,8 +4,9 @@ engines:
   # positives in test files where queries are built with test data.
   semgrep:
     exclude_paths:
-      - "**.spec.ts"
-      - "**.e2e-spec.ts"
+      - "**/*.spec.ts"
+      - "**/*.e2e-spec.ts"
+      - "**/*.ui-spec.ts"
       - "**/specs/**"
       - "**/ui-specs/**"
       - "**/fixtures/**"
