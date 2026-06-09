@@ -110,6 +110,7 @@ describe("POST /auth/register", () => {
         configure: configureViewEngine,
         build: (builder) =>
           builder.overrideProvider(ConfigService).useValue({
+            databaseUri: ":memory:",
             smtpHost: "localhost",
             smtpPort: "19999",
             smtpUser: "",

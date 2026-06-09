@@ -12,7 +12,7 @@
  * ```
  */
 
-import { cpSync, existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "fs"
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "fs"
 import { basename, extname, join, resolve } from "path"
 import { fileURLToPath } from "url"
 
@@ -33,6 +33,7 @@ const TEXT_EXTENSIONS = new Set([
   ".yaml",
   ".yml",
   ".mjs",
+  ".sh",
 ])
 
 const SKIP_DIRS = new Set(["node_modules", "dist", "playwright-report", "test-results"])
@@ -131,6 +132,17 @@ cpSync(TEMPLATE_DIR, targetDir, {
     return !SKIP_DIRS.has(name)
   },
 })
+
+// Move scaffold/*.yml to .github/workflows/
+const scaffoldDir = join(targetDir, "scaffold")
+if (existsSync(scaffoldDir)) {
+  const workflowsDir = join(targetDir, ".github", "workflows")
+  mkdirSync(workflowsDir, { recursive: true })
+  for (const file of readdirSync(scaffoldDir)) {
+    renameSync(join(scaffoldDir, file), join(workflowsDir, file))
+  }
+  rmSync(scaffoldDir, { recursive: true })
+}
 
 replaceTokensInDir(targetDir, {
   __PACKAGE_NAME__: projectName,

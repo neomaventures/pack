@@ -5,6 +5,7 @@
   "private": true,
   "license": "MIT",
   "type": "commonjs",
+  "packageManager": "pnpm@11.1.3",
   "engines": {
     "node": ">=22.0.0"
   },
@@ -16,9 +17,12 @@
     "postdev": "docker stop saas-mailpit",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
-    "start:prod": "node dist/main",
+    "start": "node dist/src/main",
     "test": "node --env-file=.env.spec --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.json",
     "test:e2e": "node --env-file=.env.e2e-spec --experimental-vm-modules node_modules/jest/bin/jest.js --config ./specs/jest-e2e.json --runInBand",
+    "typeorm": "TS_NODE_PROJECT=typeorm/tsconfig.json node -r ts-node/register/transpile-only -r tsconfig-paths/register node_modules/typeorm/cli.js",
+    "migration:generate": "bash scripts/migration-generate.sh",
+    "migration:run": "pnpm typeorm migration:run -d typeorm/datasource.ts",
     "test:ui": "pnpm build:css && node --env-file=.env.ui-spec node_modules/@playwright/test/cli.js test"
   },
   "dependencies": {
@@ -35,6 +39,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "ejs": "^3.1.10",
+    "pg": "^8.21.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "sqlite3": "^5.1.7",
@@ -63,6 +68,8 @@
     "jest": "^30.3.0",
     "jsonwebtoken": "^9.0.2",
     "supertest": "^7.2.2",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^6.0.2"
   }
 }

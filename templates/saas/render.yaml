@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: __PACKAGE_NAME__
+    runtime: node
+    plan: starter
+    region: frankfurt
+    buildCommand: NODE_ENV=development pnpm install --frozen-lockfile && NODE_ENV=production pnpm build
+    startCommand: pnpm migration:run && pnpm start
+    autoDeploy: false
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NPM_TOKEN
+        sync: false
+      - key: DATABASE_URI
+        fromDatabase:
+          type: database
+          name: __PACKAGE_NAME__-db
+          property: connectionString
+      - key: APP_URL
+        value: https://__PACKAGE_NAME__.onrender.com
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MAIL_FROM
+        value: onboarding@resend.dev
+      - key: SMTP_HOST
+        value: smtp.resend.com
+      - key: SMTP_PORT
+        value: "465"
+      - key: SMTP_USER
+        value: resend
+      - key: SMTP_PASSWORD
+        sync: false
+
+databases:
+  - name: __PACKAGE_NAME__-db
+    plan: free
+    region: frankfurt

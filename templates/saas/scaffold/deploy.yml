@@ -1,0 +1,11 @@
+name: Deploy
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy
+        run: curl -sf "${{ secrets.RENDER_DEPLOY_HOOK }}"
