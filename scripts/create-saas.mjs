@@ -133,12 +133,14 @@ cpSync(TEMPLATE_DIR, targetDir, {
   },
 })
 
-// Move scaffold/deploy.yml to .github/workflows/deploy.yml
+// Move scaffold/*.yml to .github/workflows/
 const scaffoldDir = join(targetDir, "scaffold")
 if (existsSync(scaffoldDir)) {
   const workflowsDir = join(targetDir, ".github", "workflows")
   mkdirSync(workflowsDir, { recursive: true })
-  renameSync(join(scaffoldDir, "deploy.yml"), join(workflowsDir, "deploy.yml"))
+  for (const file of readdirSync(scaffoldDir)) {
+    renameSync(join(scaffoldDir, file), join(workflowsDir, file))
+  }
   rmSync(scaffoldDir, { recursive: true })
 }
 
