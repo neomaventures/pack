@@ -40,7 +40,7 @@ export function databaseOptions(
   uri: string,
   caCert?: string,
 ): TypeOrmModuleOptions {
-  if (uri.startsWith("postgres")) {
+  if (uri?.startsWith("postgres")) {
     return {
       type: "postgres",
       url: stripSslMode(uri),
@@ -69,7 +69,10 @@ export function databaseOptions(
   imports: [
     TypeOrmModule.forRootAsync({
       useFactory: (config: TypedConfig<DatabaseConfig>): TypeOrmModuleOptions =>
-        databaseOptions(config.databaseUri, config.databaseCaCert || undefined),
+        databaseOptions(
+          config.databaseUri || ":memory:",
+          config.databaseCaCert || undefined,
+        ),
       inject: [ConfigService],
     }),
   ],
