@@ -17,8 +17,8 @@
     "create:saas": "node scripts/create-saas.mjs"
   },
   "lint-staged": {
-    "*.ts": "eslint --fix",
-    "*.{yml,yaml}": "eslint --fix"
+    "**/*.ts": "eslint --fix",
+    "**/*.{yml,yaml}": "eslint --fix"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0",
