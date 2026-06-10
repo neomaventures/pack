@@ -26,6 +26,7 @@ The monorepo for the **`@neomaventures/*`** family — a pack of NestJS building
 | [`@neomaventures/managed-app`](packages/managed-app) | Boots a NestJS app from a module path — an e2e harness for the `@neomaventures/*` packages. |
 | [`@neomaventures/google-fixtures`](packages/google-fixtures) | Google OAuth test fixtures — fake data generators and MockServer helpers for `POST /token`. |
 | [`@neomaventures/managed-database`](packages/managed-database) | In-memory SQLite `datasource` fixture for tests. |
+| [`@neomaventures/healthcheck`](packages/healthcheck) | Drop-in healthcheck endpoint for NestJS — `@HealthCheck()` decorator with auto-detected TypeORM connectivity probe. |
 
 ## Templates
 
@@ -132,7 +133,7 @@ Replace `src/index.ts` with the real API and add specs alongside it. e2e (a `pac
 2. **Merge to `main`** → CI opens a **"Version Packages"** PR that bumps versions and writes each package's `CHANGELOG.md`.
 3. **Merge the Version PR** → CI publishes the changed packages to GitHub Packages and tags them (`@neomaventures/<pkg>@<version>`).
 
-A change merged **without** a changeset ships nothing — it waits on `main` until one is added.
+A PR that touches a published package without a `.changeset/*.md` entry **fails CI** (the `changeset-check` job). The auto-raised "Version Packages" PR is exempt.
 
 ### Consuming the packages
 

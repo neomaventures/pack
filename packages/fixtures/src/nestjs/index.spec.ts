@@ -60,6 +60,24 @@ describe("executionContext", () => {
     expect(ctx.getHandler!()).toBe(UserController.prototype.findAll)
     expect(ctx.getClass!()).toBe(UserController)
   })
+
+  it("should default getType() to 'http'", () => {
+    const ctx = executionContext()
+
+    expect(ctx.getType!()).toBe("http")
+  })
+
+  it("should return the provided type from getType()", () => {
+    const ctx = executionContext(
+      express.request(),
+      undefined,
+      undefined,
+      undefined,
+      "rpc",
+    )
+
+    expect(ctx.getType!()).toBe("rpc")
+  })
 })
 
 describe("callHandler", () => {

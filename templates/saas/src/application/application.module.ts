@@ -5,6 +5,7 @@ import {
   type TypedConfig,
 } from "@neomaventures/config"
 import { ExceptionHandlerModule } from "@neomaventures/exceptions"
+import { HealthcheckModule } from "@neomaventures/healthcheck"
 import { LoggingModule } from "@neomaventures/logging"
 import { RequestContextModule } from "@neomaventures/request-context"
 import {
@@ -47,6 +48,7 @@ interface AppConfig {
     RequestContextModule.forRoot(),
     LoggingModule.forRoot(),
     ExceptionHandlerModule,
+    HealthcheckModule.forRoot(),
     DatabaseModule,
     AuthModule.forRootAsync({
       useFactory: (config: TypedConfig<AppConfig>) => ({

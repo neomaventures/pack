@@ -1,4 +1,5 @@
 import { ErrorTemplate } from "@neomaventures/exceptions"
+import { HealthCheck } from "@neomaventures/healthcheck"
 import { ApplicationLoggerService } from "@neomaventures/logging"
 import {
   BadRequestException,
@@ -26,15 +27,15 @@ export class ApplicationController {
   }
 
   /**
-   * Returns a health check response for liveness probes.
+   * Healthcheck endpoint for liveness/readiness probes.
    *
-   * Keyed by probe type so additional checks (e.g. `database`) can be
-   * added without a breaking change.
+   * The method body is intentionally empty — the global
+   * `HealthcheckInterceptor` from `@neomaventures/healthcheck` replaces the
+   * response with the aggregated probe result and sets the HTTP status.
    */
   @Get("api/health")
-  public health(): { http: string } {
-    return { http: "ok" }
-  }
+  @HealthCheck()
+  public health(): void {}
 
   /**
    * Exercises both modes of the exception filter via `@ErrorTemplate`.
