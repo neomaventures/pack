@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0
+
+### Minor Changes
+
+- 7dab5d1: Add `@neomaventures/mockserver/fixture` subpath export — a singleton `mockserver` client that auto-resets between tests via a `beforeEach` hook. Reads `MOCKSERVER_URL` from the environment.
+
 ## 0.3.0
 
 ### Minor Changes
