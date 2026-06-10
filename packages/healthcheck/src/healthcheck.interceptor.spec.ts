@@ -1,22 +1,17 @@
-import { type CallHandler, type ExecutionContext } from "@nestjs/common"
+import { callHandler, executionContext, express } from "@neomaventures/fixtures"
 import { Reflector } from "@nestjs/core"
-import { firstValueFrom, of } from "rxjs"
+import { firstValueFrom } from "rxjs"
 
 import { type HealthService } from "./health.service"
 import { HealthcheckInterceptor } from "./healthcheck.interceptor"
 
-type ResponseLike = { status: jest.Mock }
-
 const buildContext = (
   handler: () => void,
-  response: ResponseLike,
-): ExecutionContext =>
-  ({
-    getHandler: (): (() => void) => handler,
-    switchToHttp: (): { getResponse: <T>() => T } => ({
-      getResponse: <T>(): T => response as unknown as T,
-    }),
-  }) as unknown as ExecutionContext
+  res = express.response(),
+): ReturnType<typeof executionContext> => {
+  const req = express.request({ res })
+  return executionContext(req, res, handler)
+}
 
 describe("HealthcheckInterceptor", () => {
   let reflector: Reflector
@@ -35,24 +30,20 @@ describe("HealthcheckInterceptor", () => {
   describe("intercept()", () => {
     describe("Given no @HealthCheck() metadata on the handler", () => {
       it("should delegate to next.handle() and not call HealthService.check", async () => {
-        const downstream = of({ untouched: true })
-        const next: CallHandler = {
-          handle: jest.fn().mockReturnValue(downstream),
-        }
+        const downstream = callHandler({ untouched: true })
+        const handleSpy = jest.spyOn(downstream, "handle")
         const handler = (): void => {}
-        const response: ResponseLike = { status: jest.fn() }
+        const res = express.response()
+        const ctx = buildContext(handler, res)
 
-        const result$ = interceptor.intercept(
-          buildContext(handler, response),
-          next,
-        )
+        const result$ = interceptor.intercept(ctx as never, downstream)
 
         await expect(firstValueFrom(result$)).resolves.toEqual({
           untouched: true,
         })
-        expect(next.handle).toHaveBeenCalled()
+        expect(handleSpy).toHaveBeenCalled()
         expect(healthService.check).not.toHaveBeenCalled()
-        expect(response.status).not.toHaveBeenCalled()
+        expect(res.statusCode).toBeUndefined()
       })
     })
 
@@ -65,26 +56,19 @@ describe("HealthcheckInterceptor", () => {
       })
 
       it("should set the response status to 200", async () => {
-        const response: ResponseLike = { status: jest.fn() }
-        const next: CallHandler = { handle: jest.fn() }
+        const res = express.response()
+        const ctx = buildContext(handler, res)
 
-        const result$ = interceptor.intercept(
-          buildContext(handler, response),
-          next,
-        )
+        const result$ = interceptor.intercept(ctx as never, callHandler())
         await firstValueFrom(result$)
 
-        expect(response.status).toHaveBeenCalledWith(200)
+        expect(res.statusCode).toBe(200)
       })
 
       it("should emit the aggregated HealthResult", async () => {
-        const response: ResponseLike = { status: jest.fn() }
-        const next: CallHandler = { handle: jest.fn() }
+        const ctx = buildContext(handler)
 
-        const result$ = interceptor.intercept(
-          buildContext(handler, response),
-          next,
-        )
+        const result$ = interceptor.intercept(ctx as never, callHandler())
 
         await expect(firstValueFrom(result$)).resolves.toEqual({
           http: "ok",
@@ -105,26 +89,19 @@ describe("HealthcheckInterceptor", () => {
       })
 
       it("should set the response status to 503", async () => {
-        const response: ResponseLike = { status: jest.fn() }
-        const next: CallHandler = { handle: jest.fn() }
+        const res = express.response()
+        const ctx = buildContext(handler, res)
 
-        const result$ = interceptor.intercept(
-          buildContext(handler, response),
-          next,
-        )
+        const result$ = interceptor.intercept(ctx as never, callHandler())
         await firstValueFrom(result$)
 
-        expect(response.status).toHaveBeenCalledWith(503)
+        expect(res.statusCode).toBe(503)
       })
 
       it("should emit the HealthResult with database: error", async () => {
-        const response: ResponseLike = { status: jest.fn() }
-        const next: CallHandler = { handle: jest.fn() }
+        const ctx = buildContext(handler)
 
-        const result$ = interceptor.intercept(
-          buildContext(handler, response),
-          next,
-        )
+        const result$ = interceptor.intercept(ctx as never, callHandler())
 
         await expect(firstValueFrom(result$)).resolves.toEqual({
           http: "ok",
@@ -142,16 +119,13 @@ describe("HealthcheckInterceptor", () => {
       })
 
       it("should set the response status to 200", async () => {
-        const response: ResponseLike = { status: jest.fn() }
-        const next: CallHandler = { handle: jest.fn() }
+        const res = express.response()
+        const ctx = buildContext(handler, res)
 
-        const result$ = interceptor.intercept(
-          buildContext(handler, response),
-          next,
-        )
+        const result$ = interceptor.intercept(ctx as never, callHandler())
         await firstValueFrom(result$)
 
-        expect(response.status).toHaveBeenCalledWith(200)
+        expect(res.statusCode).toBe(200)
       })
     })
   })

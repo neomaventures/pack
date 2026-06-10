@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, Optional } from "@nestjs/common"
+import { Inject, Injectable, Optional } from "@nestjs/common"
 import { getDataSourceToken } from "@nestjs/typeorm"
 import { type DataSource } from "typeorm"
 
@@ -13,8 +13,6 @@ import { type HealthResult } from "./healthcheck.types"
  */
 @Injectable()
 export class HealthService {
-  private readonly logger = new Logger(HealthService.name)
-
   public constructor(
     @Optional()
     @Inject(getDataSourceToken())
@@ -27,7 +25,9 @@ export class HealthService {
    * - `http` is always `"ok"` — if this method returns, HTTP works.
    * - `database` is included only when a default TypeORM `DataSource` is
    *   registered in the consuming app. Errors from the probe are caught
-   *   and surfaced as `"error"`; this method never throws.
+   *   and surfaced as `"error"`; this method never throws. The 503 status
+   *   on the wrapped route is the failure signal — no logger is used so
+   *   consumers don't pay observability noise on every failed probe.
    *
    * @returns The aggregated probe result.
    *
@@ -44,8 +44,7 @@ export class HealthService {
       try {
         await this.dataSource.query("SELECT 1")
         result.database = "ok"
-      } catch (error) {
-        this.logger.warn(`Database probe failed: ${(error as Error).message}`)
+      } catch {
         result.database = "error"
       }
     }

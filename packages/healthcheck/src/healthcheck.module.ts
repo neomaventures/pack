@@ -19,6 +19,11 @@ export class HealthcheckModule {
    * `APP_INTERCEPTOR` registration is process-wide regardless, and
    * `HealthService` is only needed where it's explicitly imported.
    *
+   * The global interceptor's per-request cost on routes WITHOUT
+   * `@HealthCheck()` is a single synchronous `Reflect.getMetadata` lookup —
+   * no DB queries, no probe execution. The probe only runs when the route's
+   * handler carries the `@HealthCheck()` metadata key.
+   *
    * @returns A `DynamicModule` providing `HealthService` and registering
    *          `HealthcheckInterceptor` as a global interceptor.
    *

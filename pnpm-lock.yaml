@@ -462,6 +462,9 @@ importers:
 
   packages/healthcheck:
     devDependencies:
+      '@neomaventures/fixtures':
+        specifier: workspace:*
+        version: link:../fixtures
       '@nestjs/common':
         specifier: ^11.1.18
         version: 11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)

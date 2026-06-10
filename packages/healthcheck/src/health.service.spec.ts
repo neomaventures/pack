@@ -1,4 +1,3 @@
-import { Logger } from "@nestjs/common"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { getDataSourceToken, TypeOrmModule } from "@nestjs/typeorm"
 import { type DataSource } from "typeorm"
@@ -64,13 +63,8 @@ describe("HealthService", () => {
 
     describe("Given a DataSource whose query rejects", () => {
       let service: HealthService
-      let warnSpy: jest.SpyInstance
 
       beforeEach(async () => {
-        warnSpy = jest
-          .spyOn(Logger.prototype, "warn")
-          .mockImplementation(() => undefined)
-
         const failingDataSource = {
           query: jest.fn().mockRejectedValue(new Error("connection refused")),
         } as unknown as DataSource
@@ -85,10 +79,6 @@ describe("HealthService", () => {
         service = module.get<HealthService>(HealthService)
       })
 
-      afterEach(() => {
-        warnSpy.mockRestore()
-      })
-
       it('should return { http: "ok", database: "error" }', async () => {
         const result = await service.check()
 
@@ -97,14 +87,6 @@ describe("HealthService", () => {
 
       it("should not rethrow", async () => {
         await expect(service.check()).resolves.toBeDefined()
-      })
-
-      it("should log a warning", async () => {
-        await service.check()
-
-        expect(warnSpy).toHaveBeenCalledWith(
-          expect.stringContaining("Database probe failed"),
-        )
       })
     })
   })
