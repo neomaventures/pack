@@ -146,16 +146,16 @@ describe("UserService", () => {
 
 ### Using with NestJS test modules
 
-When the module under test is `@Global()` (for example a storage module
-whose interceptors inject the datasource), a `useValue` provider declared
-on `Test.createTestingModule` can't cross the global-module boundary.
-`createTestDbModule(entities)` returns a `@Global()` module class that
-exposes the managed datasource under TypeORM's standard
+`ManagedDatabaseModule.forRoot(entities)` returns a `@Global()` dynamic
+module that exposes the managed datasource under TypeORM's standard
 `getDataSourceToken()`, sharing the same per-test cache + teardown as
-`managedDatasourceInstance`.
+`managedDatasourceInstance`. Global by design: this is a test fixture,
+and global is what makes the datasource reachable from `@Global()`
+modules under test (e.g. `StorageModule`) whose internals inject it
+across the global boundary.
 
 ```typescript
-import { createTestDbModule } from "@neomaventures/managed-database"
+import { ManagedDatabaseModule } from "@neomaventures/managed-database"
 import { Test } from "@nestjs/testing"
 
 import { TestFile } from "./test-file.entity"
@@ -165,7 +165,7 @@ describe("StorageModule", () => {
   it("compiles", async () => {
     const module = await Test.createTestingModule({
       imports: [
-        createTestDbModule([TestFile]),
+        ManagedDatabaseModule.forRoot([TestFile]),
         StorageModule.forRoot(options),
       ],
     }).compile()
@@ -209,23 +209,26 @@ Low-level function to create a new DataSource instance. Used internally by `mana
 - Entities: Auto-discovered from `src/**/*.entity.ts`
 - Synchronize: Enabled (auto-creates schema)
 
-### `createTestDbModule(entities): Type<unknown>`
+### `ManagedDatabaseModule.forRoot(entities): DynamicModule`
 
-Returns a `@Global()` NestJS module class exposing the managed datasource under `getDataSourceToken()`.
+Wires the managed test datasource into a NestJS testing module. Exposes the `DataSource` under `getDataSourceToken()`, globally.
 
 **Parameters:**
 - `entities` — TypeORM entity classes to register on the datasource.
 
-**Returns:** `Type<unknown>` — a fresh anonymous module class on every call, so independent tests can compose without provider-token collisions.
+**Returns:** `DynamicModule` — a `@Global()` dynamic module exporting `getDataSourceToken()`.
 
 **Lifecycle:**
-- The provider uses `useFactory` that delegates to `managedDatasourceInstance(entities)`, so the per-test cache and `afterEach` teardown remain authoritative.
-- Repeated calls with the same `entities` inside one test return the same underlying `DataSource` (cache hit), but each call returns a distinct module class.
+- The provider's `useFactory` delegates to `managedDatasourceInstance(entities)`, so the per-test cache and `afterEach` teardown remain authoritative.
+- Repeated calls with the same `entities` inside one test resolve to the same underlying `DataSource` (cache hit).
 
 **Example:**
 ```typescript
 const module = await Test.createTestingModule({
-  imports: [createTestDbModule([User]), MyModule.forRoot(options)],
+  imports: [
+    ManagedDatabaseModule.forRoot([User]),
+    MyModule.forRoot(options),
+  ],
 }).compile()
 
 const ds = module.get<DataSource>(getDataSourceToken())

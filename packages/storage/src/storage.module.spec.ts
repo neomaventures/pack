@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker"
-import { createTestDbModule } from "@neomaventures/managed-database"
+import { ManagedDatabaseModule } from "@neomaventures/managed-database"
 import { Test } from "@nestjs/testing"
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
 
@@ -41,7 +41,7 @@ describe("StorageModule", () => {
     it("should compile the module", async () => {
       const module = await Test.createTestingModule({
         imports: [
-          createTestDbModule([TestFile]),
+          ManagedDatabaseModule.forRoot([TestFile]),
           StorageModule.forRoot(options),
         ],
       }).compile()
@@ -54,7 +54,7 @@ describe("StorageModule", () => {
     it("should compile the module", async () => {
       const module = await Test.createTestingModule({
         imports: [
-          createTestDbModule([TestFile]),
+          ManagedDatabaseModule.forRoot([TestFile]),
           StorageModule.forRootAsync({
             useFactory: () => options,
           }),

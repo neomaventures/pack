@@ -4,7 +4,7 @@ import {
   MockRequest,
   multerFile,
 } from "@neomaventures/fixtures"
-import { createTestDbModule } from "@neomaventures/managed-database"
+import { ManagedDatabaseModule } from "@neomaventures/managed-database"
 import { type CallHandler, type ExecutionContext } from "@nestjs/common"
 import { EventEmitter2, EventEmitterModule } from "@nestjs/event-emitter"
 import { Test, type TestingModule } from "@nestjs/testing"
@@ -101,7 +101,7 @@ describe("UploadInterceptor", () => {
   beforeEach(async () => {
     module = await Test.createTestingModule({
       imports: [
-        createTestDbModule([TestUpload]),
+        ManagedDatabaseModule.forRoot([TestUpload]),
         EventEmitterModule.forRoot(),
         StorageModule.forRoot({
           ...options,
@@ -451,7 +451,7 @@ describe("UploadInterceptor", () => {
         await module.close()
         module = await Test.createTestingModule({
           imports: [
-            createTestDbModule([TestUpload]),
+            ManagedDatabaseModule.forRoot([TestUpload]),
             EventEmitterModule.forRoot(),
             StorageModule.forRoot({
               ...options,
