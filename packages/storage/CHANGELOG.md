@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1
+
+### Patch Changes
+
+- 286f944: Adopt `ManagedDatabaseModule.forRoot()` from `@neomaventures/managed-database` in test setup. Internal refactor only — no public API change.
+
 ## 0.2.0
 
 ### Minor Changes

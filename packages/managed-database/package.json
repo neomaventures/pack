@@ -1,6 +1,6 @@
 {
   "name": "@neomaventures/managed-database",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A managed in-memory database fixture for Jest testing (unit, integration).",
   "author": "Daniel Bruce",
   "repository": {
@@ -46,9 +46,15 @@
     "typeorm": "^0.3"
   },
   "peerDependenciesMeta": {
-    "@nestjs/common": { "optional": true },
-    "@nestjs/core": { "optional": true },
-    "@nestjs/typeorm": { "optional": true }
+    "@nestjs/common": {
+      "optional": true
+    },
+    "@nestjs/core": {
+      "optional": true
+    },
+    "@nestjs/typeorm": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@nestjs/common": "^11.1.18",
