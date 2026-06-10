@@ -72,6 +72,31 @@ Editing a package **and** its consumer together? The consumer resolves the depen
 pnpm --filter @neomaventures/fixtures exec tsc -p tsconfig.lib.json --watch
 ```
 
+### Test container ports
+
+Every test layer that boots a Docker container declares its host ports in the layer's `.env` file — never mutates `process.env` from `globalSetup`. CI runs `pnpm turbo test:e2e` which fans suites out **in parallel**, so any two suites that share a host port collide on `docker run -p`. To stay parallel-safe, each package owns a unique **300-port slot**, split into three 100-port sub-ranges:
+
+| Sub-range | Layer |
+|---|---|
+| `base + 0..99` | unit (`.spec`) |
+| `base + 100..199` | e2e (`.e2e-spec`, `.env.e2e`) |
+| `base + 200..299` | ui (`.ui-spec`) |
+
+Within each sub-range, the package picks specific ports for the containers it boots. The next package's `base` is 300 higher, so slots never overlap.
+
+| Package | Base | Slot |
+|---|---|---|
+| [`@neomaventures/mockserver`](packages/mockserver) | `2000` | `2000-2299` |
+| [`@neomaventures/mailpit`](packages/mailpit) | `2300` | `2300-2599` |
+| [`@neomaventures/minio`](packages/minio) | `2600` | `2600-2899` |
+| [`@neomaventures/auth`](packages/auth) | `2900` | `2900-3199` |
+| [`@neomaventures/storage`](packages/storage) | `3200` | `3200-3499` |
+| [`templates/saas`](templates/saas) | `3500` | `3500-3799` |
+
+Each container package's README documents the specific port numbers its consumers should use. Each consumer package's `.env` files declare the slot ports plus the consumer-side URLs derived from them (e.g. `MOCKSERVER_URL=http://localhost:3000/mockserver`).
+
+When you add a new package that needs container ports, take the next free slot above the table and add a row.
+
 ### Pre-commit lint hook
 
 A `pre-commit` git hook runs ESLint with `--fix` on staged `.ts` and YAML files via [husky](https://typicode.github.io/husky/) + [lint-staged](https://github.com/lint-staged/lint-staged). It auto-installs on `corepack pnpm install` (via the `prepare` script) — existing contributors should re-run install once after pulling this change.
