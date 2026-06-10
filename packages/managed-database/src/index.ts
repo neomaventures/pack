@@ -72,3 +72,5 @@ export const managedDatasourceInstance = async (
 
   return instance
 }
+
+export { createTestDbModule } from "./test-db.module"

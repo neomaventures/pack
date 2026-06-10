@@ -4,13 +4,8 @@ import {
   MockRequest,
   multerFile,
 } from "@neomaventures/fixtures"
-import { managedDatasourceInstance } from "@neomaventures/managed-database"
-import {
-  type CallHandler,
-  type ExecutionContext,
-  Global,
-  Module,
-} from "@nestjs/common"
+import { createTestDbModule } from "@neomaventures/managed-database"
+import { type CallHandler, type ExecutionContext } from "@nestjs/common"
 import { EventEmitter2, EventEmitterModule } from "@nestjs/event-emitter"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { getDataSourceToken } from "@nestjs/typeorm"
@@ -56,25 +51,6 @@ class TestUpload implements Storable {
   @Column()
   public bucket!: string
 }
-
-/**
- * Exposes a managed (cached, auto-torn-down) test DataSource globally so the
- * UploadInterceptor inside the global StorageModule can inject it — a
- * root-level provider can't cross that boundary. TODO: promote to a
- * `ManagedDatabaseModule` exported from @neomaventures/managed-database.
- */
-@Global()
-@Module({
-  providers: [
-    {
-      provide: getDataSourceToken(),
-      useFactory: (): Promise<DataSource> =>
-        managedDatasourceInstance([TestUpload]),
-    },
-  ],
-  exports: [getDataSourceToken()],
-})
-class GlobalTestDbModule {}
 
 const options: StorageOptions = {
   endpoint: process.env.STORAGE_ENDPOINT!,
@@ -125,7 +101,7 @@ describe("UploadInterceptor", () => {
   beforeEach(async () => {
     module = await Test.createTestingModule({
       imports: [
-        GlobalTestDbModule,
+        createTestDbModule([TestUpload]),
         EventEmitterModule.forRoot(),
         StorageModule.forRoot({
           ...options,
@@ -475,7 +451,7 @@ describe("UploadInterceptor", () => {
         await module.close()
         module = await Test.createTestingModule({
           imports: [
-            GlobalTestDbModule,
+            createTestDbModule([TestUpload]),
             EventEmitterModule.forRoot(),
             StorageModule.forRoot({
               ...options,

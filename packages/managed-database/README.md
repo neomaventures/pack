@@ -144,6 +144,37 @@ describe("UserService", () => {
 })
 ```
 
+### Using with NestJS test modules
+
+When the module under test is `@Global()` (for example a storage module
+whose interceptors inject the datasource), a `useValue` provider declared
+on `Test.createTestingModule` can't cross the global-module boundary.
+`createTestDbModule(entities)` returns a `@Global()` module class that
+exposes the managed datasource under TypeORM's standard
+`getDataSourceToken()`, sharing the same per-test cache + teardown as
+`managedDatasourceInstance`.
+
+```typescript
+import { createTestDbModule } from "@neomaventures/managed-database"
+import { Test } from "@nestjs/testing"
+
+import { TestFile } from "./test-file.entity"
+import { StorageModule } from "./storage.module"
+
+describe("StorageModule", () => {
+  it("compiles", async () => {
+    const module = await Test.createTestingModule({
+      imports: [
+        createTestDbModule([TestFile]),
+        StorageModule.forRoot(options),
+      ],
+    }).compile()
+
+    expect(module).toBeDefined()
+  })
+})
+```
+
 ## API Reference
 
 ### `managedDatasourceInstance(): DataSource`
@@ -177,6 +208,28 @@ Low-level function to create a new DataSource instance. Used internally by `mana
 - Database: In-memory (`:memory:`)
 - Entities: Auto-discovered from `src/**/*.entity.ts`
 - Synchronize: Enabled (auto-creates schema)
+
+### `createTestDbModule(entities): Type<unknown>`
+
+Returns a `@Global()` NestJS module class exposing the managed datasource under `getDataSourceToken()`.
+
+**Parameters:**
+- `entities` — TypeORM entity classes to register on the datasource.
+
+**Returns:** `Type<unknown>` — a fresh anonymous module class on every call, so independent tests can compose without provider-token collisions.
+
+**Lifecycle:**
+- The provider uses `useFactory` that delegates to `managedDatasourceInstance(entities)`, so the per-test cache and `afterEach` teardown remain authoritative.
+- Repeated calls with the same `entities` inside one test return the same underlying `DataSource` (cache hit), but each call returns a distinct module class.
+
+**Example:**
+```typescript
+const module = await Test.createTestingModule({
+  imports: [createTestDbModule([User]), MyModule.forRoot(options)],
+}).compile()
+
+const ds = module.get<DataSource>(getDataSourceToken())
+```
 
 ## Configuration
 

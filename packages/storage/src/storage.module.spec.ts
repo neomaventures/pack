@@ -1,14 +1,7 @@
 import { faker } from "@faker-js/faker"
-import { managedDatasourceInstance } from "@neomaventures/managed-database"
-import { Global, Module } from "@nestjs/common"
+import { createTestDbModule } from "@neomaventures/managed-database"
 import { Test } from "@nestjs/testing"
-import { getDataSourceToken } from "@nestjs/typeorm"
-import {
-  Column,
-  type DataSource,
-  Entity,
-  PrimaryGeneratedColumn,
-} from "typeorm"
+import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
 
 import { type Storable } from "./interfaces/storable.interface"
 import { StorageModule } from "./storage.module"
@@ -34,24 +27,6 @@ class TestFile implements Storable {
   public bucket!: string
 }
 
-/**
- * Exposes a managed (cached, auto-torn-down) test DataSource globally so the
- * interceptors inside the global StorageModule can inject it — a root-level
- * provider can't cross that boundary.
- */
-@Global()
-@Module({
-  providers: [
-    {
-      provide: getDataSourceToken(),
-      useFactory: (): Promise<DataSource> =>
-        managedDatasourceInstance([TestFile]),
-    },
-  ],
-  exports: [getDataSourceToken()],
-})
-class GlobalTestDbModule {}
-
 describe("StorageModule", () => {
   const options = {
     endpoint: faker.internet.url(),
@@ -65,7 +40,10 @@ describe("StorageModule", () => {
   describe("forRoot", () => {
     it("should compile the module", async () => {
       const module = await Test.createTestingModule({
-        imports: [GlobalTestDbModule, StorageModule.forRoot(options)],
+        imports: [
+          createTestDbModule([TestFile]),
+          StorageModule.forRoot(options),
+        ],
       }).compile()
 
       expect(module).toBeDefined()
@@ -76,7 +54,7 @@ describe("StorageModule", () => {
     it("should compile the module", async () => {
       const module = await Test.createTestingModule({
         imports: [
-          GlobalTestDbModule,
+          createTestDbModule([TestFile]),
           StorageModule.forRootAsync({
             useFactory: () => options,
           }),
