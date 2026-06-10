@@ -144,6 +144,37 @@ describe("UserService", () => {
 })
 ```
 
+### Using with NestJS test modules
+
+`ManagedDatabaseModule.forRoot(entities)` returns a `@Global()` dynamic
+module that exposes the managed datasource under TypeORM's standard
+`getDataSourceToken()`, sharing the same per-test cache + teardown as
+`managedDatasourceInstance`. Global by design: this is a test fixture,
+and global is what makes the datasource reachable from `@Global()`
+modules under test (e.g. `StorageModule`) whose internals inject it
+across the global boundary.
+
+```typescript
+import { ManagedDatabaseModule } from "@neomaventures/managed-database"
+import { Test } from "@nestjs/testing"
+
+import { TestFile } from "./test-file.entity"
+import { StorageModule } from "./storage.module"
+
+describe("StorageModule", () => {
+  it("compiles", async () => {
+    const module = await Test.createTestingModule({
+      imports: [
+        ManagedDatabaseModule.forRoot([TestFile]),
+        StorageModule.forRoot(options),
+      ],
+    }).compile()
+
+    expect(module).toBeDefined()
+  })
+})
+```
+
 ## API Reference
 
 ### `managedDatasourceInstance(): DataSource`
@@ -177,6 +208,28 @@ Low-level function to create a new DataSource instance. Used internally by `mana
 - Database: In-memory (`:memory:`)
 - Entities: Auto-discovered from `src/**/*.entity.ts`
 - Synchronize: Enabled (auto-creates schema)
+
+### `ManagedDatabaseModule.forRoot(entities?): DynamicModule`
+
+Wires the managed test datasource into a NestJS testing module. Exposes the `DataSource` under `getDataSourceToken()`, globally.
+
+**Parameters:**
+- `entities` *(optional)* — TypeORM entity classes to register on the datasource. Omit to auto-discover every `.entity.ts` file under the consumer's `src/`.
+
+**Returns:** `DynamicModule` — a `@Global()` dynamic module exporting `getDataSourceToken()`.
+
+**Lifecycle:**
+- The provider's `useFactory` delegates to `managedDatasourceInstance(entities)`, so the per-test cache and `afterEach` teardown remain authoritative.
+- Repeated calls with the same `entities` inside one test resolve to the same underlying `DataSource` (cache hit).
+
+**Example:**
+```typescript
+// Explicit — register only the entities this test needs:
+imports: [ManagedDatabaseModule.forRoot([User])]
+
+// Default — auto-discover all `.entity.ts` files under src/:
+imports: [ManagedDatabaseModule.forRoot()]
+```
 
 ## Configuration
 
