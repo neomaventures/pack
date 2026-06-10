@@ -51,8 +51,8 @@ export class Authenticated implements CanActivate {
    *
    * @returns `true` if a principal is present.
    *
-   * @throws UnauthorizedException - If no principal is found.
-   * @throws UnauthorizedRedirectException - If no principal is found and a redirect URL was provided.
+   * @throws {@link UnauthorizedException} - If no principal is found.
+   * @throws {@link UnauthorizedRedirectException} - If no principal is found and a redirect URL was provided.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Required by CanActivate interface
   public canActivate(_context: ExecutionContext): boolean {
