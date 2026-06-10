@@ -72,7 +72,7 @@ it("returns the mocked body", async () => {
 Importing the subpath:
 
 - Constructs a singleton `MockServerClient` from `process.env.MOCKSERVER_URL`. The variable **must** be set before the module is imported (typically via an `.env.e2e` consumed by `node --env-file` or via a Jest `globalSetup` that runs first). If it is unset or empty, importing throws.
-- Registers `beforeEach(() => mockserver.reset())` if the host runner exposes `beforeEach` globally (Jest, Vitest, Playwright Test).
+- Registers `beforeEach(() => mockserver.reset())` if the host runner exposes `beforeEach` globally (Jest, Vitest). Playwright Test does not expose a global `beforeEach` — call `await mockserver.reset()` from your own `test.beforeEach` instead.
 
 Suites that test `MockServerClient` itself, or that need multiple independent clients (e.g. per-suite isolated containers), should keep constructing the class directly.
 

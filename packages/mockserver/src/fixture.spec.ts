@@ -55,14 +55,14 @@ describe("@neomaventures/mockserver/fixture", () => {
       }).toThrow(/MOCKSERVER_URL/)
     })
 
-    it("should suggest the .env line in the error message", () => {
+    it("should point at an .env file in the error message", () => {
       delete process.env.MOCKSERVER_URL
 
       expect(() => {
         jest.isolateModules(() => {
           require("./fixture")
         })
-      }).toThrow(/MOCKSERVER_URL=/)
+      }).toThrow(/\.env/)
     })
   })
 
@@ -78,7 +78,7 @@ describe("@neomaventures/mockserver/fixture", () => {
     })
   })
 
-  describe("Given a global beforeEach exists (Jest, Vitest, Playwright Test)", () => {
+  describe("Given a global beforeEach exists (Jest, Vitest)", () => {
     it("should register a beforeEach hook that resets the client", async () => {
       process.env.MOCKSERVER_URL = faker.internet.url()
       const beforeEachSpy = jest.fn()

@@ -4,8 +4,9 @@ const url = process.env.MOCKSERVER_URL
 if (!url) {
   throw new Error(
     "@neomaventures/mockserver/fixture: MOCKSERVER_URL is not set. " +
-      "Add MOCKSERVER_URL=http://localhost:1080/mockserver to your .env.e2e " +
-      "(or set it in your jest globalSetup before this module is imported).",
+      "Declare it in the .env file your test runner loads (e.g. via " +
+      "`node --env-file=.env.e2e`) so it is present before this module is " +
+      "imported.",
   )
 }
 
@@ -14,10 +15,11 @@ if (!url) {
  * `MOCKSERVER_URL` environment variable.
  *
  * Importing this module registers a `beforeEach` hook in test runners that
- * expose one globally (Jest, Vitest, Playwright Test), calling
- * {@link MockServerClient.reset} before every test. This removes the
- * boilerplate of constructing a client and manually clearing expectations
- * in each suite.
+ * expose one globally (Jest, Vitest), calling {@link MockServerClient.reset}
+ * before every test. This removes the boilerplate of constructing a client
+ * and manually clearing expectations in each suite. Playwright Test does
+ * not expose a global `beforeEach`; call `await mockserver.reset()` from
+ * your own `test.beforeEach` in that runner.
  *
  * The `MOCKSERVER_URL` variable **must** be set before this module is
  * imported — typically via an `.env.e2e` file consumed by `node --env-file`
