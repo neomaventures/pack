@@ -20,33 +20,6 @@ test.describe("Google OAuth Flow", () => {
     await mockServerClient.reset()
   })
 
-  test.describe("When the registration page is loaded", () => {
-    test("should display an enabled 'Continue with Google' link that points to Google", async ({
-      page,
-    }) => {
-      await page.goto("/auth/register")
-
-      const googleLink = page.getByRole("link", {
-        name: "Continue with Google",
-      })
-      await expect(googleLink).toBeVisible()
-      await expect(googleLink).toHaveAttribute("href", /accounts\.google\.com/)
-    })
-
-    test("the Google link should include the correct client_id and redirect_uri", async ({
-      page,
-    }) => {
-      await page.goto("/auth/register")
-
-      const googleLink = page.getByRole("link", {
-        name: "Continue with Google",
-      })
-      const href = await googleLink.getAttribute("href")
-      expect(href).toContain(`client_id=${clientId}`)
-      expect(href).toContain(encodeURIComponent(redirectUri))
-    })
-  })
-
   test.describe("Given a valid Google OAuth code exchange", () => {
     test("should land on /dashboard after callback", async ({ page }) => {
       const code = google.code()
@@ -97,7 +70,7 @@ test.describe("Google OAuth Flow", () => {
     })
   })
 
-  test.describe("Given an invalid or unmocked code", () => {
+  test.describe("Given the Google code exchange fails", () => {
     test("should redirect to /auth/register", async ({ page }) => {
       const code = google.code()
 

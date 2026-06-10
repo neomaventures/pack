@@ -1,28 +1,24 @@
 import { faker } from "@faker-js/faker"
-import { google, type GoogleOAuthClient } from "@neomaventures/google-fixtures"
+import { google, GoogleOAuthClient } from "@neomaventures/google-fixtures"
 import { managedAppInstance } from "@neomaventures/managed-app"
-import { type MockServerClient } from "@neomaventures/mockserver"
+import { MockServerClient } from "@neomaventures/mockserver"
 import { HttpStatus } from "@nestjs/common"
 import request from "supertest"
 
 import { configureViewEngine } from "~fixtures/configure-view-engine"
 import { SESSION_COOKIE_REGEX } from "~fixtures/email/content"
-import {
-  createGoogleOAuthClient,
-  googleClientId,
-  googleClientSecret,
-  googleRedirectUri,
-} from "~fixtures/google/oauth-client"
 
 const { FOUND, SEE_OTHER } = HttpStatus
 
 describe("GET /auth/google/callback", () => {
+  const { APP_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, MOCKSERVER_URL } =
+    process.env as Record<string, string>
+  const redirectUri = `${APP_URL}/auth/google/callback`
+  const mockServerClient = new MockServerClient(MOCKSERVER_URL)
+  const googleOAuth = new GoogleOAuthClient(mockServerClient)
   let app: Awaited<ReturnType<typeof managedAppInstance>>
-  let mockServerClient: MockServerClient
-  let googleOAuth: GoogleOAuthClient
 
   beforeEach(async () => {
-    ;({ mockServerClient, googleOAuth } = createGoogleOAuthClient())
     await mockServerClient.reset()
 
     app = await managedAppInstance({
@@ -37,9 +33,9 @@ describe("GET /auth/google/callback", () => {
 
       await googleOAuth.mockCodeExchange({
         code,
-        clientId: googleClientId,
-        clientSecret: googleClientSecret,
-        redirectUri: googleRedirectUri,
+        clientId: GOOGLE_CLIENT_ID,
+        clientSecret: GOOGLE_CLIENT_SECRET,
+        redirectUri,
         idToken: google.idToken({ email }),
       })
 
@@ -60,9 +56,9 @@ describe("GET /auth/google/callback", () => {
       const firstCode = google.code()
       await googleOAuth.mockCodeExchange({
         code: firstCode,
-        clientId: googleClientId,
-        clientSecret: googleClientSecret,
-        redirectUri: googleRedirectUri,
+        clientId: GOOGLE_CLIENT_ID,
+        clientSecret: GOOGLE_CLIENT_SECRET,
+        redirectUri,
         idToken: google.idToken({ email }),
       })
 
@@ -75,9 +71,9 @@ describe("GET /auth/google/callback", () => {
       const secondCode = google.code()
       await googleOAuth.mockCodeExchange({
         code: secondCode,
-        clientId: googleClientId,
-        clientSecret: googleClientSecret,
-        redirectUri: googleRedirectUri,
+        clientId: GOOGLE_CLIENT_ID,
+        clientSecret: GOOGLE_CLIENT_SECRET,
+        redirectUri,
         idToken: google.idToken({ email }),
       })
 
@@ -90,7 +86,7 @@ describe("GET /auth/google/callback", () => {
     })
   })
 
-  describe("Given an invalid code (no mock registered)", () => {
+  describe("Given the Google code exchange fails", () => {
     it("should redirect to /auth/register with no session cookie", async () => {
       const code = google.code()
 

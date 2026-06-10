@@ -1,3 +1,4 @@
+import { GoogleAuthService } from "@neomaventures/auth"
 import { InjectConfig, type TypedConfig } from "@neomaventures/config"
 import { Injectable, type NestMiddleware } from "@nestjs/common"
 import { type NextFunction, type Request, type Response } from "express"
@@ -9,12 +10,6 @@ interface ViewConfig {
 
   /** Application version from npm package metadata. */
   npmPackageVersion: string
-
-  /** Google OAuth client ID (empty when not configured). */
-  googleClientId: string
-
-  /** Base application URL for constructing redirect URIs. */
-  appUrl: string
 }
 
 /**
@@ -29,12 +24,15 @@ export class ViewLocalsMiddleware implements NestMiddleware {
    * Constructs the middleware with injected configuration.
    *
    * @param config - The configuration object containing view-related environment variables.
+   * @param googleAuthService - The Google OAuth service for building the authorize URL.
    */
   public constructor(
     @InjectConfig()
     private readonly config: TypedConfig<ViewConfig>,
+    private readonly googleAuthService: GoogleAuthService,
   ) {
-    this.googleAuthorizeUrl = this.buildGoogleAuthorizeUrl()
+    this.googleAuthorizeUrl =
+      this.googleAuthService.authorizeUrl?.toString() ?? null
   }
 
   /**
@@ -51,27 +49,5 @@ export class ViewLocalsMiddleware implements NestMiddleware {
     res.locals.npmPackageVersion = this.config.npmPackageVersion
     res.locals.googleAuthorizeUrl = this.googleAuthorizeUrl
     next()
-  }
-
-  /**
-   * Builds the Google OAuth authorize URL from configuration values.
-   *
-   * @returns The authorize URL when `GOOGLE_CLIENT_ID` is set, or `null`.
-   */
-  private buildGoogleAuthorizeUrl(): string | null {
-    const clientId = this.config.googleClientId
-    if (!clientId) {
-      return null
-    }
-
-    const redirectUri = `${this.config.appUrl}/auth/google/callback`
-    const params = new URLSearchParams({
-      client_id: clientId,
-      redirect_uri: redirectUri,
-      response_type: "code",
-      scope: "openid email profile",
-    })
-
-    return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
   }
 }

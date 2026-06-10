@@ -1,4 +1,5 @@
 import { faker } from "@faker-js/faker"
+import { GoogleAuthService } from "@neomaventures/auth"
 import { ConfigService } from "@neomaventures/config"
 import { express } from "@neomaventures/fixtures"
 import { Test, type TestingModule } from "@nestjs/testing"
@@ -8,11 +9,12 @@ import { ViewLocalsMiddleware } from "./view-locals.middleware"
 
 const npmPackageName = "my-cool-app"
 const npmPackageVersion = "1.2.3"
-const appUrl = "http://localhost:3000"
 
 describe("ViewLocalsMiddleware", () => {
   describe("Given Google OAuth is configured", () => {
-    const googleClientId = faker.string.alphanumeric(20)
+    const authorizeUrl = new URL(
+      `https://accounts.google.com/o/oauth2/v2/auth?client_id=${faker.string.alphanumeric(20)}`,
+    )
 
     let middleware: ViewLocalsMiddleware
 
@@ -22,12 +24,11 @@ describe("ViewLocalsMiddleware", () => {
           ViewLocalsMiddleware,
           {
             provide: ConfigService,
-            useValue: {
-              npmPackageName,
-              npmPackageVersion,
-              googleClientId,
-              appUrl,
-            },
+            useValue: { npmPackageName, npmPackageVersion },
+          },
+          {
+            provide: GoogleAuthService,
+            useValue: { authorizeUrl },
           },
         ],
       }).compile()
@@ -45,16 +46,8 @@ describe("ViewLocalsMiddleware", () => {
           expect(res.locals).toMatchObject({
             npmPackageName,
             npmPackageVersion,
+            googleAuthorizeUrl: authorizeUrl.toString(),
           })
-          expect(res.locals.googleAuthorizeUrl).toContain(
-            "https://accounts.google.com/o/oauth2/v2/auth",
-          )
-          expect(res.locals.googleAuthorizeUrl).toContain(
-            `client_id=${googleClientId}`,
-          )
-          expect(res.locals.googleAuthorizeUrl).toContain(
-            encodeURIComponent(`${appUrl}/auth/google/callback`),
-          )
           done()
         })
       })
@@ -70,12 +63,11 @@ describe("ViewLocalsMiddleware", () => {
           ViewLocalsMiddleware,
           {
             provide: ConfigService,
-            useValue: {
-              npmPackageName,
-              npmPackageVersion,
-              googleClientId: "",
-              appUrl,
-            },
+            useValue: { npmPackageName, npmPackageVersion },
+          },
+          {
+            provide: GoogleAuthService,
+            useValue: { authorizeUrl: null },
           },
         ],
       }).compile()
@@ -93,8 +85,8 @@ describe("ViewLocalsMiddleware", () => {
           expect(res.locals).toMatchObject({
             npmPackageName,
             npmPackageVersion,
+            googleAuthorizeUrl: null,
           })
-          expect(res.locals.googleAuthorizeUrl).toBeNull()
           done()
         })
       })

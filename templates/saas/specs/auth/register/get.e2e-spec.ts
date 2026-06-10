@@ -1,13 +1,13 @@
 import { readFileSync } from "fs"
 import { join } from "path"
 
+import { google } from "@neomaventures/google-fixtures"
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
 import ejs from "ejs"
 import request from "supertest"
 
 import { configureViewEngine } from "~fixtures/configure-view-engine"
-import { buildGoogleAuthorizeUrl } from "~fixtures/google/authorize-url"
 import { npmPackageName, npmPackageVersion } from "~fixtures/package-version"
 
 const { OK } = HttpStatus
@@ -26,7 +26,11 @@ describe("GET /auth/register", () => {
       const expectedHtml = ejs.render(template, {
         npmPackageName,
         npmPackageVersion,
-        googleAuthorizeUrl: buildGoogleAuthorizeUrl(),
+        googleAuthorizeUrl: google.authorizeUrl(
+          process.env.GOOGLE_CLIENT_ID!,
+          `${process.env.APP_URL!}/auth/google/callback`,
+          google.sensibleScopes(),
+        ),
       })
 
       await request(app.getHttpServer())

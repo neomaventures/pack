@@ -64,6 +64,38 @@ describe("google", () => {
     })
   })
 
+  describe("requiredScopes()", () => {
+    it("should return an array containing only openid", () => {
+      expect(google.requiredScopes()).toEqual(["openid"])
+    })
+  })
+
+  describe("sensibleScopes()", () => {
+    it("should return openid, email, and profile", () => {
+      expect(google.sensibleScopes()).toEqual(["openid", "email", "profile"])
+    })
+  })
+
+  describe("authorizeUrl()", () => {
+    it("should return a URL with the given client ID, redirect URI, and scopes", () => {
+      const url = new URL(
+        google.authorizeUrl("my-client-id", "http://localhost:3000/callback", [
+          "openid",
+          "email",
+        ]),
+      )
+
+      expect(url.origin).toBe("https://accounts.google.com")
+      expect(url.pathname).toBe("/o/oauth2/v2/auth")
+      expect(url.searchParams.get("client_id")).toBe("my-client-id")
+      expect(url.searchParams.get("redirect_uri")).toBe(
+        "http://localhost:3000/callback",
+      )
+      expect(url.searchParams.get("response_type")).toBe("code")
+      expect(url.searchParams.get("scope")).toBe("openid email")
+    })
+  })
+
   describe("idToken()", () => {
     describe("Given no overrides", () => {
       it("should return a valid JWT", () => {

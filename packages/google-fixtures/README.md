@@ -23,13 +23,16 @@ pnpm add -D @neomaventures/google-fixtures @neomaventures/mockserver @faker-js/f
 ```typescript
 import { google } from "@neomaventures/google-fixtures"
 
-google.clientId()       // "12345678901-abc...xyz.apps.googleusercontent.com"
-google.clientSecret()   // "abcdef-1234567890abcdefgh..."
-google.code()           // "4/MTYzMjM0NTY3..."
-google.idToken(claims?) // signed JWT with Google-shaped claims
-google.accessToken()    // "1/MTYzMjM0NTY3..."
-google.refreshToken()   // "1//MTYzMjM0NTY3..."
-google.scopes()         // ["https://www.googleapis.com/auth/userinfo.email", ...]
+google.clientId()           // "12345678901-abc...xyz.apps.googleusercontent.com"
+google.clientSecret()       // "abcdef-1234567890abcdefgh..."
+google.code()               // "4/MTYzMjM0NTY3..."
+google.idToken(claims?)     // signed JWT with Google-shaped claims
+google.accessToken()        // "1/MTYzMjM0NTY3..."
+google.refreshToken()       // "1//MTYzMjM0NTY3..."
+google.scopes()             // ["https://www.googleapis.com/auth/userinfo.email", ...]
+google.requiredScopes()     // ["openid"]
+google.sensibleScopes()     // ["openid", "email", "profile"]
+google.authorizeUrl(clientId, redirectUri, scopes) // full Google OAuth authorize URL
 ```
 
 `idToken()` accepts optional claims to override defaults:

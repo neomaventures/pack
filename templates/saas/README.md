@@ -153,6 +153,9 @@ The app reads configuration from environment variables via `@neomaventures/confi
 | `SMTP_PASSWORD` | SMTP authentication password | _(empty)_ |
 | `MAIL_FROM` | From address for magic link emails | `noreply@localhost` |
 | `APP_URL` | Base URL for magic link callback URLs | `http://localhost:3000` |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID (empty disables Google login) | _(empty)_ |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | _(empty)_ |
+| `GOOGLE_TOKEN_ENDPOINT` | Google token endpoint override (test only) | _(empty)_ |
 
 For local development, the defaults work out of the box with [Mailpit](https://mailpit.axllent.org/) running on port 1025.
 
@@ -220,7 +223,8 @@ export class DashboardController {
 
 | Route | What it does |
 |---|---|
-| `GET /auth/register` | Renders the registration page with a magic link form and a disabled Google OAuth button |
+| `GET /auth/register` | Renders the registration page with a magic link form and optional Google sign-in link |
+| `GET /auth/google/callback` | Exchanges the Google authorization code, creates a session cookie, redirects to `/dashboard`. Errors redirect to `/auth/register` |
 | `POST /auth/register` | Validates the email, sends a magic link, redirects to `/auth/magic-link/sent` |
 | `GET /auth/magic-link/sent` | "Check your email" confirmation page |
 | `GET /auth/magic-link/callback` | Verifies the magic link token, creates a JWT session cookie, redirects to `/dashboard` |
@@ -230,7 +234,17 @@ export class DashboardController {
 
 ### Google OAuth
 
-The sign up page includes a disabled Google OAuth button marked "coming soon". Google login is planned but deferred until the magic link flow stabilises.
+The sign up page includes a "Continue with Google" link when `GOOGLE_CLIENT_ID` is configured. Google login uses `@neomaventures/auth`'s OAuth code exchange flow — the `@GoogleCallback()` interceptor handles the token exchange server-to-server, and the controller creates a session cookie on success. Error cases (invalid code, network failure, denied consent) redirect back to `/auth/register`.
+
+Set the following environment variables to enable Google OAuth:
+
+| Variable | Purpose |
+|---|---|
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID from Google Cloud Console |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
+| `GOOGLE_TOKEN_ENDPOINT` | _(test only)_ Override for pointing at MockServer |
+
+When `GOOGLE_CLIENT_ID` is empty, the Google sign-in link is hidden and magic link login is the only option.
 
 ## Tests
 
@@ -278,7 +292,7 @@ my-app/
 │   ├── application/
 │   │   ├── application.module.ts            # Root module (wires Neoma packages)
 │   │   ├── application.controller.ts        # Welcome page, health check, error exercise
-│   │   └── view-locals.middleware.ts         # Injects npmPackageName + npmPackageVersion into res.locals
+│   │   └── view-locals.middleware.ts         # Injects npmPackageName, npmPackageVersion, and googleAuthorizeUrl into res.locals
 │   ├── auth/
 │   │   ├── auth.module.ts                   # Auth module (magic link controllers)
 │   │   ├── auth.controller.ts               # Register, magic link, callback, logout
@@ -338,6 +352,8 @@ my-app/
 | `@neomaventures/managed-app` | Wired (test) |
 | `@neomaventures/managed-database` | Wired (test) |
 | `@neomaventures/mailpit` | Wired (test) |
+| `@neomaventures/mockserver` | Wired (test) |
+| `@neomaventures/google-fixtures` | Wired (test) |
 | `@neomaventures/storage` | Planned |
 | `@neomaventures/webhooks` | Planned |
 | `@neomaventures/route-model-binding` | Planned |

@@ -24,6 +24,57 @@ const { hacker, internet, person, string } = faker
  */
 export const google = {
   /**
+   * Returns the standard set of scopes required for basic Google authentication.
+   * This typically includes "openid" to get the user's unique identifier.
+   * Additional scopes like "email" and "profile" can be added for more user info, but are not strictly required.
+   * Use `sensibleScopes()` for a more comprehensive set of scopes that includes email and profile information and
+   * aligns more closely with what most applications will need.
+   *
+   * @returns An array of required scope strings for Google authentication
+   */
+  requiredScopes(): string[] {
+    return ["openid"]
+  },
+  /**
+   * Returns a more comprehensive set of scopes that are commonly used in Google authentication flows.
+   * This includes the required "openid" scope plus "email" and "profile" for access to the user's email address and basic profile information.
+   * These scopes are not strictly required for authentication, but are often necessary for applications that want to personalize the user experience or need access to the user's email.
+   * Use `requiredScopes()` if you only want the minimal scopes needed for authentication without additional user info.
+   *
+   * @returns An array of scope strings that includes both required and commonly used scopes for Google authentication
+   */
+  sensibleScopes(): string[] {
+    return ["openid", "email", "profile"]
+  },
+  /**
+   * Builds a Google OAuth authorize URL.
+   *
+   * @param clientId - The Google OAuth client ID
+   * @param redirectUri - The full OAuth redirect URI (e.g. `http://localhost:3000/auth/google/callback`)
+   * @param scopes - Array of OAuth scopes to include in the authorization request
+   *
+   * @returns A complete Google OAuth authorize URL
+   *
+   * @example
+   * const url = google.authorizeUrl("123-abc.apps.googleusercontent.com", "http://localhost:3000/auth/callback", ["openid", "email", "profile"])
+   * // => "https://accounts.google.com/o/oauth2/v2/auth?client_id=123-abc.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fcallback&response_type=code&scope=openid+email+profile"
+   */
+  authorizeUrl(
+    clientId: string,
+    redirectUri: string,
+    scopes: string[],
+  ): string {
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      response_type: "code",
+      scope: scopes.join(" "),
+    })
+
+    return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
+  },
+
+  /**
    * Returns a random Google OAuth client ID.
    *
    * @returns A string resembling a real Google client ID
