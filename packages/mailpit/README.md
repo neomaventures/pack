@@ -55,6 +55,20 @@ The container honours these environment variables:
 | `MAILPIT_API_PORT` | `8025` | Host port for the HTTP API |
 | `NEOMA_TEST_PREFIX` | `neoma-test` | Prefix for the container name (`{prefix}-mailpit`) |
 
+### Test layer ports
+
+Consumers run `pnpm turbo test:e2e` in CI, which parallelises e2e jobs across packages. Sharing a host port between two parallel suites collides on `docker run -p`, so each package owns a unique [port slot in the root convention](../../README.md#test-container-ports). The ports below are mailpit's own slot; each consumer of this fixture should declare its `MAILPIT_SMTP_PORT` / `MAILPIT_API_PORT` from its **own** slot.
+
+Mailpit's own slot (used by `packages/mailpit/.env.e2e`):
+
+| Layer | `MAILPIT_SMTP_PORT` | `MAILPIT_API_PORT` |
+|---|---|---|
+| unit (`.spec`) | `1025` (default — no container started) | `8025` (default — no container started) |
+| e2e (`.env.e2e`) | `2400` | `2401` |
+| ui | `2500` (reserved) | `2501` (reserved) |
+
+Consumer packages pick their own ports from their own slots. Example: `@neomaventures/auth` (slot `2900-3199`) uses `MAILPIT_SMTP_PORT=3001` / `MAILPIT_API_PORT=3002` for e2e. `templates/saas` (slot `3500-3799`) uses `3601`/`3602` for e2e and `3701`/`3702` for ui. Declare both the ports and the consumer-side values (e.g. `SMTP_PORT=3001`, `MAILPIT_API=http://localhost:3002/api/v1`) in the same `.env` file.
+
 ## API
 
 - **`MailpitClient`** — `clear()`, `messages()`, `message(id)`, `findByRecipient(email)`.

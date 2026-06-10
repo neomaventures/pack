@@ -86,6 +86,20 @@ The container honours these environment variables:
 | `NEOMA_TEST_PREFIX` | `neoma-test` | Prefix for the container name (`{prefix}-mockserver`) |
 | `MOCKSERVER_URL` | _none_ | Required by `@neomaventures/mockserver/fixture` at import time |
 
+### Test layer ports
+
+Consumers run `pnpm turbo test:e2e` in CI, which parallelises e2e jobs across packages. Sharing a host port between two parallel suites collides on `docker run -p`, so each package owns a unique [port slot in the root convention](../../README.md#test-container-ports). The ports below are mockserver's own slot; each consumer of this fixture should declare a `MOCKSERVER_PORT` from its **own** slot in its `.env` files.
+
+Mockserver's own slot (used by `packages/mockserver/.env.e2e`):
+
+| Layer | `MOCKSERVER_PORT` |
+|---|---|
+| unit (`.spec`) | `1080` (default — no container started) |
+| e2e (`.env.e2e`) | `2100` |
+| ui | `2200` (reserved) |
+
+Consumer packages pick their own port from their own slot. Example: `@neomaventures/auth` (slot `2900-3199`) uses `MOCKSERVER_PORT=3000` for e2e. `templates/saas` (slot `3500-3799`) uses `MOCKSERVER_PORT=3600` for e2e and `3700` for ui. Declare both the port and the consumer-side URL (e.g. `MOCKSERVER_URL=http://localhost:3000/mockserver`) in the same `.env` file.
+
 ## API
 
 - **`MockServerClient`** — `reset()`, `createExpectation(expectation)`, `verifyExpectationMatched(request, count?)`.

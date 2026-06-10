@@ -57,6 +57,20 @@ The container honours these environment variables:
 | `MINIO_CONSOLE_PORT` | `9001` | Host port for the web console |
 | `NEOMA_TEST_PREFIX` | `neoma-test` | Prefix for the container name (`{prefix}-minio`) |
 
+### Test layer ports
+
+Consumers run `pnpm turbo test:e2e` in CI, which parallelises e2e jobs across packages. Sharing a host port between two parallel suites collides on `docker run -p`, so each package owns a unique [port slot in the root convention](../../README.md#test-container-ports). The ports below are minio's own slot; each consumer of this fixture should declare its `MINIO_PORT` / `MINIO_CONSOLE_PORT` from its **own** slot.
+
+Minio's own slot (used by `packages/minio/.env.e2e`):
+
+| Layer | `MINIO_PORT` | `MINIO_CONSOLE_PORT` |
+|---|---|---|
+| unit (`.spec`) | `9000` (default — no container started) | `9001` (default — no container started) |
+| e2e (`.env.e2e`) | `2700` | `2701` |
+| ui | `2800` (reserved) | `2801` (reserved) |
+
+Consumer packages pick their own ports from their own slots. Example: `@neomaventures/storage` (slot `3200-3499`) uses `MINIO_PORT=3200` for unit specs and `3300` for e2e. Declare both the ports and the consumer-side URL (e.g. `STORAGE_ENDPOINT=http://localhost:3300`) in the same `.env` file.
+
 ## API
 
 - **`startContainer(options?)` / `stopContainer(options?)`** — manage the container directly when `globalSetup` isn't a fit. `start` creates the bucket and returns `{ container, apiPort, consolePort, bucket, accessKey, secretKey }`. Options: `prefix`, `apiPort`, `consolePort`, `bucket`.
