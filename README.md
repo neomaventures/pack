@@ -72,6 +72,12 @@ Editing a package **and** its consumer together? The consumer resolves the depen
 pnpm --filter @neomaventures/fixtures exec tsc -p tsconfig.lib.json --watch
 ```
 
+### Pre-commit lint hook
+
+A `pre-commit` git hook runs ESLint with `--fix` on staged `.ts` and YAML files via [husky](https://typicode.github.io/husky/) + [lint-staged](https://github.com/lint-staged/lint-staged). It auto-installs on `corepack pnpm install` (via the `prepare` script) — existing contributors should re-run install once after pulling this change.
+
+The hook is a local convenience; CI's `lint` job remains the merge gate. Skip the hook with `git commit --no-verify` if you need to (e.g. mid-rebase fixups).
+
 ## Creating a package
 
 Scaffold a new `@neomaventures/*` package in the canonical flattened layout:

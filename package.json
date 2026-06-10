@@ -10,10 +10,15 @@
     "test": "turbo test",
     "lint": "turbo lint && pnpm lint:yaml",
     "lint:yaml": "eslint \"**/*.{yml,yaml}\"",
+    "prepare": "husky",
     "release": "pnpm -r build && changeset publish",
     "new-package": "bash scripts/new-package.sh",
     "check:readme": "node scripts/check-readme-packages.mjs",
     "create:saas": "node scripts/create-saas.mjs"
+  },
+  "lint-staged": {
+    "*.ts": "eslint --fix",
+    "*.{yml,yaml}": "eslint --fix"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0",
@@ -32,9 +37,11 @@
     "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-yml": "^3.3.2",
     "globals": "^17.4.0",
+    "husky": "^9.1.7",
     "jest": "^30.3.0",
     "jest-extended": "^7.0.0",
     "jest-matcher-utils": "^30.4.1",
+    "lint-staged": "^16.0.0",
     "nodemailer": "^8.0.7",
     "prettier": "^3.4.2",
     "prettier-plugin-tailwindcss": "^0.8.0",
