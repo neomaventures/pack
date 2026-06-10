@@ -1,6 +1,6 @@
 {
   "name": "@neomaventures/google-fixtures",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Test fixtures for mocking Google OAuth APIs on top of @neomaventures/mockserver.",
   "author": "Daniel Bruce",
   "repository": {
