@@ -12,24 +12,21 @@ test.describe("Registration Page", () => {
       await expect(headline).toHaveText("Sign up")
     })
 
-    test("should display the email input", async ({ page }) => {
-      const emailInput = page.getByLabel("Email address")
-      await expect(emailInput).toBeVisible()
-    })
+    test("should display a Google sign-in link with the correct client_id and redirect_uri", async ({
+      page,
+    }) => {
+      const clientId = process.env.GOOGLE_CLIENT_ID!
+      const redirectUri = `${process.env.APP_URL!}/auth/google/callback`
 
-    test("should display the magic link submit button", async ({ page }) => {
-      const submitButton = page.getByRole("button", {
-        name: "Continue with email",
+      const googleLink = page.getByRole("link", {
+        name: "Continue with Google",
       })
-      await expect(submitButton).toBeVisible()
-    })
+      await expect(googleLink).toBeVisible()
 
-    test("should display the Google button as disabled", async ({ page }) => {
-      const googleButton = page.getByRole("button", {
-        name: /Google/,
-      })
-      await expect(googleButton).toBeVisible()
-      await expect(googleButton).toBeDisabled()
+      const href = await googleLink.getAttribute("href")
+      expect(href).toContain("accounts.google.com")
+      expect(href).toContain(`client_id=${clientId}`)
+      expect(href).toContain(encodeURIComponent(redirectUri))
     })
 
     test("should navigate to / when the back link is clicked", async ({

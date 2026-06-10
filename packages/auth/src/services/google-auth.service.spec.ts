@@ -129,6 +129,82 @@ registrations.forEach(([name, register]) => {
       await client.reset()
     })
 
+    describe("authorizeUrl", () => {
+      describe("Given Google OAuth is configured with default scopes", () => {
+        let service: GoogleAuthService
+
+        beforeEach(async () => {
+          const module = await buildModule(User, register)
+          service = module.get<GoogleAuthService>(GoogleAuthService)
+        })
+
+        it("should return the authorize URL with configured params and default scopes", () => {
+          const expected = googleFakes.authorizeUrl(
+            googleAuth.clientId,
+            googleAuth.redirectUri,
+            googleFakes.sensibleScopes(),
+          )
+
+          expect(service.authorizeUrl!.toString()).toBe(expected)
+        })
+      })
+
+      describe("Given Google OAuth is configured with custom scopes", () => {
+        let service: GoogleAuthService
+
+        beforeEach(async () => {
+          const module = await buildModule(User, register, {
+            googleAuth: {
+              ...googleAuth,
+              scopes: [
+                "openid",
+                "email",
+                "https://www.googleapis.com/auth/gmail.readonly",
+              ],
+            },
+          })
+          service = module.get<GoogleAuthService>(GoogleAuthService)
+        })
+
+        it("should return a URL with the custom scopes", () => {
+          expect(service.authorizeUrl!.searchParams.get("scope")).toBe(
+            "openid email https://www.googleapis.com/auth/gmail.readonly",
+          )
+        })
+      })
+
+      describe("Given Google OAuth is not configured", () => {
+        let service: GoogleAuthService
+
+        beforeEach(async () => {
+          const module = await buildModule(User, register, {
+            googleAuth: undefined,
+            magicLink: {
+              mailer: {
+                host: "localhost",
+                port: 1025,
+                from: faker.internet.email(),
+                welcome: {
+                  subject: "Welcome",
+                  html: '<a href="{{token}}">Link</a>',
+                },
+                welcomeBack: {
+                  subject: "Welcome back",
+                  html: '<a href="{{token}}">Link</a>',
+                },
+              },
+            },
+          } as Partial<AuthOptions>)
+
+          service = module.get<GoogleAuthService>(GoogleAuthService)
+        })
+
+        it("should return null", () => {
+          expect(service.authorizeUrl).toBeNull()
+        })
+      })
+    })
+
     describe("authenticate", () => {
       describe("Given a valid code for a new email", () => {
         let service: GoogleAuthService

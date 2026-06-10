@@ -65,11 +65,40 @@ export class GoogleAuthService {
   private static readonly DEFAULT_TOKEN_ENDPOINT =
     "https://oauth2.googleapis.com/token"
 
+  private static readonly DEFAULT_SCOPES = ["openid", "email", "profile"]
+
   public constructor(
     @Inject(AUTH_OPTIONS) private readonly options: AuthOptions,
     private readonly datasource: DataSource,
     private readonly eventEmitter: EventEmitter2,
   ) {}
+
+  /**
+   * Builds the Google OAuth authorize URL from the configured options.
+   *
+   * @returns The authorize URL, or `null` if Google OAuth is not configured
+   *
+   * @example
+   * ```typescript
+   * const url = googleAuthService.authorizeUrl
+   * // => URL { href: "https://accounts.google.com/o/oauth2/v2/auth?client_id=...&scope=openid+email+profile" }
+   * ```
+   */
+  public get authorizeUrl(): URL | null {
+    const googleAuth = this.options.googleAuth
+    if (!googleAuth) {
+      return null
+    }
+
+    const scopes = googleAuth.scopes ?? GoogleAuthService.DEFAULT_SCOPES
+    const url = new URL("https://accounts.google.com/o/oauth2/v2/auth")
+    url.searchParams.set("client_id", googleAuth.clientId)
+    url.searchParams.set("redirect_uri", googleAuth.redirectUri)
+    url.searchParams.set("response_type", "code")
+    url.searchParams.set("scope", scopes.join(" "))
+
+    return url
+  }
 
   /**
    * Returns the Google OAuth options, throwing if not configured.

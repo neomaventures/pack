@@ -29,6 +29,9 @@ interface AppConfig {
   smtpPassword: string
   mailFrom: string
   appUrl: string
+  googleClientId: string
+  googleClientSecret: string
+  googleTokenEndpoint: string
 }
 
 /**
@@ -73,6 +76,16 @@ interface AppConfig {
             },
           },
         },
+        ...(config.googleClientId && {
+          googleAuth: {
+            clientId: config.googleClientId,
+            clientSecret: config.googleClientSecret,
+            redirectUri: `${config.appUrl}/auth/google/callback`,
+            ...(config.googleTokenEndpoint && {
+              tokenEndpoint: config.googleTokenEndpoint,
+            }),
+          },
+        }),
       }),
       inject: [ConfigService],
     }),

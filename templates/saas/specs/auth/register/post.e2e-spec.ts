@@ -3,6 +3,7 @@ import { join } from "path"
 
 import { faker } from "@faker-js/faker"
 import { ConfigService } from "@neomaventures/config"
+import { google } from "@neomaventures/google-fixtures"
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
 import ejs from "ejs"
@@ -13,6 +14,7 @@ import { mailpit } from "~fixtures/email/mailpit"
 import { npmPackageName, npmPackageVersion } from "~fixtures/package-version"
 
 const { BAD_REQUEST, FOUND, SEE_OTHER } = HttpStatus
+const email = faker.internet.email()
 
 const registerTemplate = readFileSync(
   join(process.cwd(), "views", "auth", "register.ejs"),
@@ -36,6 +38,11 @@ describe("POST /auth/register", () => {
         const expectedHtml = ejs.render(registerTemplate, {
           npmPackageName,
           npmPackageVersion,
+          googleAuthorizeUrl: google.authorizeUrl(
+            process.env.GOOGLE_CLIENT_ID!,
+            `${process.env.APP_URL!}/auth/google/callback`,
+            google.sensibleScopes(),
+          ),
           exception: {
             email: {
               value: invalidEmail,
@@ -58,6 +65,11 @@ describe("POST /auth/register", () => {
         const expectedHtml = ejs.render(registerTemplate, {
           npmPackageName,
           npmPackageVersion,
+          googleAuthorizeUrl: google.authorizeUrl(
+            process.env.GOOGLE_CLIENT_ID!,
+            `${process.env.APP_URL!}/auth/google/callback`,
+            google.sensibleScopes(),
+          ),
           exception: {
             email: {
               value: undefined,
@@ -76,8 +88,6 @@ describe("POST /auth/register", () => {
     })
 
     describe("Given a valid email", () => {
-      const email = faker.internet.email()
-
       it(`should redirect to /auth/magic-link/sent with the email`, async () => {
         await request(app.getHttpServer())
           .post("/auth/register")
@@ -114,10 +124,12 @@ describe("POST /auth/register", () => {
             smtpHost: "localhost",
             smtpPort: "19999",
             smtpUser: "",
-            smtpPass: "",
+            smtpPassword: "",
             mailFrom: faker.internet.email(),
             jwtSecret: faker.string.alphanumeric(32),
             appUrl: faker.internet.url(),
+            googleClientId: "",
+            googleClientSecret: "",
           }),
       })
     })

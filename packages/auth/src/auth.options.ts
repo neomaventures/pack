@@ -74,6 +74,11 @@ export interface GoogleAuthOptions {
   /** OAuth redirect URI */
   redirectUri: string
   /**
+   * OAuth scopes to request during authorization.
+   * Defaults to `["openid", "email", "profile"]`.
+   */
+  scopes?: string[]
+  /**
    * Google OAuth token endpoint URL.
    * Defaults to `https://oauth2.googleapis.com/token`.
    *

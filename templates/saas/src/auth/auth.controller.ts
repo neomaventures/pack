@@ -1,4 +1,11 @@
-import { EmailDto, MagicLinkService, SessionService } from "@neomaventures/auth"
+import {
+  EmailDto,
+  GetGoogleAuthResult,
+  type GoogleAuthResult,
+  GoogleCallback,
+  MagicLinkService,
+  SessionService,
+} from "@neomaventures/auth"
 import { ErrorTemplate } from "@neomaventures/exceptions"
 import { ApplicationLoggerService } from "@neomaventures/logging"
 import {
@@ -15,6 +22,8 @@ import {
   Res,
 } from "@nestjs/common"
 import { type Response } from "express"
+
+import { type Account } from "~auth/account.entity"
 
 const { FOUND, SEE_OTHER } = HttpStatus
 
@@ -110,6 +119,30 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ url: string }> {
     const { entity } = await this.magicLinkService.verify(token)
+    this.sessionService.create(res, entity)
+    return { url: "/dashboard" }
+  }
+
+  /**
+   * Handles the Google OAuth callback by exchanging the authorization code
+   * for user credentials, creating a session, and redirecting to the dashboard.
+   *
+   * On failure (invalid code, network error, etc.), the exception handler
+   * redirects to the registration page.
+   *
+   * @param result - The Google authentication result from the interceptor.
+   * @param res - The Express response, used by SessionService to set the session cookie.
+   *
+   * @returns The redirect URL for the dashboard.
+   */
+  @Get("google/callback")
+  @GoogleCallback()
+  @ErrorTemplate({ default: "/auth/register" })
+  @Redirect("", FOUND)
+  public googleCallback(
+    @GetGoogleAuthResult() { entity }: GoogleAuthResult<Account>,
+    @Res({ passthrough: true }) res: Response,
+  ): { url: string } {
     this.sessionService.create(res, entity)
     return { url: "/dashboard" }
   }

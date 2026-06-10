@@ -1,6 +1,7 @@
 import { readFileSync } from "fs"
 import { join } from "path"
 
+import { google } from "@neomaventures/google-fixtures"
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
 import ejs from "ejs"
@@ -25,6 +26,11 @@ describe("GET /auth/register", () => {
       const expectedHtml = ejs.render(template, {
         npmPackageName,
         npmPackageVersion,
+        googleAuthorizeUrl: google.authorizeUrl(
+          process.env.GOOGLE_CLIENT_ID!,
+          `${process.env.APP_URL!}/auth/google/callback`,
+          google.sensibleScopes(),
+        ),
       })
 
       await request(app.getHttpServer())

@@ -48,13 +48,22 @@
         <span class="px-3">or</span>
       </div>
 
+      <% if (googleAuthorizeUrl) { %>
+      <a
+        href="<%= googleAuthorizeUrl %>"
+        class="inline-block w-full rounded-md border border-slate-200 bg-white px-4 py-2.5 text-center font-sans text-sm font-medium text-slate-800 no-underline hover:opacity-90"
+      >
+        Continue with Google
+      </a>
+      <% } else { %>
       <button
         class="w-full cursor-pointer rounded-md border border-slate-200 bg-white px-4 py-2.5 font-sans text-sm font-medium text-slate-800 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         type="button"
         disabled
       >
-        Continue with Google (coming soon)
+        Continue with Google
       </button>
+      <% } %>
 
       <a
         href="/"

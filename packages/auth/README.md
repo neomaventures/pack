@@ -513,6 +513,7 @@ Configures the authentication module with options resolved via the NestJS DI con
 | `clientId` | `string` | — | Google OAuth client ID |
 | `clientSecret` | `string` | — | Google OAuth client secret |
 | `redirectUri` | `string` | — | OAuth redirect URI (must match your Google Cloud Console configuration) |
+| `scopes` | `string[]` | `["openid", "email", "profile"]` | OAuth scopes to request during authorization |
 | `tokenEndpoint` | `string` | `"https://oauth2.googleapis.com/token"` | Google OAuth token endpoint URL. Do not override in production -- this exists for testing purposes only (e.g., pointing to a mock server) |
 
 #### CookieOptions
@@ -540,6 +541,7 @@ Configures the authentication module with options resolved via the NestJS DI con
 
 #### GoogleAuthService
 
+- `authorizeUrl: URL | null` (getter) - Returns the Google OAuth authorize URL built from the configured client ID, redirect URI, and scopes. Returns `null` when Google OAuth is not configured.
 - `authenticate<T>(code: string): Promise<GoogleAuthResult<T>>` - Exchanges a Google authorization code for user credentials. Finds or creates the user by email (same pattern as `MagicLinkService.verify()`). Returns the entity, an `isNewUser` flag, and the Google profile. If the entity has an `authProfile` column, Google profile data is persisted automatically.
 
 #### SessionService
