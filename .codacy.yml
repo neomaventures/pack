@@ -21,3 +21,9 @@ engines:
       - "packages/mockserver/**"
     exclude_rules:
       - "Semgrep_rules_lgpl_javascript_database_rule-node-nosqli-injection"
+
+  # Exclude auto-generated files from any type of complexity analysis.
+  lizard:
+    exclude_paths:
+      - "**/*-lock.yml"
+      - "**/*-lock.yaml"
