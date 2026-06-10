@@ -118,15 +118,10 @@ describe("RouteModel", () => {
     it("should include the requested param name on the exception", () => {
       const context = <ExecutionContext>executionContext(express.request({}))
 
-      try {
-        userDecorator("user", context)
-        fail("Expected decorator to throw")
-      } catch (error) {
-        expect(error).toBeInstanceOf(RouteModelBindingNotAppliedException)
-        expect((error as RouteModelBindingNotAppliedException).paramName).toBe(
-          "user",
-        )
-      }
+      expect(() => userDecorator("user", context)).toThrowMatching(
+        RouteModelBindingNotAppliedException,
+        { paramName: "user" },
+      )
     })
 
     it("should throw with a message that mentions the param name", () => {

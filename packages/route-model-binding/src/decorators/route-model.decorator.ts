@@ -39,11 +39,11 @@ import { RouteModelBindingNotAppliedException } from "../exceptions/route-model-
  * ```
  */
 export const RouteModel = createParamDecorator(
-  (data: any, context: ExecutionContext): any => {
+  (data: string, context: ExecutionContext): unknown => {
     const req = context.switchToHttp().getRequest()
 
     if (req.routeModels === undefined) {
-      throw new RouteModelBindingNotAppliedException(String(data))
+      throw new RouteModelBindingNotAppliedException(data)
     }
 
     const models = req.routeModels
