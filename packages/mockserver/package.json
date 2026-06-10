@@ -37,6 +37,10 @@
     "./teardown": {
       "require": "./dist/teardown.js",
       "types": "./dist/teardown.d.ts"
+    },
+    "./fixture": {
+      "require": "./dist/fixture.js",
+      "types": "./dist/fixture.d.ts"
     }
   },
   "files": [

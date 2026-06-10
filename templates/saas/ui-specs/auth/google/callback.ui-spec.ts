@@ -1,23 +1,22 @@
 import { faker } from "@faker-js/faker"
 import { google, GoogleOAuthClient } from "@neomaventures/google-fixtures"
-import { MockServerClient } from "@neomaventures/mockserver"
+import { mockserver } from "@neomaventures/mockserver/fixture"
 import { expect, test } from "@playwright/test"
 
-const mockserverUrl =
-  process.env.MOCKSERVER_URL ?? "http://localhost:1080/mockserver"
 const clientId = process.env.GOOGLE_CLIENT_ID ?? "test-client-id"
 const clientSecret = process.env.GOOGLE_CLIENT_SECRET ?? "test-client-secret"
 const appUrl = process.env.APP_URL ?? "http://localhost:3000"
 const redirectUri = `${appUrl}/auth/google/callback`
 
 test.describe("Google OAuth Flow", () => {
-  let mockServerClient: MockServerClient
   let googleOAuth: GoogleOAuthClient
 
+  // Playwright Test does not expose a global `beforeEach`, so the singleton's
+  // auto-reset hook does not fire here. Reset explicitly to preserve isolation
+  // between tests in this suite.
   test.beforeEach(async () => {
-    mockServerClient = new MockServerClient(mockserverUrl)
-    googleOAuth = new GoogleOAuthClient(mockServerClient)
-    await mockServerClient.reset()
+    await mockserver.reset()
+    googleOAuth = new GoogleOAuthClient(mockserver)
   })
 
   test.describe("Given a valid Google OAuth code exchange", () => {
