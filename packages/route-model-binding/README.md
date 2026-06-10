@@ -390,6 +390,25 @@ export class User {
 
 Route parameter `:user` will map to the `User` entity class.
 
+## Troubleshooting
+
+### `RouteModelBindingNotAppliedException: @RouteModel("...") was invoked but req.routeModels is undefined`
+
+You declared `@RouteModel("user")` on a controller method, but the
+`RouteModelBindingMiddleware` is not applied to that route. The decorator
+throws an HTTP 500 with this message rather than masking the misconfiguration
+as a 404.
+
+Wire the middleware up in your module's `configure()`:
+
+```typescript
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(RouteModelBindingMiddleware).forRoutes("users/:user")
+  }
+}
+```
+
 ## Comparison with Laravel
 
 If you're coming from Laravel, here's how this library compares:
