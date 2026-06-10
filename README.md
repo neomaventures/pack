@@ -132,7 +132,7 @@ Replace `src/index.ts` with the real API and add specs alongside it. e2e (a `pac
 2. **Merge to `main`** → CI opens a **"Version Packages"** PR that bumps versions and writes each package's `CHANGELOG.md`.
 3. **Merge the Version PR** → CI publishes the changed packages to GitHub Packages and tags them (`@neomaventures/<pkg>@<version>`).
 
-A change merged **without** a changeset ships nothing — it waits on `main` until one is added.
+A PR that touches a published package without a `.changeset/*.md` entry **fails CI** (the `changeset-check` job). The auto-raised "Version Packages" PR is exempt.
 
 ### Consuming the packages
 

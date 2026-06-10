@@ -178,6 +178,24 @@ jobs:
             fi
           fi
 
+  # ── Changeset check ─────────────────────────────────────────────────
+  # Fails a PR that touches a published package without a
+  # `.changeset/*.md` entry. Runs on every PR (internal-branch + fork)
+  # but skips the auto-raised "Version Packages" PR, which intentionally
+  # has no changeset (it consumes them). Does not run on push-to-main,
+  # so the `release` job is unaffected.
+  changeset-check:
+    if: ${{ github.event_name == 'pull_request' && github.head_ref != 'changeset-release/main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+
+      - name: Check for changeset
+        run: pnpm changeset status --since=origin/main
+
   # ── Release ──────────────────────────────────────────────────────────
   # Gated on lint + unit-test + e2e + ui-test, so we never open a Version Packages
   # PR or publish from a commit whose checks haven't gone green. Runs
