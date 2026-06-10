@@ -1,12 +1,23 @@
 import {
   type DynamicModule,
+  Inject,
   type MiddlewareConsumer,
   Module,
   type NestModule,
+  type OnApplicationBootstrap,
+  Optional,
 } from "@nestjs/common"
 import { ClsModule } from "nestjs-cls"
 
+import { MissingRequestContextError } from "./exceptions/missing-request-context.exception"
 import { RequestContextMiddleware } from "./request-context.middleware"
+
+/**
+ * Module-private marker token. Registered by `forRoot()` and asserted at
+ * `onApplicationBootstrap`. Intentionally not exported — this is an internal
+ * invariant, not a public API.
+ */
+const REQUEST_CONTEXT_MARKER = Symbol("REQUEST_CONTEXT_MARKER")
 
 /**
  * Per-request context for NestJS, backed by `AsyncLocalStorage` via
@@ -28,7 +39,15 @@ import { RequestContextMiddleware } from "./request-context.middleware"
  * ```
  */
 @Module({})
-export class RequestContextModule implements NestModule {
+export class RequestContextModule
+  implements NestModule, OnApplicationBootstrap
+{
+  public constructor(
+    @Optional()
+    @Inject(REQUEST_CONTEXT_MARKER)
+    private readonly marker?: true,
+  ) {}
+
   /**
    * Wire the request-context boundary into your application.
    *
@@ -36,6 +55,10 @@ export class RequestContextModule implements NestModule {
    * app-wide and the static handle resolves everywhere) without mounting cls's
    * own middleware — {@link RequestContextMiddleware} is the single context
    * boundary.
+   *
+   * Also registers an internal marker provider that is asserted at
+   * `onApplicationBootstrap`. If the module is instantiated without
+   * `forRoot()`, bootstrap fails with {@link MissingRequestContextError}.
    *
    * @returns A dynamic module to add to your root module's `imports`.
    *
@@ -51,15 +74,40 @@ export class RequestContextModule implements NestModule {
       imports: [
         ClsModule.forRoot({ global: true, middleware: { mount: false } }),
       ],
-      providers: [RequestContextMiddleware],
+      providers: [
+        RequestContextMiddleware,
+        { provide: REQUEST_CONTEXT_MARKER, useValue: true },
+      ],
     }
   }
 
   /**
    * Mounts the boundary middleware on every route so each request runs inside
-   * its own `AsyncLocalStorage` context.
+   * its own `AsyncLocalStorage` context. Fails fast if the module was
+   * instantiated without `forRoot()` — the middleware cannot be resolved
+   * without `ClsService`, so we throw a deterministic, named error here rather
+   * than letting Nest surface an opaque DI exception.
+   *
+   * @throws {@link MissingRequestContextError} when the module was
+   * instantiated without `forRoot()`.
    */
   public configure(consumer: MiddlewareConsumer): void {
+    if (this.marker !== true) {
+      throw new MissingRequestContextError()
+    }
     consumer.apply(RequestContextMiddleware).forRoutes("*")
+  }
+
+  /**
+   * Asserts the internal marker provider resolved. If the marker is not
+   * registered (i.e. `forRoot()` was not called), bootstrap fails fast.
+   *
+   * @throws {@link MissingRequestContextError} when the module was
+   * instantiated without `forRoot()`.
+   */
+  public onApplicationBootstrap(): void {
+    if (this.marker !== true) {
+      throw new MissingRequestContextError()
+    }
   }
 }

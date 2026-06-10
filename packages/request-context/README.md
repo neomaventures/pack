@@ -138,6 +138,17 @@ stored object. Concurrent requests are fully isolated.
 > works for object types. For primitive values (string, number), use the plain
 > `get` accessor instead.
 
+## Boot guard
+
+`RequestContextModule.forRoot()` registers an internal marker provider and
+asserts it resolves at `onApplicationBootstrap`. If the module is instantiated
+without `forRoot()` (e.g. listed in `providers` directly, or wired into a
+non-global scope the consumer never imported), bootstrap fails with
+`MissingRequestContextError`.
+
+If you never import `RequestContextModule` at all, the guard does not run and
+`getRequest()` returns `undefined` off-request as documented.
+
 ## License
 
 MIT
