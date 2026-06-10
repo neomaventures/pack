@@ -45,6 +45,11 @@
     "sqlite3": "^5",
     "typeorm": "^0.3"
   },
+  "peerDependenciesMeta": {
+    "@nestjs/common": { "optional": true },
+    "@nestjs/core": { "optional": true },
+    "@nestjs/typeorm": { "optional": true }
+  },
   "devDependencies": {
     "@nestjs/common": "^11.1.18",
     "@nestjs/core": "^11.1.18",

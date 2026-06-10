@@ -75,5 +75,19 @@ describe("ManagedDatabaseModule", () => {
         expect(fromModule).toBe(direct)
       })
     })
+
+    describe("without entities argument", () => {
+      it("auto-discovers entities under src/**/*.entity.ts", async () => {
+        const module = await Test.createTestingModule({
+          imports: [ManagedDatabaseModule.forRoot()],
+        }).compile()
+
+        const ds = module.get<DataSource>(getDataSourceToken())
+        const targets = targetsOf(ds)
+
+        expect(targets).toContain(User)
+        expect(targets).toContain(Post)
+      })
+    })
   })
 })

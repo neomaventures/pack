@@ -209,12 +209,12 @@ Low-level function to create a new DataSource instance. Used internally by `mana
 - Entities: Auto-discovered from `src/**/*.entity.ts`
 - Synchronize: Enabled (auto-creates schema)
 
-### `ManagedDatabaseModule.forRoot(entities): DynamicModule`
+### `ManagedDatabaseModule.forRoot(entities?): DynamicModule`
 
 Wires the managed test datasource into a NestJS testing module. Exposes the `DataSource` under `getDataSourceToken()`, globally.
 
 **Parameters:**
-- `entities` — TypeORM entity classes to register on the datasource.
+- `entities` *(optional)* — TypeORM entity classes to register on the datasource. Omit to auto-discover every `.entity.ts` file under the consumer's `src/`.
 
 **Returns:** `DynamicModule` — a `@Global()` dynamic module exporting `getDataSourceToken()`.
 
@@ -224,14 +224,11 @@ Wires the managed test datasource into a NestJS testing module. Exposes the `Dat
 
 **Example:**
 ```typescript
-const module = await Test.createTestingModule({
-  imports: [
-    ManagedDatabaseModule.forRoot([User]),
-    MyModule.forRoot(options),
-  ],
-}).compile()
+// Explicit — register only the entities this test needs:
+imports: [ManagedDatabaseModule.forRoot([User])]
 
-const ds = module.get<DataSource>(getDataSourceToken())
+// Default — auto-discover all `.entity.ts` files under src/:
+imports: [ManagedDatabaseModule.forRoot()]
 ```
 
 ## Configuration
