@@ -1,10 +1,15 @@
 import { ErrorTemplate } from "@neomaventures/exceptions"
-import { HealthCheck } from "@neomaventures/healthcheck"
+import {
+  HealthCheck,
+  type HealthResult,
+  HealthService,
+} from "@neomaventures/healthcheck"
 import { ApplicationLoggerService } from "@neomaventures/logging"
 import {
   BadRequestException,
   Controller,
   Get,
+  Header,
   InternalServerErrorException,
   Query,
   Render,
@@ -15,7 +20,10 @@ import {
  */
 @Controller()
 export class ApplicationController {
-  public constructor(private readonly logger: ApplicationLoggerService) {}
+  public constructor(
+    private readonly logger: ApplicationLoggerService,
+    private readonly healthService: HealthService,
+  ) {}
 
   /**
    * Renders the welcome page.
@@ -36,6 +44,30 @@ export class ApplicationController {
   @Get("api/health")
   @HealthCheck()
   public health(): void {}
+
+  /**
+   * Renders the human-readable HTML status page (statuspage.io-style).
+   *
+   * Distinct from `GET /api/health` (JSON, used by load balancers and
+   * orchestrators). Always returns HTTP 200 — the page itself rendered
+   * fine even when individual probes are in error. `Cache-Control:
+   * no-store` ensures every refresh re-probes.
+   *
+   * Unauthenticated by default — `ApplicationController` carries no
+   * class-level guard, matching the policy of `/api/health`.
+   *
+   * @returns The aggregated probe result and the ISO timestamp the
+   *          probes were run at, consumed by `views/application/status.ejs`.
+   */
+  @Get("status")
+  @Header("Cache-Control", "no-store")
+  @Render("application/status")
+  public async status(): Promise<{ result: HealthResult; checkedAt: string }> {
+    return {
+      result: await this.healthService.check(),
+      checkedAt: new Date().toISOString(),
+    }
+  }
 
   /**
    * Exercises both modes of the exception filter via `@ErrorTemplate`.
