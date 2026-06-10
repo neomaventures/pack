@@ -1,5 +1,5 @@
-import { HttpStatus } from "@nestjs/common"
 import { managedAppInstance } from "@neomaventures/managed-app"
+import { HttpStatus } from "@nestjs/common"
 import request from "supertest"
 
 import { configureViewEngine } from "~fixtures/configure-view-engine"
@@ -16,7 +16,9 @@ describe("GET /api/health", () => {
       await request(app.getHttpServer())
         .get("/api/health")
         .expect(OK)
-        .expect({ http: "ok" })
+        .expect((res) => {
+          expect(res.body).toMatchObject({ http: "ok" })
+        })
     })
   })
 })

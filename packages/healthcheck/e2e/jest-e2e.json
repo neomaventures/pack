@@ -1,0 +1,30 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "setupFiles": ["reflect-metadata", "<rootDir>/build.setup.ts"],
+  "setupFilesAfterEnv": ["jest-extended/all"],
+  "transform": {
+    "^.+\\.tsx?$": [
+      "@swc/jest",
+      {
+        "jsc": {
+          "parser": {
+            "syntax": "typescript",
+            "decorators": true,
+            "dynamicImport": true
+          },
+          "transform": {
+            "legacyDecorator": true,
+            "decoratorMetadata": true
+          }
+        }
+      }
+    ]
+  },
+  "moduleNameMapper": {
+    "^@neomaventures/healthcheck$": "<rootDir>/../dist/index.js",
+    "^@neomaventures/healthcheck/(.*)$": "<rootDir>/../dist/$1"
+  }
+}

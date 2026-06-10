@@ -31,12 +31,6 @@ describe("ApplicationController", () => {
     })
   })
 
-  describe("health()", () => {
-    it('should return { http: "ok" }', () => {
-      expect(controller.health()).toEqual({ http: "ok" })
-    })
-  })
-
   describe("error()", () => {
     describe("Given type is 'redirect'", () => {
       it("should throw a BadRequestException", () => {
