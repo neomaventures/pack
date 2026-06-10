@@ -8,7 +8,6 @@ import {
 import { EventEmitter2, EventEmitterModule } from "@nestjs/event-emitter"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { TypeOrmModule } from "@nestjs/typeorm"
-import * as svix from "fixtures/svix"
 import { lastValueFrom, throwError } from "rxjs"
 import {
   Column,
@@ -18,6 +17,7 @@ import {
   Unique,
 } from "typeorm"
 
+import { factories } from "../../test/factories"
 import { WebhookHandler } from "../decorators/webhook-handler.decorator"
 import { WebhookDuplicateEvent } from "../events/webhook-duplicate.event"
 import { WebhookReceivedEvent } from "../events/webhook-received.event"
@@ -49,7 +49,7 @@ class TestWebhookController {
   public handle(): void {}
 }
 
-const EXTERNAL_ID = svix.id()
+const EXTERNAL_ID = factories.id()
 const HANDLER = { controller: TestWebhookController, method: "handle" as const }
 
 const OPTIONS = {

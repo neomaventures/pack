@@ -22,7 +22,7 @@ import { faker } from "@faker-js/faker"
  *
  * This will compute the HMAC-SHA256 signature of the string "msg_a1b2c3d4e5f6g7h8i9j0k.1700000000.{body}" using the provided secret key, and return it in the format "v1,<base64-encoded-signature>".
  */
-export const signature = (
+const signature = (
   secret: string,
   svixId: string,
   svixTimestamp: string,
@@ -50,7 +50,7 @@ export const signature = (
  * const randomId = id() // e.g. "msg_a1b2c3d4e5f6g7h8i9j0k"
  * const customPrefixId = id("evt_") // e.g. "evt_a1b2c3d4e5f6g7h8i9j0k"
  */
-export const id = (prefix = "msg_"): string =>
+const id = (prefix = "msg_"): string =>
   `${prefix}${faker.string.alphanumeric(21)}`
 
 /**
@@ -72,7 +72,7 @@ export const id = (prefix = "msg_"): string =>
  * const specificTimestamp = timestamp(new Date("2024-01-01T00:00:00Z")) // "1704067200"
  *
  */
-export const timestamp = (date = faker.date.recent()): string =>
+const timestamp = (date = faker.date.recent()): string =>
   Math.floor(date.getTime() / 1000).toString()
 
 /**
@@ -88,8 +88,7 @@ export const timestamp = (date = faker.date.recent()): string =>
  * const randomSecret = secret()
  * // e.g. "whsec_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
  */
-export const secret = ({
-  prefix = "whsec_",
-  postfixLength = 32,
-} = {}): string =>
+const secret = ({ prefix = "whsec_", postfixLength = 32 } = {}): string =>
   `${prefix}${faker.string.alphanumeric({ length: postfixLength })}`
+
+export const factories = { signature, id, timestamp, secret }

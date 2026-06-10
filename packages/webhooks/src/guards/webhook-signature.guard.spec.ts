@@ -1,8 +1,8 @@
 import { executionContext, express } from "@neomaventures/fixtures"
 import { type ExecutionContext, UnauthorizedException } from "@nestjs/common"
 import { Test, type TestingModule } from "@nestjs/testing"
-import * as svix from "fixtures/svix"
 
+import { factories } from "../../test/factories"
 import { WebhookRawBodyException } from "../exceptions/webhook-raw-body.exception"
 import { WEBHOOKS_OPTIONS } from "../webhooks.options"
 
@@ -12,7 +12,12 @@ const TEST_SECRET = "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw"
 const SVIX_ID = "msg_2Lx0r7Gmz1lL7dK3n4y5j"
 const SVIX_TIMESTAMP = "1713200000"
 const BODY = JSON.stringify({ type: "user.created", data: { id: "usr_123" } })
-const SIGNATURE = svix.signature(TEST_SECRET, SVIX_ID, SVIX_TIMESTAMP, BODY)
+const SIGNATURE = factories.signature(
+  TEST_SECRET,
+  SVIX_ID,
+  SVIX_TIMESTAMP,
+  BODY,
+)
 
 describe("WebhookSignatureGuard", () => {
   describe("When the request has a valid signature", () => {
@@ -100,8 +105,8 @@ describe("WebhookSignatureGuard", () => {
         headers: {
           "svix-id": SVIX_ID,
           "svix-timestamp": SVIX_TIMESTAMP,
-          "svix-signature": svix.signature(
-            svix.secret(),
+          "svix-signature": factories.signature(
+            factories.secret(),
             SVIX_ID,
             SVIX_TIMESTAMP,
             BODY,

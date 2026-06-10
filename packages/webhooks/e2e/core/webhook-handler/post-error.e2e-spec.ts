@@ -1,16 +1,22 @@
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
-import * as svix from "fixtures/svix"
 import request from "supertest"
+
+import { factories } from "../../../test/factories"
 
 const { BAD_REQUEST, INTERNAL_SERVER_ERROR } = HttpStatus
 
 const SECRET = "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw"
-const SVIX_ID = svix.id()
-const SVIX_TIMESTAMP = svix.timestamp()
+const SVIX_ID = factories.id()
+const SVIX_TIMESTAMP = factories.timestamp()
 const BODY = { type: "user.created", data: { id: "usr_123" } }
 const BODY_STRING = JSON.stringify(BODY)
-const SIGNATURE = svix.signature(SECRET, SVIX_ID, SVIX_TIMESTAMP, BODY_STRING)
+const SIGNATURE = factories.signature(
+  SECRET,
+  SVIX_ID,
+  SVIX_TIMESTAMP,
+  BODY_STRING,
+)
 
 const appModules: [string, string][] = [
   ["forRoot", "e2e/app/app.module.ts#AppModule"],
