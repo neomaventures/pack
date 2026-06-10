@@ -54,8 +54,12 @@ export const callHandler = (returnValue: any = { ok: true }): CallHandler =>
  * getHandler and getClass are not included on the returned context.
  * @param cls An optional class returned by getClass(). Only meaningful when handler
  * is a bare function; ignored when handler is a route object. Defaults to Object.
- * @returns A partial ExecutionContext that supports switchToHttp and, when a handler
- * is supplied, getHandler/getClass.
+ * @param type The context type returned by getType(). Defaults to "http" since
+ * that's overwhelmingly the most common case in tests. Pass "rpc" or "ws" to
+ * exercise non-HTTP code paths (e.g. an interceptor that should reject non-HTTP
+ * routes).
+ * @returns A partial ExecutionContext that supports switchToHttp, getType, and,
+ * when a handler is supplied, getHandler/getClass.
  */
 export const executionContext = <T>(
   req: MockRequest = express.request(),
@@ -64,6 +68,7 @@ export const executionContext = <T>(
     | (() => void)
     | { controller: new (...args: any[]) => T; method: keyof T & string },
   cls?: new (...args: any[]) => any,
+  type: string = "http",
 ): Partial<ExecutionContext> => {
   req.res = res
 
@@ -85,6 +90,7 @@ export const executionContext = <T>(
       getResponse: jest.fn().mockReturnValue(res),
       getRequest: jest.fn().mockReturnValue(req),
     }),
+    getType: jest.fn().mockReturnValue(type),
     ...(resolvedHandler && {
       getHandler: jest.fn().mockReturnValue(resolvedHandler),
       getClass: jest.fn().mockReturnValue(resolvedClass),

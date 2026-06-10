@@ -6,18 +6,6 @@ import { type HealthService } from "./health.service"
 import { HEALTHCHECK_METADATA_KEY } from "./healthcheck.constants"
 import { HealthcheckInterceptor } from "./healthcheck.interceptor"
 
-const buildContext = (
-  handler: () => void,
-  res = express.response(),
-  type: "http" | "rpc" | "ws" = "http",
-): ReturnType<typeof executionContext> & { getType: () => string } => {
-  const req = express.request({ res })
-  const ctx = executionContext(req, res, handler)
-  // @neomaventures/fixtures' executionContext doesn't include getType(); extend
-  // here. Worth promoting upstream — tracked separately.
-  return { ...ctx, getType: jest.fn().mockReturnValue(type) }
-}
-
 describe("HealthcheckInterceptor", () => {
   let reflector: Reflector
   let healthService: { check: jest.Mock }
@@ -39,7 +27,7 @@ describe("HealthcheckInterceptor", () => {
         const handleSpy = jest.spyOn(downstream, "handle")
         const handler = (): void => {}
         const res = express.response()
-        const ctx = buildContext(handler, res)
+        const ctx = executionContext(undefined, res, handler)
 
         const result$ = interceptor.intercept(ctx as never, downstream)
 
@@ -62,7 +50,7 @@ describe("HealthcheckInterceptor", () => {
 
       it("should set the response status to 200", async () => {
         const res = express.response()
-        const ctx = buildContext(handler, res)
+        const ctx = executionContext(undefined, res, handler)
 
         const result$ = interceptor.intercept(ctx as never, callHandler())
         await firstValueFrom(result$)
@@ -71,7 +59,7 @@ describe("HealthcheckInterceptor", () => {
       })
 
       it("should emit the aggregated HealthResult", async () => {
-        const ctx = buildContext(handler)
+        const ctx = executionContext(undefined, undefined, handler)
 
         const result$ = interceptor.intercept(ctx as never, callHandler())
 
@@ -95,7 +83,7 @@ describe("HealthcheckInterceptor", () => {
 
       it("should set the response status to 503", async () => {
         const res = express.response()
-        const ctx = buildContext(handler, res)
+        const ctx = executionContext(undefined, res, handler)
 
         const result$ = interceptor.intercept(ctx as never, callHandler())
         await firstValueFrom(result$)
@@ -104,7 +92,7 @@ describe("HealthcheckInterceptor", () => {
       })
 
       it("should emit the HealthResult with database: error", async () => {
-        const ctx = buildContext(handler)
+        const ctx = executionContext(undefined, undefined, handler)
 
         const result$ = interceptor.intercept(ctx as never, callHandler())
 
@@ -125,7 +113,7 @@ describe("HealthcheckInterceptor", () => {
 
       it("should set the response status to 200", async () => {
         const res = express.response()
-        const ctx = buildContext(handler, res)
+        const ctx = executionContext(undefined, res, handler)
 
         const result$ = interceptor.intercept(ctx as never, callHandler())
         await firstValueFrom(result$)
@@ -139,7 +127,13 @@ describe("HealthcheckInterceptor", () => {
         const handler = (): void => {}
         Reflect.defineMetadata(HEALTHCHECK_METADATA_KEY, true, handler)
 
-        const ctx = buildContext(handler, undefined, "rpc")
+        const ctx = executionContext(
+          undefined,
+          undefined,
+          handler,
+          undefined,
+          "rpc",
+        )
 
         expect(() =>
           interceptor.intercept(ctx as never, callHandler()),
