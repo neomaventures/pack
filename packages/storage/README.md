@@ -282,6 +282,7 @@ Injected via DI. Wraps `@aws-sdk/client-s3`.
 
 - `store(key, buffer, contentType): Promise<void>` -- Upload a file to S3 under the given key
 - `getSignedUrl(key, expiresIn?): Promise<string>` -- Generate a presigned download URL
+- `bucket: string` -- The configured S3 bucket name; use when constructing `Storable` entities outside the `@Upload()` interceptor
 
 ## Storage Key Format
 
