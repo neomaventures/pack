@@ -22,10 +22,10 @@ pnpm add @neomaventures/healthcheck
 - `@nestjs/common` (`11.x`)
 - `@nestjs/core` (`11.x`)
 - `rxjs` (`7.x`)
-- `@nestjs/typeorm` (`11.x`) — **optional**, only needed for the database probe
-- `typeorm` (`>=0.3`) — **optional**, only needed for the database probe
+- `@nestjs/typeorm` (`11.x`)
+- `typeorm` (`>=0.3`)
 
-If your app doesn't use TypeORM, you don't need to install the optional peers — the package will still build and run, and the response will simply omit the `database` key.
+All peers are required — `HealthService` imports `getDataSourceToken` from `@nestjs/typeorm` at module load. If your consuming app doesn't register a `DataSource`, the response simply omits the `database` key at runtime, but the TypeORM package itself still needs to be installed for `HealthService` to resolve.
 
 ## Quick start
 
@@ -65,6 +65,14 @@ The decorated method body is ignored at runtime — a global interceptor replace
 | Any probe `"error"` | `503` |
 
 The status is set directly on the response — no `ServiceUnavailableException` is thrown, so your global exception filters are not invoked and the JSON shape stays uniform across both branches.
+
+## Probe timeout
+
+The database probe has a 5-second hard timeout. If `SELECT 1` doesn't resolve within `PROBE_TIMEOUT_MS` (exported from `healthcheck.constants`), the probe reports `database: "error"` and the route still returns `503` cleanly — your orchestrator's external timeout won't fire before ours, so the failure surfaces as a `503` and not a hung request.
+
+## HTTP-only
+
+`@HealthCheck()` only works on HTTP routes for now. Applying it to a Microservice / WebSocket / RPC handler throws at request time with a descriptive error. If you need probes on non-HTTP transports, please file an issue describing the use case.
 
 ## Calling probes from your own code
 

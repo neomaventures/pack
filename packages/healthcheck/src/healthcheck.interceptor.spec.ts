@@ -3,14 +3,19 @@ import { Reflector } from "@nestjs/core"
 import { firstValueFrom } from "rxjs"
 
 import { type HealthService } from "./health.service"
+import { HEALTHCHECK_METADATA_KEY } from "./healthcheck.constants"
 import { HealthcheckInterceptor } from "./healthcheck.interceptor"
 
 const buildContext = (
   handler: () => void,
   res = express.response(),
-): ReturnType<typeof executionContext> => {
+  type: "http" | "rpc" | "ws" = "http",
+): ReturnType<typeof executionContext> & { getType: () => string } => {
   const req = express.request({ res })
-  return executionContext(req, res, handler)
+  const ctx = executionContext(req, res, handler)
+  // @neomaventures/fixtures' executionContext doesn't include getType(); extend
+  // here. Worth promoting upstream — tracked separately.
+  return { ...ctx, getType: jest.fn().mockReturnValue(type) }
 }
 
 describe("HealthcheckInterceptor", () => {
@@ -51,7 +56,7 @@ describe("HealthcheckInterceptor", () => {
       const handler = (): void => {}
 
       beforeEach(() => {
-        Reflect.defineMetadata("neoma:healthcheck", true, handler)
+        Reflect.defineMetadata(HEALTHCHECK_METADATA_KEY, true, handler)
         healthService.check.mockResolvedValue({ http: "ok", database: "ok" })
       })
 
@@ -81,7 +86,7 @@ describe("HealthcheckInterceptor", () => {
       const handler = (): void => {}
 
       beforeEach(() => {
-        Reflect.defineMetadata("neoma:healthcheck", true, handler)
+        Reflect.defineMetadata(HEALTHCHECK_METADATA_KEY, true, handler)
         healthService.check.mockResolvedValue({
           http: "ok",
           database: "error",
@@ -114,7 +119,7 @@ describe("HealthcheckInterceptor", () => {
       const handler = (): void => {}
 
       beforeEach(() => {
-        Reflect.defineMetadata("neoma:healthcheck", true, handler)
+        Reflect.defineMetadata(HEALTHCHECK_METADATA_KEY, true, handler)
         healthService.check.mockResolvedValue({ http: "ok" })
       })
 
@@ -126,6 +131,20 @@ describe("HealthcheckInterceptor", () => {
         await firstValueFrom(result$)
 
         expect(res.statusCode).toBe(200)
+      })
+    })
+
+    describe("Given @HealthCheck() metadata on a non-HTTP route", () => {
+      it("should throw because non-HTTP contexts are not supported", () => {
+        const handler = (): void => {}
+        Reflect.defineMetadata(HEALTHCHECK_METADATA_KEY, true, handler)
+
+        const ctx = buildContext(handler, undefined, "rpc")
+
+        expect(() =>
+          interceptor.intercept(ctx as never, callHandler()),
+        ).toThrow(/only supports HTTP routes/)
+        expect(healthService.check).not.toHaveBeenCalled()
       })
     })
   })

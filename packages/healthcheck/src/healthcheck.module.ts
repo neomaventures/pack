@@ -40,7 +40,6 @@ export class HealthcheckModule {
       module: HealthcheckModule,
       providers: [
         HealthService,
-        HealthcheckInterceptor,
         { provide: APP_INTERCEPTOR, useClass: HealthcheckInterceptor },
       ],
       exports: [HealthService],

@@ -3,6 +3,7 @@ import { getDataSourceToken, TypeOrmModule } from "@nestjs/typeorm"
 import { type DataSource } from "typeorm"
 
 import { HealthService } from "./health.service"
+import { PROBE_TIMEOUT_MS } from "./healthcheck.constants"
 
 describe("HealthService", () => {
   describe("check()", () => {
@@ -87,6 +88,39 @@ describe("HealthService", () => {
 
       it("should not rethrow", async () => {
         await expect(service.check()).resolves.toBeDefined()
+      })
+    })
+
+    describe("Given a DataSource whose query hangs (never resolves)", () => {
+      let service: HealthService
+
+      beforeEach(async () => {
+        const hangingDataSource = {
+          query: jest.fn().mockReturnValue(new Promise<never>(() => {})),
+        } as unknown as DataSource
+
+        const module: TestingModule = await Test.createTestingModule({
+          providers: [
+            HealthService,
+            { provide: getDataSourceToken(), useValue: hangingDataSource },
+          ],
+        }).compile()
+
+        service = module.get<HealthService>(HealthService)
+      })
+
+      it('should time out and return database: "error"', async () => {
+        jest.useFakeTimers()
+        try {
+          const probe = service.check()
+          await jest.advanceTimersByTimeAsync(PROBE_TIMEOUT_MS + 1)
+          await expect(probe).resolves.toEqual({
+            http: "ok",
+            database: "error",
+          })
+        } finally {
+          jest.useRealTimers()
+        }
       })
     })
   })

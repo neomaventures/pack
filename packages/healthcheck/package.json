@@ -45,14 +45,6 @@
     "rxjs": "7.x",
     "typeorm": ">=0.3"
   },
-  "peerDependenciesMeta": {
-    "@nestjs/typeorm": {
-      "optional": true
-    },
-    "typeorm": {
-      "optional": true
-    }
-  },
   "devDependencies": {
     "@neomaventures/fixtures": "workspace:*",
     "@nestjs/common": "^11.1.18",

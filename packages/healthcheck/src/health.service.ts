@@ -2,6 +2,7 @@ import { Inject, Injectable, Optional } from "@nestjs/common"
 import { getDataSourceToken } from "@nestjs/typeorm"
 import { type DataSource } from "typeorm"
 
+import { PROBE_TIMEOUT_MS } from "./healthcheck.constants"
 import { type HealthResult } from "./healthcheck.types"
 
 /**
@@ -24,10 +25,11 @@ export class HealthService {
    *
    * - `http` is always `"ok"` — if this method returns, HTTP works.
    * - `database` is included only when a default TypeORM `DataSource` is
-   *   registered in the consuming app. Errors from the probe are caught
-   *   and surfaced as `"error"`; this method never throws. The 503 status
-   *   on the wrapped route is the failure signal — no logger is used so
-   *   consumers don't pay observability noise on every failed probe.
+   *   registered in the consuming app. Errors from the probe — including
+   *   the {@link PROBE_TIMEOUT_MS} timeout — are caught and surfaced as
+   *   `"error"`; this method never throws. The 503 status on the wrapped
+   *   route is the failure signal — no logger is used so consumers don't
+   *   pay observability noise on every failed probe.
    *
    * @returns The aggregated probe result.
    *
@@ -42,7 +44,7 @@ export class HealthService {
 
     if (this.dataSource) {
       try {
-        await this.dataSource.query("SELECT 1")
+        await this.race(this.dataSource.query("SELECT 1"))
         result.database = "ok"
       } catch {
         result.database = "error"
@@ -50,5 +52,27 @@ export class HealthService {
     }
 
     return result
+  }
+
+  /**
+   * Races the given promise against a `PROBE_TIMEOUT_MS` deadline so a
+   * hung connection can't stall the whole healthcheck endpoint past the
+   * orchestrator's own external timeout.
+   */
+  private async race<T>(probe: Promise<T>): Promise<T> {
+    let timeoutId: NodeJS.Timeout | undefined
+    try {
+      return await Promise.race([
+        probe,
+        new Promise<never>((_, reject) => {
+          timeoutId = setTimeout(
+            () => reject(new Error("probe timed out")),
+            PROBE_TIMEOUT_MS,
+          )
+        }),
+      ])
+    } finally {
+      if (timeoutId !== undefined) clearTimeout(timeoutId)
+    }
   }
 }

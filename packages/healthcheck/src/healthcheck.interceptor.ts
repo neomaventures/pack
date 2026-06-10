@@ -48,6 +48,12 @@ export class HealthcheckInterceptor implements NestInterceptor {
       return next.handle()
     }
 
+    if (context.getType() !== "http") {
+      throw new Error(
+        `@HealthCheck() currently only supports HTTP routes; received context type "${context.getType()}".`,
+      )
+    }
+
     return from(this.run(context))
   }
 
