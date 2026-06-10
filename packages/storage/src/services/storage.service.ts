@@ -96,4 +96,29 @@ export class StorageService {
       expiresIn: expiresIn ?? this.options.linkExpiresIn ?? 3600,
     })
   }
+
+  /**
+   * The configured S3 bucket name.
+   *
+   * Exposed for programmatic (non-HTTP) entity creation paths — when a
+   * consumer constructs a `Storable` entity outside the `@Upload()`
+   * interceptor (e.g. seeders, background jobs, importers) it needs to
+   * populate `Storable.bucket` to match the bucket this service writes to.
+   *
+   * @returns The configured S3 bucket name
+   *
+   * @example
+   * ```typescript
+   * const storable = repository.create({
+   *   key: resolvedKey,
+   *   bucket: storageService.bucket,
+   *   contentType: "image/jpeg",
+   *   size: buffer.byteLength,
+   * })
+   * await storageService.store(resolvedKey, buffer, "image/jpeg")
+   * ```
+   */
+  public get bucket(): string {
+    return this.options.bucket
+  }
 }

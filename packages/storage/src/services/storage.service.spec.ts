@@ -91,4 +91,10 @@ describe("StorageService", () => {
       })
     })
   })
+
+  describe("bucket", () => {
+    it("should return the configured bucket name", () => {
+      expect(service.bucket).toBe(options.bucket)
+    })
+  })
 })
