@@ -3,7 +3,7 @@ import {
   google as googleFakes,
   GoogleOAuthClient,
 } from "@neomaventures/google-fixtures"
-import { MockServerClient } from "@neomaventures/mockserver"
+import { mockserver } from "@neomaventures/mockserver/fixture"
 import { DynamicModule } from "@nestjs/common"
 import { EventEmitter2 } from "@nestjs/event-emitter"
 import { Test, TestingModule } from "@nestjs/testing"
@@ -49,9 +49,7 @@ class UserWithProfile implements Authenticatable {
   public authProfile?: AuthenticatableProfile
 }
 
-const mockserverUrl = process.env.MOCKSERVER_URL!
-const client = new MockServerClient(mockserverUrl)
-const googleOAuthClient = new GoogleOAuthClient(client)
+const googleOAuthClient = new GoogleOAuthClient(mockserver)
 
 const googleAuth = google.authOptions({
   tokenEndpoint: googleOAuthClient.tokenEndpoint(),
@@ -125,10 +123,6 @@ const registrations: [string, (opts: AuthOptions) => DynamicModule][] = [
 
 registrations.forEach(([name, register]) => {
   describe(`GoogleAuthService (${name})`, () => {
-    afterEach(async () => {
-      await client.reset()
-    })
-
     describe("authorizeUrl", () => {
       describe("Given Google OAuth is configured with default scopes", () => {
         let service: GoogleAuthService

@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker"
 import { google, GoogleOAuthClient } from "@neomaventures/google-fixtures"
 import { managedAppInstance } from "@neomaventures/managed-app"
-import { MockServerClient } from "@neomaventures/mockserver"
+import { mockserver } from "@neomaventures/mockserver/fixture"
 import { HttpStatus } from "@nestjs/common"
 import request from "supertest"
 
@@ -11,16 +11,13 @@ import { SESSION_COOKIE_REGEX } from "~fixtures/email/content"
 const { FOUND, SEE_OTHER } = HttpStatus
 
 describe("GET /auth/google/callback", () => {
-  const { APP_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, MOCKSERVER_URL } =
+  const { APP_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } =
     process.env as Record<string, string>
   const redirectUri = `${APP_URL}/auth/google/callback`
-  const mockServerClient = new MockServerClient(MOCKSERVER_URL)
-  const googleOAuth = new GoogleOAuthClient(mockServerClient)
+  const googleOAuth = new GoogleOAuthClient(mockserver)
   let app: Awaited<ReturnType<typeof managedAppInstance>>
 
   beforeEach(async () => {
-    await mockServerClient.reset()
-
     app = await managedAppInstance({
       configure: configureViewEngine,
     })

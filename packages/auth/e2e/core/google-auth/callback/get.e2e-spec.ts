@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker"
 import { SESSION_AUDIENCE } from "@neomaventures/auth"
 import { google, GoogleOAuthClient } from "@neomaventures/google-fixtures"
 import { managedAppInstance } from "@neomaventures/managed-app"
-import { MockServerClient } from "@neomaventures/mockserver"
+import { mockserver } from "@neomaventures/mockserver/fixture"
 import { HttpStatus } from "@nestjs/common"
 import { authenticateViaEmail } from "fixtures/fakes/magic-link"
 import * as jwt from "jsonwebtoken"
@@ -11,7 +11,6 @@ import { DataSource } from "typeorm"
 
 const { OK, UNAUTHORIZED, FORBIDDEN, BAD_GATEWAY } = HttpStatus
 
-const mockserverUrl = process.env.MOCKSERVER_URL!
 const clientId = process.env.GOOGLE_CLIENT_ID!
 const clientSecret = process.env.GOOGLE_CLIENT_SECRET!
 const redirectUri = process.env.GOOGLE_REDIRECT_URI!
@@ -25,18 +24,12 @@ appModules.forEach(([name, modulePath]) => {
   describe(`GET /auth/google/callback (${name})`, () => {
     let app: Awaited<ReturnType<typeof managedAppInstance>>
     let datasource: DataSource
-    let mockServerClient: MockServerClient
     let googleOAuth: GoogleOAuthClient
 
     beforeEach(async () => {
-      mockServerClient = new MockServerClient(mockserverUrl)
-      googleOAuth = new GoogleOAuthClient(mockServerClient)
+      googleOAuth = new GoogleOAuthClient(mockserver)
       app = await managedAppInstance(modulePath)
       datasource = app.get(DataSource)
-    })
-
-    afterEach(async () => {
-      await mockServerClient.reset()
     })
 
     describe("When called with a valid code for a new email", () => {

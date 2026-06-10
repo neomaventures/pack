@@ -51,6 +51,31 @@ const matched = await client.verifyExpectationMatched({
 })
 ```
 
+## Auto-reset fixture
+
+For test suites that want a single shared client and an automatic `reset()` between tests, import the `/fixture` subpath:
+
+```typescript
+import { mockserver } from "@neomaventures/mockserver/fixture"
+
+it("returns the mocked body", async () => {
+  await mockserver.createExpectation({
+    httpRequest: { path: "/api/users", method: "GET" },
+    httpResponse: { statusCode: 200, body: "[]" },
+    times: { unlimited: true },
+  })
+
+  // ...exercise the code under test...
+})
+```
+
+Importing the subpath:
+
+- Constructs a singleton `MockServerClient` from `process.env.MOCKSERVER_URL`. The variable **must** be set before the module is imported (typically via an `.env.e2e` consumed by `node --env-file` or via a Jest `globalSetup` that runs first). If it is unset or empty, importing throws.
+- Registers `beforeEach(() => mockserver.reset())` if the host runner exposes `beforeEach` globally (Jest, Vitest). Playwright Test does not expose a global `beforeEach` — call `await mockserver.reset()` from your own `test.beforeEach` instead.
+
+Suites that test `MockServerClient` itself, or that need multiple independent clients (e.g. per-suite isolated containers), should keep constructing the class directly.
+
 ## Configuration
 
 The container honours these environment variables:
@@ -59,12 +84,14 @@ The container honours these environment variables:
 |---|---|---|
 | `MOCKSERVER_PORT` | `1080` | Host port to bind the container to |
 | `NEOMA_TEST_PREFIX` | `neoma-test` | Prefix for the container name (`{prefix}-mockserver`) |
+| `MOCKSERVER_URL` | _none_ | Required by `@neomaventures/mockserver/fixture` at import time |
 
 ## API
 
 - **`MockServerClient`** — `reset()`, `createExpectation(expectation)`, `verifyExpectationMatched(request, count?)`.
 - **`startContainer(options?)` / `stopContainer(options?)`** — manage the container directly when `globalSetup` isn't a fit. `start` returns `{ container, port }`.
 - **`@neomaventures/mockserver/setup` / `@neomaventures/mockserver/teardown`** — Jest `globalSetup`/`globalTeardown` drop-ins wrapping the above.
+- **`@neomaventures/mockserver/fixture`** — singleton `mockserver` client wired from `MOCKSERVER_URL` with an auto-reset `beforeEach` hook.
 
 ## License
 
