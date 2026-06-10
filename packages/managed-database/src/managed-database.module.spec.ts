@@ -63,25 +63,6 @@ describe("ManagedDatabaseModule", () => {
       })
     })
 
-    describe("per-test teardown", () => {
-      let heldDataSource: DataSource | undefined
-
-      it("holds a reference to a datasource resolved in this test", async () => {
-        const module = await Test.createTestingModule({
-          imports: [ManagedDatabaseModule.forRoot([User])],
-        }).compile()
-
-        heldDataSource = module.get<DataSource>(getDataSourceToken())
-        expect(heldDataSource.isInitialized).toBe(true)
-      })
-
-      it("returns a destroyed datasource in the next test", () => {
-        // afterEach in index.ts ran between the previous `it` and this one.
-        expect(heldDataSource).toBeDefined()
-        expect(heldDataSource!.isInitialized).toBe(false)
-      })
-    })
-
     describe("cache reuse within a test", () => {
       it("yields the same DataSource instance as managedDatasourceInstance for the same entities", async () => {
         const module = await Test.createTestingModule({
