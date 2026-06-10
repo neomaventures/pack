@@ -5,6 +5,8 @@ import { ROUTE_ARGS_METADATA } from "@nestjs/common/constants"
 import { post as postEntity } from "fixtures/models/post"
 import { user as userEntity } from "fixtures/models/user"
 
+import { RouteModelBindingNotAppliedException } from "../exceptions/route-model-binding-not-applied.exception"
+
 import { RouteModel } from "./route-model.decorator"
 
 /**
@@ -105,10 +107,40 @@ describe("RouteModel", () => {
   })
 
   describe("When routeModels is undefined", () => {
-    it("should throw a NotFoundException", () => {
+    it("should throw a RouteModelBindingNotAppliedException", () => {
       const context = <ExecutionContext>executionContext(express.request({}))
 
-      expect(() => userDecorator("user", context)).toThrow(NotFoundException)
+      expect(() => userDecorator("user", context)).toThrow(
+        RouteModelBindingNotAppliedException,
+      )
+    })
+
+    it("should include the requested param name on the exception", () => {
+      const context = <ExecutionContext>executionContext(express.request({}))
+
+      try {
+        userDecorator("user", context)
+        fail("Expected decorator to throw")
+      } catch (error) {
+        expect(error).toBeInstanceOf(RouteModelBindingNotAppliedException)
+        expect((error as RouteModelBindingNotAppliedException).paramName).toBe(
+          "user",
+        )
+      }
+    })
+
+    it("should throw with a message that mentions the param name", () => {
+      const context = <ExecutionContext>executionContext(express.request({}))
+
+      expect(() => userDecorator("user", context)).toThrow(/"user"/)
+    })
+
+    it("should throw with a message that mentions RouteModelBindingMiddleware", () => {
+      const context = <ExecutionContext>executionContext(express.request({}))
+
+      expect(() => userDecorator("user", context)).toThrow(
+        /RouteModelBindingMiddleware/,
+      )
     })
   })
 

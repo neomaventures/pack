@@ -6,3 +6,6 @@ export * from "./decorators/route-model.decorator"
 export * from "./interfaces/route-model-binding-config.interface"
 export * from "./interfaces/scope-accessor.interface"
 export * from "./constants/injection-tokens"
+
+// Exceptions
+export * from "./exceptions/route-model-binding-not-applied.exception"
