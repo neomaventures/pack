@@ -2,9 +2,8 @@ import { faker } from "@faker-js/faker"
 import { express, executionContext } from "@neomaventures/fixtures"
 import { ExecutionContext, NotFoundException } from "@nestjs/common"
 import { ROUTE_ARGS_METADATA } from "@nestjs/common/constants"
-import { post as postEntity } from "fixtures/models/post"
-import { user as userEntity } from "fixtures/models/user"
 
+import { factories } from "../../test/factories"
 import { RouteModelBindingNotAppliedException } from "../exceptions/route-model-binding-not-applied.exception"
 
 import { RouteModel } from "./route-model.decorator"
@@ -20,8 +19,8 @@ type Args = Record<
 >
 
 describe("RouteModel", () => {
-  const user = userEntity.entity()
-  const post = postEntity.entity()
+  const user = factories.user()
+  const post = factories.post()
   let userDecorator: typeof RouteModel
   let postDecorator: typeof RouteModel
 

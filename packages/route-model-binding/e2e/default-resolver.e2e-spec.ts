@@ -1,17 +1,17 @@
 import { HttpStatus, type INestApplication } from "@nestjs/common"
 import { managedAppInstance } from "fixtures/app"
 import { sqlInjectionAttempts } from "fixtures/database/sql-injection"
-import { post as postEntity } from "fixtures/models/post"
-import { user as userEntity } from "fixtures/models/user"
 import { Post } from "src/post.entity"
 import { User } from "src/user.entity"
 import request from "supertest"
 import { type App } from "supertest/types"
 import { DataSource } from "typeorm"
 
+import { factories } from "../test/factories"
+
 describe("Route Model Binding", () => {
-  const user = userEntity.entity()
-  const post = postEntity.entity()
+  const user = factories.user()
+  const post = factories.post()
   const nonExistentId = crypto.randomUUID()
 
   let app: INestApplication<App>
@@ -21,16 +21,11 @@ describe("Route Model Binding", () => {
 
     await ds
       .getRepository(User)
-      .save([
-        userEntity.entity(),
-        user,
-        userEntity.entity(),
-        userEntity.entity(),
-      ])
+      .save([factories.user(), user, factories.user(), factories.user()])
 
     await ds
       .getRepository(Post)
-      .save([postEntity.entity(), post, postEntity.entity()])
+      .save([factories.post(), post, factories.post()])
   })
 
   describe("GET /users/:user/posts/:post", () => {

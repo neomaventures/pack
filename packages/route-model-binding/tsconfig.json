@@ -9,5 +9,5 @@
       "fixtures/*": ["./fixtures/*"]
     }
   },
-  "include": ["src/**/*", "fixtures/**/*", "e2e/**/*"]
+  "include": ["src/**/*", "fixtures/**/*", "e2e/**/*", "test/**/*"]
 }

@@ -1,15 +1,15 @@
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
-import { post as postEntity } from "fixtures/models/post"
-import { user as userEntity } from "fixtures/models/user"
 import { Post } from "src/post.entity"
 import { User } from "src/user.entity"
 import request from "supertest"
 import { DataSource } from "typeorm"
 
+import { factories } from "../test/factories"
+
 describe("Scope Accessor — Multi-param", () => {
-  const user = userEntity.entity()
-  const post = postEntity.entity()
+  const user = factories.user()
+  const post = factories.post()
 
   describe("Given a user and post exist", () => {
     describe("When the accessor allows users but denies posts", () => {

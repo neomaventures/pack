@@ -5,12 +5,11 @@ import { Test, type TestingModule } from "@nestjs/testing"
 import { getDataSourceToken } from "@nestjs/typeorm"
 import { type Request, type Response } from "express"
 import { sqlInjectionAttempts } from "fixtures/database/sql-injection"
-import { post as postEntity } from "fixtures/models/post"
-import { user as userEntity } from "fixtures/models/user"
 import { Post } from "src/post.entity"
 import { User } from "src/user.entity"
 import { type DataSource } from "typeorm"
 
+import { factories } from "../../test/factories"
 import { ROUTE_MODEL_BINDING_CONFIG } from "../constants/injection-tokens"
 import { type RouteModelBindingConfig } from "../interfaces/route-model-binding-config.interface"
 import { DEFAULT_RESOLVER } from "../modules/route-model-binding.module"
@@ -18,8 +17,8 @@ import { DEFAULT_RESOLVER } from "../modules/route-model-binding.module"
 import { RouteModelBindingMiddleware } from "./route-model-binding.middleware"
 
 describe("RouteModelBindingMiddleware", () => {
-  const user = userEntity.entity()
-  const post = postEntity.entity()
+  const user = factories.user()
+  const post = factories.post()
   const nonExistentId = crypto.randomUUID()
   let middleware: RouteModelBindingMiddleware
 
@@ -54,16 +53,11 @@ describe("RouteModelBindingMiddleware", () => {
 
     await datasource
       .getRepository(User)
-      .save([
-        userEntity.entity(),
-        userEntity.entity(),
-        user,
-        userEntity.entity(),
-      ])
+      .save([factories.user(), factories.user(), user, factories.user()])
 
     await datasource
       .getRepository(Post)
-      .save([postEntity.entity(), postEntity.entity(), post])
+      .save([factories.post(), factories.post(), post])
   })
 
   describe(`Given a User Entity exists with the id ${user.id} and a Post Entity exists with the id ${post.id}`, () => {

@@ -1,15 +1,15 @@
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
-import { post as postEntity } from "fixtures/models/post"
-import { user as userEntity } from "fixtures/models/user"
 import { Post } from "src/post.entity"
 import { User } from "src/user.entity"
 import request from "supertest"
 import { DataSource } from "typeorm"
 
+import { factories } from "../test/factories"
+
 describe("Scope Accessor — Deny 403", () => {
-  const user = userEntity.entity()
-  const post = postEntity.entity()
+  const user = factories.user()
+  const post = factories.post()
 
   let app: Awaited<ReturnType<typeof managedAppInstance>>
   beforeEach(async () => {

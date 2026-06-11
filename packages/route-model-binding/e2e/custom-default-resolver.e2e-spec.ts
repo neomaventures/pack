@@ -2,24 +2,24 @@ import { type ResolverContext } from "@neomaventures/route-model-binding"
 import { HttpStatus, type INestApplication } from "@nestjs/common"
 import { managedCustomAppInstance, setupCustomApp } from "fixtures/app/custom"
 import { sqlInjectionAttempts } from "fixtures/database/sql-injection"
-import { post as postEntity } from "fixtures/models/post"
-import { user as userEntity } from "fixtures/models/user"
 import { Post } from "src/post.entity"
 import { User } from "src/user.entity"
 import request from "supertest"
 import { type App } from "supertest/types"
 import { DataSource, type FindOptionsWhere } from "typeorm"
 
+import { factories } from "../test/factories"
+
 describe("Custom Default Resolver", () => {
-  const user = userEntity.entity()
-  const post = postEntity.entity()
+  const user = factories.user()
+  const post = factories.post()
 
   // Deleted entities to test soft-deletion handling
   // within the custom default resolver, these ensure that
   // the custom resolver is being used instead of the default
   // behavior which would return these entities.
-  const deletedUser = userEntity.entity({ deletedAt: new Date() })
-  const deletedPost = postEntity.entity({ deletedAt: new Date() })
+  const deletedUser = factories.user({ deletedAt: new Date() })
+  const deletedPost = factories.post({ deletedAt: new Date() })
   const nonExistentId = crypto.randomUUID()
 
   // An example custom resolver that makes use of all parameters available to it;
@@ -55,11 +55,11 @@ describe("Custom Default Resolver", () => {
     const ds = app.get<DataSource>(DataSource)
     await ds
       .getRepository(User)
-      .save([userEntity.entity(), user, userEntity.entity(), deletedUser])
+      .save([factories.user(), user, factories.user(), deletedUser])
 
     await ds
       .getRepository(Post)
-      .save([post, postEntity.entity(), postEntity.entity(), deletedPost])
+      .save([post, factories.post(), factories.post(), deletedPost])
   })
 
   describe("GET /users/:user/posts/:post", () => {
