@@ -1,23 +1,16 @@
-import { faker } from "@faker-js/faker"
 import { executionContext, express } from "@neomaventures/fixtures"
 import { type ExecutionContext } from "@nestjs/common"
 import { ROUTE_ARGS_METADATA } from "@nestjs/common/constants"
 import { type CustomParamFactory } from "@nestjs/common/interfaces"
 
+import { factories } from "../../test/factories"
 import { type Storable } from "../interfaces/storable.interface"
 
 import { StoredFile } from "./stored-file.decorator"
 
 type Args = Record<string, { factory: CustomParamFactory }>
 
-const mockStoredFile: Storable = {
-  id: faker.number.int(),
-  originalName: faker.system.fileName(),
-  mimeType: faker.system.mimeType(),
-  size: faker.number.int({ min: 1, max: 10_000_000 }),
-  key: `uploads/${faker.string.alphanumeric(26)}-${faker.system.fileName()}`,
-  bucket: faker.string.alphanumeric(10),
-}
+const mockStoredFile: Storable = factories.storable()
 
 describe("StoredFileDecorator", () => {
   let factory: CustomParamFactory

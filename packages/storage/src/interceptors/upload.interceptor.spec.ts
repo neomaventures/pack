@@ -1,9 +1,4 @@
-import {
-  executionContext,
-  express,
-  MockRequest,
-  multerFile,
-} from "@neomaventures/fixtures"
+import { executionContext, express, MockRequest } from "@neomaventures/fixtures"
 import { ManagedDatabaseModule } from "@neomaventures/managed-database"
 import { type CallHandler, type ExecutionContext } from "@nestjs/common"
 import { EventEmitter2, EventEmitterModule } from "@nestjs/event-emitter"
@@ -16,6 +11,7 @@ import { lastValueFrom, type Observable, of, throwError } from "rxjs"
 import { Column, DataSource, Entity, PrimaryGeneratedColumn } from "typeorm"
 
 import { StorageModule } from "../"
+import { factories } from "../../test/factories"
 import { Upload } from "../decorators/upload.decorator"
 import { FileCreatedEvent } from "../events/file-created.event"
 import { FileStoreUnreachableException } from "../exceptions/file-store-unreachable.exception"
@@ -68,7 +64,7 @@ class UploadHandlerClass {
 }
 
 const interceptorInvocation = ({
-  file = multerFile(),
+  file = factories.multerFile(),
   handlerMethod = UploadHandlerClass.prototype.uploadHandler,
   response = of({}) as Observable<unknown>,
 }: {
@@ -130,7 +126,7 @@ describe("UploadInterceptor", () => {
   describe("intercept()", () => {
     describe("Given a valid file upload", () => {
       it("should upload the file to MinIO", async () => {
-        const file = multerFile()
+        const file = factories.multerFile()
         const { ctx, handler, req } = interceptorInvocation({ file })
 
         await lastValueFrom(await interceptor.intercept(ctx, handler))
@@ -144,7 +140,7 @@ describe("UploadInterceptor", () => {
       })
 
       it("should create an entity and attach it to req.storage.storedFile", async () => {
-        const file = multerFile()
+        const file = factories.multerFile()
         const { ctx, handler, req } = interceptorInvocation({ file })
 
         await interceptor.intercept(ctx, handler)
@@ -174,7 +170,7 @@ describe("UploadInterceptor", () => {
       })
 
       it("should persist the entity to the database", async () => {
-        const file = multerFile()
+        const file = factories.multerFile()
         const { ctx, handler } = interceptorInvocation({ file })
 
         await lastValueFrom(await interceptor.intercept(ctx, handler))
@@ -200,7 +196,7 @@ describe("UploadInterceptor", () => {
 
       it("should create an entity and attach it to req.storage.storedFile", async () => {
         const resolver = module.get(TestKeyResolver)
-        const file = multerFile()
+        const file = factories.multerFile()
         const { ctx, handler, req } = interceptorInvocation({
           file,
           handlerMethod: CustomKeyResolverClass.prototype.uploadHandler,
@@ -220,7 +216,7 @@ describe("UploadInterceptor", () => {
 
       it("should upload the file to MinIO", async () => {
         const resolver = module.get(TestKeyResolver)
-        const file = multerFile()
+        const file = factories.multerFile()
         const { ctx, handler, req } = interceptorInvocation({
           file,
           handlerMethod: CustomKeyResolverClass.prototype.uploadHandler,
@@ -246,7 +242,7 @@ describe("UploadInterceptor", () => {
       }
 
       it("should create an entity and attach it to req.storage.storedFile", async () => {
-        const file = multerFile()
+        const file = factories.multerFile()
         const { ctx, handler, req } = interceptorInvocation({
           file,
           handlerMethod: CustomKeyResolverClass.prototype.uploadHandler,
@@ -265,7 +261,7 @@ describe("UploadInterceptor", () => {
       })
 
       it("should upload the file to MinIO", async () => {
-        const file = multerFile()
+        const file = factories.multerFile()
         const { ctx, handler, req } = interceptorInvocation({
           file,
           handlerMethod: CustomKeyResolverClass.prototype.uploadHandler,
@@ -298,7 +294,7 @@ describe("UploadInterceptor", () => {
       it("should throw FileTooLargeException with fileSize and maxSize", async () => {
         const fileSize = GLOBAL_MAX_FILE_SIZE * 2
         const { ctx, handler } = interceptorInvocation({
-          file: multerFile({ size: fileSize }),
+          file: factories.multerFile({ size: fileSize }),
         })
 
         await expect(interceptor.intercept(ctx, handler)).rejects.toMatchError(
@@ -315,7 +311,7 @@ describe("UploadInterceptor", () => {
       it("should throw UnsupportedFileTypeException with mimeType and allowedTypes", async () => {
         const mimeType = "audio/vorbis"
         const { ctx, handler } = interceptorInvocation({
-          file: multerFile({ mimetype: mimeType }),
+          file: factories.multerFile({ mimetype: mimeType }),
         })
 
         await expect(interceptor.intercept(ctx, handler)).rejects.toMatchError(
@@ -337,7 +333,7 @@ describe("UploadInterceptor", () => {
       it("should throw FileTooLargeException with per-route maxSize", async () => {
         const fileSize = ROUTE_MAX_FILE_SIZE + 1
         const { ctx, handler } = interceptorInvocation({
-          file: multerFile({ size: fileSize }),
+          file: factories.multerFile({ size: fileSize }),
           handlerMethod: SmallFileHandlerClass.prototype.smallHandler,
         })
 
@@ -360,7 +356,7 @@ describe("UploadInterceptor", () => {
       it("should throw UnsupportedFileTypeException with per-route types", async () => {
         const mimeType = "text/plain"
         const { ctx, handler } = interceptorInvocation({
-          file: multerFile({ mimetype: mimeType }),
+          file: factories.multerFile({ mimetype: mimeType }),
           handlerMethod: CsvHandlerClass.prototype.csvHandler,
         })
 
@@ -383,7 +379,7 @@ describe("UploadInterceptor", () => {
       it("should throw UnsupportedFileTypeException when file passes global but fails per-route", async () => {
         const mimeType = "text/plain"
         const { ctx, handler } = interceptorInvocation({
-          file: multerFile({ mimetype: mimeType }),
+          file: factories.multerFile({ mimetype: mimeType }),
           handlerMethod: CsvOnlyHandlerClass.prototype.csvOnlyHandler,
         })
 
@@ -399,7 +395,7 @@ describe("UploadInterceptor", () => {
 
     describe("Given a successful upload", () => {
       it("should emit a FileCreatedEvent with the persisted entity", async () => {
-        const file = multerFile()
+        const file = factories.multerFile()
         const { ctx, handler } = interceptorInvocation({ file })
 
         const receivedEvents: FileCreatedEvent[] = []
