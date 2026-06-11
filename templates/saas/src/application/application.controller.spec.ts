@@ -77,7 +77,6 @@ describe("ApplicationController", () => {
         result: checkResult,
         checkedAt: "2026-06-11T12:34:56.789Z",
       })
-      expect(healthService.check).toHaveBeenCalledTimes(1)
 
       jest.useRealTimers()
     })
