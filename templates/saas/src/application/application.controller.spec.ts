@@ -1,4 +1,5 @@
 import { MockLoggerService } from "@neomaventures/fixtures"
+import { type HealthResult, HealthService } from "@neomaventures/healthcheck"
 import { ApplicationLoggerService } from "@neomaventures/logging"
 import {
   BadRequestException,
@@ -11,13 +12,18 @@ import { ApplicationController } from "./application.controller"
 describe("ApplicationController", () => {
   let controller: ApplicationController
   let logger: MockLoggerService
+  let healthService: { check: jest.Mock }
 
   beforeEach(async () => {
     logger = new MockLoggerService()
+    healthService = { check: jest.fn() }
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ApplicationController],
-      providers: [{ provide: ApplicationLoggerService, useValue: logger }],
+      providers: [
+        { provide: ApplicationLoggerService, useValue: logger },
+        { provide: HealthService, useValue: healthService },
+      ],
     }).compile()
 
     controller = module.get<ApplicationController>(ApplicationController)
@@ -56,6 +62,24 @@ describe("ApplicationController", () => {
       it("should throw a BadRequestException", () => {
         expect(() => controller.error()).toThrow(BadRequestException)
       })
+    })
+  })
+
+  describe("status()", () => {
+    it("should return the health probe result and an ISO timestamp", async () => {
+      const checkResult: HealthResult = { http: "ok", database: "ok" }
+      healthService.check.mockResolvedValue(checkResult)
+      jest.useFakeTimers().setSystemTime(new Date("2026-06-11T12:34:56.789Z"))
+
+      const result = await controller.status()
+
+      expect(result).toEqual({
+        result: checkResult,
+        checkedAt: "2026-06-11T12:34:56.789Z",
+      })
+      expect(healthService.check).toHaveBeenCalledTimes(1)
+
+      jest.useRealTimers()
     })
   })
 })
