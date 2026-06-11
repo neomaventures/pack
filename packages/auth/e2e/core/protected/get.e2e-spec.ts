@@ -2,9 +2,10 @@ import { faker } from "@faker-js/faker"
 import { MailpitClient } from "@neomaventures/mailpit"
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
-import { authenticateViaEmail } from "fixtures/fakes/magic-link"
 import request from "supertest"
 import { DataSource } from "typeorm"
+
+import { helpers } from "../../../test/helpers"
 
 const { OK, UNAUTHORIZED, FORBIDDEN } = HttpStatus
 const mailpit = new MailpitClient(process.env.MAILPIT_API!)
@@ -36,7 +37,7 @@ appModules.forEach(([name, modulePath]) => {
     const createUserWithPermissions = async (
       permissions: string[],
     ): Promise<{ id: string; email: string; token: string }> => {
-      const { token, user } = await authenticateViaEmail(
+      const { token, user } = await helpers.authenticateViaEmail(
         app,
         faker.internet.email(),
       )

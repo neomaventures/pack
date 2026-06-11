@@ -8,10 +8,10 @@ import { DynamicModule } from "@nestjs/common"
 import { EventEmitter2 } from "@nestjs/event-emitter"
 import { Test, TestingModule } from "@nestjs/testing"
 import { getRepositoryToken, TypeOrmModule } from "@nestjs/typeorm"
-import { google } from "fixtures/fakes/google"
 import * as jwt from "jsonwebtoken"
 import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm"
 
+import { factories } from "../../test/factories"
 import { AuthModule } from "../auth.module"
 import { AuthOptions } from "../auth.options"
 import { AuthenticatedEvent } from "../events/authenticated.event"
@@ -51,7 +51,7 @@ class UserWithProfile implements Authenticatable {
 
 const googleOAuthClient = new GoogleOAuthClient(mockserver)
 
-const googleAuth = google.authOptions({
+const googleAuth = factories.googleAuthOptions({
   tokenEndpoint: googleOAuthClient.tokenEndpoint(),
 })
 

@@ -15,16 +15,7 @@ export interface AuthResult {
   user: { id: string; email: string }
 }
 
-/**
- * Authenticates a user via the full magic link flow:
- * sends email, extracts token from mailpit, verifies it,
- * and returns the session token, cookie, and user.
- *
- * @param app - The NestJS application instance
- * @param email - The email address to authenticate
- * @returns The session token, Set-Cookie header, and user details
- */
-export const authenticateViaEmail = async (
+const authenticateViaEmail = async (
   app: INestApplication,
   email: string,
 ): Promise<AuthResult> => {
@@ -55,13 +46,11 @@ export const authenticateViaEmail = async (
   }
 }
 
-/**
- * Extracts the `name=value` portion from a Set-Cookie header,
- * stripping attributes like HttpOnly, Secure, Path, etc.
- *
- * @param setCookie - The raw Set-Cookie header string
- * @returns The cookie in `name=value` format for use in a Cookie request header
- */
-export const extractCookieValue = (setCookie: string): string => {
+const extractCookieValue = (setCookie: string): string => {
   return setCookie.split(";")[0]
+}
+
+export const helpers = {
+  authenticateViaEmail,
+  extractCookieValue,
 }

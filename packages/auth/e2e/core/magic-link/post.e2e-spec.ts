@@ -2,10 +2,11 @@ import { faker } from "@faker-js/faker"
 import { MailpitClient } from "@neomaventures/mailpit"
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
-import { credentials } from "fixtures/fakes/credentials"
 import * as jwt from "jsonwebtoken"
 import request from "supertest"
 import { DataSource } from "typeorm"
+
+import { factories } from "../../../test/factories"
 
 const { ACCEPTED, BAD_REQUEST } = HttpStatus
 const FIFTEEN_MINUTES = 900
@@ -152,7 +153,7 @@ appModules.forEach(([name, modulePath]) => {
       })
     })
 
-    credentials.invalidEmails().forEach((email) => {
+    factories.invalidEmails().forEach((email) => {
       describe(`When it's called with the invalid email ${email}`, () => {
         it(`Then it should respond with an HTTP ${BAD_REQUEST}`, () => {
           return request(app.getHttpServer())

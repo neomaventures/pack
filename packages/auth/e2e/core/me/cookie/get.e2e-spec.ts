@@ -3,13 +3,11 @@ import { MAGIC_LINK_AUDIENCE, SESSION_AUDIENCE } from "@neomaventures/auth"
 import { MailpitClient } from "@neomaventures/mailpit"
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
-import {
-  authenticateViaEmail,
-  extractCookieValue,
-} from "fixtures/fakes/magic-link"
 import * as jwt from "jsonwebtoken"
 import request from "supertest"
 import { v4 } from "uuid"
+
+import { helpers } from "../../../../test/helpers"
 
 const { OK, UNAUTHORIZED } = HttpStatus
 const mailpit = new MailpitClient(process.env.MAILPIT_API!)
@@ -39,28 +37,34 @@ appModules.forEach(([name, modulePath]) => {
     describe("When a request is made with a valid session cookie", () => {
       it("should respond with HTTP OK and the authenticated user", async () => {
         const email = faker.internet.email()
-        const { cookie, user } = await authenticateViaEmail(app, email)
+        const { cookie, user } = await helpers.authenticateViaEmail(app, email)
 
         await request(app.getHttpServer())
           .get("/me")
-          .set("Cookie", extractCookieValue(cookie))
+          .set("Cookie", helpers.extractCookieValue(cookie))
           .expect(OK)
           .expect({ id: user.id, email: user.email })
       })
 
       it("should return different users for different cookies", async () => {
-        const userA = await authenticateViaEmail(app, faker.internet.email())
-        const userB = await authenticateViaEmail(app, faker.internet.email())
+        const userA = await helpers.authenticateViaEmail(
+          app,
+          faker.internet.email(),
+        )
+        const userB = await helpers.authenticateViaEmail(
+          app,
+          faker.internet.email(),
+        )
 
         await request(app.getHttpServer())
           .get("/me")
-          .set("Cookie", extractCookieValue(userA.cookie))
+          .set("Cookie", helpers.extractCookieValue(userA.cookie))
           .expect(OK)
           .expect({ id: userA.user.id, email: userA.user.email })
 
         await request(app.getHttpServer())
           .get("/me")
-          .set("Cookie", extractCookieValue(userB.cookie))
+          .set("Cookie", helpers.extractCookieValue(userB.cookie))
           .expect(OK)
           .expect({ id: userB.user.id, email: userB.user.email })
       })
@@ -68,7 +72,7 @@ appModules.forEach(([name, modulePath]) => {
 
     describe("When the verify endpoint responds", () => {
       it("should include a Set-Cookie header with auth.sid, HttpOnly, Secure, SameSite=Lax, and Path=/", async () => {
-        const { cookie } = await authenticateViaEmail(
+        const { cookie } = await helpers.authenticateViaEmail(
           app,
           faker.internet.email(),
         )
@@ -191,11 +195,11 @@ appModules.forEach(([name, modulePath]) => {
 
     describe("When both Bearer and Cookie are present", () => {
       it("should authenticate via Bearer (Bearer takes priority)", async () => {
-        const bearerUser = await authenticateViaEmail(
+        const bearerUser = await helpers.authenticateViaEmail(
           app,
           faker.internet.email(),
         )
-        const cookieUser = await authenticateViaEmail(
+        const cookieUser = await helpers.authenticateViaEmail(
           app,
           faker.internet.email(),
         )
@@ -203,7 +207,7 @@ appModules.forEach(([name, modulePath]) => {
         await request(app.getHttpServer())
           .get("/me")
           .set("Authorization", `Bearer ${bearerUser.token}`)
-          .set("Cookie", extractCookieValue(cookieUser.cookie))
+          .set("Cookie", helpers.extractCookieValue(cookieUser.cookie))
           .expect(OK)
           .expect({ id: bearerUser.user.id, email: bearerUser.user.email })
       })

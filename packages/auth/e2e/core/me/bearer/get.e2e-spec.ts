@@ -3,10 +3,11 @@ import { MAGIC_LINK_AUDIENCE, SESSION_AUDIENCE } from "@neomaventures/auth"
 import { MailpitClient } from "@neomaventures/mailpit"
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
-import { authenticateViaEmail } from "fixtures/fakes/magic-link"
 import * as jwt from "jsonwebtoken"
 import request from "supertest"
 import { v4 } from "uuid"
+
+import { helpers } from "../../../../test/helpers"
 
 const { OK, UNAUTHORIZED } = HttpStatus
 const mailpit = new MailpitClient(process.env.MAILPIT_API!)
@@ -36,7 +37,7 @@ appModules.forEach(([name, modulePath]) => {
     describe("When a request is made with a valid Bearer token", () => {
       it("should respond with HTTP OK and the authenticated user", async () => {
         const email = faker.internet.email()
-        const { token, user } = await authenticateViaEmail(app, email)
+        const { token, user } = await helpers.authenticateViaEmail(app, email)
 
         await request(app.getHttpServer())
           .get("/me")
@@ -46,8 +47,14 @@ appModules.forEach(([name, modulePath]) => {
       })
 
       it("should return different users for different tokens", async () => {
-        const userA = await authenticateViaEmail(app, faker.internet.email())
-        const userB = await authenticateViaEmail(app, faker.internet.email())
+        const userA = await helpers.authenticateViaEmail(
+          app,
+          faker.internet.email(),
+        )
+        const userB = await helpers.authenticateViaEmail(
+          app,
+          faker.internet.email(),
+        )
 
         await request(app.getHttpServer())
           .get("/me")

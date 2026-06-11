@@ -6,7 +6,7 @@ import { Inject, Injectable } from "@nestjs/common"
 import { Test } from "@nestjs/testing"
 import { ClsService } from "nestjs-cls"
 
-import * as fakes from "../../fixtures/fakes/principal"
+import { factories } from "../../test/factories"
 import { type Authenticatable } from "../interfaces/authenticatable.interface"
 
 import {
@@ -30,7 +30,7 @@ describe("principal.slot", () => {
   describe("getPrincipal()", () => {
     describe("Given a CLS context with a principal set via setPrincipal()", () => {
       it("should return the principal", () => {
-        const principal = fakes.principal()
+        const principal = factories.principal()
 
         const result = cls.run(() => {
           setPrincipal(principal)
@@ -58,7 +58,7 @@ describe("principal.slot", () => {
   describe("setPrincipal()", () => {
     describe("Given an active CLS context", () => {
       it("should store the principal so getPrincipal() can retrieve it", () => {
-        const principal = fakes.principal()
+        const principal = factories.principal()
 
         const result = cls.run(() => {
           setPrincipal(principal)
@@ -71,7 +71,9 @@ describe("principal.slot", () => {
 
     describe("Given no active CLS context", () => {
       it("should throw NoContextError", () => {
-        expect(() => setPrincipal(fakes.principal())).toThrow(NoContextError)
+        expect(() => setPrincipal(factories.principal())).toThrow(
+          NoContextError,
+        )
       })
     })
   })
@@ -107,7 +109,7 @@ describe("principal.slot", () => {
 
     describe("Given a principal has been stored in the CLS context", () => {
       it("should resolve the principal's properties via the proxy", () => {
-        const principal = fakes.principal()
+        const principal = factories.principal()
 
         cls.run(() => {
           setPrincipal(principal)

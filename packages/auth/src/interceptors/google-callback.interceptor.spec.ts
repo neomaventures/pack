@@ -1,16 +1,16 @@
 import { faker } from "@faker-js/faker"
 import { executionContext, express } from "@neomaventures/fixtures"
 import { type CallHandler, type ExecutionContext } from "@nestjs/common"
-import { google } from "fixtures/fakes/google"
 import { of } from "rxjs"
 
+import { factories } from "../../test/factories"
 import { GoogleCodeExchangeException } from "../exceptions/google-code-exchange.exception"
 import { type GoogleAuthService } from "../services/google-auth.service"
 
 import { GoogleCallbackInterceptor } from "./google-callback.interceptor"
 
 describe("GoogleCallbackInterceptor", () => {
-  const mockAuthResult = google.authResult()
+  const mockAuthResult = factories.googleAuthResult()
 
   const mockGoogleAuthService = {
     authenticate: jest.fn(),

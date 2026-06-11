@@ -12,7 +12,7 @@ import {
 import { Test, type TestingModule } from "@nestjs/testing"
 import { ClsService } from "nestjs-cls"
 
-import * as fakes from "../../fixtures/fakes/principal"
+import { factories } from "../../test/factories"
 import { UnauthorizedRedirectException } from "../exceptions/unauthorized-redirect.exception"
 import { setPrincipal } from "../principal/principal.slot"
 
@@ -58,7 +58,7 @@ describe("Authenticated", () => {
       describe(`When it is called with a request with an attached principal`, () => {
         it("Then it should return true.", () => {
           cls.run(() => {
-            setPrincipal(fakes.principal())
+            setPrincipal(factories.principal())
             expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
           })
         })
@@ -114,7 +114,7 @@ describe("Authenticated", () => {
       describe(`When it is called with a request with an attached principal`, () => {
         it("Then it should return true.", () => {
           cls.run(() => {
-            setPrincipal(fakes.principal())
+            setPrincipal(factories.principal())
             expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
           })
         })

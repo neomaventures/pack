@@ -2,11 +2,9 @@ import { faker } from "@faker-js/faker"
 import { MailpitClient } from "@neomaventures/mailpit"
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
-import {
-  authenticateViaEmail,
-  extractCookieValue,
-} from "fixtures/fakes/magic-link"
 import request from "supertest"
+
+import { helpers } from "../../../test/helpers"
 
 const { NO_CONTENT } = HttpStatus
 const mailpit = new MailpitClient(process.env.MAILPIT_API!)
@@ -28,26 +26,26 @@ appModules.forEach(([name, modulePath]) => {
 
     describe("When a request is made with a valid session cookie", () => {
       it(`should respond with HTTP ${NO_CONTENT}`, async () => {
-        const { cookie } = await authenticateViaEmail(
+        const { cookie } = await helpers.authenticateViaEmail(
           app,
           faker.internet.email(),
         )
 
         await request(app.getHttpServer())
           .post("/logout")
-          .set("Cookie", extractCookieValue(cookie))
+          .set("Cookie", helpers.extractCookieValue(cookie))
           .expect(NO_CONTENT)
       })
 
       it("should clear the session cookie with Max-Age=0", async () => {
-        const { cookie } = await authenticateViaEmail(
+        const { cookie } = await helpers.authenticateViaEmail(
           app,
           faker.internet.email(),
         )
 
         const response = await request(app.getHttpServer())
           .post("/logout")
-          .set("Cookie", extractCookieValue(cookie))
+          .set("Cookie", helpers.extractCookieValue(cookie))
           .expect(NO_CONTENT)
 
         const setCookie = Array.isArray(response.headers["set-cookie"])

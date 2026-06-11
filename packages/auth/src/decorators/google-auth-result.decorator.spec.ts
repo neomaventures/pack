@@ -1,13 +1,14 @@
 import { executionContext, express } from "@neomaventures/fixtures"
 import { ROUTE_ARGS_METADATA } from "@nestjs/common/constants"
 import { CustomParamFactory, ExecutionContext } from "@nestjs/common/interfaces"
-import { google } from "fixtures/fakes/google"
+
+import { factories } from "../../test/factories"
 
 import { GetGoogleAuthResult } from "./google-auth-result.decorator"
 
 type Args = Record<string, { factory: CustomParamFactory }>
 
-const mockResult = google.authResult()
+const mockResult = factories.googleAuthResult()
 
 describe("GetGoogleAuthResultDecorator", () => {
   let decorator: typeof GetGoogleAuthResult

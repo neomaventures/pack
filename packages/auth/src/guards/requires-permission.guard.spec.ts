@@ -9,7 +9,7 @@ import { Reflector } from "@nestjs/core"
 import { Test, TestingModule } from "@nestjs/testing"
 import { ClsService } from "nestjs-cls"
 
-import * as fakes from "../../fixtures/fakes/principal"
+import { factories } from "../../test/factories"
 import { RequiresAnyPermission } from "../decorators/requires-any-permission.decorator"
 import { RequiresPermission } from "../decorators/requires-permission.decorator"
 import { PermissionDeniedException } from "../exceptions/permission-denied.exception"
@@ -93,7 +93,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(fakes.principal({ permissions: [] }))
+          setPrincipal(factories.principal({ permissions: [] }))
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })
@@ -108,7 +108,7 @@ describe("RequiresPermissionGuard", () => {
 
         cls.run(() => {
           setPrincipal(
-            fakes.principal({
+            factories.principal({
               permissions: ["read:users", "write:users", "delete:users"],
             }),
           )
@@ -123,7 +123,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(fakes.principal({ permissions: ["read:users"] }))
+          setPrincipal(factories.principal({ permissions: ["read:users"] }))
           expect(() =>
             guard.canActivate(<ExecutionContext>ctx),
           ).toThrowMatching(PermissionDeniedException, {
@@ -139,7 +139,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(fakes.principal({ permissions: ["*"] }))
+          setPrincipal(factories.principal({ permissions: ["*"] }))
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })
@@ -153,7 +153,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(fakes.principal({ permissions: ["delete:users"] }))
+          setPrincipal(factories.principal({ permissions: ["delete:users"] }))
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })
@@ -165,7 +165,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(fakes.principal({ permissions: ["read:users"] }))
+          setPrincipal(factories.principal({ permissions: ["read:users"] }))
           expect(() =>
             guard.canActivate(<ExecutionContext>ctx),
           ).toThrowMatching(PermissionDeniedException, {
@@ -184,7 +184,7 @@ describe("RequiresPermissionGuard", () => {
 
         cls.run(() => {
           setPrincipal(
-            fakes.principal({ permissions: ["read:users", "write:users"] }),
+            factories.principal({ permissions: ["read:users", "write:users"] }),
           )
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
@@ -197,7 +197,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(fakes.principal({ permissions: ["read:users"] }))
+          setPrincipal(factories.principal({ permissions: ["read:users"] }))
           expect(() =>
             guard.canActivate(<ExecutionContext>ctx),
           ).toThrowMatching(PermissionDeniedException, {
@@ -213,7 +213,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(fakes.principal({ permissions: ["admin"] }))
+          setPrincipal(factories.principal({ permissions: ["admin"] }))
           expect(() =>
             guard.canActivate(<ExecutionContext>ctx),
           ).toThrowMatching(PermissionDeniedException, {
@@ -232,7 +232,7 @@ describe("RequiresPermissionGuard", () => {
 
         cls.run(() => {
           setPrincipal(
-            fakes.principal({ permissions: ["read:admin", "write:admin"] }),
+            factories.principal({ permissions: ["read:admin", "write:admin"] }),
           )
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
@@ -245,7 +245,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(fakes.principal({ permissions: ["read:admin"] }))
+          setPrincipal(factories.principal({ permissions: ["read:admin"] }))
           expect(() =>
             guard.canActivate(<ExecutionContext>ctx),
           ).toThrowMatching(PermissionDeniedException, {
@@ -261,7 +261,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(fakes.principal({ permissions: ["write:admin"] }))
+          setPrincipal(factories.principal({ permissions: ["write:admin"] }))
           expect(() =>
             guard.canActivate(<ExecutionContext>ctx),
           ).toThrowMatching(PermissionDeniedException, {
@@ -279,7 +279,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(fakes.principal({ permissions: ["read:admin"] }))
+          setPrincipal(factories.principal({ permissions: ["read:admin"] }))
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })
@@ -293,7 +293,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(fakes.principal({ permissions: ["read:admin"] }))
+          setPrincipal(factories.principal({ permissions: ["read:admin"] }))
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })

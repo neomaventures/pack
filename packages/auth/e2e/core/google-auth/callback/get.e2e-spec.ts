@@ -4,10 +4,11 @@ import { google, GoogleOAuthClient } from "@neomaventures/google-fixtures"
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { mockserver } from "@neomaventures/mockserver/fixture"
 import { HttpStatus } from "@nestjs/common"
-import { authenticateViaEmail } from "fixtures/fakes/magic-link"
 import * as jwt from "jsonwebtoken"
 import request from "supertest"
 import { DataSource } from "typeorm"
+
+import { helpers } from "../../../../test/helpers"
 
 const { OK, UNAUTHORIZED, FORBIDDEN, BAD_GATEWAY } = HttpStatus
 
@@ -348,7 +349,7 @@ appModules.forEach(([name, modulePath]) => {
           expect(googleResponse.body.isNewUser).toBe(true)
 
           // Step 2: Authenticate via magic link with the same email
-          const magicLinkResult = await authenticateViaEmail(app, email)
+          const magicLinkResult = await helpers.authenticateViaEmail(app, email)
 
           // Step 3: Verify it is the same user
           expect(magicLinkResult.user.id).toBe(googleUserId)
@@ -382,7 +383,7 @@ appModules.forEach(([name, modulePath]) => {
           const googleName = faker.person.fullName()
 
           // Step 1: Authenticate via magic link first
-          const magicLinkResult = await authenticateViaEmail(app, email)
+          const magicLinkResult = await helpers.authenticateViaEmail(app, email)
           const magicLinkUserId = magicLinkResult.user.id
 
           // Step 2: Authenticate via Google with the same email
