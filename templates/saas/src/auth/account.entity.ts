@@ -2,7 +2,15 @@ import {
   type Authenticatable,
   type AuthenticatableProfile,
 } from "@neomaventures/auth"
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from "typeorm"
+
+import { Upload } from "~profile/upload.entity"
 
 /**
  * Represents an authenticated account in the application.
@@ -38,4 +46,17 @@ export class Account implements Authenticatable {
   /** Optional provider-specific profile data (e.g. Google OAuth claims). */
   @Column("simple-json", { nullable: true })
   public authProfile?: AuthenticatableProfile
+
+  /**
+   * The account holder's avatar image, or `null` when no avatar has been
+   * set. Eagerly loaded on every Account query — the JOIN is cheap (single
+   * UUID FK) and templates can access `account.avatar` directly without
+   * threading `relations: ['avatar']` through every callsite.
+   *
+   * Switch to explicit `relations: ['avatar']` per-query if the eager JOIN
+   * ever shows up in a profile.
+   */
+  @OneToOne(() => Upload, { eager: true, nullable: true, onDelete: "SET NULL" })
+  @JoinColumn({ name: "avatarUploadId" })
+  public avatar?: Upload | null
 }

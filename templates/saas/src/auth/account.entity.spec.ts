@@ -3,13 +3,14 @@ import { managedDatasourceInstance } from "@neomaventures/managed-database"
 import { type DataSource, type Repository } from "typeorm"
 
 import { Account } from "~auth/account.entity"
+import { Upload } from "~profile/upload.entity"
 
 describe("Account", () => {
   let datasource: DataSource
   let repository: Repository<Account>
 
   beforeEach(async () => {
-    datasource = await managedDatasourceInstance([Account])
+    datasource = await managedDatasourceInstance([Account, Upload])
     repository = datasource.getRepository(Account)
   })
 
