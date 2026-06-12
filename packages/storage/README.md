@@ -265,12 +265,31 @@ Parameter decorator that extracts the stored file entity from the request.
 
 ### `@TemporaryLink(options?)`
 
-Method decorator for download routes. Handler must return a `Storable` entity.
+Method decorator for download routes. Handler must return a `Storable` entity, or `null`/`undefined` when paired with `default`.
 
 ```typescript
-@TemporaryLink()                  // default expiry from StorageOptions.linkExpiresIn
-@TemporaryLink(600)               // 10 minute expiry
+@TemporaryLink()                              // default expiry from StorageOptions.linkExpiresIn
+@TemporaryLink({ expiresIn: 600 })            // 10 minute expiry
+@TemporaryLink({ default: "/img/avatar.svg" }) // redirect here when handler returns null
 ```
+
+#### Default for missing assets
+
+Pass a `default` URL to redirect to when the handler returns `null` or `undefined`. Useful for default avatars, cover images, and deleted-file placeholders.
+
+```typescript
+@Get("avatar")
+@TemporaryLink({ default: "/img/default-avatar.svg" })
+public async avatar(@CurrentUser() user: User): Promise<Upload | null> {
+  return this.profile.getAvatar(user.id) // returns null when no avatar is set
+}
+```
+
+The `default` value is used verbatim as the 302 `Location` — relative path, absolute URL, or another route. The package does not validate it.
+
+Without `default`, a `null` return is a programmer error and throws — the existing strict contract is preserved for callers who haven't opted in.
+
+`default` only covers the "handler returned null" path. Exceptions thrown inside the handler (DB down, S3 unreachable, `findOneByOrFail` miss) bubble to the global exception filter as before — `default` is **not** an error-swallowing fallback.
 
 ### `FileCreatedEvent`
 
