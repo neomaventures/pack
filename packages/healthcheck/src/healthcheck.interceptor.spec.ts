@@ -1,3 +1,4 @@
+import { faker } from "@faker-js/faker"
 import { callHandler, executionContext, express } from "@neomaventures/fixtures"
 import { Reflector } from "@nestjs/core"
 import { firstValueFrom } from "rxjs"
@@ -48,7 +49,7 @@ describe("HealthcheckInterceptor", () => {
       const healthResult = {
         http: "ok",
         database: "ok",
-        checkedAt: new Date("2026-06-12T00:00:00.000Z"),
+        checkedAt: faker.date.recent(),
       }
 
       beforeEach(() => {
@@ -96,7 +97,7 @@ describe("HealthcheckInterceptor", () => {
       const errorResult = {
         http: "ok",
         database: "error",
-        checkedAt: new Date("2026-06-12T00:00:00.000Z"),
+        checkedAt: faker.date.recent(),
       }
 
       beforeEach(() => {
@@ -137,7 +138,7 @@ describe("HealthcheckInterceptor", () => {
         Reflect.defineMetadata(HEALTHCHECK_METADATA_KEY, true, handler)
         healthService.check.mockResolvedValue({
           http: "ok",
-          checkedAt: new Date("2026-06-12T00:00:00.000Z"),
+          checkedAt: faker.date.recent(),
         })
       })
 

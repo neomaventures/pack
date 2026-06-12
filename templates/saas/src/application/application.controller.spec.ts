@@ -1,3 +1,4 @@
+import { faker } from "@faker-js/faker"
 import { MockLoggerService } from "@neomaventures/fixtures"
 import { type HealthResult } from "@neomaventures/healthcheck"
 import { ApplicationLoggerService } from "@neomaventures/logging"
@@ -65,7 +66,7 @@ describe("ApplicationController", () => {
       const status: HealthResult = {
         http: "ok",
         database: "ok",
-        checkedAt: new Date("2026-06-12T12:00:00.000Z"),
+        checkedAt: faker.date.recent(),
       }
 
       expect(controller.apiHealth(status)).toBe(status)
@@ -77,7 +78,7 @@ describe("ApplicationController", () => {
       const status: HealthResult = {
         http: "ok",
         database: "ok",
-        checkedAt: new Date("2026-06-12T12:00:00.000Z"),
+        checkedAt: faker.date.recent(),
       }
 
       expect(controller.health(status)).toEqual({ result: status })

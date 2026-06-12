@@ -1,3 +1,4 @@
+import { faker } from "@faker-js/faker"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { getDataSourceToken, TypeOrmModule } from "@nestjs/typeorm"
 import { type DataSource } from "typeorm"
@@ -5,7 +6,7 @@ import { type DataSource } from "typeorm"
 import { HealthService } from "./health.service"
 import { PROBE_TIMEOUT_MS } from "./healthcheck.constants"
 
-const CHECKED_AT = new Date("2026-06-12T12:00:00.000Z")
+const CHECKED_AT = faker.date.recent()
 
 describe("HealthService", () => {
   beforeEach(() => {
