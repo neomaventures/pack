@@ -327,15 +327,14 @@ describe("TemporaryLinkInterceptor", () => {
       })
     })
 
-    describe("Given a per-route cacheControl is set (signed-URL branch)", () => {
-      it("should set the Cache-Control header to the per-route value before redirecting", async () => {
+    describe("Given a per-route cacheControl is set and the handler returns a Storable entity", () => {
+      it("should set the Cache-Control header to the per-route value", async () => {
         const content = faker.lorem.paragraph()
         const fileName = faker.system.fileName()
         const key = `${faker.string.alphanumeric(10)}-${fileName}`
         await storageService.store(key, Buffer.from(content), "text/plain")
 
         const res = express.response()
-        const setHeaderSpy = jest.spyOn(res, "setHeader")
         const req = express.request()
         const ctx = executionContext(
           req,
@@ -351,15 +350,11 @@ describe("TemporaryLinkInterceptor", () => {
           result.subscribe({ complete: () => resolve() })
         })
 
-        expect(setHeaderSpy).toHaveBeenCalledWith(
-          "Cache-Control",
-          perRouteCacheControl,
-        )
-        expect(setHeaderSpy).toHaveBeenCalledBefore(res.redirect as jest.Mock)
+        expect(res.getHeader("Cache-Control")).toBe(perRouteCacheControl)
       })
     })
 
-    describe("Given only a global linkCacheControl is set (signed-URL branch)", () => {
+    describe("Given only a global linkCacheControl is set and the handler returns a Storable entity", () => {
       const globalCacheControl = "public, max-age=120"
 
       it("should set the Cache-Control header to the global value", async () => {
@@ -379,7 +374,6 @@ describe("TemporaryLinkInterceptor", () => {
         )
 
         const res = express.response()
-        const setHeaderSpy = jest.spyOn(res, "setHeader")
         const req = express.request()
         const ctx = executionContext(
           req,
@@ -395,11 +389,7 @@ describe("TemporaryLinkInterceptor", () => {
           result.subscribe({ complete: () => resolve() })
         })
 
-        expect(setHeaderSpy).toHaveBeenCalledWith(
-          "Cache-Control",
-          globalCacheControl,
-        )
-        expect(setHeaderSpy).toHaveBeenCalledBefore(res.redirect as jest.Mock)
+        expect(res.getHeader("Cache-Control")).toBe(globalCacheControl)
 
         await globalModule.close()
       })
@@ -425,7 +415,6 @@ describe("TemporaryLinkInterceptor", () => {
         )
 
         const res = express.response()
-        const setHeaderSpy = jest.spyOn(res, "setHeader")
         const req = express.request()
         const ctx = executionContext(
           req,
@@ -441,14 +430,7 @@ describe("TemporaryLinkInterceptor", () => {
           result.subscribe({ complete: () => resolve() })
         })
 
-        expect(setHeaderSpy).toHaveBeenCalledWith(
-          "Cache-Control",
-          perRouteCacheControl,
-        )
-        expect(setHeaderSpy).not.toHaveBeenCalledWith(
-          "Cache-Control",
-          globalCacheControl,
-        )
+        expect(res.getHeader("Cache-Control")).toBe(perRouteCacheControl)
 
         await globalModule.close()
       })
@@ -462,7 +444,6 @@ describe("TemporaryLinkInterceptor", () => {
         await storageService.store(key, Buffer.from(content), "text/plain")
 
         const res = express.response()
-        const setHeaderSpy = jest.spyOn(res, "setHeader")
         const req = express.request()
         const ctx = executionContext(
           req,
@@ -478,17 +459,13 @@ describe("TemporaryLinkInterceptor", () => {
           result.subscribe({ complete: () => resolve() })
         })
 
-        expect(setHeaderSpy).not.toHaveBeenCalledWith(
-          "Cache-Control",
-          expect.anything(),
-        )
+        expect(res.getHeader("Cache-Control")).toBeUndefined()
       })
     })
 
-    describe("Given a per-route cacheControl is set on a default-URL handler", () => {
-      it("should set the Cache-Control header before redirecting to the default URL", async () => {
+    describe("Given a default URL is configured, a per-route cacheControl is set, and the handler returns null", () => {
+      it("should set the Cache-Control header and redirect to the default URL", async () => {
         const res = express.response()
-        const setHeaderSpy = jest.spyOn(res, "setHeader")
         const req = express.request()
         const ctx = executionContext(
           req,
@@ -503,26 +480,21 @@ describe("TemporaryLinkInterceptor", () => {
           result.subscribe({ complete: () => resolve() })
         })
 
-        expect(setHeaderSpy).toHaveBeenCalledWith(
-          "Cache-Control",
-          perRouteCacheControl,
-        )
-        expect(setHeaderSpy).toHaveBeenCalledBefore(res.redirect as jest.Mock)
+        expect(res.getHeader("Cache-Control")).toBe(perRouteCacheControl)
         expect(res.redirect).toHaveBeenCalledWith(HttpStatus.FOUND, defaultUrl)
       })
     })
 
-    describe("Given only a global linkCacheControl is set on a default-URL handler", () => {
+    describe("Given a default URL is configured, a global linkCacheControl is set, and the handler returns null", () => {
       const globalCacheControl = "public, max-age=120"
 
-      it("should set the Cache-Control header to the global value before redirecting to the default URL", async () => {
+      it("should set the Cache-Control header to the global value and redirect to the default URL", async () => {
         const globalModule = await createModule({
           linkCacheControl: globalCacheControl,
         })
         const globalInterceptor = globalModule.get(TemporaryLinkInterceptor)
 
         const res = express.response()
-        const setHeaderSpy = jest.spyOn(res, "setHeader")
         const req = express.request()
         const ctx = executionContext(
           req,
@@ -537,11 +509,7 @@ describe("TemporaryLinkInterceptor", () => {
           result.subscribe({ complete: () => resolve() })
         })
 
-        expect(setHeaderSpy).toHaveBeenCalledWith(
-          "Cache-Control",
-          globalCacheControl,
-        )
-        expect(setHeaderSpy).toHaveBeenCalledBefore(res.redirect as jest.Mock)
+        expect(res.getHeader("Cache-Control")).toBe(globalCacheControl)
         expect(res.redirect).toHaveBeenCalledWith(HttpStatus.FOUND, defaultUrl)
 
         await globalModule.close()
