@@ -48,7 +48,7 @@ describe("HealthcheckInterceptor", () => {
       const healthResult = {
         http: "ok",
         database: "ok",
-        checkedAt: "2026-06-12T00:00:00.000Z",
+        checkedAt: new Date("2026-06-12T00:00:00.000Z"),
       }
 
       beforeEach(() => {
@@ -78,7 +78,7 @@ describe("HealthcheckInterceptor", () => {
         ).toEqual(healthResult)
       })
 
-      it("should pass through to next.handle() (controller runs, not short-circuited)", async () => {
+      it("should pass through to next.handle()", async () => {
         const downstream = callHandler({ fromController: "rendered" })
         const handleSpy = jest.spyOn(downstream, "handle")
         const ctx = executionContext(undefined, undefined, handler)
@@ -96,7 +96,7 @@ describe("HealthcheckInterceptor", () => {
       const errorResult = {
         http: "ok",
         database: "error",
-        checkedAt: "2026-06-12T00:00:00.000Z",
+        checkedAt: new Date("2026-06-12T00:00:00.000Z"),
       }
 
       beforeEach(() => {
@@ -137,7 +137,7 @@ describe("HealthcheckInterceptor", () => {
         Reflect.defineMetadata(HEALTHCHECK_METADATA_KEY, true, handler)
         healthService.check.mockResolvedValue({
           http: "ok",
-          checkedAt: "2026-06-12T00:00:00.000Z",
+          checkedAt: new Date("2026-06-12T00:00:00.000Z"),
         })
       })
 

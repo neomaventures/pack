@@ -17,8 +17,14 @@
 
     <main class="flex flex-1 flex-col items-center px-6 py-16">
       <div class="w-full max-w-2xl">
-        <% const { checkedAt, ...probes } = result %>
-        <% const degraded = Object.values(probes).some(v => v === "error") %>
+        <%
+          // Probe data is namespaced under `result` so it doesn't collide
+          // with the view-engine globals merged into `locals`
+          // (npmPackageName etc.). Split the timestamp out from the probe
+          // entries so it doesn't render as a per-probe row.
+          const { checkedAt, ...probes } = result
+          const degraded = Object.values(probes).some(v => v === "error")
+        %>
         <% if (degraded) { %>
           <div
             class="rounded-md bg-red-100 px-6 py-4 text-center text-lg font-semibold text-red-800"
@@ -53,8 +59,14 @@
         </ul>
 
         <p class="mt-6 text-center text-sm text-slate-500">
-          Last checked at <%= checkedAt %>
+          Last checked at <%= checkedAt.toISOString() %>
         </p>
+        <!--
+          checkedAt is a Date instance — the template owns the formatting.
+          Switch to .toLocaleString(...) or a date-fns helper if you want
+          a more operator-friendly format.
+        -->
+
       </div>
     </main>
 

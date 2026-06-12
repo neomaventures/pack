@@ -5,9 +5,17 @@ import { type DataSource } from "typeorm"
 import { HealthService } from "./health.service"
 import { PROBE_TIMEOUT_MS } from "./healthcheck.constants"
 
-const ISO_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/
+const CHECKED_AT = new Date("2026-06-12T12:00:00.000Z")
 
 describe("HealthService", () => {
+  beforeEach(() => {
+    jest.useFakeTimers().setSystemTime(CHECKED_AT)
+  })
+
+  afterEach(() => {
+    jest.useRealTimers()
+  })
+
   describe("check()", () => {
     describe("Given no DataSource is registered", () => {
       let service: HealthService
@@ -20,19 +28,10 @@ describe("HealthService", () => {
         service = module.get<HealthService>(HealthService)
       })
 
-      it("should return only the http probe", async () => {
+      it("should return only the http probe + checkedAt", async () => {
         const result = await service.check()
 
-        expect(result).toEqual({
-          http: "ok",
-          checkedAt: expect.stringMatching(ISO_TIMESTAMP),
-        })
-      })
-
-      it("should not include a database key", async () => {
-        const result = await service.check()
-
-        expect(result).not.toHaveProperty("database")
+        expect(result).toEqual({ http: "ok", checkedAt: CHECKED_AT })
       })
     })
 
@@ -66,7 +65,7 @@ describe("HealthService", () => {
         expect(result).toEqual({
           http: "ok",
           database: "ok",
-          checkedAt: expect.stringMatching(ISO_TIMESTAMP),
+          checkedAt: CHECKED_AT,
         })
       })
     })
@@ -95,7 +94,7 @@ describe("HealthService", () => {
         expect(result).toEqual({
           http: "ok",
           database: "error",
-          checkedAt: expect.stringMatching(ISO_TIMESTAMP),
+          checkedAt: CHECKED_AT,
         })
       })
 
@@ -123,41 +122,14 @@ describe("HealthService", () => {
       })
 
       it('should time out and return database: "error"', async () => {
-        jest.useFakeTimers()
-        try {
-          const probe = service.check()
-          await jest.advanceTimersByTimeAsync(PROBE_TIMEOUT_MS + 1)
-          await expect(probe).resolves.toEqual({
-            http: "ok",
-            database: "error",
-            checkedAt: expect.stringMatching(ISO_TIMESTAMP),
-          })
-        } finally {
-          jest.useRealTimers()
-        }
-      })
-    })
+        const probe = service.check()
+        await jest.advanceTimersByTimeAsync(PROBE_TIMEOUT_MS + 1)
 
-    describe("checkedAt timestamp", () => {
-      let service: HealthService
-
-      beforeEach(async () => {
-        const module: TestingModule = await Test.createTestingModule({
-          providers: [HealthService],
-        }).compile()
-
-        service = module.get<HealthService>(HealthService)
-      })
-
-      it("should be the ISO timestamp at which probes were run", async () => {
-        jest.useFakeTimers().setSystemTime(new Date("2026-06-12T12:00:00.000Z"))
-        try {
-          const result = await service.check()
-
-          expect(result.checkedAt).toBe("2026-06-12T12:00:00.000Z")
-        } finally {
-          jest.useRealTimers()
-        }
+        await expect(probe).resolves.toEqual({
+          http: "ok",
+          database: "error",
+          checkedAt: CHECKED_AT,
+        })
       })
     })
   })

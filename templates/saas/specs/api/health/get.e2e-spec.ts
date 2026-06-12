@@ -14,16 +14,15 @@ describe("GET /api/health", () => {
         configure: configureViewEngine,
       })
 
-      await request(app.getHttpServer())
+      const { body } = await request(app.getHttpServer())
         .get("/api/health")
         .expect(OK)
-        .expect((res) => {
-          expect(res.body).toEqual({
-            http: "ok",
-            database: "ok",
-            checkedAt: expect.stringMatching(ISO_TIMESTAMP),
-          })
-        })
+
+      expect(body).toEqual({
+        http: "ok",
+        database: "ok",
+        checkedAt: expect.stringMatching(ISO_TIMESTAMP),
+      })
     })
   })
 })

@@ -63,6 +63,10 @@ export class ApplicationController {
   public health(@HealthStatus() status: HealthResult): {
     result: HealthResult
   } {
+    // Wrap under `result` so the EJS template can distinguish probe
+    // data (`result.*`) from the view-engine globals merged into
+    // `locals` (`npmPackageName`, `npmPackageVersion`). Without the
+    // wrap, those globals would surface as fake probe rows.
     return { result: status }
   }
 

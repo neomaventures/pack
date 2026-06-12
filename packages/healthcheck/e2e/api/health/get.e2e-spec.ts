@@ -24,20 +24,16 @@ describe("GET /api/health (with TypeORM DataSource)", () => {
   })
 
   describe("When the DataSource is healthy", () => {
-    it("should respond with HTTP 200, http + database ok, and an ISO checkedAt", async () => {
-      // Body assertion is split: supertest's `.expect(body)` requires exact
-      // equality, but `checkedAt` is dynamic — switch to a callback only for
-      // the fields we can't deep-equal against literals.
-      await request(app.getHttpServer())
+    it("should respond with HTTP 200 and the aggregated probe result", async () => {
+      const { body } = await request(app.getHttpServer())
         .get("/api/health")
         .expect(200)
-        .expect((res) => {
-          expect(res.body).toEqual({
-            http: "ok",
-            database: "ok",
-            checkedAt: expect.stringMatching(ISO_TIMESTAMP),
-          })
-        })
+
+      expect(body).toEqual({
+        http: "ok",
+        database: "ok",
+        checkedAt: expect.stringMatching(ISO_TIMESTAMP),
+      })
     })
   })
 })

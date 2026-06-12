@@ -102,8 +102,8 @@ export class StatusController {
   @Get("health")
   @HealthCheck()
   @Render("application/status")
-  public status(@HealthStatus() status: HealthResult): { result: HealthResult } {
-    return { result: status }
+  public status(@HealthStatus() status: HealthResult): HealthResult {
+    return status
   }
 }
 ```

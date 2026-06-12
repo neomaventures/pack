@@ -65,7 +65,7 @@ describe("ApplicationController", () => {
       const status: HealthResult = {
         http: "ok",
         database: "ok",
-        checkedAt: "2026-06-12T12:00:00.000Z",
+        checkedAt: new Date("2026-06-12T12:00:00.000Z"),
       }
 
       expect(controller.apiHealth(status)).toBe(status)
@@ -77,7 +77,7 @@ describe("ApplicationController", () => {
       const status: HealthResult = {
         http: "ok",
         database: "ok",
-        checkedAt: "2026-06-12T12:00:00.000Z",
+        checkedAt: new Date("2026-06-12T12:00:00.000Z"),
       }
 
       expect(controller.health(status)).toEqual({ result: status })

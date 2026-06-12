@@ -7,6 +7,8 @@ import { type DataSource } from "typeorm"
 
 import { AppModule } from "../../fixtures/app.module"
 
+const ISO_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/
+
 /**
  * Tests the 503 path against a real `DataSource` whose connection has been
  * torn down — `dataSource.query("SELECT 1")` then rejects with a real
@@ -37,18 +39,15 @@ describe("GET /api/health (DataSource connection broken)", () => {
 
   describe("When the database probe rejects", () => {
     it("should respond with HTTP 503 and database: error", async () => {
-      await request(app.getHttpServer())
+      const { body } = await request(app.getHttpServer())
         .get("/api/health")
         .expect(503)
-        .expect((res) => {
-          expect(res.body).toEqual({
-            http: "ok",
-            database: "error",
-            checkedAt: expect.stringMatching(
-              /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
-            ),
-          })
-        })
+
+      expect(body).toEqual({
+        http: "ok",
+        database: "error",
+        checkedAt: expect.stringMatching(ISO_TIMESTAMP),
+      })
     })
   })
 })

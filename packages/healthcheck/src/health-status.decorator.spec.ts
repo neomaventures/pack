@@ -30,7 +30,7 @@ describe("@HealthStatus()", () => {
       const attached: HealthResult = {
         http: "ok",
         database: "ok",
-        checkedAt: "2026-06-12T00:00:00.000Z",
+        checkedAt: new Date("2026-06-12T00:00:00.000Z"),
       }
       ;(req as unknown as Record<string, unknown>)[HEALTHCHECK_REQUEST_KEY] =
         attached
