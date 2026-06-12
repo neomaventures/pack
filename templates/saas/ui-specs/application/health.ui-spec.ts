@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test"
 
 test.describe("Status Page", () => {
-  test.describe("When an operator visits /status", () => {
-    test.beforeEach(({ page }) => page.goto("/status"))
+  test.describe("When an operator visits /health", () => {
+    test.beforeEach(({ page }) => page.goto("/health"))
 
     test("should display the overall operational banner", async ({ page }) => {
       await expect(page.getByText("All systems operational")).toBeVisible()

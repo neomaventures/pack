@@ -22,12 +22,18 @@ describe("GET /api/health (without TypeORM DataSource)", () => {
   })
 
   describe("When no DataSource is registered", () => {
-    it("should respond with HTTP 200 and only the http probe", async () => {
+    it("should respond with HTTP 200 and the http probe with no database key", async () => {
       const response = await request(app.getHttpServer())
         .get("/api/health")
         .expect(200)
 
-      expect(response.body).toEqual({ http: "ok" })
+      expect(response.body).toEqual({
+        http: "ok",
+        checkedAt: expect.stringMatching(
+          /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+        ),
+      })
+      expect(response.body).not.toHaveProperty("database")
     })
   })
 })

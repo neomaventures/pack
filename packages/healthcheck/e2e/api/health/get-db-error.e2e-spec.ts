@@ -40,7 +40,15 @@ describe("GET /api/health (DataSource connection broken)", () => {
       await request(app.getHttpServer())
         .get("/api/health")
         .expect(503)
-        .expect({ http: "ok", database: "error" })
+        .expect((res) => {
+          expect(res.body).toEqual({
+            http: "ok",
+            database: "error",
+            checkedAt: expect.stringMatching(
+              /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+            ),
+          })
+        })
     })
   })
 })

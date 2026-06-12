@@ -30,14 +30,21 @@ All peers are required — `HealthService` imports `getDataSourceToken` from `@n
 ## Quick start
 
 ```typescript
-import { HealthcheckModule, HealthCheck } from "@neomaventures/healthcheck"
+import {
+  HealthcheckModule,
+  HealthCheck,
+  HealthStatus,
+  type HealthResult,
+} from "@neomaventures/healthcheck"
 import { Controller, Get, Module } from "@nestjs/common"
 
 @Controller()
 export class HealthController {
   @Get("api/health")
   @HealthCheck()
-  public health(): void {}
+  public health(@HealthStatus() status: HealthResult): HealthResult {
+    return status
+  }
 }
 
 @Module({
@@ -47,15 +54,19 @@ export class HealthController {
 export class AppModule {}
 ```
 
-The decorated method body is ignored at runtime — a global interceptor replaces the response with the aggregated probe result. `public health(): void {}` is intentional.
+The global `HealthcheckInterceptor` runs the probes, sets the HTTP status (200 / 503), attaches the result to the request, and passes control to the controller method. `@HealthStatus()` extracts the attached result so the method body is a thin pass-through — no `HealthService` to inject, no probe to call, no timestamp to generate. The same pattern works for HTML render routes (see [HTML rendering](#html-rendering) below).
 
 ## Response shape
 
+`HealthService.check()` and the `@HealthCheck()` JSON response both return `HealthResult`:
+
 | Scenario | Body |
 |---|---|
-| No TypeORM `DataSource` registered | `{ "http": "ok" }` |
-| `DataSource` registered, healthy | `{ "http": "ok", "database": "ok" }` |
-| `DataSource` registered, `SELECT 1` fails | `{ "http": "ok", "database": "error" }` |
+| No TypeORM `DataSource` registered | `{ "http": "ok", "checkedAt": "..." }` |
+| `DataSource` registered, healthy | `{ "http": "ok", "database": "ok", "checkedAt": "..." }` |
+| `DataSource` registered, `SELECT 1` fails | `{ "http": "ok", "database": "error", "checkedAt": "..." }` |
+
+`checkedAt` is an ISO timestamp generated when the probes ran — the service owns this value so it's consistent across JSON and HTML renderings and reflects the actual probe time, not the response-formatting time.
 
 ## HTTP status
 
@@ -74,27 +85,51 @@ The database probe has a 5-second hard timeout. If `SELECT 1` doesn't resolve wi
 
 `@HealthCheck()` only works on HTTP routes for now. Applying it to a Microservice / WebSocket / RPC handler throws at request time with a descriptive error. If you need probes on non-HTTP transports, please file an issue describing the use case.
 
-## Calling probes from your own code
+## HTML rendering
 
-`HealthService` is exported and can be injected anywhere. Use it when you want the same probe logic without going through HTTP — for example, in a scheduled task, a guard, or a custom HTML dashboard route.
+Use the same `@HealthCheck()` + `@HealthStatus()` pair on a route that's also decorated with `@Render(...)`. The interceptor runs the probes and attaches the result to the request before the controller method runs; the controller passes the result into the render context.
 
 ```typescript
-import { HealthService } from "@neomaventures/healthcheck"
+import {
+  HealthCheck,
+  type HealthResult,
+  HealthStatus,
+} from "@neomaventures/healthcheck"
 import { Controller, Get, Render } from "@nestjs/common"
 
 @Controller()
-export class DashboardController {
-  public constructor(private readonly healthService: HealthService) {}
-
-  @Get("dashboard/health")
-  @Render("dashboard/health")
-  public async dashboard(): Promise<{ result: Awaited<ReturnType<HealthService["check"]>> }> {
-    return { result: await this.healthService.check() }
+export class StatusController {
+  @Get("health")
+  @HealthCheck()
+  @Render("application/status")
+  public status(@HealthStatus() status: HealthResult): { result: HealthResult } {
+    return { result: status }
   }
 }
 ```
 
-The package returns JSON only. HTML rendering is the consumer's responsibility — `HealthService.check()` is the seam.
+The HTTP status is still set by the interceptor (200/503). If your HTML template should always return 200 regardless of probe outcome (e.g. an operator status page), set the response status explicitly inside the method or use a separate route with no `@HealthCheck()`.
+
+## Calling probes from your own code
+
+`HealthService` is exported and can be injected anywhere. Use it when you want the probe logic outside the HTTP layer — for example, a scheduled task, a guard, or a non-controller workflow.
+
+```typescript
+import { HealthService } from "@neomaventures/healthcheck"
+import { Injectable } from "@nestjs/common"
+
+@Injectable()
+export class StatusReporter {
+  public constructor(private readonly healthService: HealthService) {}
+
+  public async report(): Promise<void> {
+    const result = await this.healthService.check()
+    // ...do something with the result
+  }
+}
+```
+
+Inside HTTP controllers, prefer the `@HealthCheck()` + `@HealthStatus()` decorator pair over direct injection — it keeps the method as a thin pass-through and centralises the status-code decision.
 
 ## Troubleshooting
 

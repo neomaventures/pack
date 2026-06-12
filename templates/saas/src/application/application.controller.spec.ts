@@ -1,5 +1,5 @@
 import { MockLoggerService } from "@neomaventures/fixtures"
-import { type HealthResult, HealthService } from "@neomaventures/healthcheck"
+import { type HealthResult } from "@neomaventures/healthcheck"
 import { ApplicationLoggerService } from "@neomaventures/logging"
 import {
   BadRequestException,
@@ -12,18 +12,13 @@ import { ApplicationController } from "./application.controller"
 describe("ApplicationController", () => {
   let controller: ApplicationController
   let logger: MockLoggerService
-  let healthService: { check: jest.Mock }
 
   beforeEach(async () => {
     logger = new MockLoggerService()
-    healthService = { check: jest.fn() }
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ApplicationController],
-      providers: [
-        { provide: ApplicationLoggerService, useValue: logger },
-        { provide: HealthService, useValue: healthService },
-      ],
+      providers: [{ provide: ApplicationLoggerService, useValue: logger }],
     }).compile()
 
     controller = module.get<ApplicationController>(ApplicationController)
@@ -65,20 +60,27 @@ describe("ApplicationController", () => {
     })
   })
 
-  describe("status()", () => {
-    it("should return the health probe result and an ISO timestamp", async () => {
-      const checkResult: HealthResult = { http: "ok", database: "ok" }
-      healthService.check.mockResolvedValue(checkResult)
-      jest.useFakeTimers().setSystemTime(new Date("2026-06-11T12:34:56.789Z"))
+  describe("apiHealth()", () => {
+    it("should pass the HealthStatus argument straight through", () => {
+      const status: HealthResult = {
+        http: "ok",
+        database: "ok",
+        checkedAt: "2026-06-12T12:00:00.000Z",
+      }
 
-      const result = await controller.status()
+      expect(controller.apiHealth(status)).toBe(status)
+    })
+  })
 
-      expect(result).toEqual({
-        result: checkResult,
-        checkedAt: "2026-06-11T12:34:56.789Z",
-      })
+  describe("health()", () => {
+    it("should wrap the HealthStatus argument as { result } for the render context", () => {
+      const status: HealthResult = {
+        http: "ok",
+        database: "ok",
+        checkedAt: "2026-06-12T12:00:00.000Z",
+      }
 
-      jest.useRealTimers()
+      expect(controller.health(status)).toEqual({ result: status })
     })
   })
 })

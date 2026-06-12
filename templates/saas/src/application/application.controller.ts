@@ -2,7 +2,7 @@ import { ErrorTemplate } from "@neomaventures/exceptions"
 import {
   HealthCheck,
   type HealthResult,
-  HealthService,
+  HealthStatus,
 } from "@neomaventures/healthcheck"
 import { ApplicationLoggerService } from "@neomaventures/logging"
 import {
@@ -20,10 +20,7 @@ import {
  */
 @Controller()
 export class ApplicationController {
-  public constructor(
-    private readonly logger: ApplicationLoggerService,
-    private readonly healthService: HealthService,
-  ) {}
+  public constructor(private readonly logger: ApplicationLoggerService) {}
 
   /**
    * Renders the welcome page.
@@ -35,38 +32,38 @@ export class ApplicationController {
   }
 
   /**
-   * Healthcheck endpoint for liveness/readiness probes.
+   * JSON healthcheck endpoint for liveness/readiness probes.
    *
-   * The method body is intentionally empty — the global
-   * `HealthcheckInterceptor` from `@neomaventures/healthcheck` replaces the
-   * response with the aggregated probe result and sets the HTTP status.
+   * The global `HealthcheckInterceptor` runs the probes, sets the HTTP
+   * status (200/503), and attaches the result to the request;
+   * `@HealthStatus()` extracts it. The method body just returns the
+   * result for NestJS to serialise as JSON.
    */
   @Get("api/health")
   @HealthCheck()
-  public health(): void {}
+  public apiHealth(@HealthStatus() status: HealthResult): HealthResult {
+    return status
+  }
 
   /**
-   * Renders the human-readable HTML status page (statuspage.io-style).
+   * Human-readable HTML status page (statuspage.io-style).
    *
-   * Distinct from `GET /api/health` (JSON, used by load balancers and
-   * orchestrators). Always returns HTTP 200 — the page itself rendered
-   * fine even when individual probes are in error. `Cache-Control:
-   * no-store` ensures every refresh re-probes.
+   * Same `@HealthCheck()` flow as the JSON endpoint — the interceptor
+   * runs the probes and sets HTTP 200 or 503; this method is a thin
+   * pass-through into the EJS render context. `Cache-Control: no-store`
+   * ensures every refresh re-probes.
    *
    * Unauthenticated by default — `ApplicationController` carries no
    * class-level guard, matching the policy of `/api/health`.
-   *
-   * @returns The aggregated probe result and the ISO timestamp the
-   *          probes were run at, consumed by `views/application/status.ejs`.
    */
-  @Get("status")
+  @Get("health")
+  @HealthCheck()
   @Header("Cache-Control", "no-store")
   @Render("application/status")
-  public async status(): Promise<{ result: HealthResult; checkedAt: string }> {
-    return {
-      result: await this.healthService.check(),
-      checkedAt: new Date().toISOString(),
-    }
+  public health(@HealthStatus() status: HealthResult): {
+    result: HealthResult
+  } {
+    return { result: status }
   }
 
   /**

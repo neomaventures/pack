@@ -17,7 +17,8 @@
 
     <main class="flex flex-1 flex-col items-center px-6 py-16">
       <div class="w-full max-w-2xl">
-        <% const degraded = Object.values(result).some(v => v === "error") %>
+        <% const { checkedAt, ...probes } = result %>
+        <% const degraded = Object.values(probes).some(v => v === "error") %>
         <% if (degraded) { %>
           <div
             class="rounded-md bg-red-100 px-6 py-4 text-center text-lg font-semibold text-red-800"
@@ -33,7 +34,7 @@
         <% } %>
 
         <ul class="mt-8 divide-y divide-slate-200 rounded-md border border-slate-200 bg-white">
-          <% for (const [name, status] of Object.entries(result)) { %>
+          <% for (const [name, status] of Object.entries(probes)) { %>
             <li class="flex items-center justify-between px-6 py-4">
               <span class="font-medium capitalize"><%= name %></span>
               <% if (status === "ok") { %>

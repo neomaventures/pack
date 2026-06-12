@@ -3,7 +3,10 @@ import { Reflector } from "@nestjs/core"
 import { firstValueFrom } from "rxjs"
 
 import { type HealthService } from "./health.service"
-import { HEALTHCHECK_METADATA_KEY } from "./healthcheck.constants"
+import {
+  HEALTHCHECK_METADATA_KEY,
+  HEALTHCHECK_REQUEST_KEY,
+} from "./healthcheck.constants"
 import { HealthcheckInterceptor } from "./healthcheck.interceptor"
 
 describe("HealthcheckInterceptor", () => {
@@ -42,10 +45,15 @@ describe("HealthcheckInterceptor", () => {
 
     describe("Given @HealthCheck() metadata and all probes are ok", () => {
       const handler = (): void => {}
+      const healthResult = {
+        http: "ok",
+        database: "ok",
+        checkedAt: "2026-06-12T00:00:00.000Z",
+      }
 
       beforeEach(() => {
         Reflect.defineMetadata(HEALTHCHECK_METADATA_KEY, true, handler)
-        healthService.check.mockResolvedValue({ http: "ok", database: "ok" })
+        healthService.check.mockResolvedValue(healthResult)
       })
 
       it("should set the response status to 200", async () => {
@@ -58,27 +66,42 @@ describe("HealthcheckInterceptor", () => {
         expect(res.statusCode).toBe(200)
       })
 
-      it("should emit the aggregated HealthResult", async () => {
-        const ctx = executionContext(undefined, undefined, handler)
+      it("should attach the HealthResult to the request under HEALTHCHECK_REQUEST_KEY", async () => {
+        const req = express.request()
+        const ctx = executionContext(req, undefined, handler)
 
         const result$ = interceptor.intercept(ctx as never, callHandler())
+        await firstValueFrom(result$)
 
-        await expect(firstValueFrom(result$)).resolves.toEqual({
-          http: "ok",
-          database: "ok",
-        })
+        expect(
+          (req as unknown as Record<string, unknown>)[HEALTHCHECK_REQUEST_KEY],
+        ).toEqual(healthResult)
+      })
+
+      it("should pass through to next.handle() (controller runs, not short-circuited)", async () => {
+        const downstream = callHandler({ fromController: "rendered" })
+        const handleSpy = jest.spyOn(downstream, "handle")
+        const ctx = executionContext(undefined, undefined, handler)
+
+        const result$ = interceptor.intercept(ctx as never, downstream)
+        const emitted = await firstValueFrom(result$)
+
+        expect(handleSpy).toHaveBeenCalled()
+        expect(emitted).toEqual({ fromController: "rendered" })
       })
     })
 
     describe("Given @HealthCheck() metadata and the database probe errors", () => {
       const handler = (): void => {}
+      const errorResult = {
+        http: "ok",
+        database: "error",
+        checkedAt: "2026-06-12T00:00:00.000Z",
+      }
 
       beforeEach(() => {
         Reflect.defineMetadata(HEALTHCHECK_METADATA_KEY, true, handler)
-        healthService.check.mockResolvedValue({
-          http: "ok",
-          database: "error",
-        })
+        healthService.check.mockResolvedValue(errorResult)
       })
 
       it("should set the response status to 503", async () => {
@@ -91,15 +114,19 @@ describe("HealthcheckInterceptor", () => {
         expect(res.statusCode).toBe(503)
       })
 
-      it("should emit the HealthResult with database: error", async () => {
-        const ctx = executionContext(undefined, undefined, handler)
+      it("should still pass through to the controller and attach the error result", async () => {
+        const req = express.request()
+        const downstream = callHandler({ shown: "error page" })
+        const ctx = executionContext(req, undefined, handler)
 
-        const result$ = interceptor.intercept(ctx as never, callHandler())
+        const emitted = await firstValueFrom(
+          interceptor.intercept(ctx as never, downstream),
+        )
 
-        await expect(firstValueFrom(result$)).resolves.toEqual({
-          http: "ok",
-          database: "error",
-        })
+        expect(
+          (req as unknown as Record<string, unknown>)[HEALTHCHECK_REQUEST_KEY],
+        ).toEqual(errorResult)
+        expect(emitted).toEqual({ shown: "error page" })
       })
     })
 
@@ -108,7 +135,10 @@ describe("HealthcheckInterceptor", () => {
 
       beforeEach(() => {
         Reflect.defineMetadata(HEALTHCHECK_METADATA_KEY, true, handler)
-        healthService.check.mockResolvedValue({ http: "ok" })
+        healthService.check.mockResolvedValue({
+          http: "ok",
+          checkedAt: "2026-06-12T00:00:00.000Z",
+        })
       })
 
       it("should set the response status to 200", async () => {
