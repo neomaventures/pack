@@ -30,17 +30,23 @@ export class HealthService {
    *   `"error"`; this method never throws. The 503 status on the wrapped
    *   route is the failure signal — no logger is used so consumers don't
    *   pay observability noise on every failed probe.
+   * - `checkedAt` is the `Date` the probes were run at. The service owns
+   *   this value (rather than the consuming controller) so the timestamp
+   *   is consistent across JSON and HTML renderings and reflects the
+   *   actual probe time, not the response-formatting time. Formatting
+   *   into a string is a rendering concern handled at the response layer.
    *
    * @returns The aggregated probe result.
    *
    * @example
    * ```ts
    * const result = await healthService.check()
-   * // { http: "ok", database: "ok" }
+   * // { http: "ok", database: "ok", checkedAt: <Date> }
    * ```
    */
   public async check(): Promise<HealthResult> {
-    const result: HealthResult = { http: "ok" }
+    const checkedAt = new Date()
+    const result: HealthResult = { http: "ok", checkedAt }
 
     if (this.dataSource) {
       try {

@@ -1,10 +1,15 @@
 import { ErrorTemplate } from "@neomaventures/exceptions"
-import { HealthCheck } from "@neomaventures/healthcheck"
+import {
+  HealthCheck,
+  type HealthResult,
+  HealthStatus,
+} from "@neomaventures/healthcheck"
 import { ApplicationLoggerService } from "@neomaventures/logging"
 import {
   BadRequestException,
   Controller,
   Get,
+  Header,
   InternalServerErrorException,
   Query,
   Render,
@@ -27,15 +32,43 @@ export class ApplicationController {
   }
 
   /**
-   * Healthcheck endpoint for liveness/readiness probes.
+   * JSON healthcheck endpoint for liveness/readiness probes.
    *
-   * The method body is intentionally empty — the global
-   * `HealthcheckInterceptor` from `@neomaventures/healthcheck` replaces the
-   * response with the aggregated probe result and sets the HTTP status.
+   * The global `HealthcheckInterceptor` runs the probes, sets the HTTP
+   * status (200/503), and attaches the result to the request;
+   * `@HealthStatus()` extracts it. The method body just returns the
+   * result for NestJS to serialise as JSON.
    */
   @Get("api/health")
   @HealthCheck()
-  public health(): void {}
+  public apiHealth(@HealthStatus() status: HealthResult): HealthResult {
+    return status
+  }
+
+  /**
+   * Human-readable HTML status page (statuspage.io-style).
+   *
+   * Same `@HealthCheck()` flow as the JSON endpoint — the interceptor
+   * runs the probes and sets HTTP 200 or 503; this method is a thin
+   * pass-through into the EJS render context. `Cache-Control: no-store`
+   * ensures every refresh re-probes.
+   *
+   * Unauthenticated by default — `ApplicationController` carries no
+   * class-level guard, matching the policy of `/api/health`.
+   */
+  @Get("health")
+  @HealthCheck()
+  @Header("Cache-Control", "no-store")
+  @Render("application/status")
+  public health(@HealthStatus() status: HealthResult): {
+    result: HealthResult
+  } {
+    // Wrap under `result` so the EJS template can distinguish probe
+    // data (`result.*`) from the view-engine globals merged into
+    // `locals` (`npmPackageName`, `npmPackageVersion`). Without the
+    // wrap, those globals would surface as fake probe rows.
+    return { result: status }
+  }
 
   /**
    * Exercises both modes of the exception filter via `@ErrorTemplate`.

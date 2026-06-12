@@ -11,3 +11,11 @@ export const HEALTHCHECK_METADATA_KEY = "neoma:healthcheck"
  * orchestrator's external timeout doesn't fire before ours.
  */
 export const PROBE_TIMEOUT_MS = 5000
+
+/**
+ * Key under which `HealthcheckInterceptor` attaches the probe result on
+ * the current request, so `@HealthStatus()` can extract it during the
+ * pipes phase. Internal to the package — consumers use the parameter
+ * decorator, not this key directly.
+ */
+export const HEALTHCHECK_REQUEST_KEY = "neoma:healthcheck:result"

@@ -6,6 +6,7 @@ import { type App } from "supertest/types"
 import { type DataSource } from "typeorm"
 
 import { AppModule } from "../../fixtures/app.module"
+import { ISO_TIMESTAMP } from "../../fixtures/iso-timestamp"
 
 /**
  * Tests the 503 path against a real `DataSource` whose connection has been
@@ -37,10 +38,15 @@ describe("GET /api/health (DataSource connection broken)", () => {
 
   describe("When the database probe rejects", () => {
     it("should respond with HTTP 503 and database: error", async () => {
-      await request(app.getHttpServer())
+      const { body } = await request(app.getHttpServer())
         .get("/api/health")
         .expect(503)
-        .expect({ http: "ok", database: "error" })
+
+      expect(body).toEqual({
+        http: "ok",
+        database: "error",
+        checkedAt: expect.stringMatching(ISO_TIMESTAMP),
+      })
     })
   })
 })

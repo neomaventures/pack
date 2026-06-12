@@ -1,4 +1,6 @@
+import { faker } from "@faker-js/faker"
 import { MockLoggerService } from "@neomaventures/fixtures"
+import { type HealthResult } from "@neomaventures/healthcheck"
 import { ApplicationLoggerService } from "@neomaventures/logging"
 import {
   BadRequestException,
@@ -56,6 +58,30 @@ describe("ApplicationController", () => {
       it("should throw a BadRequestException", () => {
         expect(() => controller.error()).toThrow(BadRequestException)
       })
+    })
+  })
+
+  describe("apiHealth()", () => {
+    it("should pass the HealthStatus argument straight through", () => {
+      const status: HealthResult = {
+        http: "ok",
+        database: "ok",
+        checkedAt: faker.date.recent(),
+      }
+
+      expect(controller.apiHealth(status)).toBe(status)
+    })
+  })
+
+  describe("health()", () => {
+    it("should wrap the HealthStatus argument as { result } for the render context", () => {
+      const status: HealthResult = {
+        http: "ok",
+        database: "ok",
+        checkedAt: faker.date.recent(),
+      }
+
+      expect(controller.health(status)).toEqual({ result: status })
     })
   })
 })

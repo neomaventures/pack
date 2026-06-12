@@ -4,6 +4,7 @@ import request from "supertest"
 import { type App } from "supertest/types"
 
 import { AppModule } from "../../fixtures/app.module"
+import { ISO_TIMESTAMP } from "../../fixtures/iso-timestamp"
 
 describe("GET /api/health (with TypeORM DataSource)", () => {
   let app: INestApplication<App>
@@ -22,11 +23,16 @@ describe("GET /api/health (with TypeORM DataSource)", () => {
   })
 
   describe("When the DataSource is healthy", () => {
-    it("should respond with HTTP 200 and the http + database probes ok", async () => {
-      await request(app.getHttpServer())
+    it("should respond with HTTP 200 and the aggregated probe result", async () => {
+      const { body } = await request(app.getHttpServer())
         .get("/api/health")
         .expect(200)
-        .expect({ http: "ok", database: "ok" })
+
+      expect(body).toEqual({
+        http: "ok",
+        database: "ok",
+        checkedAt: expect.stringMatching(ISO_TIMESTAMP),
+      })
     })
   })
 })
