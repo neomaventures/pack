@@ -4,8 +4,7 @@ import request from "supertest"
 import { type App } from "supertest/types"
 
 import { AppModule } from "../../fixtures/app.module"
-
-const ISO_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/
+import { ISO_TIMESTAMP } from "../../fixtures/iso-timestamp"
 
 describe("GET /api/health (with TypeORM DataSource)", () => {
   let app: INestApplication<App>
