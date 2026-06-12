@@ -10,7 +10,10 @@ import { Reflector } from "@nestjs/core"
 import { type Response } from "express"
 import { type Observable, switchMap } from "rxjs"
 
-import { TEMPORARY_LINK_METADATA_KEY } from "../decorators/temporary-link.decorator"
+import {
+  TEMPORARY_LINK_METADATA_KEY,
+  type TemporaryLinkOptions,
+} from "../decorators/temporary-link.decorator"
 import { StorageService } from "../services/storage.service"
 
 /**
@@ -49,19 +52,28 @@ export class TemporaryLinkInterceptor implements NestInterceptor {
     next: CallHandler,
   ): Observable<any> {
     const handler = context.getHandler()
-    const metadata = this.reflector.get<{ expiresIn?: number }>(
+    const metadata = this.reflector.get<TemporaryLinkOptions>(
       TEMPORARY_LINK_METADATA_KEY,
       handler,
     )
     const expiresIn = metadata?.expiresIn
+    const defaultUrl = metadata?.default
 
     const res = context.switchToHttp().getResponse<Response>()
 
     return next.handle().pipe(
       switchMap(async (entity: unknown) => {
+        if (entity === null || entity === undefined) {
+          if (defaultUrl !== undefined) {
+            res.redirect(HttpStatus.FOUND, defaultUrl)
+            return
+          }
+          throw new InternalServerErrorException(
+            "TemporaryLinkInterceptor requires the handler to return an object with a string `key` property",
+          )
+        }
+
         if (
-          entity === null ||
-          entity === undefined ||
           typeof entity !== "object" ||
           !("key" in entity) ||
           typeof (entity as any).key !== "string"

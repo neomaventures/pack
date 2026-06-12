@@ -44,5 +44,16 @@ appModules.forEach(([name, modulePath]) => {
         await request(location).get("").expect(OK).expect(sampleFileContent)
       })
     })
+
+    describe("When the handler returns null and a default URL is configured", () => {
+      it(`should respond with HTTP ${FOUND} redirect to the default URL`, async () => {
+        const unknownId = faker.string.ulid()
+
+        await request(app.getHttpServer())
+          .get(`/uploads/${unknownId}/avatar`)
+          .expect(FOUND)
+          .expect("Location", "/img/default.svg")
+      })
+    })
   })
 })

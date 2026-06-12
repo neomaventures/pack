@@ -54,6 +54,15 @@ Reflect.defineMetadata(
   customExpiryHandler,
 )
 
+// Handler function with a default URL configured
+const defaultUrl = "/img/default.svg"
+function defaultUrlHandler(): void {}
+Reflect.defineMetadata(
+  TEMPORARY_LINK_METADATA_KEY,
+  { default: defaultUrl },
+  defaultUrlHandler,
+)
+
 describe("TemporaryLinkInterceptor", () => {
   let module: TestingModule
   let interceptor: TemporaryLinkInterceptor
@@ -205,6 +214,99 @@ describe("TemporaryLinkInterceptor", () => {
             result.subscribe({ next: resolve, error: reject })
           }),
         ).rejects.toMatchError(InternalServerErrorException)
+      })
+    })
+
+    describe("Given a default URL is configured and the handler returns null", () => {
+      it(`should redirect with HTTP ${HttpStatus.FOUND} to the default URL`, async () => {
+        const res = express.response()
+        const req = express.request()
+        const ctx = executionContext(
+          req,
+          res,
+          defaultUrlHandler,
+        ) as ExecutionContext
+
+        const handler: CallHandler = { handle: () => of(null) }
+
+        const result = interceptor.intercept(ctx, handler)
+        await new Promise<void>((resolve) => {
+          result.subscribe({ complete: () => resolve() })
+        })
+
+        expect(res.redirect).toHaveBeenCalledWith(HttpStatus.FOUND, defaultUrl)
+      })
+    })
+
+    describe("Given a default URL is configured and the handler returns undefined", () => {
+      it(`should redirect with HTTP ${HttpStatus.FOUND} to the default URL`, async () => {
+        const res = express.response()
+        const req = express.request()
+        const ctx = executionContext(
+          req,
+          res,
+          defaultUrlHandler,
+        ) as ExecutionContext
+
+        const handler: CallHandler = { handle: () => of(undefined) }
+
+        const result = interceptor.intercept(ctx, handler)
+        await new Promise<void>((resolve) => {
+          result.subscribe({ complete: () => resolve() })
+        })
+
+        expect(res.redirect).toHaveBeenCalledWith(HttpStatus.FOUND, defaultUrl)
+      })
+    })
+
+    describe("Given a default URL is configured and the handler returns a malformed entity", () => {
+      it("should throw InternalServerErrorException", async () => {
+        const res = express.response()
+        const req = express.request()
+        const ctx = executionContext(
+          req,
+          res,
+          defaultUrlHandler,
+        ) as ExecutionContext
+
+        const handler: CallHandler = { handle: () => of({ foo: 1 }) }
+
+        const result = interceptor.intercept(ctx, handler)
+
+        await expect(
+          new Promise((resolve, reject) => {
+            result.subscribe({ next: resolve, error: reject })
+          }),
+        ).rejects.toMatchError(InternalServerErrorException)
+
+        expect(res.redirect).not.toHaveBeenCalled()
+      })
+    })
+
+    describe("Given a default URL is configured and the handler throws", () => {
+      it("should propagate the error without redirecting to the default", async () => {
+        const res = express.response()
+        const req = express.request()
+        const ctx = executionContext(
+          req,
+          res,
+          defaultUrlHandler,
+        ) as ExecutionContext
+
+        const handlerError = new Error("downstream failure")
+        const handler: CallHandler = {
+          handle: () => throwError(() => handlerError),
+        }
+
+        const result = interceptor.intercept(ctx, handler)
+
+        await expect(
+          new Promise((resolve, reject) => {
+            result.subscribe({ next: resolve, error: reject })
+          }),
+        ).rejects.toThrow("downstream failure")
+
+        expect(res.redirect).not.toHaveBeenCalled()
       })
     })
 
