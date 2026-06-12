@@ -1,10 +1,6 @@
 import { faker } from "@faker-js/faker"
-import { MailpitClient } from "@neomaventures/mailpit"
-import { expect, test } from "@playwright/test"
 
-import { extractCallbackUrl } from "../../fixtures/email/content"
-
-const mailpit = new MailpitClient(process.env.MAILPIT_API!)
+import { expect, test } from "../../fixtures/auth/test"
 
 test.describe("Dashboard Page", () => {
   test.describe("When an unauthenticated visitor navigates to the dashboard", () => {
@@ -17,31 +13,24 @@ test.describe("Dashboard Page", () => {
   test.describe("When an authenticated user visits the dashboard", () => {
     let email: string
 
-    test.beforeEach(async ({ page }) => {
+    test.beforeEach(async ({ login }) => {
       email = faker.internet.email()
-      await mailpit.clear()
-
-      await page.goto("/auth/register")
-      await page.getByLabel("Email address").fill(email)
-      await page.getByRole("button", { name: "Continue with email" }).click()
-      await page.waitForURL(/\/auth\/magic-link\/sent/)
-
-      const message = await mailpit.findByRecipient(email)
-      const callbackUrl = extractCallbackUrl(message)
-      await page.goto(callbackUrl.toString())
-      await page.waitForURL("/dashboard")
+      await login.as(email)
     })
 
     test("should display the Dashboard heading", async ({ page }) => {
+      await page.goto("/dashboard")
       const heading = page.getByRole("heading", { level: 1 })
       await expect(heading).toHaveText("Dashboard")
     })
 
     test("should display the user's email address", async ({ page }) => {
+      await page.goto("/dashboard")
       await expect(page.getByText(email.toLowerCase())).toBeVisible()
     })
 
     test("should display a Sign out button", async ({ page }) => {
+      await page.goto("/dashboard")
       const button = page.getByRole("button", { name: "Sign out" })
       await expect(button).toBeVisible()
     })
