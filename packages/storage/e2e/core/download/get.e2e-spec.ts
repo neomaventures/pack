@@ -43,6 +43,13 @@ appModules.forEach(([name, modulePath]) => {
 
         await request(location).get("").expect(OK).expect(sampleFileContent)
       })
+
+      it(`should apply the global linkCacheControl to the 302 response`, async () => {
+        await request(app.getHttpServer())
+          .get(`/uploads/${id}`)
+          .expect(FOUND)
+          .expect("Cache-Control", "private, max-age=60")
+      })
     })
 
     describe("When the handler returns null and a default URL is configured", () => {
@@ -53,6 +60,15 @@ appModules.forEach(([name, modulePath]) => {
           .get(`/uploads/${unknownId}/avatar`)
           .expect(FOUND)
           .expect("Location", "/img/default.svg")
+      })
+
+      it(`should apply the per-route cacheControl to the 302 response, overriding the global default`, async () => {
+        const unknownId = faker.string.ulid()
+
+        await request(app.getHttpServer())
+          .get(`/uploads/${unknownId}/avatar`)
+          .expect(FOUND)
+          .expect("Cache-Control", "private, max-age=300")
       })
     })
   })

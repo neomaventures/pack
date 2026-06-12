@@ -28,6 +28,26 @@ export interface TemporaryLinkOptions {
    * entities and thrown exceptions still bubble up.
    */
   default?: string
+
+  /**
+   * `Cache-Control` header to set on the 302 redirect response. Passed
+   * verbatim to `res.setHeader("Cache-Control", ...)` — the package does
+   * not parse or validate the value.
+   *
+   * Overrides the global {@link StorageOptions.linkCacheControl} default.
+   * When neither this nor the global default is set, no header is sent
+   * (existing behaviour).
+   *
+   * Keep the cache `max-age` shorter than `expiresIn` — the redirect points
+   * at a presigned URL that expires after `expiresIn` seconds, so caching
+   * the redirect for longer will replay an expired URL.
+   *
+   * @example
+   * ```typescript
+   * @TemporaryLink({ expiresIn: 3600, cacheControl: "private, max-age=300" })
+   * ```
+   */
+  cacheControl?: string
 }
 
 /**

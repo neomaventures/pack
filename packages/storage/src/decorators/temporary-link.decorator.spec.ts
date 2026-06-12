@@ -78,6 +78,31 @@ describe("TemporaryLinkDecorator", () => {
     })
   })
 
+  describe("Given an options object with cacheControl is provided", () => {
+    const cacheControl = "private, max-age=300"
+
+    class CacheControlTest {
+      @TemporaryLink({ cacheControl })
+      public handler(): void {}
+    }
+
+    it("should store the cacheControl value verbatim in metadata", () => {
+      const metadata = Reflect.getMetadata(
+        TEMPORARY_LINK_METADATA_KEY,
+        CacheControlTest.prototype.handler,
+      )
+      expect(metadata).toMatchObject({ cacheControl })
+    })
+
+    it("should attach the TemporaryLinkInterceptor", () => {
+      const interceptors = Reflect.getMetadata(
+        INTERCEPTORS_METADATA,
+        CacheControlTest.prototype.handler,
+      )
+      expect(interceptors).toContain(TemporaryLinkInterceptor)
+    })
+  })
+
   describe("Given an options object with a default URL is provided", () => {
     const defaultUrl = "/img/default.svg"
 
