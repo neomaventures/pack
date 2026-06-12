@@ -38,6 +38,14 @@ export interface StorageOptions<T extends Storable = Storable> {
   allowedMimeTypes?: string[]
   /** Presigned link expiration time in seconds */
   linkExpiresIn?: number
+  /**
+   * Default `Cache-Control` header for `@TemporaryLink()` 302 redirects.
+   * Passed verbatim to `res.setHeader("Cache-Control", ...)` — the package
+   * does not parse or validate the value. Per-route
+   * `@TemporaryLink({ cacheControl })` overrides this default. When neither
+   * is set, no `Cache-Control` header is sent.
+   */
+  linkCacheControl?: string
   /** Use path-style URLs (required for MinIO, optional for AWS S3). Defaults to true. */
   forcePathStyle?: boolean
 }

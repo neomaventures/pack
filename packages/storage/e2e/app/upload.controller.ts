@@ -73,7 +73,10 @@ export class UploadController {
   }
 
   @Get(":id/avatar")
-  @TemporaryLink({ default: "/img/default.svg" })
+  @TemporaryLink({
+    default: "/img/default.svg",
+    cacheControl: "private, max-age=300",
+  })
   public async avatar(@Param("id") id: string): Promise<Upload | null> {
     const repo = this.dataSource.getRepository(Upload)
     return repo.findOneBy({ id })

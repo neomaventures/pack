@@ -199,6 +199,7 @@ All exceptions extend `HttpException` and include metadata for diagnostics:
 | `maxFileSize` | `number` | No | | Global maximum file size in bytes |
 | `allowedMimeTypes` | `string[]` | No | | Global allowed MIME types |
 | `linkExpiresIn` | `number` | No | `3600` | Default presigned URL expiry in seconds |
+| `linkCacheControl` | `string` | No | | Default `Cache-Control` header for temporary-link 302 responses |
 | `forcePathStyle` | `boolean` | No | `true` | Use path-style S3 URLs (required for MinIO) |
 
 ### `Storable` interface
@@ -271,6 +272,7 @@ Method decorator for download routes. Handler must return a `Storable` entity, o
 @TemporaryLink()                              // default expiry from StorageOptions.linkExpiresIn
 @TemporaryLink({ expiresIn: 600 })            // 10 minute expiry
 @TemporaryLink({ default: "/img/avatar.svg" }) // redirect here when handler returns null
+@TemporaryLink({ cacheControl: "private, max-age=300" }) // cache the 302 for 5 minutes
 ```
 
 #### Default for missing assets
@@ -290,6 +292,26 @@ The `default` value is used verbatim as the 302 `Location` — relative path, ab
 Without `default`, a `null` return is a programmer error and throws — the existing strict contract is preserved for callers who haven't opted in.
 
 `default` only covers the "handler returned null" path. Exceptions thrown inside the handler (DB down, S3 unreachable, `findOneByOrFail` miss) bubble to the global exception filter as before — `default` is **not** an error-swallowing fallback.
+
+#### Caching the redirect
+
+Pass `cacheControl` to set a `Cache-Control` header on the 302. Useful when the same temporary link is rendered repeatedly (e.g. an avatar in the nav bar across page navigations) — the browser skips the redirect hop until the cache window expires.
+
+```typescript
+@Get("avatar")
+@TemporaryLink({ expiresIn: 3600, cacheControl: "private, max-age=300" })
+public async avatar(@CurrentUser() user: User): Promise<Upload | null> {
+  return this.profile.getAvatar(user.id)
+}
+```
+
+The value is passed verbatim to `res.setHeader("Cache-Control", ...)`. The package does not parse or validate it.
+
+Set a global default via `StorageOptions.linkCacheControl`; the per-route `cacheControl` overrides it. When neither is set, no header is sent (existing behaviour).
+
+**Use `private` for user-scoped assets.** Avatars, attachments, and anything keyed to the current user should be `private, max-age=N` so shared caches (proxies, CDNs) don't serve one user's redirect to another.
+
+**Keep `max-age` shorter than `expiresIn`.** The 302 points at a presigned S3 URL that expires after `expiresIn` seconds. If the browser caches the redirect for longer, it will replay an expired URL and the download will fail. A `max-age` well under `expiresIn` (e.g. 300s cache on a 3600s link) leaves headroom for clock skew and in-flight requests.
 
 ### `FileCreatedEvent`
 

@@ -23,6 +23,7 @@ import { Upload } from "./upload.entity"
         secretAccessKey: process.env.STORAGE_SECRET_KEY!,
         entity: Upload,
         maxFileSize: 500,
+        linkCacheControl: "private, max-age=60",
       }),
     }),
   ],

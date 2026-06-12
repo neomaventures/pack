@@ -2,6 +2,7 @@ import {
   type CallHandler,
   type ExecutionContext,
   HttpStatus,
+  Inject,
   Injectable,
   InternalServerErrorException,
   type NestInterceptor,
@@ -15,6 +16,7 @@ import {
   type TemporaryLinkOptions,
 } from "../decorators/temporary-link.decorator"
 import { StorageService } from "../services/storage.service"
+import { type StorageOptions, STORAGE_OPTIONS } from "../storage.options"
 
 /**
  * Interceptor that generates a presigned S3 download URL and responds
@@ -38,6 +40,7 @@ export class TemporaryLinkInterceptor implements NestInterceptor {
   public constructor(
     private readonly storageService: StorageService,
     private readonly reflector: Reflector,
+    @Inject(STORAGE_OPTIONS) private readonly options: StorageOptions,
   ) {}
 
   /**
@@ -58,6 +61,7 @@ export class TemporaryLinkInterceptor implements NestInterceptor {
     )
     const expiresIn = metadata?.expiresIn
     const defaultUrl = metadata?.default
+    const cacheControl = metadata?.cacheControl ?? this.options.linkCacheControl
 
     const res = context.switchToHttp().getResponse<Response>()
 
@@ -65,6 +69,9 @@ export class TemporaryLinkInterceptor implements NestInterceptor {
       switchMap(async (entity: unknown) => {
         if (entity === null || entity === undefined) {
           if (defaultUrl !== undefined) {
+            if (cacheControl !== undefined) {
+              res.setHeader("Cache-Control", cacheControl)
+            }
             res.redirect(HttpStatus.FOUND, defaultUrl)
             return
           }
@@ -88,6 +95,9 @@ export class TemporaryLinkInterceptor implements NestInterceptor {
           expiresIn,
         )
 
+        if (cacheControl !== undefined) {
+          res.setHeader("Cache-Control", cacheControl)
+        }
         res.redirect(HttpStatus.FOUND, url)
       }),
     )
