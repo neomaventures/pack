@@ -129,16 +129,6 @@ interface AppConfig {
         accessKeyId: config.s3AccessKeyId,
         secretAccessKey: config.s3SecretAccessKey,
         entity: Upload,
-        // Apply a global 1MB ceiling so multer rejects oversized uploads
-        // at the middleware boundary, before the per-route `@Upload({
-        // maxSize })` check runs in the interceptor. Without a global
-        // ceiling, multer buffers the entire body before validating, and
-        // the cookie-auth's CLS context can drop across multi-chunk body
-        // reads — leaving the guard with no principal and surfacing a 401
-        // when the real failure is "too large". The avatar route's
-        // per-route `maxSize: 1_000_000` matches this ceiling for now;
-        // raise the global when other routes need bigger payloads.
-        maxFileSize: 1_000_000,
       }),
       inject: [ConfigService],
     }),

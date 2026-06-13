@@ -1,3 +1,5 @@
+import { AsyncResource } from "node:async_hooks"
+
 import { Inject, Injectable, type NestMiddleware } from "@nestjs/common"
 import { type NextFunction, type Request, type Response } from "express"
 import multer, { type Multer, type MulterError } from "multer"
@@ -34,27 +36,41 @@ export class MultipartMiddleware implements NestMiddleware {
   }
 
   public use(req: Request, res: Response, next: NextFunction): void {
-    this.upload.any()(req, res, (err: any) => {
-      if (err) {
-        if (
-          (err as MulterError).code === "LIMIT_FILE_SIZE" &&
-          this.options.maxFileSize !== undefined
-        ) {
-          next(new FileTooLargeException(null, this.options.maxFileSize))
+    // Bind the callback to the current AsyncResource so that ALS frames opened
+    // by upstream middleware (e.g. @neomaventures/request-context) survive
+    // multer's deferred invocation. Multer captures its callback and fires it
+    // from a stream "finish" event whose async context is Node's HTTP parser,
+    // not ours; without rebinding, ALS-backed reads (e.g. getPrincipal()) in
+    // downstream guards and interceptors return undefined for any request
+    // whose body parsing spans multiple event-loop ticks.
+    //
+    // See multer #814: https://github.com/expressjs/multer/issues/814
+    // Regression spec: e2e/core/upload/als-propagation.e2e-spec.ts
+    this.upload.any()(
+      req,
+      res,
+      AsyncResource.bind((err: any) => {
+        if (err) {
+          if (
+            (err as MulterError).code === "LIMIT_FILE_SIZE" &&
+            this.options.maxFileSize !== undefined
+          ) {
+            next(new FileTooLargeException(null, this.options.maxFileSize))
+            return
+          }
+
+          next(err)
           return
         }
 
-        next(err)
-        return
-      }
+        // Promote the first file from req.files to req.file for
+        // consistency with multer.single() behaviour
+        if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+          req.file = req.files[0]
+        }
 
-      // Promote the first file from req.files to req.file for
-      // consistency with multer.single() behaviour
-      if (req.files && Array.isArray(req.files) && req.files.length > 0) {
-        req.file = req.files[0]
-      }
-
-      next()
-    })
+        next()
+      }),
+    )
   }
 }
