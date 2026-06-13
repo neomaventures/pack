@@ -12,9 +12,9 @@
   "scripts": {
     "build:css": "tailwindcss -i src/styles/input.css -o public/stylesheets/main.css --minify",
     "build": "pnpm build:css && nest build",
-    "predev": "lsof -ti:3000 | xargs kill -9 2>/dev/null; docker rm -f saas-mailpit 2>/dev/null; docker run -d --name saas-mailpit -p 1025:1025 -p 8025:8025 axllent/mailpit",
+    "predev": "lsof -ti:3000 | xargs kill -9 2>/dev/null; docker rm -f saas-mailpit 2>/dev/null; docker run -d --name saas-mailpit -p 1025:1025 -p 8025:8025 axllent/mailpit && node scripts/dev/start-minio.cjs",
     "dev": "concurrently -n nest,css -c blue,magenta \"node --env-file=.env.development node_modules/@nestjs/cli/bin/nest.js start --watch\" \"tailwindcss -i src/styles/input.css -o public/stylesheets/main.css --watch\"",
-    "postdev": "docker rm -f saas-mailpit",
+    "postdev": "docker rm -f saas-mailpit && node scripts/dev/stop-minio.cjs",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
     "start": "node dist/src/main",
