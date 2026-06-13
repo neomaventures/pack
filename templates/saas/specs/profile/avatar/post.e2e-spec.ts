@@ -184,6 +184,25 @@ describe("POST /profile/avatar", () => {
         })
         .expect(UNSUPPORTED_MEDIA_TYPE)
     })
+
+    it("should re-render the profile page with an inline error when the request accepts HTML", async () => {
+      const cookie = await authenticate(app, faker.internet.email())
+
+      const response = await request(app.getHttpServer())
+        .post("/profile/avatar")
+        .set("Cookie", cookie)
+        .set("Accept", "text/html")
+        .attach("file", Buffer.from("%PDF-1.4 fake pdf"), {
+          filename: "doc.pdf",
+          contentType: "application/pdf",
+        })
+        .expect(UNSUPPORTED_MEDIA_TYPE)
+        .expect("Content-Type", /text\/html/)
+
+      expect(response.text).toContain("Profile")
+      expect(response.text).toContain("not supported")
+      expect(response.text).toContain('name="file"')
+    })
   })
 
   describe("When no file is attached to the upload request", () => {

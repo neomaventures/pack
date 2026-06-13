@@ -1,5 +1,7 @@
 import { execSync } from "child_process"
 
+import { startContainer as startMinio } from "@neomaventures/minio"
+
 async function waitForHttp(url: string, timeoutMs = 30000): Promise<void> {
   const start = Date.now()
   while (Date.now() - start < timeoutMs) {
@@ -29,5 +31,8 @@ export default async (): Promise<void> => {
     { stdio: "ignore" },
   )
 
-  await waitForHttp(`http://localhost:${mockServerPort}/mockserver/status`)
+  await Promise.all([
+    waitForHttp(`http://localhost:${mockServerPort}/mockserver/status`),
+    startMinio({ bucket: process.env.S3_BUCKET }),
+  ])
 }
