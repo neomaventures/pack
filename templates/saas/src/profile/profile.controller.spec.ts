@@ -7,16 +7,10 @@ import { type Upload } from "~profile/upload.entity"
 
 describe("ProfileController", () => {
   let controller: ProfileController
-  let profileService: jest.Mocked<
-    Pick<ProfileService, "getAvatar" | "setAvatar" | "findAccount">
-  >
+  let profileService: jest.Mocked<Pick<ProfileService, "setAvatar">>
 
   beforeEach(() => {
-    profileService = {
-      getAvatar: jest.fn(),
-      setAvatar: jest.fn(),
-      findAccount: jest.fn(),
-    }
+    profileService = { setAvatar: jest.fn() }
     controller = new ProfileController(
       profileService as unknown as ProfileService,
     )
@@ -31,23 +25,28 @@ describe("ProfileController", () => {
   })
 
   describe("avatar()", () => {
-    describe("Given an authenticated principal", () => {
-      it("should resolve the avatar for the principal via the service", async () => {
-        const principal = {
+    describe("Given the principal has an avatar", () => {
+      it("should return the avatar for the principal", () => {
+        const upload = { id: faker.string.uuid() } as Upload
+        const account = {
           id: faker.string.uuid(),
           email: faker.internet.email(),
-          permissions: [],
-        }
-        const upload = { id: faker.string.uuid() } as Upload
+          avatar: upload,
+        } as Account
 
-        profileService.getAvatar.mockImplementation((accountId: string) => {
-          if (accountId === principal.id) {
-            return Promise.resolve(upload)
-          }
-          throw new Error(`Unexpected accountId: ${accountId}`)
-        })
+        expect(controller.avatar(account)).toBe(upload)
+      })
+    })
 
-        await expect(controller.avatar(principal)).resolves.toBe(upload)
+    describe("Given the principal has no avatar", () => {
+      it("should return null", () => {
+        const account = {
+          id: faker.string.uuid(),
+          email: faker.internet.email(),
+          avatar: null,
+        } as Account
+
+        expect(controller.avatar(account)).toBeNull()
       })
     })
   })
@@ -55,24 +54,16 @@ describe("ProfileController", () => {
   describe("uploadAvatar()", () => {
     describe("Given an authenticated principal and a stored Upload", () => {
       it("should set the avatar on the principal's account and redirect to /profile", async () => {
-        const principal = {
+        const account = {
           id: faker.string.uuid(),
           email: faker.internet.email(),
-          permissions: [],
-        }
-        const account = { id: principal.id, email: principal.email } as Account
+        } as Account
         const upload = { id: faker.string.uuid() } as Upload
         const redirect = jest.fn()
         const res = { redirect } as unknown as Parameters<
           ProfileController["uploadAvatar"]
         >[2]
 
-        profileService.findAccount.mockImplementation((accountId: string) => {
-          if (accountId === principal.id) {
-            return Promise.resolve(account)
-          }
-          throw new Error(`Unexpected accountId: ${accountId}`)
-        })
         profileService.setAvatar.mockImplementation((a: Account, u: Upload) => {
           if (a === account && u === upload) {
             return Promise.resolve()
@@ -80,29 +71,9 @@ describe("ProfileController", () => {
           throw new Error("Unexpected setAvatar arguments")
         })
 
-        await controller.uploadAvatar(principal, upload, res)
+        await controller.uploadAvatar(account, upload, res)
 
         expect(redirect).toHaveBeenCalledWith("/profile")
-      })
-    })
-
-    describe("Given the principal's account row cannot be found", () => {
-      it("should throw NotFoundException", async () => {
-        const principal = {
-          id: faker.string.uuid(),
-          email: faker.internet.email(),
-          permissions: [],
-        }
-        const upload = { id: faker.string.uuid() } as Upload
-        const res = { redirect: jest.fn() } as unknown as Parameters<
-          ProfileController["uploadAvatar"]
-        >[2]
-
-        profileService.findAccount.mockResolvedValue(null)
-
-        await expect(
-          controller.uploadAvatar(principal, upload, res),
-        ).rejects.toThrow(/Not Found/i)
       })
     })
   })

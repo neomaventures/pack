@@ -1,9 +1,9 @@
 node_modules/
 dist/
 
-# Environment files (keep .env.example)
+# Environment files. `.env.development` is the working example; per-developer
+# overrides live in `.env.local` which stays untracked.
 .env*
-!.env.example
 !.env.development
 !.env.spec
 !.env.e2e-spec

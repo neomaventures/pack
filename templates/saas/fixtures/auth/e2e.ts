@@ -58,7 +58,7 @@ export const authenticate = async (
 
   return cookie.serialize("auth.sid", token, {
     httpOnly: true,
-    secure: process.env.APP_URL?.startsWith("https") ?? false,
+    secure: false,
     sameSite: "lax",
     path: "/",
   })

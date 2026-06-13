@@ -36,15 +36,15 @@ export class MultipartMiddleware implements NestMiddleware {
   }
 
   public use(req: Request, res: Response, next: NextFunction): void {
-    // Bind the callback to the current AsyncResource so that ALS frames opened
-    // by upstream middleware (e.g. @neomaventures/request-context) survive
-    // multer's deferred invocation. Multer captures its callback and fires it
-    // from a stream "finish" event whose async context is Node's HTTP parser,
-    // not ours; without rebinding, ALS-backed reads (e.g. getPrincipal()) in
-    // downstream guards and interceptors return undefined for any request
-    // whose body parsing spans multiple event-loop ticks.
+    // Multer's callback is invoked from the `'finish'` listener on
+    // `IncomingMessage`, which was constructed upstream by Node's HTTP
+    // parser — so the listener runs in the HTTP-parser async context, not
+    // in this middleware's. Any ALS frame opened by upstream middleware
+    // (e.g. `@neomaventures/request-context`'s principal slot) is therefore
+    // invisible to downstream guards/interceptors. `AsyncResource.bind`
+    // snapshots our context onto the callback so the frame is restored.
     //
-    // See multer #814: https://github.com/expressjs/multer/issues/814
+    // multer #814: https://github.com/expressjs/multer/issues/814
     // Regression spec: e2e/core/upload/als-propagation.e2e-spec.ts
     this.upload.any()(
       req,

@@ -55,6 +55,12 @@ export class Account implements Authenticatable {
    *
    * Switch to explicit `relations: ['avatar']` per-query if the eager JOIN
    * ever shows up in a profile.
+   *
+   * At the database layer this `@OneToOne` generates a `UQ` constraint on
+   * `avatarUploadId` and an `FK` to the `upload` table — that is why the
+   * migration that introduced the column carries two named constraints
+   * alongside the column itself. TypeORM produces these names; do not be
+   * surprised by their verbosity.
    */
   @OneToOne(() => Upload, { eager: true, nullable: true, onDelete: "SET NULL" })
   @JoinColumn({ name: "avatarUploadId" })
