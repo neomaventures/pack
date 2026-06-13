@@ -64,7 +64,7 @@ describe("POST /profile/avatar", () => {
       await request(app.getHttpServer())
         .post("/profile/avatar")
         .set("Cookie", cookie)
-        .attach("file", jpegOfSize(1_000_001), {
+        .attach("file", jpegOfSize(3_000_001), {
           filename: "huge.jpg",
           contentType: "image/jpeg",
         })
@@ -131,6 +131,48 @@ describe("POST /profile/avatar", () => {
           contentType: "image/png",
         })
         .expect(NOT_FOUND)
+    })
+  })
+
+  describe("When an authenticated user uploads a second avatar", () => {
+    it("should change the bytes served at /profile/avatar to the new image", async () => {
+      const cookie = await authenticate(app, faker.internet.email())
+      const first = jpegOfSize(1_024)
+      const second = jpegOfSize(4_096)
+
+      const fetchAvatarBytes = async (): Promise<Buffer> => {
+        const redirect = await request(app.getHttpServer())
+          .get("/profile/avatar")
+          .set("Cookie", cookie)
+          .expect(FOUND)
+        const url = redirect.headers.location as string
+        const response = await fetch(url)
+        return Buffer.from(await response.arrayBuffer())
+      }
+
+      await request(app.getHttpServer())
+        .post("/profile/avatar")
+        .set("Cookie", cookie)
+        .attach("file", first, {
+          filename: "first.jpg",
+          contentType: "image/jpeg",
+        })
+        .expect(FOUND)
+      const before = await fetchAvatarBytes()
+
+      await request(app.getHttpServer())
+        .post("/profile/avatar")
+        .set("Cookie", cookie)
+        .attach("file", second, {
+          filename: "second.jpg",
+          contentType: "image/jpeg",
+        })
+        .expect(FOUND)
+      const after = await fetchAvatarBytes()
+
+      expect(before.equals(first)).toBe(true)
+      expect(after.equals(second)).toBe(true)
+      expect(before.equals(after)).toBe(false)
     })
   })
 })

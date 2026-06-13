@@ -125,7 +125,7 @@ export class ProfileController {
   })
   @UploadDecorator({
     types: ["image/jpeg", "image/png", "image/webp"],
-    maxSize: 1_000_000,
+    maxSize: 3_000_000,
     key: AccountAvatarKeyResolver,
   })
   public async uploadAvatar(
