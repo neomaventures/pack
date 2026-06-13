@@ -3,6 +3,7 @@ import {
   Authenticated,
   Principal,
 } from "@neomaventures/auth"
+import { ErrorTemplate } from "@neomaventures/exceptions"
 import {
   StoredFile,
   TemporaryLink,
@@ -104,7 +105,10 @@ export class ProfileController {
    * Returns a 302 to `/profile` (POST-Redirect-GET) on success. Validation
    * failures bubble through the storage package's `HttpException` types
    * (`FileTooLargeException`, `UnsupportedFileTypeException`,
-   * `NoFileProvidedException`) and are surfaced verbatim.
+   * `NoFileProvidedException`). For HTML requests, `@ErrorTemplate` maps
+   * those exceptions back to the `profile` view so the page re-renders
+   * with an inline error message; API clients still get the JSON error
+   * response with the original status code.
    *
    * Authentication uses the bare `Authenticated` guard — this is an asset
    * endpoint, not a page, so it returns 401 rather than redirecting.
@@ -123,6 +127,12 @@ export class ProfileController {
    */
   @Post("profile/avatar")
   @UseGuards(Authenticated)
+  @ErrorTemplate({
+    FileTooLargeException: "profile",
+    UnsupportedFileTypeException: "profile",
+    NoFileProvidedException: "profile",
+    default: "/error",
+  })
   @UploadDecorator({
     types: ["image/jpeg", "image/png", "image/webp"],
     maxSize: 1_000_000,
