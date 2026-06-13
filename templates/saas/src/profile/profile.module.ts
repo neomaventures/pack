@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
 
 import { Account } from "~auth/account.entity"
+import { AccountAvatarKeyResolver } from "~profile/account-avatar-key.resolver"
 import { ProfileController } from "~profile/profile.controller"
 import { ProfileService } from "~profile/profile.service"
 import { Upload } from "~profile/upload.entity"
@@ -18,6 +19,6 @@ import { Upload } from "~profile/upload.entity"
 @Module({
   imports: [TypeOrmModule.forFeature([Account, Upload])],
   controllers: [ProfileController],
-  providers: [ProfileService],
+  providers: [ProfileService, AccountAvatarKeyResolver],
 })
 export class ProfileModule {}
