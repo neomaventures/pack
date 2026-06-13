@@ -43,11 +43,15 @@ describe("GET /dashboard", () => {
     it(`should respond with HTTP ${OK} and the dashboard template with the user's email`, async () => {
       const cookie = await authenticate(app, email)
 
-      const expectedHtml = ejs.render(template, {
-        npmPackageName,
-        npmPackageVersion,
-        email: email.toLowerCase(),
-      })
+      const expectedHtml = ejs.render(
+        template,
+        {
+          npmPackageName,
+          npmPackageVersion,
+          email: email.toLowerCase(),
+        },
+        { filename: join(process.cwd(), "views", "dashboard.ejs") },
+      )
 
       await request(app.getHttpServer())
         .get("/dashboard")

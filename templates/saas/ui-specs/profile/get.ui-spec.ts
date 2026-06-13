@@ -21,5 +21,26 @@ test.describe("Profile Page", () => {
       const heading = page.getByRole("heading", { level: 1 })
       await expect(heading).toHaveText("Profile")
     })
+
+    test("should display the default avatar image", async ({ page }) => {
+      await page.goto("/profile")
+      const avatar = page.getByRole("img", { name: "Your avatar" })
+      await expect(avatar).toHaveAttribute("src", "/profile/avatar")
+    })
+
+    test("should display the nav avatar", async ({ page }) => {
+      await page.goto("/profile")
+      const avatar = page.getByRole("img", { name: "Profile" })
+      await expect(avatar).toHaveAttribute("src", "/profile/avatar")
+    })
+
+    test("should navigate to the profile page when the nav avatar is clicked", async ({
+      page,
+    }) => {
+      await page.goto("/profile")
+      const link = page.getByRole("link", { name: "Profile" })
+      await link.click()
+      await expect(page).toHaveURL("/profile")
+    })
   })
 })

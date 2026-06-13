@@ -43,10 +43,14 @@ describe("GET /profile", () => {
     it(`should respond with HTTP ${OK} and the profile template`, async () => {
       const cookie = await authenticate(app, email)
 
-      const expectedHtml = ejs.render(template, {
-        npmPackageName,
-        npmPackageVersion,
-      })
+      const expectedHtml = ejs.render(
+        template,
+        {
+          npmPackageName,
+          npmPackageVersion,
+        },
+        { filename: join(process.cwd(), "views", "profile.ejs") },
+      )
 
       await request(app.getHttpServer())
         .get("/profile")
