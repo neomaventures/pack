@@ -1,0 +1,22 @@
+<header
+  class="flex items-center justify-between border-b border-slate-200 bg-white px-8 py-4"
+>
+  <span class="text-lg font-bold tracking-tight"><%= npmPackageName %></span>
+  <nav class="flex items-center gap-4">
+    <a href="/profile" class="flex items-center">
+      <img
+        src="/profile/avatar"
+        alt="Profile"
+        class="h-8 w-8 rounded-full border border-slate-200 bg-white object-cover"
+      />
+    </a>
+    <form method="post" action="/auth/logout">
+      <button
+        type="submit"
+        class="cursor-pointer border-none bg-transparent p-0 font-sans text-sm font-medium text-slate-800 hover:text-slate-500"
+      >
+        Sign out
+      </button>
+    </form>
+  </nav>
+</header>
