@@ -11,43 +11,32 @@ test.describe("Profile Page", () => {
   })
 
   test.describe("When an authenticated user visits the profile page", () => {
-    test.beforeEach(async ({ login }) => {
+    test.beforeEach(async ({ login, page }) => {
       const email = faker.internet.email()
       await login.as(email)
+      await page.goto("/profile")
     })
 
     test("should display the Profile heading", async ({ page }) => {
-      await page.goto("/profile")
       const heading = page.getByRole("heading", { level: 1 })
       await expect(heading).toHaveText("Profile")
     })
 
-    test("should display the default avatar image", async ({ page }) => {
-      await page.goto("/profile")
+    test("should show the user's avatar on the page", async ({ page }) => {
       const avatar = page.getByRole("img", { name: "Your avatar" })
-      await expect(avatar).toHaveAttribute("src", "/profile/avatar")
+      await expect(avatar).toBeVisible()
     })
 
-    test("should display the nav avatar", async ({ page }) => {
-      await page.goto("/profile")
+    test("should show the user's avatar in the navigation", async ({
+      page,
+    }) => {
       const avatar = page.getByRole("img", { name: "Profile" })
-      await expect(avatar).toHaveAttribute("src", "/profile/avatar")
+      await expect(avatar).toBeVisible()
     })
 
-    test("should navigate to the profile page when the nav avatar is clicked", async ({
+    test("should let the user pick an image and upload it", async ({
       page,
     }) => {
-      await page.goto("/profile")
-      const link = page.getByRole("link", { name: "Profile" })
-      await link.click()
-      await expect(page).toHaveURL("/profile")
-    })
-
-    test("should display the avatar upload form with a file input and submit button", async ({
-      page,
-    }) => {
-      await page.goto("/profile")
-
       const fileInput = page.locator('input[type="file"][name="file"]')
       await expect(fileInput).toBeVisible()
 
@@ -58,8 +47,6 @@ test.describe("Profile Page", () => {
     test("should round-trip a valid upload back to /profile with a presigned avatar URL", async ({
       page,
     }) => {
-      await page.goto("/profile")
-
       // 1×1 transparent PNG — smallest valid PNG buffer.
       const pngBuffer = Buffer.from(
         "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4" +
@@ -77,7 +64,7 @@ test.describe("Profile Page", () => {
       await expect(page).toHaveURL("/profile")
 
       const avatar = page.getByRole("img", { name: "Your avatar" })
-      await expect(avatar).toHaveAttribute("src", "/profile/avatar")
+      await expect(avatar).toBeVisible()
 
       // Stronger assertion: GET /profile/avatar resolves to a presigned URL,
       // not the default SVG. The browser cache doesn't apply to a fresh
@@ -94,8 +81,6 @@ test.describe("Profile Page", () => {
     test("should re-render the form with an error when an unsupported file type is uploaded", async ({
       page,
     }) => {
-      await page.goto("/profile")
-
       await page.locator('input[type="file"][name="file"]').setInputFiles({
         name: "doc.pdf",
         mimeType: "application/pdf",

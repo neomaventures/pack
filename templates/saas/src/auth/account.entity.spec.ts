@@ -68,4 +68,32 @@ describe("Account", () => {
       await expect(repository.save(account)).rejects.toThrow()
     })
   })
+
+  describe("Given an account with an avatar Upload", () => {
+    it("should eagerly load the avatar relation on findOneBy", async () => {
+      const uploads = datasource.getRepository(Upload)
+      const account = await repository.save(
+        repository.create({ email: faker.internet.email() }),
+      )
+      const upload = await uploads.save(
+        uploads.create({
+          originalName: "avatar.jpg",
+          mimeType: "image/jpeg",
+          size: faker.number.int({ min: 100, max: 1_000 }),
+          key: `accounts/${account.id}/avatar`,
+          bucket: "test-bucket",
+        }),
+      )
+      await repository.update(account.id, { avatar: upload })
+
+      // Note: no `relations: ['avatar']` here — the eager flag on
+      // `@OneToOne` is what we're asserting.
+      const reloaded = await repository.findOneByOrFail({ id: account.id })
+
+      expect(reloaded.avatar).toMatchObject({
+        id: upload.id,
+        key: upload.key,
+      })
+    })
+  })
 })

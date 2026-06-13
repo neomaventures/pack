@@ -8,6 +8,14 @@ import { type Request } from "express"
 
 import { AccountAvatarKeyResolver } from "~profile/account-avatar-key.resolver"
 
+/**
+ * The resolver runs inside the storage interceptor after `AssetAuthenticated`
+ * has accepted the request, so in production the principal is always present.
+ * We exercise the happy path here and keep a single defensive test on the
+ * `throw new UnauthorizedException` branch — even though it's only reachable
+ * via guard misconfiguration, the contract is part of the resolver's public
+ * surface and would otherwise drift silently.
+ */
 describe("AccountAvatarKeyResolver", () => {
   let resolver: AccountAvatarKeyResolver
   let getPrincipalSpy: jest.SpyInstance
@@ -34,7 +42,7 @@ describe("AccountAvatarKeyResolver", () => {
 
   describe("resolve()", () => {
     describe("Given an authenticated request", () => {
-      it("should return accounts/${accountId}/avatar", () => {
+      it("should return a stable per-account key", () => {
         const accountId = faker.string.uuid()
         getPrincipalSpy.mockReturnValue({
           id: accountId,
@@ -45,23 +53,10 @@ describe("AccountAvatarKeyResolver", () => {
 
         expect(result).toBe(`accounts/${accountId}/avatar`)
       })
-
-      it("should be deterministic — same principal yields the same key", () => {
-        const accountId = faker.string.uuid()
-        getPrincipalSpy.mockReturnValue({
-          id: accountId,
-          email: faker.internet.email(),
-        })
-
-        const first = resolver.resolve(req, idGenerator, fileInfo)
-        const second = resolver.resolve(req, idGenerator, fileInfo)
-
-        expect(first).toBe(second)
-      })
     })
 
     describe("Given no principal on the request context", () => {
-      it("should throw UnauthorizedException", () => {
+      it("should throw UnauthorizedException as a defensive contract", () => {
         getPrincipalSpy.mockReturnValue(undefined)
 
         expect(() => resolver.resolve(req, idGenerator, fileInfo)).toThrow(

@@ -1,3 +1,4 @@
+import { faker } from "@faker-js/faker"
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { type NextFunction, type Request, type Response } from "express"
 import request from "supertest"
@@ -10,21 +11,17 @@ import { als } from "../../app/als-bug-app.module"
  * event-loop ticks. The fix wraps multer's deferred callback in
  * `AsyncResource.bind` so the frame survives invocation.
  *
- * The spec opens an ALS frame at the Express boundary via the `configure`
- * callback `managedAppInstance` exposes, guaranteed to run before
- * `MultipartMiddleware`. The controller reads the frame after multer has
- * parsed the body; without the fix the larger payloads return `undefined`
- * and the assertion fails.
+ * Pattern note: opening an ALS frame inline via `app.use` is **not** a
+ * common pattern elsewhere in this repo — production consumers
+ * (e.g. `@neomaventures/request-context`) open their frames inside a
+ * dedicated Nest middleware that runs early in the pipeline. We do it via
+ * the `configure` callback here purely to reproduce the upstream
+ * topology in a single spec without dragging in a second package: the
+ * Express boundary `app.use` runs before any Nest middleware including
+ * `MultipartMiddleware`, which is exactly the lifecycle the bug surfaces
+ * in. The controller reads the frame after multer has parsed the body;
+ * without the fix the larger payloads return `undefined`.
  */
-
-const bodyOfSize = (bytes: number): Buffer => {
-  const buffer = Buffer.alloc(bytes)
-  for (let i = 0; i < bytes; i++) {
-    buffer[i] = i % 256
-  }
-  return buffer
-}
-
 describe("MultipartMiddleware — ALS propagation (regression for #231)", () => {
   let app: Awaited<ReturnType<typeof managedAppInstance>>
 
@@ -55,7 +52,7 @@ describe("MultipartMiddleware — ALS propagation (regression for #231)", () => 
         await request(app.getHttpServer())
           .post("/als/upload")
           .set("x-test-marker", marker)
-          .attach("file", bodyOfSize(bytes), {
+          .attach("file", Buffer.from(faker.string.alphanumeric(bytes)), {
             filename: `payload-${bytes}.bin`,
             contentType: "application/octet-stream",
           })
