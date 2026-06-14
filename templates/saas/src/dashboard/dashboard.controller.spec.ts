@@ -1,8 +1,15 @@
 import { faker } from "@faker-js/faker"
-import { type Authenticatable, AUTH_OPTIONS } from "@neomaventures/auth"
+import {
+  type Authenticatable,
+  AuthModule,
+  AUTH_TEST_OPTIONS,
+} from "@neomaventures/auth"
+import { ManagedDatabaseModule } from "@neomaventures/managed-database"
 import { Test, type TestingModule } from "@nestjs/testing"
 
+import { Account } from "~auth/account.entity"
 import { DashboardController } from "~dashboard/dashboard.controller"
+import { DashboardModule } from "~dashboard/dashboard.module"
 
 const principal: Authenticatable = {
   id: faker.string.uuid(),
@@ -15,14 +22,10 @@ describe("DashboardController", () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [DashboardController],
-      providers: [
-        // `@Authenticated()` registers `AuthenticatedGuard` via `UseGuards`,
-        // so Nest must resolve its `AUTH_OPTIONS` dep when building the
-        // testing module. The guard is never invoked in these unit tests
-        // (we call the handler directly), so an empty options object is
-        // sufficient.
-        { provide: AUTH_OPTIONS, useValue: {} },
+      imports: [
+        ManagedDatabaseModule.forRoot([Account]),
+        AuthModule.forRoot(AUTH_TEST_OPTIONS),
+        DashboardModule,
       ],
     }).compile()
 

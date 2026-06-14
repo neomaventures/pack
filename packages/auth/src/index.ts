@@ -56,3 +56,6 @@ export * from "./events/authenticated.event"
 
 // Types
 export * from "./types/auth-provider"
+
+// Testing helpers (consumer specs)
+export * from "./testing/auth-test-options"
