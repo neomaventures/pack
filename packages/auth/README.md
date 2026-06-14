@@ -293,16 +293,16 @@ export class AuthController {
 
 ### 5. Protect routes
 
-Use the `Authenticated` guard and `Principal` decorator to protect routes:
+Use the `@Authenticated()` decorator and `@Principal()` decorator to protect routes:
 
 ```typescript
 import { Authenticated, Principal } from "@neomaventures/auth"
-import { Controller, Get, UseGuards } from "@nestjs/common"
+import { Controller, Get } from "@nestjs/common"
 
 import { User } from "./user.entity"
 
 @Controller("me")
-@UseGuards(Authenticated)
+@Authenticated()
 export class ProfileController {
   @Get()
   public get(@Principal() user: User): { id: string; email: string } {
@@ -315,6 +315,67 @@ export class ProfileController {
 ```
 
 `AuthModule` automatically applies `BearerAuthenticationMiddleware` and `CookieAuthenticationMiddleware` to all routes. They extract the JWT from the `Authorization: Bearer <token>` header or the `auth.sid` cookie respectively, and attach the authenticated user to `req.principal`. Bearer takes priority when both are present.
+
+#### Choosing an unauthenticated strategy
+
+Different route types want different responses when the caller is anonymous. `@Authenticated()` accepts an `onUnauthenticated` option that takes either a redirect URL or an `HttpException` class:
+
+| Route type | Pass | Result |
+|------------|------|--------|
+| API endpoint | _(omit)_ | `UnauthorizedException` (401) |
+| Page route | `"/auth/magic-link"` | `UnauthorizedRedirectException` carrying a 303 redirect |
+| Asset endpoint (e.g. avatar image) | `NotFoundException` | 404, indistinguishable from "no such route" |
+
+```typescript
+import { Authenticated } from "@neomaventures/auth"
+import { Controller, Get, NotFoundException } from "@nestjs/common"
+
+@Controller()
+export class RoutesController {
+  // 401 — right for JSON API endpoints
+  @Get("api/me")
+  @Authenticated()
+  public me(): unknown {}
+
+  // 303 redirect — right for server-rendered pages
+  @Get("dashboard")
+  @Authenticated({ onUnauthenticated: "/auth/magic-link" })
+  public dashboard(): unknown {}
+
+  // 404 — right for asset endpoints behind a per-user session
+  // (401 leaks resource existence; 303 to a login page makes <img> render a broken icon)
+  @Get("users/:id/avatar")
+  @Authenticated({ onUnauthenticated: NotFoundException })
+  public avatar(): unknown {}
+}
+```
+
+#### Module-level default
+
+Set `onUnauthenticated` on `AuthModule.forRoot()` to pick the default strategy for the whole app. Per-route values override the module default; the built-in `UnauthorizedException` (401) applies when neither is set.
+
+```typescript
+AuthModule.forRoot({
+  // ...other options
+  onUnauthenticated: "/auth/magic-link",  // page-style default for the whole app
+})
+```
+
+#### Migration from the previous API
+
+`Authenticated` used to be a guard class instantiated with `new`. It is now a decorator factory — drop `@UseGuards()` and call it directly.
+
+```typescript
+// Before
+@UseGuards(Authenticated)
+@UseGuards(new Authenticated())
+@UseGuards(new Authenticated("/auth/magic-link"))
+
+// After
+@Authenticated()
+@Authenticated()
+@Authenticated({ onUnauthenticated: "/auth/magic-link" })
+```
 
 ## Magic Link Flow
 
@@ -470,6 +531,7 @@ Configures the authentication module with a static options object. The module is
 | `googleAuth` | `GoogleAuthOptions` | Google OAuth configuration (optional -- at least one of `magicLink` or `googleAuth` is required) |
 | `cookie` | `CookieOptions` | Session cookie configuration (optional) |
 | `webhook` | `WebhookOptions` | Webhook signature verification configuration (optional) |
+| `onUnauthenticated` | `string \| HttpException class` | Default strategy used by `@Authenticated()` when no principal is found. String → 303 redirect to that URL. Class → `throw new Class(...)`. Per-route values override this. When omitted, the built-in `UnauthorizedException` (401) applies. |
 
 #### `AuthModule.forRootAsync(options)`
 
@@ -597,21 +659,29 @@ Invalid formats (e.g., `read:users:admin`, empty strings) throw at decoration ti
 
 #### Authenticated
 
-A guard that ensures `req.principal` exists. Throws `UnauthorizedException` if not authenticated.
+A decorator factory that ensures `req.principal` exists. Applied at method or class level. By default throws `UnauthorizedException` (401) when no principal is found.
 
 ```typescript
-@UseGuards(Authenticated)
+@Authenticated()
 @Controller("protected")
 export class ProtectedController {}
 ```
 
-For server-rendered apps, pass a redirect URL. The guard throws `UnauthorizedRedirectException` — still a 401, but carrying redirect metadata via `getRedirect()`. An exception filter may use this to issue an HTTP redirect for browser-based requests instead of returning 401 JSON.
+Pass an `onUnauthenticated` option to change the strategy. See [Choosing an unauthenticated strategy](#choosing-an-unauthenticated-strategy) for the full table.
 
 ```typescript
-@UseGuards(new Authenticated("/auth/magic-link"))
+// Redirect to a login page (303 via UnauthorizedRedirectException)
+@Authenticated({ onUnauthenticated: "/auth/magic-link" })
 @Controller("dashboard")
 export class DashboardController {}
+
+// Return 404 for asset endpoints behind a per-user session
+@Authenticated({ onUnauthenticated: NotFoundException })
+@Controller("avatars")
+export class AvatarController {}
 ```
+
+The module-level `AuthModule.forRoot({ onUnauthenticated })` option sets the default strategy for the whole app; per-route values override it.
 
 #### WebhookSignatureGuard
 
