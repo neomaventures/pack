@@ -27,6 +27,11 @@ const { CREATED, PAYLOAD_TOO_LARGE } = HttpStatus
  * loop, scaling the payload up to match the saas avatar test (3,000,001 B).
  */
 describe("MultipartMiddleware — ALS propagation across multer's full parse (regression for #236)", () => {
+  // The 3MB+1 case includes a real multer parse + supertest round-trip and
+  // routinely exceeds Jest's default 5s budget on slow CI runners. Bump
+  // for the whole spec so both cases are covered with the same headroom.
+  jest.setTimeout(30_000)
+
   let app: Awaited<ReturnType<typeof managedAppInstance>>
 
   beforeEach(async () => {

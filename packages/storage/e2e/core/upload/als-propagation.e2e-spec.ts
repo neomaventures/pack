@@ -31,6 +31,13 @@ import { als } from "../../app/als-bug-app.module"
  * without the fix the larger payloads return `undefined`.
  */
 describe("MultipartMiddleware — ALS propagation (regression for #231)", () => {
+  // The default Jest 5s budget is enough for the smaller cases (≤ 800KB),
+  // but the multi-MB cases include real multer parse + supertest + MinIO
+  // round-trip overhead and routinely exceed 5s on slow CI runners. Bump
+  // the per-test budget for the whole spec so we cover the success path
+  // without spurious timeouts.
+  jest.setTimeout(30_000)
+
   let app: Awaited<ReturnType<typeof managedAppInstance>>
 
   beforeEach(async () => {
