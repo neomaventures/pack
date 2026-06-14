@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker"
 import {
   type Authenticatable,
   AuthModule,
-  AUTH_TEST_OPTIONS,
+  type AuthOptions,
 } from "@neomaventures/auth"
 import { ManagedDatabaseModule } from "@neomaventures/managed-database"
 import { Test, type TestingModule } from "@nestjs/testing"
@@ -10,6 +10,27 @@ import { Test, type TestingModule } from "@nestjs/testing"
 import { Account } from "~auth/account.entity"
 import { DashboardController } from "~dashboard/dashboard.controller"
 import { DashboardModule } from "~dashboard/dashboard.module"
+
+class TestAuthenticatable implements Authenticatable {
+  public id = "test-id"
+  public email = "test@example.com"
+  public permissions: string[] = []
+}
+
+const authOptions: AuthOptions = {
+  secret: "test-secret",
+  expiresIn: "1h",
+  entity: TestAuthenticatable,
+  magicLink: {
+    mailer: {
+      host: "localhost",
+      port: 1025,
+      from: "test@example.com",
+      welcome: { subject: "Welcome", html: "<p>{{token}}</p>" },
+      welcomeBack: { subject: "Welcome back", html: "<p>{{token}}</p>" },
+    },
+  },
+}
 
 const principal: Authenticatable = {
   id: faker.string.uuid(),
@@ -24,7 +45,7 @@ describe("DashboardController", () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [
         ManagedDatabaseModule.forRoot([Account]),
-        AuthModule.forRoot(AUTH_TEST_OPTIONS),
+        AuthModule.forRoot(authOptions),
         DashboardModule,
       ],
     }).compile()
