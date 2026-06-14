@@ -9,7 +9,7 @@ import {
 import { ModuleRef, Reflector } from "@nestjs/core"
 import { EventEmitter2 } from "@nestjs/event-emitter"
 import { type Request } from "express"
-import { from, type Observable, switchMap, tap } from "rxjs"
+import { type Observable } from "rxjs"
 import { DataSource, type DeepPartial, type Repository } from "typeorm"
 
 import {
@@ -34,22 +34,29 @@ import { UlidIdGenerator } from "../services/ulid-id-generator.service"
 import { type StorageOptions, STORAGE_OPTIONS } from "../storage.options"
 
 /**
- * Interceptor that handles file uploads using the sandwich pattern.
+ * Interceptor that handles file uploads with pre-handler persistence.
  *
  * Pre-handler: Reads the file from `req.file` (parsed by {@link MultipartMiddleware}),
- * validates size/type, uploads to S3, creates an entity with Storable fields,
- * and attaches it to `req.storage.storedFile`.
+ * validates size/type, uploads to S3, creates and **persists** the entity, emits a
+ * {@link FileCreatedEvent}, and attaches the persisted entity to `req.storage.storedFile`.
  *
- * Post-handler: Persists the entity via `repository.save()` and returns the
- * original handler response unchanged.
+ * The consumer handler runs after the entity already has an `id` and exists in the
+ * database, so it can be referenced by foreign keys created within the handler. The
+ * handler is responsible for any further mutation/save; the interceptor performs no
+ * post-handler persistence.
+ *
+ * If the consumer handler throws, the persisted row and S3 object are left in place
+ * (orphan accepted). Listeners of {@link FileCreatedEvent} must not assume that any
+ * consumer-side foreign key wiring has happened yet.
  *
  * @example
  * ```typescript
  * @Post()
  * @Upload()
  * public async create(@StoredFile() file: Upload): Promise<Upload> {
+ *   // `file.id` is already set; row already exists in DB.
  *   file.source = "form"
- *   return file
+ *   return this.uploads.save(file)
  * }
  * ```
  */
@@ -77,7 +84,7 @@ export class UploadInterceptor<
    *
    * @param context - The execution context
    * @param next - The next handler in the chain
-   * @returns An observable that emits the handler's response after entity persistence
+   * @returns An observable that emits the handler's response unchanged
    */
   public async intercept(
     context: ExecutionContext,
@@ -147,25 +154,20 @@ export class UploadInterceptor<
       bucket: this.options.bucket,
     } as DeepPartial<T>)
 
-    req.storage = { ...req.storage, storedFile: entity as Storable }
+    const savedEntity = await this.repository.save(entity)
 
-    return next.handle().pipe(
-      switchMap((response) =>
-        from(this.repository.save(entity)).pipe(
-          tap((savedEntity) => {
-            try {
-              this.eventEmitter.emit(
-                FileCreatedEvent.EVENT_NAME,
-                new FileCreatedEvent(savedEntity),
-              )
-            } catch {
-              // Fire-and-forget — listener errors must not fail the upload response
-            }
-          }),
-          switchMap(() => [response]),
-        ),
-      ),
-    )
+    req.storage = { ...req.storage, storedFile: savedEntity as Storable }
+
+    try {
+      this.eventEmitter.emit(
+        FileCreatedEvent.EVENT_NAME,
+        new FileCreatedEvent(savedEntity),
+      )
+    } catch {
+      // Fire-and-forget — listener errors must not fail the upload response
+    }
+
+    return next.handle()
   }
 
   /**

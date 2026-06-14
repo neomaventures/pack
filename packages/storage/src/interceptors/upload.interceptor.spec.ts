@@ -13,7 +13,13 @@ import { TestKeyResolver } from "fixtures/resolvers/test-key-resolver"
 import { TestIdGenerator } from "fixtures/services/test-id-generator"
 import { MinioClient } from "fixtures/storage/minio"
 import { lastValueFrom, type Observable, of, throwError } from "rxjs"
-import { Column, DataSource, Entity, PrimaryGeneratedColumn } from "typeorm"
+import {
+  Column,
+  DataSource,
+  Entity,
+  PrimaryGeneratedColumn,
+  Repository,
+} from "typeorm"
 
 import { StorageModule } from "../"
 import { Upload } from "../decorators/upload.decorator"
@@ -127,9 +133,12 @@ describe("UploadInterceptor", () => {
     await module.close()
   })
 
+  const UUID_REGEX =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
   describe("intercept()", () => {
-    describe("Given a valid file upload", () => {
-      it("should upload the file to MinIO", async () => {
+    describe("Given a successful upload", () => {
+      it("should have saved the file to the store", async () => {
         const file = multerFile()
         const { ctx, handler, req } = interceptorInvocation({ file })
 
@@ -143,13 +152,20 @@ describe("UploadInterceptor", () => {
         })
       })
 
-      it("should create an entity and attach it to req.storage.storedFile", async () => {
+      it("should have persisted the entity", async () => {
         const file = multerFile()
         const { ctx, handler, req } = interceptorInvocation({ file })
 
-        await interceptor.intercept(ctx, handler)
+        await lastValueFrom(await interceptor.intercept(ctx, handler))
 
         expect(req.storage!.storedFile).toMatchObject({
+          id: expect.stringMatching(UUID_REGEX),
+        })
+        const entity = await dataSource
+          .getRepository(TestUpload)
+          .findOne({ where: { originalName: file.originalname } })
+        expect(entity).toMatchObject({
+          id: expect.stringMatching(UUID_REGEX),
           originalName: file.originalname,
           mimeType: file.mimetype,
           size: file.size,
@@ -157,6 +173,31 @@ describe("UploadInterceptor", () => {
           key: expect.stringMatching(
             new RegExp(`^[0-9A-HJKMNP-TV-Z]{26}-${file.originalname}$`),
           ),
+        })
+      })
+
+      it("should have emitted FileCreatedEvent", async () => {
+        const file = multerFile()
+        const { ctx, handler } = interceptorInvocation({ file })
+
+        const receivedEvents: FileCreatedEvent[] = []
+        eventEmitter.on(
+          FileCreatedEvent.EVENT_NAME,
+          (event: FileCreatedEvent) => {
+            receivedEvents.push(event)
+          },
+        )
+
+        await lastValueFrom(await interceptor.intercept(ctx, handler))
+
+        expect(receivedEvents).toHaveLength(1)
+        expect(receivedEvents[0]).toBeInstanceOf(FileCreatedEvent)
+        expect(receivedEvents[0].entity).toMatchObject({
+          id: expect.stringMatching(UUID_REGEX),
+          originalName: file.originalname,
+          mimeType: file.mimetype,
+          size: file.size,
+          bucket: options.bucket,
         })
       })
 
@@ -171,24 +212,6 @@ describe("UploadInterceptor", () => {
         )
 
         expect(emitted).toEqual(handlerResponse)
-      })
-
-      it("should persist the entity to the database", async () => {
-        const file = multerFile()
-        const { ctx, handler } = interceptorInvocation({ file })
-
-        await lastValueFrom(await interceptor.intercept(ctx, handler))
-
-        const entity = await dataSource
-          .getRepository(TestUpload)
-          .findOne({ where: { originalName: file.originalname } })
-
-        expect(entity).toMatchObject({
-          originalName: file.originalname,
-          mimeType: file.mimetype,
-          size: file.size,
-          bucket: options.bucket,
-        })
       })
     })
 
@@ -397,37 +420,57 @@ describe("UploadInterceptor", () => {
       })
     })
 
-    describe("Given a successful upload", () => {
-      it("should emit a FileCreatedEvent with the persisted entity", async () => {
+    describe("Given the handler throws", () => {
+      const throwingHandler = (): Observable<unknown> =>
+        throwError(() => new Error("handler error"))
+
+      it("should have saved the file to the store", async () => {
         const file = multerFile()
-        const { ctx, handler } = interceptorInvocation({ file })
+        const { ctx, handler, req } = interceptorInvocation({
+          file,
+          response: throwingHandler(),
+        })
 
-        const receivedEvents: FileCreatedEvent[] = []
-        eventEmitter.on(
-          FileCreatedEvent.EVENT_NAME,
-          (event: FileCreatedEvent) => {
-            receivedEvents.push(event)
-          },
-        )
+        await expect(
+          lastValueFrom(await interceptor.intercept(ctx, handler)),
+        ).rejects.toThrow("handler error")
 
-        await lastValueFrom(await interceptor.intercept(ctx, handler))
+        const storedFile: Storable = req.storage!.storedFile!
+        const stored = await minio.getObject(storedFile.key)
+        expect(stored).toMatchObject({
+          body: file.buffer.toString(),
+          contentType: file.mimetype,
+        })
+      })
 
-        expect(receivedEvents).toHaveLength(1)
-        expect(receivedEvents[0]).toBeInstanceOf(FileCreatedEvent)
-        expect(receivedEvents[0].entity).toMatchObject({
-          id: expect.any(String),
+      it("should have persisted the entity", async () => {
+        const file = multerFile()
+        const { ctx, handler } = interceptorInvocation({
+          file,
+          response: throwingHandler(),
+        })
+
+        await expect(
+          lastValueFrom(await interceptor.intercept(ctx, handler)),
+        ).rejects.toThrow("handler error")
+
+        const entity = await dataSource
+          .getRepository(TestUpload)
+          .findOne({ where: { originalName: file.originalname } })
+        expect(entity).toMatchObject({
+          id: expect.stringMatching(UUID_REGEX),
           originalName: file.originalname,
           mimeType: file.mimetype,
           size: file.size,
           bucket: options.bucket,
         })
       })
-    })
 
-    describe("Given the handler throws", () => {
-      it("should not emit a FileCreatedEvent", async () => {
+      it("should have emitted FileCreatedEvent", async () => {
+        const file = multerFile()
         const { ctx, handler } = interceptorInvocation({
-          response: throwError(() => new Error("handler error")),
+          file,
+          response: throwingHandler(),
         })
 
         const receivedEvents: FileCreatedEvent[] = []
@@ -442,7 +485,33 @@ describe("UploadInterceptor", () => {
           lastValueFrom(await interceptor.intercept(ctx, handler)),
         ).rejects.toThrow("handler error")
 
-        expect(receivedEvents).toHaveLength(0)
+        expect(receivedEvents).toHaveLength(1)
+        expect(receivedEvents[0]).toBeInstanceOf(FileCreatedEvent)
+        expect(receivedEvents[0].entity).toMatchObject({
+          id: expect.stringMatching(UUID_REGEX),
+          originalName: file.originalname,
+          mimeType: file.mimetype,
+          size: file.size,
+          bucket: options.bucket,
+        })
+      })
+    })
+
+    describe("Given the database save fails", () => {
+      it("should throw and not invoke the consumer handler", async () => {
+        const saveError = new Error("db save failed")
+        jest
+          .spyOn(Repository.prototype, "save")
+          .mockRejectedValueOnce(saveError as never)
+
+        const handlerSpy = jest.fn(() => of({}))
+        const { ctx } = interceptorInvocation()
+        const handler: CallHandler = { handle: handlerSpy }
+
+        await expect(interceptor.intercept(ctx, handler)).rejects.toThrow(
+          "db save failed",
+        )
+        expect(handlerSpy).not.toHaveBeenCalled()
       })
     })
 
