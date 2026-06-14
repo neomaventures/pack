@@ -1,5 +1,12 @@
 # **PACKAGE_NAME**
 
+## 0.0.6
+
+### Patch Changes
+
+- Updated dependencies [a15d6f5]
+  - @neomaventures/storage@0.5.1
+
 ## 0.0.5
 
 ### Patch Changes
