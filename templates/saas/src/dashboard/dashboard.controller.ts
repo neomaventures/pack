@@ -3,7 +3,7 @@ import {
   Authenticated,
   Principal,
 } from "@neomaventures/auth"
-import { Controller, Get, Render, UseGuards } from "@nestjs/common"
+import { Controller, Get, Render } from "@nestjs/common"
 
 /**
  * Handles the dashboard page.
@@ -21,7 +21,7 @@ export class DashboardController {
    * @returns The user's email address for display in the template.
    */
   @Get("dashboard")
-  @UseGuards(new Authenticated("/auth/register"))
+  @Authenticated({ onUnauthenticated: "/auth/register" })
   @Render("dashboard")
   public index(@Principal() principal: Authenticatable): { email: string } {
     return { email: principal.email }

@@ -34,7 +34,7 @@ import { type Authenticatable } from "../interfaces/authenticatable.interface"
  * ```typescript
  * import { Principal } from "@neomaventures/auth"
  *
- * @UseGuards(Authenticated)
+ * @Authenticated()
  * @Get("me")
  * public me(@Principal() principal: User): User {
  *   return principal
