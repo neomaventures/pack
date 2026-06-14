@@ -70,6 +70,24 @@ describe("POST /profile/avatar", () => {
         })
         .expect(PAYLOAD_TOO_LARGE)
     })
+
+    it("should re-render the profile page with an inline error message", async () => {
+      const cookie = await authenticate(app, faker.internet.email())
+
+      const response = await request(app.getHttpServer())
+        .post("/profile/avatar")
+        .set("Cookie", cookie)
+        .set("Accept", "text/html")
+        .attach("file", jpegOfSize(3_000_001), {
+          filename: "huge.jpg",
+          contentType: "image/jpeg",
+        })
+        .expect(PAYLOAD_TOO_LARGE)
+        .expect("Content-Type", /text\/html/)
+
+      expect(response.text).toContain("Profile")
+      expect(response.text).toContain('name="file"')
+    })
   })
 
   describe("When the uploaded file is not an allowed MIME type", () => {
@@ -86,11 +104,6 @@ describe("POST /profile/avatar", () => {
         .expect(UNSUPPORTED_MEDIA_TYPE)
     })
 
-    // One thorough check that an upload validation error from the storage
-    // package round-trips through `@ErrorTemplate` to the profile view with
-    // an inline error message. The other error cases (size, missing file)
-    // share the same exception filter wiring; asserting status on those is
-    // enough — repeating the template check would be redundant.
     it("should re-render the profile page with an inline error message", async () => {
       const cookie = await authenticate(app, faker.internet.email())
 
@@ -119,6 +132,20 @@ describe("POST /profile/avatar", () => {
         .post("/profile/avatar")
         .set("Cookie", cookie)
         .expect(BAD_REQUEST)
+    })
+
+    it("should re-render the profile page with an inline error message", async () => {
+      const cookie = await authenticate(app, faker.internet.email())
+
+      const response = await request(app.getHttpServer())
+        .post("/profile/avatar")
+        .set("Cookie", cookie)
+        .set("Accept", "text/html")
+        .expect(BAD_REQUEST)
+        .expect("Content-Type", /text\/html/)
+
+      expect(response.text).toContain("Profile")
+      expect(response.text).toContain('name="file"')
     })
   })
 
