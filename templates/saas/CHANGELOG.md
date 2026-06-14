@@ -1,5 +1,12 @@
 # **PACKAGE_NAME**
 
+## 0.0.5
+
+### Patch Changes
+
+- Updated dependencies [e0a9784]
+  - @neomaventures/auth@0.5.0
+
 ## 0.0.4
 
 ### Patch Changes
