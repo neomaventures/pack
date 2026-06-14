@@ -66,8 +66,10 @@ describe("RequiresPermissionGuard", () => {
   })
 
   describe("When the request has no authenticated principal", () => {
-    it("should throw UnauthorizedException", () => {
-      const ctx = executionContext(request, express.response(), {
+    it("should throw UnauthorizedException with the resource-aware message", () => {
+      const requestUrl = "/protected/articles"
+      const requestWithUrl = express.request({ url: requestUrl })
+      const ctx = executionContext(requestWithUrl, express.response(), {
         controller: NoPermissions,
         method: "handler",
       })
@@ -76,8 +78,7 @@ describe("RequiresPermissionGuard", () => {
         expect(() => guard.canActivate(<ExecutionContext>ctx)).toThrowMatching(
           UnauthorizedException,
           {
-            message:
-              "Unable to authenticate a principal. Please check the documentation for accepted authentication methods",
+            message: `Unauthenticated, access to resource ${requestUrl} denied`,
           },
         )
       })

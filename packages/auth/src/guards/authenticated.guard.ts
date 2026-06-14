@@ -17,6 +17,8 @@ import { ON_UNAUTHENTICATED_KEY } from "../decorators/authenticated.decorator"
 import { UnauthorizedRedirectException } from "../exceptions/unauthorized-redirect.exception"
 import { getPrincipal } from "../principal/principal.slot"
 
+import { buildUnauthenticatedMessage } from "./unauthenticated-message"
+
 /**
  * Guard wired up by the `@Authenticated()` decorator that gates a route
  * behind the presence of an authenticated principal in the ALS-backed
@@ -65,12 +67,7 @@ export class AuthenticatedGuard implements CanActivate {
       return true
     }
 
-    const request = context.switchToHttp().getRequest<{
-      originalUrl?: string
-      url?: string
-    }>()
-    const url = request?.originalUrl ?? request?.url ?? ""
-    const message = `Unauthenticated, access to resource ${url} denied`
+    const message = buildUnauthenticatedMessage(context)
 
     const strategy = this.resolveStrategy(context)
 
