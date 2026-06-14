@@ -108,25 +108,31 @@ import {
   StoredFile,
   TemporaryLink,
 } from "@neomaventures/storage"
+import { InjectRepository } from "@nestjs/typeorm"
+import { Repository } from "typeorm"
 
 @Controller("uploads")
 export class UploadController {
-  public constructor(private readonly dataSource: DataSource) {}
+  public constructor(
+    private readonly dataSource: DataSource,
+    @InjectRepository(Upload) private readonly uploads: Repository<Upload>,
+  ) {}
 
+  // Simple case: the file arrives already persisted (has an id) — return as-is.
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @UploadDecorator()
   public create(@StoredFile() file: Upload): Upload {
-    file.source = "form"
     return file
   }
 
+  // Mutating fields after the interceptor save? Persist explicitly.
   @Post("csv")
   @HttpCode(HttpStatus.CREATED)
   @UploadDecorator({ types: ["text/csv"], maxSize: 1_000_000 })
-  public importCsv(@StoredFile() file: Upload): Upload {
+  public async importCsv(@StoredFile() file: Upload): Promise<Upload> {
     file.source = "csv-import"
-    return file
+    return this.uploads.save(file)
   }
 
   @Get(":id")
@@ -142,9 +148,9 @@ export class UploadController {
 **Upload (`@Upload()`):**
 
 1. **Middleware:** Multer parses the multipart request (memory storage, single file)
-2. **Pre-handler:** Interceptor validates the file (size, type), uploads to S3, creates the entity, attaches it to the request
-3. **Your handler:** Receives the entity via `@StoredFile()`, mutates any additional fields, returns the HTTP response
-4. **Post-handler:** Interceptor persists the entity to the database, emits `FileCreatedEvent`
+2. **Pre-handler:** Interceptor validates the file (size, type), uploads to S3, creates the entity, **persists it to the database** (so it has an `id`), attaches it to the request, and emits `FileCreatedEvent`
+3. **Your handler:** Receives the persisted entity via `@StoredFile()` — already has an `id`, so you can wire FKs synchronously. If you mutate fields on the entity you must call `repository.save(file)` yourself; the interceptor does not re-save after your handler runs.
+4. **Post-handler:** None. The HTTP response from your handler passes through untouched.
 
 **Download (`@TemporaryLink()`):**
 
@@ -153,7 +159,7 @@ export class UploadController {
 
 ## Events
 
-After a successful upload and entity persistence, a `FileCreatedEvent` is emitted:
+After the S3 object is stored and the entity is persisted — but **before** the consumer handler runs — a `FileCreatedEvent` is emitted:
 
 ```typescript
 import { FileCreatedEvent } from "@neomaventures/storage"
@@ -169,6 +175,8 @@ export class UploadProcessor {
 ```
 
 Events are fire-and-forget -- listener errors do not affect the upload response.
+
+**Listeners must not assume FK wiring has happened.** The event is an honest signal that the file exists in S3 and a row exists in the database — it fires before any controller logic that might wire foreign keys (e.g. `Account.avatar = file`). If your listener needs that context, listen for a domain event your controller emits after wiring instead.
 
 ## Exceptions
 
@@ -371,6 +379,60 @@ export class AppModule {}
 ```
 
 Any class with a `generate(): string` method satisfies the contract — the upload pipeline calls `idGenerator.generate()` to mint each key prefix. Inject it the same way for tests (e.g. a `TestIdGenerator` that returns predictable strings) so your specs don't have to mock around ULID's randomness.
+
+## Migrating from 0.x: pre-handler persistence
+
+**Breaking change in 0.5.0.** The `UploadInterceptor` lifecycle changed: the entity is now saved to the database **before** the consumer handler runs, not after. This unblocks consumers who want to wire foreign keys (e.g. `Account.avatar = file`) without a double-save workaround.
+
+### What changed
+
+- **Before (0.4.x and earlier):** Interceptor called `repository.create()` pre-handler. Your handler received an unpersisted entity (no `id`). The interceptor called `repository.save()` post-handler, then emitted `FileCreatedEvent`.
+- **After (0.5.0+):** Interceptor calls `repository.save()` pre-handler. Your handler receives a persisted entity (has `id`). `FileCreatedEvent` fires before the handler. No post-handler save.
+
+### Before / after consumer snippets
+
+**Before** — handler mutates and returns; interceptor auto-saves:
+
+```typescript
+@Post()
+@UploadDecorator()
+public create(@StoredFile() file: Upload): Upload {
+  file.source = "form"
+  return file // interceptor saves this post-handler
+}
+```
+
+**After** — file is already saved; mutate-and-save is explicit:
+
+```typescript
+@Post()
+@UploadDecorator()
+public async create(@StoredFile() file: Upload): Promise<Upload> {
+  file.source = "form"
+  return this.uploads.save(file) // explicit
+}
+```
+
+If your handler did not mutate fields, just return the file as-is — no migration needed.
+
+### Wiring FKs is now a one-liner
+
+The original motivation. Before, you had to inject the uploads repository and double-save to set a foreign key. Now:
+
+```typescript
+@Post("avatar")
+@UploadDecorator()
+public async uploadAvatar(
+  @CurrentUser() user: User,
+  @StoredFile() file: Upload,
+): Promise<void> {
+  await this.accounts.update(user.id, { avatar: file }) // file.id exists
+}
+```
+
+### Trade-off: orphan rows on handler failure
+
+Because persistence happens before the handler runs, a handler that throws leaves the row (and S3 object) in place. This is intentional: the file genuinely exists in S3, so an orphan row is an *honest* row. If you need transactional cleanup, listen for `FileCreatedEvent` and reconcile out-of-band, or wrap the handler in a try/catch that deletes the row explicitly.
 
 ## License
 

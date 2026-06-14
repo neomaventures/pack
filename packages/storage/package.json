@@ -1,6 +1,6 @@
 {
   "name": "@neomaventures/storage",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "NestJS-idiomatic file storage for S3-compatible backends — upload, persist, presigned download.",
   "author": "Daniel Bruce",
   "repository": {
