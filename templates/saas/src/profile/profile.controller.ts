@@ -5,12 +5,18 @@ import {
   TemporaryLink,
   Upload as UploadDecorator,
 } from "@neomaventures/storage"
-import { Controller, Get, Post, Render, Res, UseGuards } from "@nestjs/common"
+import {
+  Controller,
+  Get,
+  NotFoundException,
+  Post,
+  Render,
+  Res,
+} from "@nestjs/common"
 import { type Response } from "express"
 
 import { Account } from "~auth/account.entity"
 import { AccountAvatarKeyResolver } from "~profile/account-avatar-key.resolver"
-import { AssetAuthenticated } from "~profile/asset-authenticated.guard"
 import { ProfileService } from "~profile/profile.service"
 import { Upload } from "~profile/upload.entity"
 
@@ -21,10 +27,12 @@ import { Upload } from "~profile/upload.entity"
  * authenticated user's avatar via `GET /profile/avatar`, and accepts
  * avatar uploads via `POST /profile/avatar`.
  *
- * Page endpoints redirect unauthenticated visitors to `/auth/register`.
- * Asset endpoints (`/profile/avatar`) return `404 Not Found` — they
- * should not confirm the existence of a per-user resource to an
- * unauthenticated caller (see {@link AssetAuthenticated}).
+ * Page endpoints redirect unauthenticated visitors to `/auth/register`
+ * (the module-wide default configured on `AuthModule.forRoot(...)`).
+ * Asset endpoints (`/profile/avatar`) override that with a per-route
+ * `onUnauthenticated: NotFoundException` so they return `404 Not Found` —
+ * asset endpoints should not confirm the existence of a per-user resource
+ * to an unauthenticated caller.
  *
  * `@Principal()` is typed as {@link Account} here because the auth module
  * is configured with `entity: Account` (see `ApplicationModule`), so the
@@ -46,7 +54,7 @@ export class ProfileController {
    *   `GET /profile/avatar` endpoint rather than receiving it inline.
    */
   @Get("profile")
-  @UseGuards(new Authenticated("/auth/register"))
+  @Authenticated()
   @Render("profile")
   public index(): Record<string, never> {
     return {}
@@ -60,8 +68,8 @@ export class ProfileController {
    * avatar is set, `null` causes the framework to redirect to the static
    * silhouette under `/img/default-avatar.svg`.
    *
-   * Unauthenticated callers get a 404 via {@link AssetAuthenticated} —
-   * asset endpoints don't confirm resource existence.
+   * Unauthenticated callers get a 404 — asset endpoints don't confirm
+   * resource existence.
    *
    * @param account - The authenticated account, injected via `@Principal()`.
    * @returns The avatar `Upload`, or `null` when none is set.
@@ -72,7 +80,7 @@ export class ProfileController {
    * ```
    */
   @Get("profile/avatar")
-  @UseGuards(AssetAuthenticated)
+  @Authenticated({ onUnauthenticated: NotFoundException })
   @TemporaryLink({
     default: "/img/default-avatar.svg",
     cacheControl: "private, max-age=30",
@@ -116,7 +124,7 @@ export class ProfileController {
    * ```
    */
   @Post("profile/avatar")
-  @UseGuards(AssetAuthenticated)
+  @Authenticated({ onUnauthenticated: NotFoundException })
   @ErrorTemplate({
     FileTooLargeException: "profile",
     UnsupportedFileTypeException: "profile",

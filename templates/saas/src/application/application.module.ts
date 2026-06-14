@@ -85,6 +85,7 @@ interface AppConfig {
         secret: config.jwtSecret,
         expiresIn: "7d",
         entity: Account,
+        onUnauthenticated: "/auth/register",
         cookie: {
           secure: config.appUrl.startsWith("https"),
           sameSite: "lax" as const,

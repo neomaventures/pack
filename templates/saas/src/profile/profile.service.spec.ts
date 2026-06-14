@@ -23,7 +23,6 @@ describe("ProfileService", () => {
       providers: [
         ProfileService,
         { provide: getRepositoryToken(Account), useValue: accounts },
-        { provide: getRepositoryToken(Upload), useValue: uploads },
       ],
     }).compile()
 
@@ -31,23 +30,26 @@ describe("ProfileService", () => {
   })
 
   describe("setAvatar()", () => {
-    describe("Given an account and a new Upload", () => {
-      it("should persist the Upload as the account's avatar", async () => {
+    describe("Given an account and a persisted Upload", () => {
+      it("should set the Upload as the account's avatar", async () => {
         const account = await accounts.save(
           accounts.create({ email: faker.internet.email() }),
         )
-        const upload = uploads.create({
-          originalName: "avatar.jpg",
-          mimeType: "image/jpeg",
-          size: faker.number.int({ min: 100, max: 1_000 }),
-          key: `accounts/${account.id}/avatar`,
-          bucket: "test-bucket",
-        })
+        const upload = await uploads.save(
+          uploads.create({
+            originalName: "avatar.jpg",
+            mimeType: "image/jpeg",
+            size: faker.number.int({ min: 100, max: 1_000 }),
+            key: `accounts/${account.id}/avatar`,
+            bucket: "test-bucket",
+          }),
+        )
 
         await service.setAvatar(account, upload)
 
         const reloaded = await accounts.findOneByOrFail({ id: account.id })
         expect(reloaded.avatar).toMatchObject({
+          id: upload.id,
           key: `accounts/${account.id}/avatar`,
           mimeType: "image/jpeg",
         })
@@ -59,26 +61,33 @@ describe("ProfileService", () => {
         const account = await accounts.save(
           accounts.create({ email: faker.internet.email() }),
         )
-        const first = uploads.create({
-          originalName: "first.jpg",
-          mimeType: "image/jpeg",
-          size: 1_024,
-          key: `accounts/${account.id}/avatar`,
-          bucket: "test-bucket",
-        })
+        const first = await uploads.save(
+          uploads.create({
+            originalName: "first.jpg",
+            mimeType: "image/jpeg",
+            size: 1_024,
+            key: `accounts/${account.id}/avatar`,
+            bucket: "test-bucket",
+          }),
+        )
         await service.setAvatar(account, first)
 
-        const replacement = uploads.create({
-          originalName: "second.png",
-          mimeType: "image/png",
-          size: 2_048,
-          key: `accounts/${account.id}/avatar`,
-          bucket: "test-bucket",
-        })
+        const replacement = await uploads.save(
+          uploads.create({
+            originalName: "second.png",
+            mimeType: "image/png",
+            size: 2_048,
+            key: `accounts/${account.id}/avatar-2`,
+            bucket: "test-bucket",
+          }),
+        )
         await service.setAvatar(account, replacement)
 
         const reloaded = await accounts.findOneByOrFail({ id: account.id })
-        expect(reloaded.avatar).toMatchObject({ mimeType: "image/png" })
+        expect(reloaded.avatar).toMatchObject({
+          id: replacement.id,
+          mimeType: "image/png",
+        })
       })
     })
   })

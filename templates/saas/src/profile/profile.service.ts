@@ -18,15 +18,10 @@ export class ProfileService {
   /**
    * @param accounts - Repository for {@link Account}. Used to write the
    *   avatar FK after the storage pipeline has persisted the file.
-   * @param uploads - Repository for {@link Upload}. The storage pipeline
-   *   only saves the upload row in its post-handler step; we save it
-   *   in-band so the FK has a stable id to point at.
    */
   public constructor(
     @InjectRepository(Account)
     private readonly accounts: Repository<Account>,
-    @InjectRepository(Upload)
-    private readonly uploads: Repository<Upload>,
   ) {}
 
   /**
@@ -34,10 +29,12 @@ export class ProfileService {
    * FK on the `Account` row.
    *
    * Called synchronously from the upload controller after the storage
-   * package has written the file to S3. Doing the FK assignment in-band
-   * (rather than from a `FileCreatedEvent` listener) keeps the slice of
-   * work atomic from the caller's perspective — a successful 302 to
-   * `/profile` is the signal that the avatar is live.
+   * package has written the file to S3 and persisted the `Upload` row
+   * (the storage `UploadInterceptor` saves the entity before the handler
+   * runs, so `upload.id` is already stable here). Doing the FK assignment
+   * in-band — rather than from a `FileCreatedEvent` listener — keeps the
+   * slice of work atomic from the caller's perspective: a successful 302
+   * to `/profile` is the signal that the avatar is live.
    *
    * Implementation note: `repository.update()` generates a direct SQL
    * `UPDATE` without consulting the change-tracker. Calling `save()` on
@@ -46,8 +43,8 @@ export class ProfileService {
    * `UpdateQueryBuilder`; `update()` sidesteps that path entirely.
    *
    * @param account - The authenticated account to update.
-   * @param upload - The `Upload` entity returned by the storage pipeline.
-   *   Persisted here so the FK has a stable id to point at.
+   * @param upload - The persisted `Upload` entity returned by the storage
+   *   pipeline. Already has a stable `id` for the FK to point at.
    *
    * @example
    * ```typescript
@@ -56,7 +53,6 @@ export class ProfileService {
    * ```
    */
   public async setAvatar(account: Account, upload: Upload): Promise<void> {
-    const saved = await this.uploads.save(upload)
-    await this.accounts.update(account.id, { avatar: saved })
+    await this.accounts.update(account.id, { avatar: upload })
   }
 }

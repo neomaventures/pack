@@ -9,7 +9,7 @@ import { type Request } from "express"
 import { AccountAvatarKeyResolver } from "~profile/account-avatar-key.resolver"
 
 /**
- * The resolver runs inside the storage interceptor after `AssetAuthenticated`
+ * The resolver runs inside the storage interceptor after `@Authenticated()`
  * has accepted the request, so in production the principal is always present.
  * We exercise the happy path here and keep a single defensive test on the
  * `throw new UnauthorizedException` branch — even though it's only reachable

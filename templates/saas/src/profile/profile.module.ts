@@ -3,7 +3,6 @@ import { TypeOrmModule } from "@nestjs/typeorm"
 
 import { Account } from "~auth/account.entity"
 import { AccountAvatarKeyResolver } from "~profile/account-avatar-key.resolver"
-import { AssetAuthenticated } from "~profile/asset-authenticated.guard"
 import { ProfileController } from "~profile/profile.controller"
 import { ProfileService } from "~profile/profile.service"
 import { Upload } from "~profile/upload.entity"
@@ -15,12 +14,11 @@ import { Upload } from "~profile/upload.entity"
  * TypeORM so the storage package, `Account.avatar` relation, and
  * {@link ProfileService} can resolve them. Also registers the
  * {@link ProfileController} which renders the authenticated user's
- * profile view and serves the avatar endpoint, along with the
- * {@link AssetAuthenticated} guard used by the asset routes.
+ * profile view and serves the avatar endpoint.
  */
 @Module({
   imports: [TypeOrmModule.forFeature([Account, Upload])],
   controllers: [ProfileController],
-  providers: [ProfileService, AccountAvatarKeyResolver, AssetAuthenticated],
+  providers: [ProfileService, AccountAvatarKeyResolver],
 })
 export class ProfileModule {}
