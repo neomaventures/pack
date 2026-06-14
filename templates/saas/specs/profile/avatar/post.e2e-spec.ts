@@ -1,10 +1,15 @@
+import { readFileSync } from "fs"
+import { join } from "path"
+
 import { faker } from "@faker-js/faker"
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
+import ejs from "ejs"
 import request from "supertest"
 
 import { authenticate } from "~fixtures/auth/e2e"
 import { configureViewEngine } from "~fixtures/configure-view-engine"
+import { npmPackageName, npmPackageVersion } from "~fixtures/package-version"
 
 const {
   BAD_REQUEST,
@@ -13,6 +18,24 @@ const {
   PAYLOAD_TOO_LARGE,
   UNSUPPORTED_MEDIA_TYPE,
 } = HttpStatus
+
+const profileTemplatePath = join(process.cwd(), "views", "profile.ejs")
+const profileTemplate = readFileSync(profileTemplatePath, "utf-8")
+
+/**
+ * Per-route upload limit configured on `@Upload({ maxSize })` in
+ * {@link ProfileController.uploadAvatar}. Mirrored here so the rendered
+ * error message matches what the controller's `FileTooLargeException`
+ * carries.
+ */
+const AVATAR_MAX_SIZE = 3_000_000
+
+/**
+ * Per-route allowed MIME types from `@Upload({ types })` on
+ * {@link ProfileController.uploadAvatar}. Mirrored here so the rendered
+ * `UnsupportedFileTypeException` message matches the controller's.
+ */
+const AVATAR_ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"]
 
 /**
  * 1×1 transparent PNG. Smallest valid PNG buffer — keeps the multipart body
@@ -73,20 +96,35 @@ describe("POST /profile/avatar", () => {
 
     it("should re-render the profile page with an inline error message", async () => {
       const cookie = await authenticate(app, faker.internet.email())
+      const oversizeBytes = AVATAR_MAX_SIZE + 1
 
-      const response = await request(app.getHttpServer())
+      const expectedHtml = ejs.render(
+        profileTemplate,
+        {
+          npmPackageName,
+          npmPackageVersion,
+          exception: {
+            statusCode: PAYLOAD_TOO_LARGE,
+            message: `File size ${oversizeBytes} bytes exceeds the maximum allowed size of ${AVATAR_MAX_SIZE} bytes.`,
+            fileSize: oversizeBytes,
+            maxSize: AVATAR_MAX_SIZE,
+            error: "Payload Too Large",
+          },
+        },
+        { filename: profileTemplatePath },
+      )
+
+      await request(app.getHttpServer())
         .post("/profile/avatar")
         .set("Cookie", cookie)
         .set("Accept", "text/html")
-        .attach("file", jpegOfSize(3_000_001), {
+        .attach("file", jpegOfSize(oversizeBytes), {
           filename: "huge.jpg",
           contentType: "image/jpeg",
         })
         .expect(PAYLOAD_TOO_LARGE)
         .expect("Content-Type", /text\/html/)
-
-      expect(response.text).toContain("Profile")
-      expect(response.text).toContain('name="file"')
+        .expect(expectedHtml)
     })
   })
 
@@ -106,21 +144,35 @@ describe("POST /profile/avatar", () => {
 
     it("should re-render the profile page with an inline error message", async () => {
       const cookie = await authenticate(app, faker.internet.email())
+      const rejectedMimeType = "application/pdf"
 
-      const response = await request(app.getHttpServer())
+      const expectedHtml = ejs.render(
+        profileTemplate,
+        {
+          npmPackageName,
+          npmPackageVersion,
+          exception: {
+            statusCode: UNSUPPORTED_MEDIA_TYPE,
+            message: `File type "${rejectedMimeType}" is not supported. Allowed types: ${AVATAR_ALLOWED_TYPES.join(", ")}.`,
+            mimeType: rejectedMimeType,
+            allowedTypes: AVATAR_ALLOWED_TYPES,
+            error: "Unsupported Media Type",
+          },
+        },
+        { filename: profileTemplatePath },
+      )
+
+      await request(app.getHttpServer())
         .post("/profile/avatar")
         .set("Cookie", cookie)
         .set("Accept", "text/html")
         .attach("file", Buffer.from("%PDF-1.4 fake pdf"), {
           filename: "doc.pdf",
-          contentType: "application/pdf",
+          contentType: rejectedMimeType,
         })
         .expect(UNSUPPORTED_MEDIA_TYPE)
         .expect("Content-Type", /text\/html/)
-
-      expect(response.text).toContain("Profile")
-      expect(response.text).toContain("not supported")
-      expect(response.text).toContain('name="file"')
+        .expect(expectedHtml)
     })
   })
 
@@ -137,15 +189,27 @@ describe("POST /profile/avatar", () => {
     it("should re-render the profile page with an inline error message", async () => {
       const cookie = await authenticate(app, faker.internet.email())
 
-      const response = await request(app.getHttpServer())
+      const expectedHtml = ejs.render(
+        profileTemplate,
+        {
+          npmPackageName,
+          npmPackageVersion,
+          exception: {
+            statusCode: BAD_REQUEST,
+            message: "No file was provided in the request.",
+            error: "Bad Request",
+          },
+        },
+        { filename: profileTemplatePath },
+      )
+
+      await request(app.getHttpServer())
         .post("/profile/avatar")
         .set("Cookie", cookie)
         .set("Accept", "text/html")
         .expect(BAD_REQUEST)
         .expect("Content-Type", /text\/html/)
-
-      expect(response.text).toContain("Profile")
-      expect(response.text).toContain('name="file"')
+        .expect(expectedHtml)
     })
   })
 
