@@ -1,8 +1,31 @@
+import { type HttpException } from "@nestjs/common"
 import type * as jwt from "jsonwebtoken"
 
 import { type Authenticatable } from "./interfaces/authenticatable.interface"
 
 export const AUTH_OPTIONS = Symbol("AUTH_OPTIONS")
+
+/**
+ * Strategy describing what should happen when an authenticated route is hit
+ * without a principal.
+ *
+ * - A `string` is interpreted as a redirect URL: the {@link AuthenticatedGuard}
+ *   throws an `UnauthorizedRedirectException` with a 303 See Other status.
+ * - An `HttpException` subclass is instantiated with a fixed access-denied
+ *   message and thrown directly, allowing consumers to surface arbitrary
+ *   HTTP statuses (e.g. `NotFoundException`, `ForbiddenException`).
+ *
+ * @example Redirect to login page
+ * ```typescript
+ * onUnauthenticated: "/auth/magic-link"
+ * ```
+ *
+ * @example Disguise the route by returning 404
+ * ```typescript
+ * onUnauthenticated: NotFoundException
+ * ```
+ */
+export type OnUnauthenticated = string | (new (...args: any[]) => HttpException)
 
 /**
  * Subject and HTML body for a magic link email template.
@@ -102,6 +125,13 @@ interface AuthBaseOptions<T extends Authenticatable = Authenticatable> {
   entity: new () => T
   /** Session cookie configuration */
   cookie?: CookieOptions
+  /**
+   * Default strategy used by the `@Authenticated()` decorator when a route is
+   * accessed without an authenticated principal. Per-route metadata supplied
+   * to `@Authenticated({ onUnauthenticated })` takes precedence over this
+   * default. When omitted, the guard throws a plain `UnauthorizedException`.
+   */
+  onUnauthenticated?: OnUnauthenticated
 }
 
 /**

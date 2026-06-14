@@ -1,14 +1,14 @@
 import { Authenticated, Principal } from "@neomaventures/auth"
-import { Controller, Get, UseGuards } from "@nestjs/common"
+import { Controller, Get } from "@nestjs/common"
 
 import { User } from "../user.entity"
 
 /**
  * A test Controller for accessing the authenticated user
- * using Auth's Authenticated guard and Principal decorator.
+ * using Auth's @Authenticated decorator and Principal decorator.
  */
 @Controller("me")
-@UseGuards(Authenticated)
+@Authenticated()
 export class MeController {
   /**
    * Returns the authenticated user's id and email.

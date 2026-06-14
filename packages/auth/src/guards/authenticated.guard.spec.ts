@@ -6,44 +6,97 @@ import {
 import { RequestContextModule } from "@neomaventures/request-context"
 import {
   type ExecutionContext,
+  ForbiddenException,
   HttpStatus,
+  NotFoundException,
   UnauthorizedException,
 } from "@nestjs/common"
+import { Reflector } from "@nestjs/core"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { ClsService } from "nestjs-cls"
 
 import * as fakes from "../../fixtures/fakes/principal"
+import { type AuthOptions, AUTH_OPTIONS } from "../auth.options"
+import { Authenticated } from "../decorators/authenticated.decorator"
 import { UnauthorizedRedirectException } from "../exceptions/unauthorized-redirect.exception"
 import { setPrincipal } from "../principal/principal.slot"
 
-import { Authenticated } from "./authenticated.guard"
+import { AuthenticatedGuard } from "./authenticated.guard"
 
-describe("Authenticated", () => {
+// A bare controller with no @Authenticated metadata — used for tests that
+// exercise the module-level default path.
+class NoMetadataController {
+  public handler(): void {}
+}
+
+// Routes that stamp per-route metadata via the decorator. We exercise the
+// guard against the resolved handler/class pair to drive Reflector reads.
+class RedirectMetadataController {
+  @Authenticated({ onUnauthenticated: "/y" })
+  public handler(): void {}
+}
+
+class ExceptionMetadataController {
+  @Authenticated({ onUnauthenticated: ForbiddenException })
+  public handler(): void {}
+}
+
+const buildModule = async (
+  options: Partial<AuthOptions> = {},
+): Promise<TestingModule> =>
+  Test.createTestingModule({
+    imports: [RequestContextModule.forRoot()],
+    providers: [
+      AuthenticatedGuard,
+      Reflector,
+      { provide: AUTH_OPTIONS, useValue: options as AuthOptions },
+    ],
+  }).compile()
+
+describe("AuthenticatedGuard", () => {
+  let guard: AuthenticatedGuard
   let cls: ClsService
+  let request: MockRequest
 
-  describe("Without a redirect URL", () => {
-    let guard: Authenticated
+  beforeEach(() => {
+    request = express.request()
+  })
 
-    beforeAll(async () => {
-      const module: TestingModule = await Test.createTestingModule({
-        imports: [RequestContextModule.forRoot()],
-        providers: [Authenticated],
-      }).compile()
-
-      guard = module.get(Authenticated)
+  describe("Given an authenticated principal in the request context", () => {
+    beforeEach(async () => {
+      const module = await buildModule()
+      guard = module.get(AuthenticatedGuard)
       cls = module.get(ClsService)
     })
 
-    describe("canActivate", () => {
-      let request: MockRequest
-      let ctx: Partial<ExecutionContext>
-      beforeEach(() => {
-        request = express.request()
-        ctx = executionContext(request, express.response())
+    it("should return true regardless of metadata or module options", () => {
+      const ctx = executionContext(request, express.response(), {
+        controller: NoMetadataController,
+        method: "handler",
       })
 
-      describe(`When it is called with a request with no current principal`, () => {
-        it("Then it should throw an UnauthorizedException.", () => {
+      cls.run(() => {
+        setPrincipal(fakes.principal())
+        expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
+      })
+    })
+  })
+
+  describe("Given no principal in the request context", () => {
+    describe("And no per-route metadata", () => {
+      describe("And no module-level onUnauthenticated", () => {
+        beforeEach(async () => {
+          const module = await buildModule()
+          guard = module.get(AuthenticatedGuard)
+          cls = module.get(ClsService)
+        })
+
+        it("should throw UnauthorizedException with the documented message", () => {
+          const ctx = executionContext(request, express.response(), {
+            controller: NoMetadataController,
+            method: "handler",
+          })
+
           cls.run(() => {
             expect(() =>
               guard.canActivate(<ExecutionContext>ctx),
@@ -55,67 +108,100 @@ describe("Authenticated", () => {
         })
       })
 
-      describe(`When it is called with a request with an attached principal`, () => {
-        it("Then it should return true.", () => {
-          cls.run(() => {
-            setPrincipal(fakes.principal())
-            expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
-          })
+      describe("And module-level onUnauthenticated is a redirect string", () => {
+        beforeEach(async () => {
+          const module = await buildModule({ onUnauthenticated: "/x" })
+          guard = module.get(AuthenticatedGuard)
+          cls = module.get(ClsService)
         })
-      })
-    })
-  })
 
-  describe("With a redirect URL", () => {
-    const redirectUrl = "/auth/magic-link"
-    let guard: Authenticated
+        it("should throw UnauthorizedRedirectException for /x with 303", () => {
+          const ctx = executionContext(request, express.response(), {
+            controller: NoMetadataController,
+            method: "handler",
+          })
 
-    beforeAll(async () => {
-      const module: TestingModule = await Test.createTestingModule({
-        imports: [RequestContextModule.forRoot()],
-      }).compile()
-
-      cls = module.get(ClsService)
-      // TODO : Can we decorate a class or function and grab the Authenticated instance from it to avoid this new?
-      guard = new Authenticated(redirectUrl)
-    })
-
-    describe("canActivate", () => {
-      let request: MockRequest
-      let ctx: Partial<ExecutionContext>
-      beforeEach(() => {
-        request = express.request()
-        ctx = executionContext(request, express.response())
-      })
-
-      describe(`When it is called with a request with no current principal`, () => {
-        it("Then it should throw an UnauthorizedRedirectException.", () => {
           cls.run(() => {
             expect(() =>
               guard.canActivate(<ExecutionContext>ctx),
             ).toThrowMatching(UnauthorizedRedirectException, {
-              message: "Unauthorized. Redirecting to login.",
-            })
-          })
-        })
-
-        it("Then the exception should have a redirect with the URL and 303 status.", () => {
-          cls.run(() => {
-            expect(() =>
-              guard.canActivate(<ExecutionContext>ctx),
-            ).toThrowMatching(UnauthorizedRedirectException, {
-              url: redirectUrl,
+              url: "/x",
               redirectStatus: HttpStatus.SEE_OTHER,
             })
           })
         })
       })
 
-      describe(`When it is called with a request with an attached principal`, () => {
-        it("Then it should return true.", () => {
+      describe("And module-level onUnauthenticated is an HttpException class", () => {
+        beforeEach(async () => {
+          const module = await buildModule({
+            onUnauthenticated: NotFoundException,
+          })
+          guard = module.get(AuthenticatedGuard)
+          cls = module.get(ClsService)
+        })
+
+        it("should throw the configured exception with the access-denied message", () => {
+          const ctx = executionContext(request, express.response(), {
+            controller: NoMetadataController,
+            method: "handler",
+          })
+
           cls.run(() => {
-            setPrincipal(fakes.principal())
-            expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
+            expect(() =>
+              guard.canActivate(<ExecutionContext>ctx),
+            ).toThrowMatching(NotFoundException, {
+              message: "Request unauthenticated — access denied",
+            })
+          })
+        })
+      })
+    })
+
+    describe("And per-route metadata is supplied", () => {
+      describe("Given metadata is a redirect string", () => {
+        beforeEach(async () => {
+          const module = await buildModule({ onUnauthenticated: "/x" })
+          guard = module.get(AuthenticatedGuard)
+          cls = module.get(ClsService)
+        })
+
+        it("should let route metadata win over the module-level default", () => {
+          const ctx = executionContext(request, express.response(), {
+            controller: RedirectMetadataController,
+            method: "handler",
+          })
+
+          cls.run(() => {
+            expect(() =>
+              guard.canActivate(<ExecutionContext>ctx),
+            ).toThrowMatching(UnauthorizedRedirectException, {
+              url: "/y",
+              redirectStatus: HttpStatus.SEE_OTHER,
+            })
+          })
+        })
+      })
+
+      describe("Given metadata is an HttpException class", () => {
+        beforeEach(async () => {
+          const module = await buildModule({ onUnauthenticated: "/x" })
+          guard = module.get(AuthenticatedGuard)
+          cls = module.get(ClsService)
+        })
+
+        it("should throw the metadata exception, not redirect to the default", () => {
+          const ctx = executionContext(request, express.response(), {
+            controller: ExceptionMetadataController,
+            method: "handler",
+          })
+
+          cls.run(() => {
+            expect(() =>
+              guard.canActivate(<ExecutionContext>ctx),
+            ).toThrowMatching(ForbiddenException, {
+              message: "Request unauthenticated — access denied",
+            })
           })
         })
       })
