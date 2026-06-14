@@ -1,4 +1,9 @@
-import { Authenticated, Principal } from "@neomaventures/auth"
+import {
+  Authenticated,
+  OAuthToken,
+  type OAuthTokenSnapshot,
+  Principal,
+} from "@neomaventures/auth"
 import { ErrorTemplate } from "@neomaventures/exceptions"
 import {
   StoredFile,
@@ -35,7 +40,7 @@ import { Upload } from "~auth/upload.entity"
  * to an unauthenticated caller.
  *
  * `@Principal()` is typed as {@link Account} here because the auth module
- * is configured with `entity: Account` (see `ApplicationModule`), so the
+ * is configured with `entities.authenticatable: Account` (see `ApplicationModule`), so the
  * principal slot always carries the loaded account row — including the
  * eagerly-joined `avatar` relation.
  */
@@ -139,5 +144,28 @@ export class ProfileController {
   ): Promise<void> {
     await this.accountService.setAvatar(account, upload)
     res.redirect("/profile")
+  }
+
+  /**
+   * Returns the active Google OAuth token snapshot for the authenticated
+   * account, or `null` when no usable token is on file. Demonstrates the
+   * `@OAuthToken(provider)` parameter decorator and is consumed by the
+   * end-to-end suite that exercises {@link OAuthTokenService} through the
+   * HTTP boundary.
+   *
+   * The snapshot deliberately excludes the refresh token — that field is
+   * internal to the auth package and never crosses the controller.
+   *
+   * @param token - The active Google token snapshot, resolved by
+   *   `@OAuthToken("google")`. `null` when the principal has no Google
+   *   tokens on file or the stored token has expired.
+   * @returns A JSON envelope with the snapshot under `token`.
+   */
+  @Get("api/oauth-tokens/google")
+  @Authenticated()
+  public googleToken(@OAuthToken("google") token: OAuthTokenSnapshot | null): {
+    token: OAuthTokenSnapshot | null
+  } {
+    return { token }
   }
 }

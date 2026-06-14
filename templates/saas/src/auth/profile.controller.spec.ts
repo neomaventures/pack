@@ -1,4 +1,5 @@
 import { faker } from "@faker-js/faker"
+import { type OAuthTokenSnapshot } from "@neomaventures/auth"
 import { express } from "@neomaventures/fixtures"
 
 import { type Account } from "~auth/account.entity"
@@ -68,6 +69,26 @@ describe("ProfileController", () => {
 
         expect(accountService.setAvatar).toHaveBeenCalledWith(account, upload)
         expect(res.redirect).toHaveBeenCalledWith("/profile")
+      })
+    })
+  })
+
+  describe("googleToken()", () => {
+    describe("Given the decorator resolved a snapshot", () => {
+      it("should echo the snapshot under `token`", () => {
+        const snapshot: OAuthTokenSnapshot = {
+          accessToken: faker.string.alphanumeric(40),
+          expiresAt: new Date(Date.now() + 3600 * 1000),
+          scopes: ["openid", "email"],
+        }
+
+        expect(controller.googleToken(snapshot)).toEqual({ token: snapshot })
+      })
+    })
+
+    describe("Given the decorator resolved null", () => {
+      it("should return token: null", () => {
+        expect(controller.googleToken(null)).toEqual({ token: null })
       })
     })
   })

@@ -6,6 +6,7 @@ import { type DataSource, type Repository } from "typeorm"
 
 import { Account } from "~auth/account.entity"
 import { AccountService } from "~auth/account.service"
+import { OAuthToken } from "~auth/oauth-token.entity"
 import { Upload } from "~auth/upload.entity"
 
 describe("AccountService", () => {
@@ -15,7 +16,7 @@ describe("AccountService", () => {
   let uploads: Repository<Upload>
 
   beforeEach(async () => {
-    datasource = await managedDatasourceInstance([Account, Upload])
+    datasource = await managedDatasourceInstance([Account, OAuthToken, Upload])
     accounts = datasource.getRepository(Account)
     uploads = datasource.getRepository(Upload)
 

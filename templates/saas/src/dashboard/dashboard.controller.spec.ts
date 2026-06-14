@@ -8,6 +8,7 @@ import { ManagedDatabaseModule } from "@neomaventures/managed-database"
 import { Test, type TestingModule } from "@nestjs/testing"
 
 import { Account } from "~auth/account.entity"
+import { OAuthToken } from "~auth/oauth-token.entity"
 import { Upload } from "~auth/upload.entity"
 import { DashboardController } from "~dashboard/dashboard.controller"
 import { DashboardModule } from "~dashboard/dashboard.module"
@@ -15,7 +16,7 @@ import { DashboardModule } from "~dashboard/dashboard.module"
 const authOptions: AuthOptions = {
   secret: "test-secret",
   expiresIn: "1h",
-  entity: Account,
+  entities: { authenticatable: Account },
   magicLink: {
     mailer: {
       host: "localhost",
@@ -39,7 +40,7 @@ describe("DashboardController", () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [
-        ManagedDatabaseModule.forRoot([Account, Upload]),
+        ManagedDatabaseModule.forRoot([Account, OAuthToken, Upload]),
         AuthModule.forRoot(authOptions),
         DashboardModule,
       ],
