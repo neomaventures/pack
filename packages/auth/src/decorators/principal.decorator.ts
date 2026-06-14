@@ -4,13 +4,13 @@
  * slot — reads the same value as `getPrincipal()`.
  *
  * Returns `undefined` when no principal exists (e.g. unauthenticated request).
- * Use behind `@UseGuards(Authenticated)` to guarantee a principal is present.
+ * Use behind `@Authenticated()` to guarantee a principal is present.
  *
  * Must be called with parentheses: `@Principal()`.
  *
  * @example
  * ```typescript
- * @UseGuards(Authenticated)
+ * @Authenticated()
  * @Get("me")
  * public me(@Principal() user: User): User {
  *   return user

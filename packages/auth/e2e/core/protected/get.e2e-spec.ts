@@ -9,12 +9,13 @@ import { DataSource } from "typeorm"
 const { OK, UNAUTHORIZED, FORBIDDEN } = HttpStatus
 const mailpit = new MailpitClient(process.env.MAILPIT_API!)
 
-const UNAUTHORIZED_BODY = {
+const unauthorizedBody = (
+  resource: string,
+): { statusCode: number; message: string; error: string } => ({
   statusCode: UNAUTHORIZED,
-  message:
-    "Unable to authenticate a principal. Please check the documentation for accepted authentication methods",
+  message: `Unauthenticated, access to resource ${resource} denied`,
   error: "Unauthorized",
-}
+})
 
 const appModules: [string, string][] = [
   ["forRoot", "e2e/app/core/app.module.ts#AppModule"],
@@ -53,7 +54,7 @@ appModules.forEach(([name, modulePath]) => {
           await request(app.getHttpServer())
             .get("/protected/articles")
             .expect(UNAUTHORIZED)
-            .expect(UNAUTHORIZED_BODY)
+            .expect(unauthorizedBody("/protected/articles"))
         })
       })
 
@@ -146,7 +147,7 @@ appModules.forEach(([name, modulePath]) => {
           await request(app.getHttpServer())
             .get("/protected/articles/edit")
             .expect(UNAUTHORIZED)
-            .expect(UNAUTHORIZED_BODY)
+            .expect(unauthorizedBody("/protected/articles/edit"))
         })
       })
 
@@ -282,7 +283,7 @@ appModules.forEach(([name, modulePath]) => {
           await request(app.getHttpServer())
             .get("/protected/articles/delete")
             .expect(UNAUTHORIZED)
-            .expect(UNAUTHORIZED_BODY)
+            .expect(unauthorizedBody("/protected/articles/delete"))
         })
       })
 
@@ -404,7 +405,7 @@ appModules.forEach(([name, modulePath]) => {
           await request(app.getHttpServer())
             .get("/protected/reports")
             .expect(UNAUTHORIZED)
-            .expect(UNAUTHORIZED_BODY)
+            .expect(unauthorizedBody("/protected/reports"))
         })
       })
 
@@ -479,14 +480,14 @@ appModules.forEach(([name, modulePath]) => {
           await request(app.getHttpServer())
             .get("/admin/dashboard")
             .expect(UNAUTHORIZED)
-            .expect(UNAUTHORIZED_BODY)
+            .expect(unauthorizedBody("/admin/dashboard"))
         })
 
         it("should respond with HTTP 401 for /admin/settings", async () => {
           await request(app.getHttpServer())
             .get("/admin/settings")
             .expect(UNAUTHORIZED)
-            .expect(UNAUTHORIZED_BODY)
+            .expect(unauthorizedBody("/admin/settings"))
         })
       })
 

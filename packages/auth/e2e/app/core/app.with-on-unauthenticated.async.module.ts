@@ -6,12 +6,8 @@ import { TypeOrmModule } from "@nestjs/typeorm"
 
 import { User } from "../user.entity"
 
-import { GoogleAuthController } from "./google-auth.controller"
-import { LogoutController } from "./logout.controller"
 import { MagicLinkController } from "./magic-link.controller"
-import { MeController } from "./me.controller"
 import { OnUnauthenticatedController } from "./on-unauthenticated.controller"
-import { AdminController, ProtectedController } from "./protected.controller"
 
 @Module({
   imports: [
@@ -28,6 +24,7 @@ import { AdminController, ProtectedController } from "./protected.controller"
         secret: process.env.AUTH_SECRET!,
         expiresIn: "1h",
         entity: User,
+        onUnauthenticated: "/login",
         magicLink: {
           mailer: {
             host: process.env.SMTP_HOST!,
@@ -47,23 +44,9 @@ import { AdminController, ProtectedController } from "./protected.controller"
             },
           },
         },
-        googleAuth: {
-          clientId: process.env.GOOGLE_CLIENT_ID!,
-          clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-          redirectUri: process.env.GOOGLE_REDIRECT_URI!,
-          tokenEndpoint: process.env.GOOGLE_TOKEN_ENDPOINT,
-        },
       }),
     }),
   ],
-  controllers: [
-    GoogleAuthController,
-    LogoutController,
-    MagicLinkController,
-    MeController,
-    OnUnauthenticatedController,
-    ProtectedController,
-    AdminController,
-  ],
+  controllers: [MagicLinkController, OnUnauthenticatedController],
 })
-export class AsyncAppModule {}
+export class AsyncAppWithOnUnauthenticatedModule {}

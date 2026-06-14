@@ -2,73 +2,101 @@ import {
   CanActivate,
   ExecutionContext,
   HttpStatus,
+  Inject,
   Injectable,
-  Optional,
   UnauthorizedException,
 } from "@nestjs/common"
+import { Reflector } from "@nestjs/core"
 
+import {
+  type AuthOptions,
+  AUTH_OPTIONS,
+  type OnUnauthenticated,
+} from "../auth.options"
+import { ON_UNAUTHENTICATED_KEY } from "../decorators/authenticated.decorator"
 import { UnauthorizedRedirectException } from "../exceptions/unauthorized-redirect.exception"
 import { getPrincipal } from "../principal/principal.slot"
 
+import { buildUnauthenticatedMessage } from "./unauthenticated-message"
+
 /**
- * Guard that only allows access to a [Controller](https://docs.nestjs.com/controllers)
- * if there is an authenticated principal.
+ * Guard wired up by the `@Authenticated()` decorator that gates a route
+ * behind the presence of an authenticated principal in the ALS-backed
+ * request context.
  *
- * It is recommended to use this in conjunction with the {@link BearerAuthenticationMiddleware}
- * and {@link CookieAuthenticationMiddleware} which populate the principal context slot
- * when there is an authenticated session.
+ * Resolution order for the unauthenticated response:
  *
- * @example API usage (returns 401 JSON)
- * ```typescript
- * @UseGuards(Authenticated)
- * @Get("me")
- * public me() {}
- * ```
+ * 1. Per-route metadata supplied via `@Authenticated({ onUnauthenticated })`
+ * 2. Module-level default supplied via `AuthModule.forRoot({ onUnauthenticated })`
+ * 3. Built-in `UnauthorizedException` (401 JSON)
  *
- * @example Server-rendered usage (redirects to login page)
- * ```typescript
- * @UseGuards(new Authenticated("/auth/magic-link"))
- * @Get("dashboard")
- * public dashboard() {}
- * ```
+ * Strategy resolution for a non-null value:
+ *
+ * - `string` → `UnauthorizedRedirectException(url, 303, message)` so a filter
+ *   may issue an HTTP redirect for browser requests.
+ * - `HttpException` subclass → instantiated with the resource-aware message
+ *   and thrown.
+ *
+ * Every thrown exception carries a resource-aware message in the form
+ * `Unauthenticated, access to resource <request-url> denied`, where
+ * `<request-url>` is read from the request (Express `originalUrl`, falling
+ * back to `url`). The message lands in both server logs and the response
+ * body so consumers can see which resource was denied.
  */
 @Injectable()
-export class Authenticated implements CanActivate {
-  /**
-   * @param redirectUrl - Optional URL to redirect unauthenticated users to.
-   *   When provided, throws {@link UnauthorizedRedirectException} instead of a plain
-   *   {@link UnauthorizedException}. The exception is still a 401 but carries redirect
-   *   metadata via `getRedirect()` that an exception filter may use to issue an HTTP
-   *   redirect for browser-based requests.
-   */
-  public constructor(@Optional() private readonly redirectUrl?: string) {}
+export class AuthenticatedGuard implements CanActivate {
+  public constructor(
+    private readonly reflector: Reflector,
+    @Inject(AUTH_OPTIONS) private readonly options: AuthOptions,
+  ) {}
 
   /**
-   * Returns `true` if a principal exists in the request context, allowing
-   * request handling to proceed. Throws if no principal is found.
+   * Allows the request when a principal is present; otherwise throws
+   * according to the strategy resolved from per-route metadata or the
+   * module-level default.
    *
-   * Reads from the ALS-backed principal slot via `getPrincipal()`.
-   *
+   * @param context - Execution context providing handler + class metadata.
    * @returns `true` if a principal is present.
    *
-   * @throws {@link UnauthorizedException} - If no principal is found.
-   * @throws {@link UnauthorizedRedirectException} - If no principal is found and a redirect URL was provided.
+   * @throws {UnauthorizedException} When no strategy is configured.
+   * @throws {UnauthorizedRedirectException} When a redirect string is configured.
+   * @throws {HttpException} When an exception class is configured.
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Required by CanActivate interface
-  public canActivate(_context: ExecutionContext): boolean {
-    if (!getPrincipal()) {
-      if (this.redirectUrl) {
-        throw new UnauthorizedRedirectException(
-          this.redirectUrl,
-          HttpStatus.SEE_OTHER,
-        )
-      }
+  public canActivate(context: ExecutionContext): boolean {
+    if (getPrincipal()) {
+      return true
+    }
 
-      throw new UnauthorizedException(
-        "Unable to authenticate a principal. Please check the documentation for accepted authentication methods",
+    const message = buildUnauthenticatedMessage(context)
+
+    const strategy = this.resolveStrategy(context)
+
+    if (typeof strategy === "string") {
+      throw new UnauthorizedRedirectException(
+        strategy,
+        HttpStatus.SEE_OTHER,
+        message,
       )
     }
 
-    return true
+    if (strategy) {
+      throw new strategy(message)
+    }
+
+    throw new UnauthorizedException(message)
+  }
+
+  private resolveStrategy(
+    context: ExecutionContext,
+  ): OnUnauthenticated | undefined {
+    const metadata = this.reflector.getAllAndOverride<
+      OnUnauthenticated | undefined
+    >(ON_UNAUTHENTICATED_KEY, [context.getHandler(), context.getClass()])
+
+    if (metadata !== undefined) {
+      return metadata
+    }
+
+    return this.options.onUnauthenticated
   }
 }

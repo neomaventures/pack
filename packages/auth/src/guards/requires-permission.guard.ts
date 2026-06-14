@@ -11,6 +11,8 @@ import { REQUIRED_PERMISSIONS_KEY } from "../decorators/requires-permission.deco
 import { getPrincipal } from "../principal/principal.slot"
 import { PermissionService } from "../services/permission.service"
 
+import { buildUnauthenticatedMessage } from "./unauthenticated-message"
+
 /**
  * Guard that enforces permission-based authorization.
  *
@@ -43,9 +45,7 @@ export class RequiresPermissionGuard implements CanActivate {
 
     // Check authentication first
     if (!principal) {
-      throw new UnauthorizedException(
-        "Unable to authenticate a principal. Please check the documentation for accepted authentication methods",
-      )
+      throw new UnauthorizedException(buildUnauthenticatedMessage(context))
     }
 
     // Get required permissions from metadata (AND logic), merging class + method

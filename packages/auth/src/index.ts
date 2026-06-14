@@ -22,6 +22,11 @@ export * from "./dtos/email.dto"
 export { getPrincipal, CurrentPrincipal } from "./principal/principal.slot"
 
 // Decorators used in consumer controllers
+export {
+  Authenticated,
+  type AuthenticatedOptions,
+  ON_UNAUTHENTICATED_KEY,
+} from "./decorators/authenticated.decorator"
 export * from "./decorators/google-auth-result.decorator"
 export * from "./decorators/google-callback.decorator"
 export * from "./decorators/principal.decorator"
@@ -30,10 +35,6 @@ export * from "./decorators/requires-any-permission.decorator"
 
 // Interceptors
 export * from "./interceptors/google-callback.interceptor"
-
-// Guards used directly by consumers
-export * from "./guards/authenticated.guard"
-export * from "./guards/requires-permission.guard"
 
 // Exceptions consumers may catch or reference in filters
 export * from "./exceptions/email-not-verified.exception"

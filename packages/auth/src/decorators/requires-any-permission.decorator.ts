@@ -12,7 +12,7 @@ export const REQUIRED_ANY_PERMISSIONS_KEY = "auth:required_any_permissions"
  * Decorator that requires the authenticated principal to have ANY of the specified permissions.
  *
  * This decorator automatically enforces authentication - there is no need to also use
- * the `@UseGuards(Authenticated)` guard.
+ * the `@Authenticated()` decorator.
  *
  * @param permissions - The permissions checked (OR logic - at least one must be present)
  *
