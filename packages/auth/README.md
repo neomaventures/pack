@@ -440,6 +440,76 @@ export class GoogleAuthController {
 
 The `@GoogleCallback()` decorator applies the `GoogleCallbackInterceptor`, which extracts the `code` query parameter, exchanges it with Google, and attaches the `GoogleAuthResult` to the request. The `@GetGoogleAuthResult()` parameter decorator then extracts it for use in your handler.
 
+### Persisting OAuth tokens
+
+`GoogleAuthService.authenticate()` captures the full token response from Google — `access_token`, `refresh_token`, `expires_in`, `scope` — and writes it to the principal's `oauthTokens` column. To opt in, implement `OAuthAuthenticatable` on your entity and add a `simple-json` column named `oauthTokens`:
+
+```typescript
+import {
+  OAuthAuthenticatable,
+  StoredOAuthToken,
+  AuthenticatableProfile,
+} from "@neomaventures/auth"
+import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
+
+@Entity()
+export class User implements OAuthAuthenticatable {
+  @PrimaryGeneratedColumn("uuid")
+  public id: string
+
+  @Column({ unique: true })
+  public email: string
+
+  @Column("simple-array", { default: "" })
+  public permissions: string[]
+
+  @Column("simple-json", { nullable: true })
+  public authProfile?: AuthenticatableProfile
+
+  @Column("simple-json", { nullable: true })
+  public oauthTokens?: StoredOAuthToken[]
+}
+```
+
+The auth package does not ship migrations — add the column via your own migration. Entries are keyed on `provider` and the upsert is atomic per principal row. On subsequent logins where Google omits `refresh_token` (which it does after the first consent), the existing refresh token is preserved.
+
+Read the active token for the current principal via `OAuthTokenService` or the `@OAuthToken(provider)` parameter decorator:
+
+```typescript
+import {
+  Authenticated,
+  OAuthToken,
+  OAuthTokenSnapshot,
+  OAuthTokenService,
+} from "@neomaventures/auth"
+import { Controller, Get, Injectable } from "@nestjs/common"
+
+@Controller("inbox")
+@Authenticated()
+export class InboxController {
+  @Get("count")
+  public count(
+    @OAuthToken("google") token: OAuthTokenSnapshot | null,
+  ): { count: number } {
+    if (!token) return { count: 0 }
+    return { count: callGmailWith(token.accessToken) }
+  }
+}
+
+@Injectable()
+export class GmailService {
+  public constructor(private readonly oauthTokens: OAuthTokenService) {}
+
+  public list(): unknown {
+    const token = this.oauthTokens.getActiveToken("google")
+    if (!token) throw new Error("Google token not available")
+    return callGmailWith(token.accessToken)
+  }
+}
+```
+
+The snapshot includes `accessToken`, `expiresAt`, and `scopes`. It deliberately omits `refreshToken` — refresh is an internal concern of the auth package (see #171). When the stored token has `expiresAt <= now`, the service and decorator both return `null`; automatic refresh-on-expiry is not yet implemented.
+
 ## Example Requests
 
 ### Request Magic Link
