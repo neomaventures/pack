@@ -11,6 +11,14 @@ import { als } from "../../app/als-bug-app.module"
  * event-loop ticks. The fix wraps multer's deferred callback in
  * `AsyncResource.bind` so the frame survives invocation.
  *
+ * Also provides the success-path half of the #236 spike's symmetric
+ * regression coverage: extends the payload sweep up to 5MB so the success
+ * path mirrors the over-limit error path covered by
+ * `limit-als-propagation.e2e-spec.ts`. Together the two specs prove the ALS
+ * frame survives multer's full parse in both directions across the full
+ * size range investigated by the #236 spike. See
+ * https://github.com/neomaventures/pack/issues/236.
+ *
  * Pattern note: opening an ALS frame inline via `app.use` is **not** a
  * common pattern elsewhere in this repo — production consumers
  * (e.g. `@neomaventures/request-context`) open their frames inside a
@@ -23,6 +31,13 @@ import { als } from "../../app/als-bug-app.module"
  * without the fix the larger payloads return `undefined`.
  */
 describe("MultipartMiddleware — ALS propagation (regression for #231)", () => {
+  // The default Jest 5s budget is enough for the smaller cases (≤ 800KB),
+  // but the multi-MB cases include real multer parse + supertest + MinIO
+  // round-trip overhead and routinely exceed 5s on slow CI runners. Bump
+  // the per-test budget for the whole spec so we cover the success path
+  // without spurious timeouts.
+  jest.setTimeout(30_000)
+
   let app: Awaited<ReturnType<typeof managedAppInstance>>
 
   beforeEach(async () => {
@@ -40,9 +55,12 @@ describe("MultipartMiddleware — ALS propagation (regression for #231)", () => 
   })
 
   const sizes = [
-    { label: "2KB (single chunk)", bytes: 2_048 },
-    { label: "200KB (multi-chunk)", bytes: 200_000 },
-    { label: "800KB (many chunks)", bytes: 800_000 },
+    { label: "100KB", bytes: 100_000 },
+    { label: "800KB", bytes: 800_000 },
+    { label: "1MB", bytes: 1_000_000 },
+    { label: "2MB", bytes: 2_000_000 },
+    { label: "3MB", bytes: 3_000_000 },
+    { label: "5MB", bytes: 5_000_000 },
   ]
 
   sizes.forEach(({ label, bytes }) => {
