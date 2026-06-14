@@ -3,7 +3,7 @@ import { managedDatasourceInstance } from "@neomaventures/managed-database"
 import { type DataSource, type Repository } from "typeorm"
 
 import { Account } from "~auth/account.entity"
-import { Upload } from "~profile/upload.entity"
+import { Upload } from "~auth/upload.entity"
 
 describe("Account", () => {
   let datasource: DataSource

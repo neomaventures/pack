@@ -3,18 +3,17 @@ import { InjectRepository } from "@nestjs/typeorm"
 import { Repository } from "typeorm"
 
 import { Account } from "~auth/account.entity"
-import { Upload } from "~profile/upload.entity"
+import { Upload } from "~auth/upload.entity"
 
 /**
- * Application-layer service for the profile feature.
+ * Application-layer service for the account domain.
  *
- * Persists profile-scoped state for the authenticated account. The avatar
- * is eagerly loaded on `Account`, so reads of the avatar happen directly
- * off the principal in the controller — this service is only involved on
- * the write path.
+ * Persists account-scoped state — currently just the avatar FK. The
+ * avatar is eagerly loaded on `Account`, so reads happen directly off
+ * the principal; this service is only involved on the write path.
  */
 @Injectable()
-export class ProfileService {
+export class AccountService {
   /**
    * @param accounts - Repository for {@link Account}. Used to write the
    *   avatar FK after the storage pipeline has persisted the file.
@@ -48,7 +47,7 @@ export class ProfileService {
    *
    * @example
    * ```typescript
-   * await profileService.setAvatar(account, file)
+   * await accountService.setAvatar(account, file)
    * res.redirect("/profile")
    * ```
    */

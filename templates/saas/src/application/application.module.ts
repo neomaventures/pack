@@ -19,10 +19,9 @@ import { ApplicationController } from "~application/application.controller"
 import { ViewLocalsMiddleware } from "~application/view-locals.middleware"
 import { Account } from "~auth/account.entity"
 import { SaasAuthModule } from "~auth/auth.module"
+import { Upload } from "~auth/upload.entity"
 import { DashboardModule } from "~dashboard/dashboard.module"
 import { DatabaseModule } from "~database/database.module"
-import { ProfileModule } from "~profile/profile.module"
-import { Upload } from "~profile/upload.entity"
 
 /**
  * Typed view onto the environment variables the application module reads
@@ -135,7 +134,6 @@ interface AppConfig {
     }),
     SaasAuthModule,
     DashboardModule,
-    ProfileModule,
   ],
   controllers: [ApplicationController],
   providers: [ViewLocalsMiddleware],

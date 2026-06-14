@@ -10,7 +10,7 @@ import {
   PrimaryGeneratedColumn,
 } from "typeorm"
 
-import { Upload } from "~profile/upload.entity"
+import { Upload } from "~auth/upload.entity"
 
 /**
  * Represents an authenticated account in the application.

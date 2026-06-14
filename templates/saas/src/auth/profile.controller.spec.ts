@@ -2,18 +2,18 @@ import { faker } from "@faker-js/faker"
 import { express } from "@neomaventures/fixtures"
 
 import { type Account } from "~auth/account.entity"
-import { ProfileController } from "~profile/profile.controller"
-import { type ProfileService } from "~profile/profile.service"
-import { type Upload } from "~profile/upload.entity"
+import { type AccountService } from "~auth/account.service"
+import { ProfileController } from "~auth/profile.controller"
+import { type Upload } from "~auth/upload.entity"
 
 describe("ProfileController", () => {
   let controller: ProfileController
-  let profileService: jest.Mocked<Pick<ProfileService, "setAvatar">>
+  let accountService: jest.Mocked<Pick<AccountService, "setAvatar">>
 
   beforeEach(() => {
-    profileService = { setAvatar: jest.fn() }
+    accountService = { setAvatar: jest.fn() }
     controller = new ProfileController(
-      profileService as unknown as ProfileService,
+      accountService as unknown as AccountService,
     )
   })
 
@@ -66,7 +66,7 @@ describe("ProfileController", () => {
 
         await controller.uploadAvatar(account, upload, res)
 
-        expect(profileService.setAvatar).toHaveBeenCalledWith(account, upload)
+        expect(accountService.setAvatar).toHaveBeenCalledWith(account, upload)
         expect(res.redirect).toHaveBeenCalledWith("/profile")
       })
     })

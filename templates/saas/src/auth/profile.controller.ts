@@ -15,10 +15,10 @@ import {
 } from "@nestjs/common"
 import { type Response } from "express"
 
+import { AccountAvatarKeyResolver } from "~auth/account-avatar-key.resolver"
 import { Account } from "~auth/account.entity"
-import { AccountAvatarKeyResolver } from "~profile/account-avatar-key.resolver"
-import { ProfileService } from "~profile/profile.service"
-import { Upload } from "~profile/upload.entity"
+import { AccountService } from "~auth/account.service"
+import { Upload } from "~auth/upload.entity"
 
 /**
  * Handles the profile page and profile-scoped asset endpoints.
@@ -41,7 +41,7 @@ import { Upload } from "~profile/upload.entity"
  */
 @Controller()
 export class ProfileController {
-  public constructor(private readonly profileService: ProfileService) {}
+  public constructor(private readonly accountService: AccountService) {}
 
   /**
    * Renders the profile page for the authenticated user.
@@ -90,7 +90,7 @@ export class ProfileController {
    *
    * The `@Upload()` interceptor validates size/type, writes the file to S3
    * under the per-account key from {@link AccountAvatarKeyResolver}, and
-   * stages the `Upload` entity. {@link ProfileService.setAvatar} then
+   * stages the `Upload` entity. {@link AccountService.setAvatar} then
    * persists the FK on the `Account` row synchronously — not via
    * `FileCreatedEvent`. Events are fire-and-forget per the storage package
    * contract; doing the FK persistence in-band avoids silent
@@ -137,7 +137,7 @@ export class ProfileController {
     @StoredFile() upload: Upload,
     @Res() res: Response,
   ): Promise<void> {
-    await this.profileService.setAvatar(account, upload)
+    await this.accountService.setAvatar(account, upload)
     res.redirect("/profile")
   }
 }

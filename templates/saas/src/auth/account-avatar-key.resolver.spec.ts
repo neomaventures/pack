@@ -6,7 +6,7 @@ import {
 } from "@neomaventures/storage"
 import { type Request } from "express"
 
-import { AccountAvatarKeyResolver } from "~profile/account-avatar-key.resolver"
+import { AccountAvatarKeyResolver } from "~auth/account-avatar-key.resolver"
 
 /**
  * The resolver runs inside the storage interceptor after `@Authenticated()`

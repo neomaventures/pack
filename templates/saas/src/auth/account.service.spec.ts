@@ -5,12 +5,12 @@ import { getRepositoryToken } from "@nestjs/typeorm"
 import { type DataSource, type Repository } from "typeorm"
 
 import { Account } from "~auth/account.entity"
-import { ProfileService } from "~profile/profile.service"
-import { Upload } from "~profile/upload.entity"
+import { AccountService } from "~auth/account.service"
+import { Upload } from "~auth/upload.entity"
 
-describe("ProfileService", () => {
+describe("AccountService", () => {
   let datasource: DataSource
-  let service: ProfileService
+  let service: AccountService
   let accounts: Repository<Account>
   let uploads: Repository<Upload>
 
@@ -21,12 +21,12 @@ describe("ProfileService", () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        ProfileService,
+        AccountService,
         { provide: getRepositoryToken(Account), useValue: accounts },
       ],
     }).compile()
 
-    service = module.get<ProfileService>(ProfileService)
+    service = module.get<AccountService>(AccountService)
   })
 
   describe("setAvatar()", () => {

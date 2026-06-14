@@ -8,9 +8,9 @@ import { ManagedDatabaseModule } from "@neomaventures/managed-database"
 import { Test, type TestingModule } from "@nestjs/testing"
 
 import { Account } from "~auth/account.entity"
+import { Upload } from "~auth/upload.entity"
 import { DashboardController } from "~dashboard/dashboard.controller"
 import { DashboardModule } from "~dashboard/dashboard.module"
-import { Upload } from "~profile/upload.entity"
 
 const authOptions: AuthOptions = {
   secret: "test-secret",
