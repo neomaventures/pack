@@ -7,9 +7,17 @@ import {
   Unique,
 } from "typeorm"
 
-// Lazy require to break the circular import with account.entity.ts.
-// `Account` is read at decorator-evaluation time via the arrow below.
 import type { Account } from "~auth/account.entity"
+
+/**
+ * Postgres uses `timestamptz` to align with the migration's
+ * `TIMESTAMP WITH TIME ZONE`; SQLite (used by in-memory unit specs)
+ * falls back to `datetime` since `timestamptz` is not a valid SQLite
+ * column type.
+ */
+const expiresAtColumnType = process.env.DATABASE_URI?.startsWith("postgres")
+  ? "timestamptz"
+  : "datetime"
 
 /**
  * OAuth token persisted by `@neomaventures/auth` whenever a third-party
@@ -38,11 +46,7 @@ export class OAuthToken implements OAuthTokenable {
    * The principal that owns this token row. Backed by the `principalId`
    * FK column (TypeORM-derived).
    */
-  @ManyToOne(
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    (): typeof Account => require("./account.entity").Account,
-    { onDelete: "CASCADE" },
-  )
+  @ManyToOne("Account", { onDelete: "CASCADE" })
   public principal!: Account
 
   /** OAuth provider — e.g. `"google"`. */
@@ -66,7 +70,7 @@ export class OAuthToken implements OAuthTokenable {
    * timestamp in Postgres; downgraded to plain `datetime` in SQLite for
    * unit specs that exercise the entity against the in-memory driver.
    */
-  @Column()
+  @Column({ type: expiresAtColumnType })
   public expiresAt!: Date
 
   /** OAuth scopes granted by the user at consent time. */
