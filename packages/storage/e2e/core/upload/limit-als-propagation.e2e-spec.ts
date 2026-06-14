@@ -4,7 +4,7 @@ import { HttpStatus } from "@nestjs/common"
 import { type NextFunction, type Request, type Response } from "express"
 import request from "supertest"
 
-import { limitAls } from "../../app/limit-bug-app.module"
+import { limitAls } from "../../app/limit-app.module"
 
 const { CREATED, PAYLOAD_TOO_LARGE } = HttpStatus
 
@@ -36,7 +36,7 @@ describe("MultipartMiddleware — ALS propagation across multer's full parse (re
 
   beforeEach(async () => {
     app = await managedAppInstance({
-      module: "e2e/app/limit-bug-app.module.ts#LimitBugAppModule",
+      module: "e2e/app/limit-app.module.ts#LimitAppModule",
       configure: (created) => {
         created.use(
           (req: Request, _res: Response, next: NextFunction): void => {

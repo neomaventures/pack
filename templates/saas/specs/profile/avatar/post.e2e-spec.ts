@@ -91,7 +91,7 @@ describe("POST /profile/avatar", () => {
     // an inline error message. The other error cases (size, missing file)
     // share the same exception filter wiring; asserting status on those is
     // enough — repeating the template check would be redundant.
-    it("should re-render the profile page with an inline error when the request accepts HTML", async () => {
+    it("should re-render the profile page with an inline error message", async () => {
       const cookie = await authenticate(app, faker.internet.email())
 
       const response = await request(app.getHttpServer())
@@ -123,7 +123,7 @@ describe("POST /profile/avatar", () => {
   })
 
   describe("When the request is not authenticated", () => {
-    it("should respond with 404 — asset endpoints do not confirm resource existence", () => {
+    it("should respond with HTTP 404", () => {
       return request(app.getHttpServer())
         .post("/profile/avatar")
         .attach("file", tinyPngBuffer(), {
@@ -172,7 +172,6 @@ describe("POST /profile/avatar", () => {
 
       expect(before.equals(first)).toBe(true)
       expect(after.equals(second)).toBe(true)
-      expect(before.equals(after)).toBe(false)
     })
   })
 })

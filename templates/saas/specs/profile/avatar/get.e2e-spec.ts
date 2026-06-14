@@ -47,18 +47,16 @@ describe("GET /profile/avatar", () => {
         })
         .expect(FOUND)
 
-      const response = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .get("/profile/avatar")
         .set("Cookie", cookie)
         .expect(FOUND)
-
-      expect(response.headers.location).not.toBe("/img/default-avatar.svg")
-      expect(response.headers.location).toMatch(/^https?:\/\//)
+        .expect("Location", /^https?:\/\//)
     })
   })
 
   describe("When the request is not authenticated", () => {
-    it("should respond with 404 — asset endpoints do not confirm resource existence", () => {
+    it("should respond with HTTP 404", () => {
       return request(app.getHttpServer())
         .get("/profile/avatar")
         .expect(NOT_FOUND)

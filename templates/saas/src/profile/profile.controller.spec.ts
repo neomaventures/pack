@@ -1,4 +1,5 @@
 import { faker } from "@faker-js/faker"
+import { express } from "@neomaventures/fixtures"
 
 import { type Account } from "~auth/account.entity"
 import { ProfileController } from "~profile/profile.controller"
@@ -59,21 +60,14 @@ describe("ProfileController", () => {
           email: faker.internet.email(),
         } as Account
         const upload = { id: faker.string.uuid() } as Upload
-        const redirect = jest.fn()
-        const res = { redirect } as unknown as Parameters<
+        const res = express.response() as unknown as Parameters<
           ProfileController["uploadAvatar"]
         >[2]
 
-        profileService.setAvatar.mockImplementation((a: Account, u: Upload) => {
-          if (a === account && u === upload) {
-            return Promise.resolve()
-          }
-          throw new Error("Unexpected setAvatar arguments")
-        })
-
         await controller.uploadAvatar(account, upload, res)
 
-        expect(redirect).toHaveBeenCalledWith("/profile")
+        expect(profileService.setAvatar).toHaveBeenCalledWith(account, upload)
+        expect(res.redirect).toHaveBeenCalledWith("/profile")
       })
     })
   })

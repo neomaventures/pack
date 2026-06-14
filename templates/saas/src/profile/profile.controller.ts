@@ -41,10 +41,6 @@ import { Upload } from "~profile/upload.entity"
  */
 @Controller()
 export class ProfileController {
-  /**
-   * @param profileService - Persists the avatar FK once the storage
-   *   pipeline has uploaded the file to S3.
-   */
   public constructor(private readonly profileService: ProfileService) {}
 
   /**

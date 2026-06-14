@@ -90,10 +90,7 @@ describe("Account", () => {
       // `@OneToOne` is what we're asserting.
       const reloaded = await repository.findOneByOrFail({ id: account.id })
 
-      expect(reloaded.avatar).toMatchObject({
-        id: upload.id,
-        key: upload.key,
-      })
+      expect(reloaded.avatar).toEqual(upload)
     })
   })
 })

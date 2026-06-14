@@ -48,11 +48,7 @@ describe("ProfileService", () => {
         await service.setAvatar(account, upload)
 
         const reloaded = await accounts.findOneByOrFail({ id: account.id })
-        expect(reloaded.avatar).toMatchObject({
-          id: upload.id,
-          key: `accounts/${account.id}/avatar`,
-          mimeType: "image/jpeg",
-        })
+        expect(reloaded.avatar).toEqual(upload)
       })
     })
 
@@ -84,10 +80,7 @@ describe("ProfileService", () => {
         await service.setAvatar(account, replacement)
 
         const reloaded = await accounts.findOneByOrFail({ id: account.id })
-        expect(reloaded.avatar).toMatchObject({
-          id: replacement.id,
-          mimeType: "image/png",
-        })
+        expect(reloaded.avatar).toEqual(replacement)
       })
     })
   })

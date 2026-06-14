@@ -24,7 +24,7 @@ import { Upload } from "./upload.entity"
  * Per-request `AsyncLocalStorage` instance used by the per-route over-limit
  * regression spec at `e2e/core/upload/limit-als-propagation.e2e-spec.ts`.
  *
- * Companion to `als` in `als-bug-app.module.ts`: that fixture covers the
+ * Companion to `als` in `als-bug-app.module.ts` — that fixture covers the
  * success path (multer parses, controller reads the frame). This one covers
  * the **per-route `@Upload({ maxSize })` over-limit path** where multer
  * parses the full body but the storage interceptor rejects post-parse —
@@ -59,7 +59,7 @@ export class PrincipalRequiredGuard implements CanActivate {
  * does the size check; the guard reads ALS before the interceptor runs.
  */
 @Controller("limit")
-export class LimitBugController {
+export class LimitController {
   @Post("upload")
   @HttpCode(HttpStatus.CREATED)
   @UseGuards(PrincipalRequiredGuard)
@@ -92,7 +92,7 @@ export class LimitBugController {
       entity: Upload,
     }),
   ],
-  controllers: [LimitBugController],
+  controllers: [LimitController],
   providers: [PrincipalRequiredGuard],
 })
-export class LimitBugAppModule {}
+export class LimitAppModule {}

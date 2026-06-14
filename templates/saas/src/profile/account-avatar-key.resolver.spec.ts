@@ -42,7 +42,7 @@ describe("AccountAvatarKeyResolver", () => {
 
   describe("resolve()", () => {
     describe("Given an authenticated request", () => {
-      it("should return a stable per-account key", () => {
+      it("should return accounts/${accountId}/avatar", () => {
         const accountId = faker.string.uuid()
         getPrincipalSpy.mockReturnValue({
           id: accountId,
@@ -56,7 +56,7 @@ describe("AccountAvatarKeyResolver", () => {
     })
 
     describe("Given no principal on the request context", () => {
-      it("should throw UnauthorizedException as a defensive contract", () => {
+      it("should throw UnauthorizedException", () => {
         getPrincipalSpy.mockReturnValue(undefined)
 
         expect(() => resolver.resolve(req, idGenerator, fileInfo)).toThrow(
