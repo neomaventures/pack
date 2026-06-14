@@ -1,10 +1,6 @@
 import { faker } from "@faker-js/faker"
-import { MailpitClient } from "@neomaventures/mailpit"
-import { expect, test } from "@playwright/test"
 
-import { extractCallbackUrl } from "../../fixtures/email/content"
-
-const mailpit = new MailpitClient(process.env.MAILPIT_API!)
+import { expect, test } from "../../fixtures/auth/test"
 
 test.describe("Dashboard Page", () => {
   test.describe("When an unauthenticated visitor navigates to the dashboard", () => {
@@ -17,19 +13,10 @@ test.describe("Dashboard Page", () => {
   test.describe("When an authenticated user visits the dashboard", () => {
     let email: string
 
-    test.beforeEach(async ({ page }) => {
+    test.beforeEach(async ({ login, page }) => {
       email = faker.internet.email()
-      await mailpit.clear()
-
-      await page.goto("/auth/register")
-      await page.getByLabel("Email address").fill(email)
-      await page.getByRole("button", { name: "Continue with email" }).click()
-      await page.waitForURL(/\/auth\/magic-link\/sent/)
-
-      const message = await mailpit.findByRecipient(email)
-      const callbackUrl = extractCallbackUrl(message)
-      await page.goto(callbackUrl.toString())
-      await page.waitForURL("/dashboard")
+      await login.as(email)
+      await page.goto("/dashboard")
     })
 
     test("should display the Dashboard heading", async ({ page }) => {
@@ -44,6 +31,21 @@ test.describe("Dashboard Page", () => {
     test("should display a Sign out button", async ({ page }) => {
       const button = page.getByRole("button", { name: "Sign out" })
       await expect(button).toBeVisible()
+    })
+
+    test("should show the user's avatar in the navigation", async ({
+      page,
+    }) => {
+      const avatar = page.getByRole("img", { name: "Profile" })
+      await expect(avatar).toHaveAttribute("src", "/profile/avatar")
+    })
+
+    test("should take the user to the profile page when the nav avatar is clicked", async ({
+      page,
+    }) => {
+      const link = page.getByRole("link", { name: "Profile" })
+      await link.click()
+      await expect(page).toHaveURL("/profile")
     })
   })
 })

@@ -8,6 +8,7 @@ import { ExceptionHandlerModule } from "@neomaventures/exceptions"
 import { HealthcheckModule } from "@neomaventures/healthcheck"
 import { LoggingModule } from "@neomaventures/logging"
 import { RequestContextModule } from "@neomaventures/request-context"
+import { StorageModule } from "@neomaventures/storage"
 import {
   type MiddlewareConsumer,
   Module,
@@ -18,21 +19,49 @@ import { ApplicationController } from "~application/application.controller"
 import { ViewLocalsMiddleware } from "~application/view-locals.middleware"
 import { Account } from "~auth/account.entity"
 import { SaasAuthModule } from "~auth/auth.module"
+import { Upload } from "~auth/upload.entity"
 import { DashboardModule } from "~dashboard/dashboard.module"
 import { DatabaseModule } from "~database/database.module"
 
-/** Config properties used by the application module. */
+/**
+ * Typed view onto the environment variables the application module reads
+ * at boot. Resolved from `@neomaventures/config` via `ConfigService`.
+ */
 interface AppConfig {
+  /** HMAC secret used by `@neomaventures/auth` to sign session cookies. */
   jwtSecret: string
+
+  /** SMTP server hostname for outbound mail (magic-link delivery). */
   smtpHost: string
+  /** SMTP server port, as a string from env. Parsed with `parseInt(..., 10)`. */
   smtpPort: string
+  /** SMTP auth username. Omit (alongside `smtpPassword`) for unauthenticated SMTP — useful for Mailpit / Mailhog in dev. */
   smtpUser: string
+  /** SMTP auth password. Omit (alongside `smtpUser`) for unauthenticated SMTP. */
   smtpPassword: string
+  /** `From:` address used on outbound auth emails. */
   mailFrom: string
+
+  /** Public-facing base URL of the app. Used to build absolute auth callback URLs and to derive cookie `secure` mode. */
   appUrl: string
+
+  /** Google OAuth client id. When absent, Google sign-in is not registered. */
   googleClientId: string
+  /** Google OAuth client secret. Required alongside `googleClientId`. */
   googleClientSecret: string
+  /** Optional override for Google's token endpoint URL. Used in tests to point at a mocked endpoint; production reads from Google. */
   googleTokenEndpoint: string
+
+  /** S3-compatible endpoint for `@neomaventures/storage` (MinIO locally, real S3/R2/B2 in production). */
+  s3Endpoint: string
+  /** AWS region passed to the S3 SDK. MinIO ignores it but the SDK still requires a value. */
+  s3Region: string
+  /** Bucket name uploads are written to. */
+  s3Bucket: string
+  /** S3 access key id. */
+  s3AccessKeyId: string
+  /** S3 secret access key. */
+  s3SecretAccessKey: string
 }
 
 /**
@@ -55,6 +84,7 @@ interface AppConfig {
         secret: config.jwtSecret,
         expiresIn: "7d",
         entity: Account,
+        onUnauthenticated: "/auth/register",
         cookie: {
           secure: config.appUrl.startsWith("https"),
           sameSite: "lax" as const,
@@ -88,6 +118,17 @@ interface AppConfig {
             }),
           },
         }),
+      }),
+      inject: [ConfigService],
+    }),
+    StorageModule.forRootAsync({
+      useFactory: (config: TypedConfig<AppConfig>) => ({
+        endpoint: config.s3Endpoint,
+        region: config.s3Region,
+        bucket: config.s3Bucket,
+        accessKeyId: config.s3AccessKeyId,
+        secretAccessKey: config.s3SecretAccessKey,
+        entity: Upload,
       }),
       inject: [ConfigService],
     }),

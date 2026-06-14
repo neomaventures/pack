@@ -3,13 +3,14 @@ import { managedDatasourceInstance } from "@neomaventures/managed-database"
 import { type DataSource, type Repository } from "typeorm"
 
 import { Account } from "~auth/account.entity"
+import { Upload } from "~auth/upload.entity"
 
 describe("Account", () => {
   let datasource: DataSource
   let repository: Repository<Account>
 
   beforeEach(async () => {
-    datasource = await managedDatasourceInstance([Account])
+    datasource = await managedDatasourceInstance([Account, Upload])
     repository = datasource.getRepository(Account)
   })
 
@@ -65,6 +66,31 @@ describe("Account", () => {
       const account = repository.create()
 
       await expect(repository.save(account)).rejects.toThrow()
+    })
+  })
+
+  describe("Given an account with an avatar Upload", () => {
+    it("should eagerly load the avatar relation on findOneBy", async () => {
+      const uploads = datasource.getRepository(Upload)
+      const account = await repository.save(
+        repository.create({ email: faker.internet.email() }),
+      )
+      const upload = await uploads.save(
+        uploads.create({
+          originalName: "avatar.jpg",
+          mimeType: "image/jpeg",
+          size: faker.number.int({ min: 100, max: 1_000 }),
+          key: `accounts/${account.id}/avatar`,
+          bucket: "test-bucket",
+        }),
+      )
+      await repository.update(account.id, { avatar: upload })
+
+      // Note: no `relations: ['avatar']` here — the eager flag on
+      // `@OneToOne` is what we're asserting.
+      const reloaded = await repository.findOneByOrFail({ id: account.id })
+
+      expect(reloaded.avatar).toEqual(upload)
     })
   })
 })

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile - <%= npmPackageName %></title>
+    <link rel="stylesheet" href="/stylesheets/main.css" />
+  </head>
+  <body class="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-800">
+    <%- include("partials/nav") %>
+
+    <main
+      class="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center"
+    >
+      <h1 class="text-4xl font-extrabold tracking-tight text-slate-800">
+        Profile
+      </h1>
+      <section class="mt-8 flex flex-col items-center gap-4">
+        <img
+          src="/profile/avatar"
+          alt="Your avatar"
+          class="h-24 w-24 rounded-full border border-slate-200 bg-white object-cover"
+        />
+
+        <form
+          class="flex w-full max-w-xs flex-col items-center gap-3"
+          action="/profile/avatar"
+          method="post"
+          enctype="multipart/form-data"
+        >
+          <% if (typeof exception !== "undefined" && exception.message) { %>
+          <p
+            class="w-full rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+            role="alert"
+          >
+            <%= exception.message %>
+          </p>
+          <% } %>
+          <label class="sr-only" for="avatar-file">Choose an image</label>
+          <input
+            class="w-full cursor-pointer rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 file:mr-3 file:cursor-pointer file:rounded file:border-0 file:bg-slate-800 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white hover:file:opacity-90"
+            id="avatar-file"
+            type="file"
+            name="file"
+            accept="image/jpeg,image/png,image/webp"
+            required
+          />
+          <button
+            class="w-full cursor-pointer rounded-md border border-slate-200 bg-slate-800 px-4 py-2.5 font-sans text-sm font-medium text-white hover:opacity-90"
+            type="submit"
+          >
+            Upload avatar
+          </button>
+        </form>
+      </section>
+    </main>
+
+    <footer class="px-8 py-4 text-right text-xs text-slate-500">
+      <span>v<%= npmPackageVersion %></span>
+    </footer>
+  </body>
+</html>

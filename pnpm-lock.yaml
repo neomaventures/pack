@@ -927,6 +927,9 @@ importers:
       '@neomaventures/request-context':
         specifier: workspace:*
         version: link:../../packages/request-context
+      '@neomaventures/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
       '@nestjs/common':
         specifier: ^11.1.18
         version: 11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -948,6 +951,9 @@ importers:
       class-validator:
         specifier: ^0.14.1
         version: 0.14.4
+      cookie:
+        specifier: ^1.1.1
+        version: 1.1.1
       ejs:
         specifier: ^3.1.10
         version: 3.1.10
@@ -985,6 +991,9 @@ importers:
       '@neomaventures/managed-database':
         specifier: workspace:*
         version: link:../../packages/managed-database
+      '@neomaventures/minio':
+        specifier: workspace:*
+        version: link:../../packages/minio
       '@neomaventures/mockserver':
         specifier: workspace:*
         version: link:../../packages/mockserver

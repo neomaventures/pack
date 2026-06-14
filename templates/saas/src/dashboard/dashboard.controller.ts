@@ -21,7 +21,7 @@ export class DashboardController {
    * @returns The user's email address for display in the template.
    */
   @Get("dashboard")
-  @Authenticated({ onUnauthenticated: "/auth/register" })
+  @Authenticated()
   @Render("dashboard")
   public index(@Principal() principal: Authenticatable): { email: string } {
     return { email: principal.email }

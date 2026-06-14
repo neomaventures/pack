@@ -14,11 +14,11 @@ import { npmPackageName, npmPackageVersion } from "~fixtures/package-version"
 const { OK, SEE_OTHER } = HttpStatus
 
 const template = readFileSync(
-  join(process.cwd(), "views", "dashboard.ejs"),
+  join(process.cwd(), "views", "profile.ejs"),
   "utf-8",
 )
 
-describe("GET /dashboard", () => {
+describe("GET /profile", () => {
   let app: Awaited<ReturnType<typeof managedAppInstance>>
 
   beforeEach(async () => {
@@ -30,7 +30,7 @@ describe("GET /dashboard", () => {
   describe("When an unauthenticated request is made", () => {
     it(`should respond with an HTTP ${SEE_OTHER} redirect to /auth/register`, () => {
       return request(app.getHttpServer())
-        .get("/dashboard")
+        .get("/profile")
         .set("Accept", "text/html")
         .expect(SEE_OTHER)
         .expect("Location", "/auth/register")
@@ -40,7 +40,7 @@ describe("GET /dashboard", () => {
   describe("When an authenticated request is made", () => {
     const email = faker.internet.email()
 
-    it(`should respond with HTTP ${OK} and the dashboard template with the user's email`, async () => {
+    it(`should respond with HTTP ${OK} and the profile template`, async () => {
       const cookie = await authenticate(app, email)
 
       const expectedHtml = ejs.render(
@@ -48,13 +48,12 @@ describe("GET /dashboard", () => {
         {
           npmPackageName,
           npmPackageVersion,
-          email: email.toLowerCase(),
         },
-        { filename: join(process.cwd(), "views", "dashboard.ejs") },
+        { filename: join(process.cwd(), "views", "profile.ejs") },
       )
 
       await request(app.getHttpServer())
-        .get("/dashboard")
+        .get("/profile")
         .set("Cookie", cookie)
         .expect(OK)
         .expect(expectedHtml)
