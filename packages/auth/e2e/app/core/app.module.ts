@@ -2,7 +2,6 @@ import { AuthModule } from "@neomaventures/auth"
 import { LoggingModule } from "@neomaventures/logging"
 import { RequestContextModule } from "@neomaventures/request-context"
 import { Module } from "@nestjs/common"
-import { APP_FILTER } from "@nestjs/core"
 import { TypeOrmModule } from "@nestjs/typeorm"
 
 import { User } from "../user.entity"
@@ -13,7 +12,6 @@ import { MagicLinkController } from "./magic-link.controller"
 import { MeController } from "./me.controller"
 import { OnUnauthenticatedController } from "./on-unauthenticated.controller"
 import { AdminController, ProtectedController } from "./protected.controller"
-import { UnauthorizedRedirectFilter } from "./unauthorized-redirect.filter"
 
 @Module({
   imports: [
@@ -65,6 +63,5 @@ import { UnauthorizedRedirectFilter } from "./unauthorized-redirect.filter"
     ProtectedController,
     AdminController,
   ],
-  providers: [{ provide: APP_FILTER, useClass: UnauthorizedRedirectFilter }],
 })
 export class AppModule {}

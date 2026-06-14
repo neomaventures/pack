@@ -1,4 +1,4 @@
-import { UnauthorizedException } from "@nestjs/common"
+import { HttpStatus, UnauthorizedException } from "@nestjs/common"
 
 /**
  * Thrown when an unauthenticated request should be redirected to a login page
@@ -7,6 +7,12 @@ import { UnauthorizedException } from "@nestjs/common"
  * Extends {@link UnauthorizedException} so existing 401 catch filters still apply.
  * The `getRedirect()` method provides the redirect URL and status code
  * for an exception filter to choose to handle as an HTTP redirect.
+ *
+ * The response body is self-describing — it includes a `redirect` field with
+ * the intended target so consumers without a redirect-aware exception filter
+ * can still observe where the user should go (e.g. `{ statusCode, message,
+ * redirect: { url, status } }`). For an actual HTTP redirect, wire a filter
+ * (or use `@neomaventures/exceptions`) that calls `getRedirect()`.
  *
  * @example
  * ```typescript
@@ -22,7 +28,11 @@ export class UnauthorizedRedirectException extends UnauthorizedException {
     public readonly url: string,
     public readonly redirectStatus: number,
   ) {
-    super("Unauthorized. Redirecting to login.")
+    super({
+      statusCode: HttpStatus.UNAUTHORIZED,
+      message: "Unauthorized. Redirecting to login.",
+      redirect: { url, status: redirectStatus },
+    })
   }
 
   /**

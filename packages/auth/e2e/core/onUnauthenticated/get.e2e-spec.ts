@@ -6,6 +6,12 @@ import { authenticateViaEmail } from "fixtures/fakes/magic-link"
 import request from "supertest"
 
 const { OK, UNAUTHORIZED, FORBIDDEN, NOT_FOUND, SEE_OTHER } = HttpStatus
+
+const REDIRECT_BODY = (url: string): Record<string, unknown> => ({
+  statusCode: UNAUTHORIZED,
+  message: "Unauthorized. Redirecting to login.",
+  redirect: { url, status: SEE_OTHER },
+})
 const mailpit = new MailpitClient(process.env.MAILPIT_API!)
 
 const UNAUTHORIZED_BODY = {
@@ -71,12 +77,11 @@ describe("GET /unauth/* (@Authenticated onUnauthenticated precedence)", () => {
 
         describe('GET /unauth/redirect — @Authenticated({ onUnauthenticated: "/login" })', () => {
           describe("When an unauthenticated request is made", () => {
-            it("should respond with HTTP 303 redirecting to /login", async () => {
-              const response = await request(app.getHttpServer())
+            it("should respond with HTTP 401 carrying the redirect target in the body", async () => {
+              await request(app.getHttpServer())
                 .get("/unauth/redirect")
-                .expect(SEE_OTHER)
-
-              expect(response.headers.location).toBe("/login")
+                .expect(UNAUTHORIZED)
+                .expect(REDIRECT_BODY("/login"))
             })
           })
 
@@ -164,12 +169,11 @@ describe("GET /unauth/* (@Authenticated onUnauthenticated precedence)", () => {
 
         describe("GET /unauth/default-redirect — @Authenticated() with no per-route options", () => {
           describe("When an unauthenticated request is made", () => {
-            it("should respond with HTTP 303 redirecting to /login (forRoot wins)", async () => {
-              const response = await request(app.getHttpServer())
+            it("should respond with HTTP 401 carrying the redirect target in the body (forRoot wins)", async () => {
+              await request(app.getHttpServer())
                 .get("/unauth/default-redirect")
-                .expect(SEE_OTHER)
-
-              expect(response.headers.location).toBe("/login")
+                .expect(UNAUTHORIZED)
+                .expect(REDIRECT_BODY("/login"))
             })
           })
 

@@ -28,4 +28,12 @@ describe("UnauthorizedRedirectException", () => {
   it("should return the redirect url and status", () => {
     expect(exception.getRedirect()).toEqual({ url, status: SEE_OTHER })
   })
+
+  it("should include the redirect target in the response body", () => {
+    expect(exception.getResponse()).toEqual({
+      statusCode: UNAUTHORIZED,
+      message: "Unauthorized. Redirecting to login.",
+      redirect: { url, status: SEE_OTHER },
+    })
+  })
 })

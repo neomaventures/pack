@@ -323,8 +323,10 @@ Different route types want different responses when the caller is anonymous. `@A
 | Route type | Pass | Result |
 |------------|------|--------|
 | API endpoint | _(omit)_ | `UnauthorizedException` (401) |
-| Page route | `"/auth/magic-link"` | `UnauthorizedRedirectException` carrying a 303 redirect |
+| Page route | `"/auth/magic-link"` | `UnauthorizedRedirectException` (401) with `redirect: { url, status: 303 }` in the body |
 | Asset endpoint (e.g. avatar image) | `NotFoundException` | 404, indistinguishable from "no such route" |
+
+By default, the redirect strategy responds with `401` and a self-describing body — `{ statusCode, message, redirect: { url, status } }` — so consumers without a redirect-aware exception filter can still observe the intended target (handy for tests and JSON clients). To turn it into an actual HTTP redirect, install a filter that calls `getRedirect()` on the exception, or use [`@neomaventures/exceptions`](https://www.npmjs.com/package/@neomaventures/exceptions), which ships one out of the box.
 
 ```typescript
 import { Authenticated } from "@neomaventures/auth"
@@ -337,7 +339,7 @@ export class RoutesController {
   @Authenticated()
   public me(): unknown {}
 
-  // 303 redirect — right for server-rendered pages
+  // 401 with redirect body — pair with a filter (or @neomaventures/exceptions) for an actual 303
   @Get("dashboard")
   @Authenticated({ onUnauthenticated: "/auth/magic-link" })
   public dashboard(): unknown {}
@@ -824,7 +826,7 @@ public getReports() {}
 | `GoogleServiceException` | 502 | Google returned a server error (5xx from token endpoint) |
 | `GoogleNetworkException` | 502 | Network failure reaching Google's token endpoint |
 | `EmailNotVerifiedException` | 403 | Google account email not verified |
-| `UnauthorizedRedirectException` | 401 | Unauthenticated request on a route with a redirect URL. Carries redirect metadata via `getRedirect()` for filters to handle |
+| `UnauthorizedRedirectException` | 401 | Unauthenticated request on a route with a redirect URL. Response body includes `redirect: { url, status }` so the target is observable without a filter; `getRedirect()` exposes the same data for filters that turn it into an actual HTTP redirect |
 | `PermissionDeniedException` | 403 | User lacks required permission(s) |
 
 ### Events
