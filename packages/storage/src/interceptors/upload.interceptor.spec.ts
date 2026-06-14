@@ -12,8 +12,14 @@ import { getDataSourceToken } from "@nestjs/typeorm"
 import { TestKeyResolver } from "fixtures/resolvers/test-key-resolver"
 import { TestIdGenerator } from "fixtures/services/test-id-generator"
 import { MinioClient } from "fixtures/storage/minio"
-import { lastValueFrom, type Observable, of, throwError } from "rxjs"
-import { Column, DataSource, Entity, PrimaryGeneratedColumn } from "typeorm"
+import { defer, lastValueFrom, type Observable, of, throwError } from "rxjs"
+import {
+  Column,
+  DataSource,
+  Entity,
+  PrimaryGeneratedColumn,
+  Repository,
+} from "typeorm"
 
 import { StorageModule } from "../"
 import { Upload } from "../decorators/upload.decorator"
@@ -158,6 +164,56 @@ describe("UploadInterceptor", () => {
             new RegExp(`^[0-9A-HJKMNP-TV-Z]{26}-${file.originalname}$`),
           ),
         })
+      })
+
+      it("should attach a persisted entity with an id to req.storage.storedFile", async () => {
+        const { ctx, handler, req } = interceptorInvocation()
+
+        await interceptor.intercept(ctx, handler)
+
+        expect(req.storage!.storedFile!.id).toEqual(expect.any(String))
+        expect(req.storage!.storedFile!.id).not.toBe("")
+      })
+
+      it("should persist the entity before next.handle() is invoked", async () => {
+        const file = multerFile()
+        let rowCountWhenHandlerRuns = -1
+        const customHandler: CallHandler = {
+          handle: () =>
+            defer(async () => {
+              rowCountWhenHandlerRuns = await dataSource
+                .getRepository(TestUpload)
+                .count({ where: { originalName: file.originalname } })
+              return {}
+            }),
+        }
+        const { ctx } = interceptorInvocation({ file })
+
+        await lastValueFrom(await interceptor.intercept(ctx, customHandler))
+
+        expect(rowCountWhenHandlerRuns).toBe(1)
+      })
+
+      it("should emit FileCreatedEvent before next.handle() is invoked", async () => {
+        const eventTimestamps: number[] = []
+        const handlerTimestamps: number[] = []
+        eventEmitter.on(FileCreatedEvent.EVENT_NAME, () => {
+          eventTimestamps.push(Date.now())
+        })
+        const customHandler: CallHandler = {
+          handle: () =>
+            defer(async () => {
+              handlerTimestamps.push(Date.now())
+              return {}
+            }),
+        }
+        const { ctx } = interceptorInvocation()
+
+        await lastValueFrom(await interceptor.intercept(ctx, customHandler))
+
+        expect(eventTimestamps).toHaveLength(1)
+        expect(handlerTimestamps).toHaveLength(1)
+        expect(eventTimestamps[0]).toBeLessThanOrEqual(handlerTimestamps[0])
       })
 
       it("should preserve the handler response unchanged", async () => {
@@ -425,8 +481,10 @@ describe("UploadInterceptor", () => {
     })
 
     describe("Given the handler throws", () => {
-      it("should not emit a FileCreatedEvent", async () => {
+      it("should still emit a FileCreatedEvent, persist the row, and leave the S3 object in place (orphan accepted)", async () => {
+        const file = multerFile()
         const { ctx, handler } = interceptorInvocation({
+          file,
           response: throwError(() => new Error("handler error")),
         })
 
@@ -442,7 +500,35 @@ describe("UploadInterceptor", () => {
           lastValueFrom(await interceptor.intercept(ctx, handler)),
         ).rejects.toThrow("handler error")
 
-        expect(receivedEvents).toHaveLength(0)
+        expect(receivedEvents).toHaveLength(1)
+        const storedFile = receivedEvents[0].entity
+        const row = await dataSource
+          .getRepository(TestUpload)
+          .findOne({ where: { originalName: file.originalname } })
+        expect(row).not.toBeNull()
+        const stored = await minio.getObject(storedFile.key)
+        expect(stored).toMatchObject({
+          body: file.buffer.toString(),
+          contentType: file.mimetype,
+        })
+      })
+    })
+
+    describe("Given the database save fails", () => {
+      it("should throw and not invoke the consumer handler", async () => {
+        const saveError = new Error("db save failed")
+        jest
+          .spyOn(Repository.prototype, "save")
+          .mockRejectedValueOnce(saveError as never)
+
+        const handlerSpy = jest.fn(() => of({}))
+        const { ctx } = interceptorInvocation()
+        const handler: CallHandler = { handle: handlerSpy }
+
+        await expect(interceptor.intercept(ctx, handler)).rejects.toThrow(
+          "db save failed",
+        )
+        expect(handlerSpy).not.toHaveBeenCalled()
       })
     })
 
