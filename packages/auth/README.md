@@ -352,6 +352,12 @@ export class RoutesController {
 }
 ```
 
+#### Behaviour note: exception class constructors
+
+Class strategies passed to `onUnauthenticated` are instantiated as `new strategy(message)` with a single string message argument. Pass classes whose constructor is `(message?: string | Record<string, any>)` — required extra arguments will throw at request time.
+
+Safe choices include all standard Nest 4xx exceptions: `UnauthorizedException`, `ForbiddenException`, `NotFoundException`, `BadRequestException`, `ConflictException`, `GoneException`, `UnprocessableEntityException`, etc. Custom exceptions are fine too, provided their constructor follows the same single-optional-message shape.
+
 #### Module-level default
 
 Set `onUnauthenticated` on `AuthModule.forRoot()` to pick the default strategy for the whole app. Per-route values override the module default; the built-in `UnauthorizedException` (401) applies when neither is set.
@@ -370,13 +376,13 @@ AuthModule.forRoot({
 ```typescript
 // Before
 @UseGuards(Authenticated)
-@UseGuards(new Authenticated())
 @UseGuards(new Authenticated("/auth/magic-link"))
+// (no previous equivalent — class strategies are new)
 
 // After
 @Authenticated()
-@Authenticated()
 @Authenticated({ onUnauthenticated: "/auth/magic-link" })
+@Authenticated({ onUnauthenticated: NotFoundException })
 ```
 
 ## Magic Link Flow

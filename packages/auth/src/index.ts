@@ -36,9 +36,6 @@ export * from "./decorators/requires-any-permission.decorator"
 // Interceptors
 export * from "./interceptors/google-callback.interceptor"
 
-// Guards used directly by consumers
-export * from "./guards/requires-permission.guard"
-
 // Exceptions consumers may catch or reference in filters
 export * from "./exceptions/email-not-verified.exception"
 export * from "./exceptions/google-code-exchange.exception"
