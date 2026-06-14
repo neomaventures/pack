@@ -10,7 +10,15 @@ import { Test, TestingModule } from "@nestjs/testing"
 import { getRepositoryToken, TypeOrmModule } from "@nestjs/typeorm"
 import { google } from "fixtures/fakes/google"
 import * as jwt from "jsonwebtoken"
-import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm"
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  Repository,
+  Unique,
+} from "typeorm"
 
 import { AuthModule } from "../auth.module"
 import { AuthOptions } from "../auth.options"
@@ -25,16 +33,24 @@ import {
   Authenticatable,
   AuthenticatableProfile,
 } from "../interfaces/authenticatable.interface"
+import { type OAuthAuthenticatable } from "../interfaces/oauth-authenticatable.interface"
+import { type OAuthTokenable } from "../interfaces/oauth-tokenable.interface"
 
 import { GoogleAuthService } from "./google-auth.service"
 
 @Entity()
-class User implements Authenticatable {
+class User implements OAuthAuthenticatable {
   @PrimaryGeneratedColumn("uuid")
   public id!: any
 
   @Column({ unique: true })
   public email!: string
+
+  @OneToMany(() => OAuthToken, (t) => t.principal, {
+    eager: true,
+    cascade: false,
+  })
+  public oauthTokens?: OAuthToken[]
 }
 
 @Entity()
@@ -49,32 +65,71 @@ class UserWithProfile implements Authenticatable {
   public authProfile?: AuthenticatableProfile
 }
 
+@Entity()
+@Unique(["principal", "provider"])
+class OAuthToken implements OAuthTokenable {
+  @PrimaryGeneratedColumn("uuid")
+  public id!: any
+
+  @ManyToOne(() => User)
+  public principal!: User
+
+  @Column()
+  public provider!: string
+
+  @Column()
+  public accessToken!: string
+
+  @Column({ type: "text", nullable: true })
+  public refreshToken!: string | null
+
+  @Column()
+  public expiresAt!: Date
+
+  @Column("simple-array")
+  public scopes!: string[]
+}
+
 const googleOAuthClient = new GoogleOAuthClient(mockserver)
 
 const googleAuth = google.authOptions({
   tokenEndpoint: googleOAuthClient.tokenEndpoint(),
 })
 
-async function buildModule<T extends Authenticatable>(
-  entityClass: new () => T,
-  register: (opts: AuthOptions) => DynamicModule,
-  opts?: Partial<AuthOptions>,
-): Promise<TestingModule> {
+type AnyEntityCtor = new () => unknown
+
+interface BuildModuleOptions {
+  entities: AnyEntityCtor[]
+  authenticatable: new () => Authenticatable
+  oauthToken?: new () => OAuthTokenable
+  register: (opts: AuthOptions) => DynamicModule
+  overrides?: Partial<AuthOptions>
+}
+
+async function buildModule({
+  entities,
+  authenticatable,
+  oauthToken,
+  register,
+  overrides,
+}: BuildModuleOptions): Promise<TestingModule> {
   return Test.createTestingModule({
     imports: [
       TypeOrmModule.forRoot({
         type: "sqlite",
         database: ":memory:",
-        entities: [entityClass],
+        entities,
         synchronize: true,
       }),
-      TypeOrmModule.forFeature([entityClass]),
+      TypeOrmModule.forFeature(entities),
       register({
         secret: faker.internet.password(),
         expiresIn: "1h",
-        entity: entityClass,
+        entities: oauthToken
+          ? { authenticatable, oauthToken }
+          : { authenticatable },
         googleAuth,
-        ...opts,
+        ...overrides,
       } as AuthOptions),
     ],
   }).compile()
@@ -128,7 +183,12 @@ registrations.forEach(([name, register]) => {
         let service: GoogleAuthService
 
         beforeEach(async () => {
-          const module = await buildModule(User, register)
+          const module = await buildModule({
+            entities: [User, OAuthToken],
+            authenticatable: User,
+            oauthToken: OAuthToken,
+            register,
+          })
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
@@ -147,14 +207,20 @@ registrations.forEach(([name, register]) => {
         let service: GoogleAuthService
 
         beforeEach(async () => {
-          const module = await buildModule(User, register, {
-            googleAuth: {
-              ...googleAuth,
-              scopes: [
-                "openid",
-                "email",
-                "https://www.googleapis.com/auth/gmail.readonly",
-              ],
+          const module = await buildModule({
+            entities: [User, OAuthToken],
+            authenticatable: User,
+            oauthToken: OAuthToken,
+            register,
+            overrides: {
+              googleAuth: {
+                ...googleAuth,
+                scopes: [
+                  "openid",
+                  "email",
+                  "https://www.googleapis.com/auth/gmail.readonly",
+                ],
+              },
             },
           })
           service = module.get<GoogleAuthService>(GoogleAuthService)
@@ -171,24 +237,29 @@ registrations.forEach(([name, register]) => {
         let service: GoogleAuthService
 
         beforeEach(async () => {
-          const module = await buildModule(User, register, {
-            googleAuth: undefined,
-            magicLink: {
-              mailer: {
-                host: "localhost",
-                port: 1025,
-                from: faker.internet.email(),
-                welcome: {
-                  subject: "Welcome",
-                  html: '<a href="{{token}}">Link</a>',
-                },
-                welcomeBack: {
-                  subject: "Welcome back",
-                  html: '<a href="{{token}}">Link</a>',
+          const module = await buildModule({
+            entities: [User, OAuthToken],
+            authenticatable: User,
+            register,
+            overrides: {
+              googleAuth: undefined,
+              magicLink: {
+                mailer: {
+                  host: "localhost",
+                  port: 1025,
+                  from: faker.internet.email(),
+                  welcome: {
+                    subject: "Welcome",
+                    html: '<a href="{{token}}">Link</a>',
+                  },
+                  welcomeBack: {
+                    subject: "Welcome back",
+                    html: '<a href="{{token}}">Link</a>',
+                  },
                 },
               },
-            },
-          } as Partial<AuthOptions>)
+            } as Partial<AuthOptions>,
+          })
 
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
@@ -206,7 +277,12 @@ registrations.forEach(([name, register]) => {
         let eventEmitter: EventEmitter2
 
         beforeEach(async () => {
-          const module = await buildModule(User, register)
+          const module = await buildModule({
+            entities: [User, OAuthToken],
+            authenticatable: User,
+            oauthToken: OAuthToken,
+            register,
+          })
           service = module.get<GoogleAuthService>(GoogleAuthService)
           repository = module.get<Repository<User>>(getRepositoryToken(User))
           eventEmitter = module.get<EventEmitter2>(EventEmitter2)
@@ -294,15 +370,24 @@ registrations.forEach(([name, register]) => {
         let existingUser: User
 
         beforeEach(async () => {
-          const module = await buildModule(User, register)
+          const module = await buildModule({
+            entities: [User, OAuthToken],
+            authenticatable: User,
+            oauthToken: OAuthToken,
+            register,
+          })
           service = module.get<GoogleAuthService>(GoogleAuthService)
           repository = module.get<Repository<User>>(getRepositoryToken(User))
           eventEmitter = module.get<EventEmitter2>(EventEmitter2)
 
-          existingUser = repository.create({
+          const created = repository.create({
             email: faker.internet.email().toLowerCase(),
           })
-          await repository.save(existingUser)
+          await repository.save(created)
+          // Reload through the repository so the eager `oauthTokens`
+          // relation is hydrated as [] (matching what the production
+          // code path sees after its own findOne).
+          existingUser = await repository.findOneByOrFail({ id: created.id })
         })
 
         it("should return the existing entity with isNewUser: false", async () => {
@@ -362,7 +447,11 @@ registrations.forEach(([name, register]) => {
         let repository: Repository<UserWithProfile>
 
         beforeEach(async () => {
-          const module = await buildModule(UserWithProfile, register)
+          const module = await buildModule({
+            entities: [UserWithProfile],
+            authenticatable: UserWithProfile,
+            register,
+          })
           service = module.get<GoogleAuthService>(GoogleAuthService)
           repository = module.get<Repository<UserWithProfile>>(
             getRepositoryToken(UserWithProfile),
@@ -397,7 +486,12 @@ registrations.forEach(([name, register]) => {
         let service: GoogleAuthService
 
         beforeEach(async () => {
-          const module = await buildModule(User, register)
+          const module = await buildModule({
+            entities: [User, OAuthToken],
+            authenticatable: User,
+            oauthToken: OAuthToken,
+            register,
+          })
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
@@ -415,7 +509,12 @@ registrations.forEach(([name, register]) => {
         let repository: Repository<User>
 
         beforeEach(async () => {
-          const module = await buildModule(User, register)
+          const module = await buildModule({
+            entities: [User, OAuthToken],
+            authenticatable: User,
+            oauthToken: OAuthToken,
+            register,
+          })
           service = module.get<GoogleAuthService>(GoogleAuthService)
           repository = module.get<Repository<User>>(getRepositoryToken(User))
         })
@@ -453,7 +552,12 @@ registrations.forEach(([name, register]) => {
         let service: GoogleAuthService
 
         beforeEach(async () => {
-          const module = await buildModule(User, register)
+          const module = await buildModule({
+            entities: [User, OAuthToken],
+            authenticatable: User,
+            oauthToken: OAuthToken,
+            register,
+          })
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
@@ -471,7 +575,12 @@ registrations.forEach(([name, register]) => {
         let service: GoogleAuthService
 
         beforeEach(async () => {
-          const module = await buildModule(User, register)
+          const module = await buildModule({
+            entities: [User, OAuthToken],
+            authenticatable: User,
+            oauthToken: OAuthToken,
+            register,
+          })
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
@@ -489,7 +598,12 @@ registrations.forEach(([name, register]) => {
         let service: GoogleAuthService
 
         beforeEach(async () => {
-          const module = await buildModule(User, register)
+          const module = await buildModule({
+            entities: [User, OAuthToken],
+            authenticatable: User,
+            oauthToken: OAuthToken,
+            register,
+          })
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
@@ -507,7 +621,12 @@ registrations.forEach(([name, register]) => {
         let service: GoogleAuthService
 
         beforeEach(async () => {
-          const module = await buildModule(User, register)
+          const module = await buildModule({
+            entities: [User, OAuthToken],
+            authenticatable: User,
+            oauthToken: OAuthToken,
+            register,
+          })
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
@@ -532,7 +651,12 @@ registrations.forEach(([name, register]) => {
         let service: GoogleAuthService
 
         beforeEach(async () => {
-          const module = await buildModule(User, register)
+          const module = await buildModule({
+            entities: [User, OAuthToken],
+            authenticatable: User,
+            oauthToken: OAuthToken,
+            register,
+          })
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
@@ -557,7 +681,12 @@ registrations.forEach(([name, register]) => {
         let service: GoogleAuthService
 
         beforeEach(async () => {
-          const module = await buildModule(User, register)
+          const module = await buildModule({
+            entities: [User, OAuthToken],
+            authenticatable: User,
+            oauthToken: OAuthToken,
+            register,
+          })
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
@@ -588,7 +717,12 @@ registrations.forEach(([name, register]) => {
         let service: GoogleAuthService
 
         beforeEach(async () => {
-          const module = await buildModule(User, register)
+          const module = await buildModule({
+            entities: [User, OAuthToken],
+            authenticatable: User,
+            oauthToken: OAuthToken,
+            register,
+          })
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
@@ -606,7 +740,12 @@ registrations.forEach(([name, register]) => {
         let service: GoogleAuthService
 
         beforeEach(async () => {
-          const module = await buildModule(User, register)
+          const module = await buildModule({
+            entities: [User, OAuthToken],
+            authenticatable: User,
+            oauthToken: OAuthToken,
+            register,
+          })
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
@@ -620,28 +759,222 @@ registrations.forEach(([name, register]) => {
         })
       })
 
+      describe("Given entities.oauthToken is configured", () => {
+        let service: GoogleAuthService
+        let principalRepo: Repository<User>
+        let tokenRepo: Repository<OAuthToken>
+
+        beforeEach(async () => {
+          const module = await buildModule({
+            entities: [User, OAuthToken],
+            authenticatable: User,
+            oauthToken: OAuthToken,
+            register,
+          })
+          service = module.get<GoogleAuthService>(GoogleAuthService)
+          principalRepo = module.get<Repository<User>>(getRepositoryToken(User))
+          tokenRepo = module.get<Repository<OAuthToken>>(
+            getRepositoryToken(OAuthToken),
+          )
+        })
+
+        describe("on first sign-in (new user)", () => {
+          it("should persist a google OAuthToken row linked to the principal with access/refresh tokens, expiresAt, and scopes", async () => {
+            const code = faker.string.alphanumeric(20)
+            const email = faker.internet.email()
+            const refreshToken = faker.string.alphanumeric(40)
+            const idToken = googleFakes.idToken({ email })
+            const response = await googleOAuthClient.mockCodeExchange({
+              code,
+              clientId: googleAuth.clientId,
+              clientSecret: googleAuth.clientSecret,
+              redirectUri: googleAuth.redirectUri,
+              idToken,
+              refreshToken,
+            })
+
+            const before = Date.now()
+            const result = await service.authenticate<User>(code)
+            const after = Date.now()
+
+            const tokens = await tokenRepo.find({
+              where: { principal: { id: result.entity.id } },
+            })
+            expect(tokens).toHaveLength(1)
+            const stored = tokens[0]
+            expect(stored.provider).toBe("google")
+            expect(stored.accessToken).toBe(response.access_token)
+            expect(stored.refreshToken).toBe(refreshToken)
+            expect(stored.scopes).toEqual(response.scope.split(" "))
+            const expiresAt = new Date(stored.expiresAt).getTime()
+            expect(expiresAt).toBeGreaterThanOrEqual(
+              before + response.expires_in * 1000 - 1000,
+            )
+            expect(expiresAt).toBeLessThanOrEqual(
+              after + response.expires_in * 1000 + 1000,
+            )
+          })
+
+          it("should eagerly load the token onto principal.oauthTokens on subsequent reads", async () => {
+            const code = faker.string.alphanumeric(20)
+            const email = faker.internet.email()
+            await googleOAuthClient.mockCodeExchange({
+              code,
+              clientId: googleAuth.clientId,
+              clientSecret: googleAuth.clientSecret,
+              redirectUri: googleAuth.redirectUri,
+              idToken: googleFakes.idToken({ email }),
+              refreshToken: faker.string.alphanumeric(40),
+            })
+
+            const result = await service.authenticate<User>(code)
+            const loaded = await principalRepo.findOneByOrFail({
+              id: result.entity.id,
+            })
+
+            expect(loaded.oauthTokens).toHaveLength(1)
+            expect(loaded.oauthTokens![0].provider).toBe("google")
+          })
+        })
+
+        describe("on subsequent sign-in where Google omits refresh_token", () => {
+          it("should preserve the existing refreshToken and replace the rest", async () => {
+            const email = faker.internet.email().toLowerCase()
+
+            const firstCode = faker.string.alphanumeric(20)
+            const originalRefreshToken = faker.string.alphanumeric(40)
+            await googleOAuthClient.mockCodeExchange({
+              code: firstCode,
+              clientId: googleAuth.clientId,
+              clientSecret: googleAuth.clientSecret,
+              redirectUri: googleAuth.redirectUri,
+              idToken: googleFakes.idToken({ email }),
+              refreshToken: originalRefreshToken,
+            })
+            await service.authenticate<User>(firstCode)
+
+            const secondCode = faker.string.alphanumeric(20)
+            const secondResponse = await googleOAuthClient.mockCodeExchange({
+              code: secondCode,
+              clientId: googleAuth.clientId,
+              clientSecret: googleAuth.clientSecret,
+              redirectUri: googleAuth.redirectUri,
+              idToken: googleFakes.idToken({ email }),
+            })
+
+            const result = await service.authenticate<User>(secondCode)
+
+            const tokens = await tokenRepo.find({
+              where: { principal: { id: result.entity.id } },
+            })
+            expect(tokens).toHaveLength(1)
+            expect(tokens[0].accessToken).toBe(secondResponse.access_token)
+            expect(tokens[0].refreshToken).toBe(originalRefreshToken)
+          })
+        })
+
+        describe("on subsequent sign-in where Google returns a new refresh_token", () => {
+          it("should overwrite the stored refreshToken", async () => {
+            const email = faker.internet.email().toLowerCase()
+
+            const firstCode = faker.string.alphanumeric(20)
+            await googleOAuthClient.mockCodeExchange({
+              code: firstCode,
+              clientId: googleAuth.clientId,
+              clientSecret: googleAuth.clientSecret,
+              redirectUri: googleAuth.redirectUri,
+              idToken: googleFakes.idToken({ email }),
+              refreshToken: faker.string.alphanumeric(40),
+            })
+            await service.authenticate<User>(firstCode)
+
+            const secondCode = faker.string.alphanumeric(20)
+            const newRefreshToken = faker.string.alphanumeric(40)
+            await googleOAuthClient.mockCodeExchange({
+              code: secondCode,
+              clientId: googleAuth.clientId,
+              clientSecret: googleAuth.clientSecret,
+              redirectUri: googleAuth.redirectUri,
+              idToken: googleFakes.idToken({ email }),
+              refreshToken: newRefreshToken,
+            })
+
+            const result = await service.authenticate<User>(secondCode)
+            const tokens = await tokenRepo.find({
+              where: { principal: { id: result.entity.id } },
+            })
+
+            expect(tokens[0].refreshToken).toBe(newRefreshToken)
+          })
+        })
+
+        describe("when the principal already has a token entry for a different provider", () => {
+          it("should leave the other provider's entry untouched", async () => {
+            const email = faker.internet.email().toLowerCase()
+            const seeded = await principalRepo.save(
+              principalRepo.create({ email }),
+            )
+            await tokenRepo.save(
+              tokenRepo.create({
+                principal: seeded,
+                provider: "github",
+                accessToken: faker.string.alphanumeric(40),
+                refreshToken: faker.string.alphanumeric(40),
+                expiresAt: new Date(Date.now() + 3600 * 1000),
+                scopes: ["repo"],
+              }),
+            )
+
+            const code = faker.string.alphanumeric(20)
+            await googleOAuthClient.mockCodeExchange({
+              code,
+              clientId: googleAuth.clientId,
+              clientSecret: googleAuth.clientSecret,
+              redirectUri: googleAuth.redirectUri,
+              idToken: googleFakes.idToken({ email }),
+              refreshToken: faker.string.alphanumeric(40),
+            })
+
+            const result = await service.authenticate<User>(code)
+            const tokens = await tokenRepo.find({
+              where: { principal: { id: result.entity.id } },
+            })
+
+            expect(tokens).toHaveLength(2)
+            const github = tokens.find((t) => t.provider === "github")
+            expect(github).toBeDefined()
+            expect(tokens.find((t) => t.provider === "google")).toBeDefined()
+          })
+        })
+      })
+
       describe("Given googleAuth is not configured", () => {
         let service: GoogleAuthService
 
         beforeEach(async () => {
-          const module = await buildModule(User, register, {
-            googleAuth: undefined,
-            magicLink: {
-              mailer: {
-                host: "localhost",
-                port: 1025,
-                from: faker.internet.email(),
-                welcome: {
-                  subject: "Welcome",
-                  html: '<a href="{{token}}">Link</a>',
-                },
-                welcomeBack: {
-                  subject: "Welcome back",
-                  html: '<a href="{{token}}">Link</a>',
+          const module = await buildModule({
+            entities: [User, OAuthToken],
+            authenticatable: User,
+            register,
+            overrides: {
+              googleAuth: undefined,
+              magicLink: {
+                mailer: {
+                  host: "localhost",
+                  port: 1025,
+                  from: faker.internet.email(),
+                  welcome: {
+                    subject: "Welcome",
+                    html: '<a href="{{token}}">Link</a>',
+                  },
+                  welcomeBack: {
+                    subject: "Welcome back",
+                    html: '<a href="{{token}}">Link</a>',
+                  },
                 },
               },
-            },
-          } as Partial<AuthOptions>)
+            } as Partial<AuthOptions>,
+          })
 
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })

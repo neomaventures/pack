@@ -67,7 +67,9 @@ export class AuthenticationService {
       )
     }
 
-    const repo = this.datasource.getRepository<T>(this.options.entity)
+    const repo = this.datasource.getRepository<T>(
+      this.options.entities.authenticatable,
+    )
     const entity = await repo.findOne({
       where: { id: sub } as FindOptionsWhere<T>,
     })

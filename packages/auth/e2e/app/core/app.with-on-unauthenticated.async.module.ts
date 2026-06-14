@@ -23,7 +23,7 @@ import { OnUnauthenticatedController } from "./on-unauthenticated.controller"
       useFactory: (): AuthOptions<User> => ({
         secret: process.env.AUTH_SECRET!,
         expiresIn: "1h",
-        entity: User,
+        entities: { authenticatable: User },
         onUnauthenticated: "/login",
         magicLink: {
           mailer: {

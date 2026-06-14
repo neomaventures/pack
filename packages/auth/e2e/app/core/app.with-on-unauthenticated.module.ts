@@ -22,7 +22,7 @@ import { OnUnauthenticatedController } from "./on-unauthenticated.controller"
     AuthModule.forRoot({
       secret: process.env.AUTH_SECRET!,
       expiresIn: "1h",
-      entity: User,
+      entities: { authenticatable: User },
       onUnauthenticated: "/login",
       magicLink: {
         mailer: {

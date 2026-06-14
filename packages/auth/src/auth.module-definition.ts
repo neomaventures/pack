@@ -7,6 +7,7 @@ import { CurrentPrincipal, principalProvider } from "./principal/principal.slot"
 import { AuthenticationService } from "./services/authentication.service"
 import { GoogleAuthService } from "./services/google-auth.service"
 import { MagicLinkService } from "./services/magic-link.service"
+import { OAuthTokenService } from "./services/oauth-token.service"
 import { PermissionService } from "./services/permission.service"
 import { SessionService } from "./services/session.service"
 import { TokenService } from "./services/token.service"
@@ -16,6 +17,7 @@ const AUTH_PROVIDERS = [
   GoogleAuthService,
   GoogleCallbackInterceptor,
   MagicLinkService,
+  OAuthTokenService,
   PermissionService,
   SessionService,
   TokenService,

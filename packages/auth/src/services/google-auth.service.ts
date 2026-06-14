@@ -1,7 +1,12 @@
 import { Inject, Injectable } from "@nestjs/common"
 import { EventEmitter2 } from "@nestjs/event-emitter"
 import * as jwt from "jsonwebtoken"
-import { DataSource, FindOptionsWhere } from "typeorm"
+import {
+  DataSource,
+  EntityManager,
+  FindOptionsWhere,
+  Repository,
+} from "typeorm"
 
 import { AUTH_OPTIONS, AuthOptions, GoogleAuthOptions } from "../auth.options"
 import { AuthenticatedEvent } from "../events/authenticated.event"
@@ -15,6 +20,7 @@ import {
   Authenticatable,
   AuthenticatableProfile,
 } from "../interfaces/authenticatable.interface"
+import { type OAuthTokenable } from "../interfaces/oauth-tokenable.interface"
 
 /**
  * Provider-specific profile data returned from Google OAuth.
@@ -50,7 +56,12 @@ export interface GoogleAuthResult<T extends Authenticatable> {
  * 2. Decodes the ID token to extract user info
  * 3. Finds an existing user by email or creates a new one
  * 4. Optionally writes Google profile data to the entity
- * 5. Emits registration or authentication events
+ * 5. Upserts the OAuth token row (when `entities.oauthToken` is configured)
+ * 6. Emits registration or authentication events after the transaction commits
+ *
+ * Steps 3–5 run inside a single `DataSource.transaction()` so the
+ * principal row and the OAuth-token row stay consistent — either both
+ * persist or both roll back.
  *
  * @example
  * ```typescript
@@ -179,7 +190,13 @@ export class GoogleAuthService {
       throw new GoogleCodeExchangeException(description)
     }
 
-    const tokenData = (await response.json()) as { id_token: string }
+    const tokenData = (await response.json()) as {
+      id_token: string
+      access_token?: string
+      refresh_token?: string
+      expires_in?: number
+      scope?: string
+    }
     // The ID token is received directly from Google's token endpoint over HTTPS
     // in a server-to-server exchange (not from a client). Signature verification
     // is unnecessary in the auth code flow — the token's authenticity is ensured
@@ -205,43 +222,132 @@ export class GoogleAuthService {
     const profile: GoogleProfile = { sub, name, picture }
 
     const normalizedEmail = email.toLowerCase()
-    const repo = this.datasource.getRepository<T>(this.options.entity)
+    const authenticatableClass = this.options.entities.authenticatable
+    const oauthTokenClass = this.options.entities.oauthToken
 
-    const existing = await repo.findOne({
-      where: { email: normalizedEmail } as FindOptionsWhere<T>,
-    })
+    // Persist principal and OAuth token row inside a single transaction so
+    // either both writes commit or both roll back. Events fire only after
+    // the transaction returns successfully — listeners must observe the
+    // persisted state.
+    const { entity, isNewUser } = await this.datasource.transaction(
+      async (manager: EntityManager) => {
+        const principalRepo = manager.getRepository<T>(authenticatableClass)
 
-    if (existing) {
-      if ("authProfile" in existing) {
-        const entityProfile =
-          (existing.authProfile as AuthenticatableProfile) ?? {}
-        ;(existing as any).authProfile = {
-          ...entityProfile,
-          google: { sub, name, picture },
+        const existing = await principalRepo.findOne({
+          where: { email: normalizedEmail } as FindOptionsWhere<T>,
+        })
+
+        if (existing) {
+          if ("authProfile" in existing) {
+            const entityProfile =
+              (existing.authProfile as AuthenticatableProfile) ?? {}
+            ;(existing as any).authProfile = {
+              ...entityProfile,
+              google: { sub, name, picture },
+            }
+            await principalRepo.save(existing)
+          }
+
+          if (oauthTokenClass) {
+            await this.upsertGoogleToken(
+              manager.getRepository(oauthTokenClass),
+              existing,
+              tokenData,
+            )
+          }
+
+          return { entity: existing, isNewUser: false }
         }
-        await repo.save(existing)
-      }
 
-      this.eventEmitter.emit(
-        AuthenticatedEvent.EVENT_NAME,
-        new AuthenticatedEvent(existing, "google"),
-      )
-      return { entity: existing, isNewUser: false, profile }
-    }
+        const created = principalRepo.create({ email: normalizedEmail } as T)
+        if ("authProfile" in created) {
+          ;(created as any).authProfile = { google: { sub, name, picture } }
+        }
+        const saved = await principalRepo.save(created)
 
-    const toSave = repo.create({ email: normalizedEmail } as T)
+        if (oauthTokenClass) {
+          await this.upsertGoogleToken(
+            manager.getRepository(oauthTokenClass),
+            saved,
+            tokenData,
+          )
+        }
 
-    if ("authProfile" in toSave) {
-      ;(toSave as any).authProfile = { google: { sub, name, picture } }
-    }
-
-    const saved = await repo.save(toSave)
-
-    this.eventEmitter.emit(
-      RegisteredEvent.EVENT_NAME,
-      new RegisteredEvent(saved, "google"),
+        return { entity: saved, isNewUser: true }
+      },
     )
 
-    return { entity: saved, isNewUser: true, profile }
+    if (isNewUser) {
+      this.eventEmitter.emit(
+        RegisteredEvent.EVENT_NAME,
+        new RegisteredEvent(entity, "google"),
+      )
+    } else {
+      this.eventEmitter.emit(
+        AuthenticatedEvent.EVENT_NAME,
+        new AuthenticatedEvent(entity, "google"),
+      )
+    }
+
+    return { entity, isNewUser, profile }
+  }
+
+  /**
+   * Upserts the Google OAuth token row for the given principal inside the
+   * supplied transactional repository.
+   *
+   * Preserves the existing `refreshToken` when Google omits `refresh_token`
+   * on the new response — Google only returns the refresh token on the
+   * first consent. When `tokenData.access_token` is absent the upsert is
+   * skipped: a row without an access token has no useful state.
+   */
+  private async upsertGoogleToken<U extends OAuthTokenable>(
+    tokenRepo: Repository<U>,
+    principal: Authenticatable,
+    tokenData: {
+      access_token?: string
+      refresh_token?: string
+      expires_in?: number
+      scope?: string
+    },
+  ): Promise<void> {
+    if (!tokenData.access_token) {
+      return
+    }
+
+    const existing = await tokenRepo.findOne({
+      where: {
+        principal: { id: principal.id },
+        provider: "google",
+      } as FindOptionsWhere<U>,
+    })
+
+    const expiresInSeconds = tokenData.expires_in ?? 3600
+    const expiresAt = new Date(Date.now() + expiresInSeconds * 1000)
+    const scopes = tokenData.scope ? tokenData.scope.split(" ") : []
+    const refreshToken =
+      tokenData.refresh_token ?? existing?.refreshToken ?? null
+
+    if (existing) {
+      await tokenRepo.save({
+        ...existing,
+        accessToken: tokenData.access_token,
+        refreshToken,
+        expiresAt,
+        scopes,
+      })
+      return
+    }
+
+    await tokenRepo.save(
+      tokenRepo.create({
+        principal,
+        provider: "google",
+        accessToken: tokenData.access_token,
+        refreshToken,
+        expiresAt,
+        scopes,
+      } as unknown as U),
+    )
   }
 }

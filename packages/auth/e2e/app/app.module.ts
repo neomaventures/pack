@@ -20,7 +20,7 @@ import { User } from "./user.entity"
     AuthModule.forRoot({
       secret: process.env.AUTH_SECRET!,
       expiresIn: "1h",
-      entity: User,
+      entities: { authenticatable: User },
       magicLink: {
         mailer: {
           host: process.env.SMTP_HOST!,
