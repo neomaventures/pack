@@ -1,3 +1,4 @@
+import { faker } from "@faker-js/faker"
 import {
   executionContext,
   express,
@@ -57,9 +58,13 @@ describe("AuthenticatedGuard", () => {
   let guard: AuthenticatedGuard
   let cls: ClsService
   let request: MockRequest
+  let requestUrl: string
+  let expectedMessage: string
 
   beforeEach(() => {
-    request = express.request()
+    requestUrl = `/${faker.lorem.slug()}/${faker.string.uuid()}`
+    request = express.request({ url: requestUrl })
+    expectedMessage = `Unauthenticated, access to resource ${requestUrl} denied`
   })
 
   describe("Given an authenticated principal in the request context", () => {
@@ -91,7 +96,7 @@ describe("AuthenticatedGuard", () => {
           cls = module.get(ClsService)
         })
 
-        it("should throw UnauthorizedException with the documented message", () => {
+        it("should throw UnauthorizedException with the resource-aware message", () => {
           const ctx = executionContext(request, express.response(), {
             controller: NoMetadataController,
             method: "handler",
@@ -101,8 +106,7 @@ describe("AuthenticatedGuard", () => {
             expect(() =>
               guard.canActivate(<ExecutionContext>ctx),
             ).toThrowMatching(UnauthorizedException, {
-              message:
-                "Unable to authenticate a principal. Please check the documentation for accepted authentication methods",
+              message: expectedMessage,
             })
           })
         })
@@ -115,7 +119,7 @@ describe("AuthenticatedGuard", () => {
           cls = module.get(ClsService)
         })
 
-        it("should throw UnauthorizedRedirectException for /x with 303", () => {
+        it("should throw UnauthorizedRedirectException for /x with 303 and the resource-aware message", () => {
           const ctx = executionContext(request, express.response(), {
             controller: NoMetadataController,
             method: "handler",
@@ -128,6 +132,16 @@ describe("AuthenticatedGuard", () => {
               url: "/x",
               redirectStatus: HttpStatus.SEE_OTHER,
             })
+
+            try {
+              guard.canActivate(<ExecutionContext>ctx)
+            } catch (error) {
+              expect(
+                (error as UnauthorizedRedirectException).getResponse(),
+              ).toMatchObject({
+                message: `${expectedMessage}. Redirecting to login.`,
+              })
+            }
           })
         })
       })
@@ -141,7 +155,7 @@ describe("AuthenticatedGuard", () => {
           cls = module.get(ClsService)
         })
 
-        it("should throw the configured exception with the access-denied message", () => {
+        it("should throw the configured exception with the resource-aware message", () => {
           const ctx = executionContext(request, express.response(), {
             controller: NoMetadataController,
             method: "handler",
@@ -151,7 +165,7 @@ describe("AuthenticatedGuard", () => {
             expect(() =>
               guard.canActivate(<ExecutionContext>ctx),
             ).toThrowMatching(NotFoundException, {
-              message: "Request unauthenticated — access denied",
+              message: expectedMessage,
             })
           })
         })
@@ -166,7 +180,7 @@ describe("AuthenticatedGuard", () => {
           cls = module.get(ClsService)
         })
 
-        it("should let route metadata win over the module-level default", () => {
+        it("should let route metadata win over the module-level default and carry the resource-aware message", () => {
           const ctx = executionContext(request, express.response(), {
             controller: RedirectMetadataController,
             method: "handler",
@@ -179,6 +193,16 @@ describe("AuthenticatedGuard", () => {
               url: "/y",
               redirectStatus: HttpStatus.SEE_OTHER,
             })
+
+            try {
+              guard.canActivate(<ExecutionContext>ctx)
+            } catch (error) {
+              expect(
+                (error as UnauthorizedRedirectException).getResponse(),
+              ).toMatchObject({
+                message: `${expectedMessage}. Redirecting to login.`,
+              })
+            }
           })
         })
       })
@@ -190,7 +214,7 @@ describe("AuthenticatedGuard", () => {
           cls = module.get(ClsService)
         })
 
-        it("should throw the metadata exception, not redirect to the default", () => {
+        it("should throw the metadata exception with the resource-aware message, not redirect to the default", () => {
           const ctx = executionContext(request, express.response(), {
             controller: ExceptionMetadataController,
             method: "handler",
@@ -200,7 +224,7 @@ describe("AuthenticatedGuard", () => {
             expect(() =>
               guard.canActivate(<ExecutionContext>ctx),
             ).toThrowMatching(ForbiddenException, {
-              message: "Request unauthenticated — access denied",
+              message: expectedMessage,
             })
           })
         })

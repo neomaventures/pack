@@ -7,19 +7,24 @@ import request from "supertest"
 
 const { OK, UNAUTHORIZED, FORBIDDEN, NOT_FOUND, SEE_OTHER } = HttpStatus
 
-const REDIRECT_BODY = (url: string): Record<string, unknown> => ({
+const resourceMessage = (resource: string): string =>
+  `Unauthenticated, access to resource ${resource} denied`
+
+const REDIRECT_BODY = (
+  url: string,
+  resource: string,
+): Record<string, unknown> => ({
   statusCode: UNAUTHORIZED,
-  message: "Unauthorized. Redirecting to login.",
+  message: `${resourceMessage(resource)}. Redirecting to login.`,
   redirect: { url, status: SEE_OTHER },
 })
 const mailpit = new MailpitClient(process.env.MAILPIT_API!)
 
-const UNAUTHORIZED_BODY = {
+const UNAUTHORIZED_BODY = (resource: string): Record<string, unknown> => ({
   statusCode: UNAUTHORIZED,
-  message:
-    "Unable to authenticate a principal. Please check the documentation for accepted authentication methods",
+  message: resourceMessage(resource),
   error: "Unauthorized",
-}
+})
 
 const defaultAppModules: [string, string][] = [
   ["forRoot", "e2e/app/core/app.module.ts#AppModule"],
@@ -55,7 +60,7 @@ describe("GET /unauth/* (@Authenticated onUnauthenticated precedence)", () => {
               await request(app.getHttpServer())
                 .get("/unauth/default-401")
                 .expect(UNAUTHORIZED)
-                .expect(UNAUTHORIZED_BODY)
+                .expect(UNAUTHORIZED_BODY("/unauth/default-401"))
             })
           })
 
@@ -81,7 +86,7 @@ describe("GET /unauth/* (@Authenticated onUnauthenticated precedence)", () => {
               await request(app.getHttpServer())
                 .get("/unauth/redirect")
                 .expect(UNAUTHORIZED)
-                .expect(REDIRECT_BODY("/login"))
+                .expect(REDIRECT_BODY("/login", "/unauth/redirect"))
             })
           })
 
@@ -108,7 +113,10 @@ describe("GET /unauth/* (@Authenticated onUnauthenticated precedence)", () => {
                 .get("/unauth/not-found")
                 .expect(NOT_FOUND)
 
-              expect(response.body).toMatchObject({ statusCode: NOT_FOUND })
+              expect(response.body).toMatchObject({
+                statusCode: NOT_FOUND,
+                message: resourceMessage("/unauth/not-found"),
+              })
             })
           })
 
@@ -135,7 +143,10 @@ describe("GET /unauth/* (@Authenticated onUnauthenticated precedence)", () => {
                 .get("/unauth/forbidden")
                 .expect(FORBIDDEN)
 
-              expect(response.body).toMatchObject({ statusCode: FORBIDDEN })
+              expect(response.body).toMatchObject({
+                statusCode: FORBIDDEN,
+                message: resourceMessage("/unauth/forbidden"),
+              })
             })
           })
 
@@ -173,7 +184,7 @@ describe("GET /unauth/* (@Authenticated onUnauthenticated precedence)", () => {
               await request(app.getHttpServer())
                 .get("/unauth/default-redirect")
                 .expect(UNAUTHORIZED)
-                .expect(REDIRECT_BODY("/login"))
+                .expect(REDIRECT_BODY("/login", "/unauth/default-redirect"))
             })
           })
 
@@ -200,7 +211,10 @@ describe("GET /unauth/* (@Authenticated onUnauthenticated precedence)", () => {
                 .get("/unauth/default-redirect-override")
                 .expect(NOT_FOUND)
 
-              expect(response.body).toMatchObject({ statusCode: NOT_FOUND })
+              expect(response.body).toMatchObject({
+                statusCode: NOT_FOUND,
+                message: resourceMessage("/unauth/default-redirect-override"),
+              })
             })
           })
 

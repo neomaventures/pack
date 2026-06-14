@@ -326,7 +326,7 @@ Different route types want different responses when the caller is anonymous. `@A
 | Page route | `"/auth/magic-link"` | `UnauthorizedRedirectException` (401) with `redirect: { url, status: 303 }` in the body |
 | Asset endpoint (e.g. avatar image) | `NotFoundException` | 404, indistinguishable from "no such route" |
 
-By default, the redirect strategy responds with `401` and a self-describing body — `{ statusCode, message, redirect: { url, status } }` — so consumers without a redirect-aware exception filter can still observe the intended target (handy for tests and JSON clients). To turn it into an actual HTTP redirect, install a filter that calls `getRedirect()` on the exception, or use [`@neomaventures/exceptions`](https://www.npmjs.com/package/@neomaventures/exceptions), which ships one out of the box.
+By default, the redirect strategy responds with `401` and a self-describing body — `{ statusCode, message, redirect: { url, status } }` — so consumers without a redirect-aware exception filter can still observe the intended target (handy for tests and JSON clients). The `message` is resource-aware (`Unauthenticated, access to resource <request-url> denied. Redirecting to login.`) so server logs and the body carry context about which resource was denied. To turn it into an actual HTTP redirect, install a filter that calls `getRedirect()` on the exception, or use [`@neomaventures/exceptions`](https://www.npmjs.com/package/@neomaventures/exceptions), which ships one out of the box.
 
 ```typescript
 import { Authenticated } from "@neomaventures/auth"
@@ -511,10 +511,12 @@ curl http://localhost:3000/me \
 ```json
 {
   "statusCode": 401,
-  "message": "Unable to authenticate a principal. Please check the documentation for accepted authentication methods",
+  "message": "Unauthenticated, access to resource /me denied",
   "error": "Unauthorized"
 }
 ```
+
+The `message` follows the format `Unauthenticated, access to resource <request-url> denied`, where `<request-url>` is the URL of the denied request. The same string is also passed to the exception class for the redirect / class strategies, so it surfaces in server logs and in the response body regardless of which `onUnauthenticated` strategy resolves. For the redirect strategy, the body's `message` becomes `"<resource-message>. Redirecting to login."`.
 
 ## API Reference
 

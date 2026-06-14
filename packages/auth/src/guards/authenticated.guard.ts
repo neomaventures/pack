@@ -17,11 +17,6 @@ import { ON_UNAUTHENTICATED_KEY } from "../decorators/authenticated.decorator"
 import { UnauthorizedRedirectException } from "../exceptions/unauthorized-redirect.exception"
 import { getPrincipal } from "../principal/principal.slot"
 
-const UNAUTHENTICATED_MESSAGE =
-  "Unable to authenticate a principal. Please check the documentation for accepted authentication methods"
-
-const ACCESS_DENIED_MESSAGE = "Request unauthenticated — access denied"
-
 /**
  * Guard wired up by the `@Authenticated()` decorator that gates a route
  * behind the presence of an authenticated principal in the ALS-backed
@@ -35,10 +30,16 @@ const ACCESS_DENIED_MESSAGE = "Request unauthenticated — access denied"
  *
  * Strategy resolution for a non-null value:
  *
- * - `string` → `UnauthorizedRedirectException(url, 303)` so a filter may
- *   issue an HTTP redirect for browser requests.
- * - `HttpException` subclass → instantiated with a fixed access-denied
- *   message and thrown.
+ * - `string` → `UnauthorizedRedirectException(url, 303, message)` so a filter
+ *   may issue an HTTP redirect for browser requests.
+ * - `HttpException` subclass → instantiated with the resource-aware message
+ *   and thrown.
+ *
+ * Every thrown exception carries a resource-aware message in the form
+ * `Unauthenticated, access to resource <request-url> denied`, where
+ * `<request-url>` is read from the request (Express `originalUrl`, falling
+ * back to `url`). The message lands in both server logs and the response
+ * body so consumers can see which resource was denied.
  */
 @Injectable()
 export class AuthenticatedGuard implements CanActivate {
@@ -64,17 +65,28 @@ export class AuthenticatedGuard implements CanActivate {
       return true
     }
 
+    const request = context.switchToHttp().getRequest<{
+      originalUrl?: string
+      url?: string
+    }>()
+    const url = request?.originalUrl ?? request?.url ?? ""
+    const message = `Unauthenticated, access to resource ${url} denied`
+
     const strategy = this.resolveStrategy(context)
 
     if (typeof strategy === "string") {
-      throw new UnauthorizedRedirectException(strategy, HttpStatus.SEE_OTHER)
+      throw new UnauthorizedRedirectException(
+        strategy,
+        HttpStatus.SEE_OTHER,
+        message,
+      )
     }
 
     if (strategy) {
-      throw new strategy(ACCESS_DENIED_MESSAGE)
+      throw new strategy(message)
     }
 
-    throw new UnauthorizedException(UNAUTHENTICATED_MESSAGE)
+    throw new UnauthorizedException(message)
   }
 
   private resolveStrategy(

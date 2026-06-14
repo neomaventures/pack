@@ -16,8 +16,7 @@ const mailpit = new MailpitClient(process.env.MAILPIT_API!)
 
 const UNAUTHORIZED_BODY = {
   statusCode: UNAUTHORIZED,
-  message:
-    "Unable to authenticate a principal. Please check the documentation for accepted authentication methods",
+  message: "Unauthenticated, access to resource /me denied",
   error: "Unauthorized",
 }
 
