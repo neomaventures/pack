@@ -1,4 +1,4 @@
-import { Authenticated, Principal } from "@neomaventures/auth"
+import { Account, Authenticated, Principal } from "@neomaventures/auth"
 import { ErrorTemplate } from "@neomaventures/exceptions"
 import {
   StoredFile,
@@ -13,12 +13,14 @@ import {
   Render,
   Res,
 } from "@nestjs/common"
+import { InjectRepository } from "@nestjs/typeorm"
 import { type Response } from "express"
+import { Repository } from "typeorm"
 
 import { AccountAvatarKeyResolver } from "~auth/account-avatar-key.resolver"
-import { Account } from "~auth/account.entity"
-import { AccountService } from "~auth/account.service"
 import { Upload } from "~auth/upload.entity"
+import { Profile } from "~profile/profile.entity"
+import { ProfileService } from "~profile/profile.service"
 
 /**
  * Handles the profile page and profile-scoped asset endpoints.
@@ -34,14 +36,17 @@ import { Upload } from "~auth/upload.entity"
  * asset endpoints should not confirm the existence of a per-user resource
  * to an unauthenticated caller.
  *
- * `@Principal()` is typed as {@link Account} here because the auth module
- * is configured with `entities.authenticatable: Account` (see `ApplicationModule`), so the
- * principal slot always carries the loaded account row — including the
- * eagerly-joined `avatar` relation.
+ * Avatar bytes live on the consumer-owned {@link Profile} entity (one-to-
+ * one with `Account`), not on `Account` itself — auth's `Account` is
+ * deliberately minimal and customisation happens via FK composition.
  */
 @Controller()
 export class ProfileController {
-  public constructor(private readonly accountService: AccountService) {}
+  public constructor(
+    private readonly profileService: ProfileService,
+    @InjectRepository(Profile)
+    private readonly profiles: Repository<Profile>,
+  ) {}
 
   /**
    * Renders the profile page for the authenticated user.
@@ -79,10 +84,10 @@ export class ProfileController {
   /**
    * Serves the authenticated user's avatar.
    *
-   * Returns the eagerly-loaded `Account.avatar` directly off the principal,
-   * letting `@TemporaryLink` issue a 302 to a presigned S3 URL. When no
-   * avatar is set, `null` causes the framework to redirect to the static
-   * silhouette under `/img/default-avatar.svg`.
+   * Loads the `Profile` row for the principal and returns the eagerly-
+   * joined `Upload`. When no profile or avatar is set, `null` causes the
+   * framework to redirect to the static silhouette under
+   * `/img/default-avatar.svg`.
    *
    * Unauthenticated callers get a 404 — asset endpoints don't confirm
    * resource existence.
@@ -101,8 +106,11 @@ export class ProfileController {
     default: "/img/default-avatar.svg",
     cacheControl: "private, max-age=30",
   })
-  public avatar(@Principal() account: Account): Upload | null {
-    return account.avatar ?? null
+  public async avatar(@Principal() account: Account): Promise<Upload | null> {
+    const profile = await this.profiles.findOne({
+      where: { account: { id: account.id } },
+    })
+    return profile?.avatar ?? null
   }
 
   /**
@@ -110,8 +118,8 @@ export class ProfileController {
    *
    * The `@Upload()` interceptor validates size/type, writes the file to S3
    * under the per-account key from {@link AccountAvatarKeyResolver}, and
-   * stages the `Upload` entity. {@link AccountService.setAvatar} then
-   * persists the FK on the `Account` row synchronously — not via
+   * stages the `Upload` entity. {@link ProfileService.setAvatar} then
+   * persists the FK on the `Profile` row synchronously — not via
    * `FileCreatedEvent`. Events are fire-and-forget per the storage package
    * contract; doing the FK persistence in-band avoids silent
    * upload-without-FK on listener failure.
@@ -130,14 +138,6 @@ export class ProfileController {
    * @param account - The authenticated account, injected via `@Principal()`.
    * @param upload - The `Upload` entity created by the storage interceptor.
    * @param res - The Express response, used to send the 302 to `/profile`.
-   *
-   * @example
-   * ```html
-   * <form action="/profile/avatar" method="post" enctype="multipart/form-data">
-   *   <input type="file" name="file" accept="image/jpeg,image/png,image/webp">
-   *   <button type="submit">Upload</button>
-   * </form>
-   * ```
    */
   @Post("profile/avatar")
   @Authenticated({ onUnauthenticated: NotFoundException })
@@ -157,7 +157,7 @@ export class ProfileController {
     @StoredFile() upload: Upload,
     @Res() res: Response,
   ): Promise<void> {
-    await this.accountService.setAvatar(account, upload)
+    await this.profileService.setAvatar(account, upload)
     res.redirect("/profile")
   }
 }

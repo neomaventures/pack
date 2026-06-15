@@ -1,20 +1,27 @@
 import { faker } from "@faker-js/faker"
+import {
+  type Account,
+  type OAuthToken as AuthOAuthToken,
+} from "@neomaventures/auth"
 import { express } from "@neomaventures/fixtures"
+import { type Repository } from "typeorm"
 
-import { type Account } from "~auth/account.entity"
-import { type AccountService } from "~auth/account.service"
-import { type OAuthToken } from "~auth/oauth-token.entity"
 import { ProfileController } from "~auth/profile.controller"
 import { type Upload } from "~auth/upload.entity"
+import { type Profile } from "~profile/profile.entity"
+import { type ProfileService } from "~profile/profile.service"
 
 describe("ProfileController", () => {
   let controller: ProfileController
-  let accountService: jest.Mocked<Pick<AccountService, "setAvatar">>
+  let profileService: jest.Mocked<Pick<ProfileService, "setAvatar">>
+  let profiles: jest.Mocked<Pick<Repository<Profile>, "findOne">>
 
   beforeEach(() => {
-    accountService = { setAvatar: jest.fn() }
+    profileService = { setAvatar: jest.fn() }
+    profiles = { findOne: jest.fn() }
     controller = new ProfileController(
-      accountService as unknown as AccountService,
+      profileService as unknown as ProfileService,
+      profiles as unknown as Repository<Profile>,
     )
   })
 
@@ -44,7 +51,7 @@ describe("ProfileController", () => {
               refreshToken: faker.string.alphanumeric(40),
               expiresAt,
               scopes,
-            } as OAuthToken,
+            } as AuthOAuthToken,
           ],
         } as Account
 
@@ -71,7 +78,7 @@ describe("ProfileController", () => {
               refreshToken: null,
               expiresAt,
               scopes: ["openid", "email"],
-            } as OAuthToken,
+            } as AuthOAuthToken,
           ],
         } as Account
 
@@ -84,35 +91,57 @@ describe("ProfileController", () => {
   })
 
   describe("avatar()", () => {
-    describe("Given the principal has an avatar", () => {
-      it("should return the avatar for the principal", () => {
+    describe("Given the principal has a profile with an avatar", () => {
+      it("should return the avatar from the profile", async () => {
         const upload = { id: faker.string.uuid() } as Upload
         const account = {
           id: faker.string.uuid(),
           email: faker.internet.email(),
-          avatar: upload,
         } as Account
+        profiles.findOne.mockResolvedValue({
+          id: faker.string.uuid(),
+          account,
+          displayName: null,
+          avatar: upload,
+        } as Profile)
 
-        expect(controller.avatar(account)).toBe(upload)
+        await expect(controller.avatar(account)).resolves.toBe(upload)
       })
     })
 
-    describe("Given the principal has no avatar", () => {
-      it("should return null", () => {
+    describe("Given the principal has no profile row", () => {
+      it("should return null", async () => {
         const account = {
           id: faker.string.uuid(),
           email: faker.internet.email(),
-          avatar: null,
         } as Account
+        profiles.findOne.mockResolvedValue(null)
 
-        expect(controller.avatar(account)).toBeNull()
+        await expect(controller.avatar(account)).resolves.toBeNull()
+      })
+    })
+
+    describe("Given the principal has a profile with no avatar", () => {
+      it("should return null", async () => {
+        const account = {
+          id: faker.string.uuid(),
+          email: faker.internet.email(),
+        } as Account
+        profiles.findOne.mockResolvedValue({
+          id: faker.string.uuid(),
+          account,
+          displayName: null,
+          avatar: null,
+        } as Profile)
+
+        await expect(controller.avatar(account)).resolves.toBeNull()
       })
     })
   })
 
   describe("uploadAvatar()", () => {
     describe("Given an authenticated principal and a stored Upload", () => {
-      it("should set the avatar on the principal's account and redirect to /profile", async () => {
+      it("should call profileService.setAvatar and redirect to /profile", async () => {
         const account = {
           id: faker.string.uuid(),
           email: faker.internet.email(),
@@ -124,7 +153,7 @@ describe("ProfileController", () => {
 
         await controller.uploadAvatar(account, upload, res)
 
-        expect(accountService.setAvatar).toHaveBeenCalledWith(account, upload)
+        expect(profileService.setAvatar).toHaveBeenCalledWith(account, upload)
         expect(res.redirect).toHaveBeenCalledWith("/profile")
       })
     })

@@ -1,38 +1,45 @@
 import { faker } from "@faker-js/faker"
+import { Account, OAuthToken } from "@neomaventures/auth"
 import { managedDatasourceInstance } from "@neomaventures/managed-database"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { getRepositoryToken } from "@nestjs/typeorm"
 import { type DataSource, type Repository } from "typeorm"
 
-import { Account } from "~auth/account.entity"
-import { AccountService } from "~auth/account.service"
-import { OAuthToken } from "~auth/oauth-token.entity"
 import { Upload } from "~auth/upload.entity"
+import { Profile } from "~profile/profile.entity"
+import { ProfileService } from "~profile/profile.service"
 
-describe("AccountService", () => {
+describe("ProfileService", () => {
   let datasource: DataSource
-  let service: AccountService
+  let service: ProfileService
   let accounts: Repository<Account>
+  let profiles: Repository<Profile>
   let uploads: Repository<Upload>
 
   beforeEach(async () => {
-    datasource = await managedDatasourceInstance([Account, OAuthToken, Upload])
+    datasource = await managedDatasourceInstance([
+      Account,
+      OAuthToken,
+      Upload,
+      Profile,
+    ])
     accounts = datasource.getRepository(Account)
+    profiles = datasource.getRepository(Profile)
     uploads = datasource.getRepository(Upload)
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        AccountService,
-        { provide: getRepositoryToken(Account), useValue: accounts },
+        ProfileService,
+        { provide: getRepositoryToken(Profile), useValue: profiles },
       ],
     }).compile()
 
-    service = module.get<AccountService>(AccountService)
+    service = module.get<ProfileService>(ProfileService)
   })
 
   describe("setAvatar()", () => {
-    describe("Given an account and a persisted Upload", () => {
-      it("should set the Upload as the account's avatar", async () => {
+    describe("Given an account with no profile yet", () => {
+      it("should create a Profile row with the avatar set", async () => {
         const account = await accounts.save(
           accounts.create({ email: faker.internet.email() }),
         )
@@ -48,12 +55,14 @@ describe("AccountService", () => {
 
         await service.setAvatar(account, upload)
 
-        const reloaded = await accounts.findOneByOrFail({ id: account.id })
-        expect(reloaded.avatar).toEqual(upload)
+        const profile = await profiles.findOneOrFail({
+          where: { account: { id: account.id } },
+        })
+        expect(profile.avatar).toEqual(upload)
       })
     })
 
-    describe("Given an account that already has an avatar", () => {
+    describe("Given an account that already has a profile with an avatar", () => {
       it("should replace the avatar with the new Upload", async () => {
         const account = await accounts.save(
           accounts.create({ email: faker.internet.email() }),
@@ -80,8 +89,12 @@ describe("AccountService", () => {
         )
         await service.setAvatar(account, replacement)
 
-        const reloaded = await accounts.findOneByOrFail({ id: account.id })
-        expect(reloaded.avatar).toEqual(replacement)
+        const profile = await profiles.findOneOrFail({
+          where: { account: { id: account.id } },
+        })
+        expect(profile.avatar).toEqual(replacement)
+        const all = await profiles.find()
+        expect(all).toHaveLength(1)
       })
     })
   })

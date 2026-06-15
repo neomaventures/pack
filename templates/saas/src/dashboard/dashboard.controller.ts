@@ -1,8 +1,4 @@
-import {
-  type Authenticatable,
-  Authenticated,
-  Principal,
-} from "@neomaventures/auth"
+import { type Account, Authenticated, Principal } from "@neomaventures/auth"
 import { Controller, Get, Render } from "@nestjs/common"
 
 /**
@@ -23,7 +19,7 @@ export class DashboardController {
   @Get("dashboard")
   @Authenticated()
   @Render("dashboard")
-  public index(@Principal() principal: Authenticatable): { email: string } {
+  public index(@Principal() principal: Account): { email: string } {
     return { email: principal.email }
   }
 }
