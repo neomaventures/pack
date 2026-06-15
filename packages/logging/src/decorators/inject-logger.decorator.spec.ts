@@ -10,6 +10,8 @@ import {
   LoggingModule,
 } from "@neomaventures/logging"
 
+import { getLoggerToken } from "../tokens"
+
 describe("@InjectLogger", () => {
   describe("Given the parameterless form @InjectLogger()", () => {
     @Injectable()
@@ -19,14 +21,16 @@ describe("@InjectLogger", () => {
       ) {}
     }
 
-    it("should inject the ApplicationLogger", async () => {
+    it("should inject the same ApplicationLogger instance the module provides", async () => {
       const module = await Test.createTestingModule({
         imports: [LoggingModule.forRoot()],
         providers: [SUT],
       }).compile()
 
       const sut = module.get(SUT)
-      expect(sut.logger).toBeInstanceOf(ApplicationLogger)
+      const provider = module.get(ApplicationLogger)
+
+      expect(sut.logger).toBe(provider)
     })
   })
 
@@ -40,7 +44,25 @@ describe("@InjectLogger", () => {
       ) {}
     }
 
-    it("should inject the forFeature-registered Logger", async () => {
+    it("should inject the logger registered for that namespace", async () => {
+      const module = await Test.createTestingModule({
+        imports: [
+          LoggingModule.forRoot({
+            destination: new ArrayStream(),
+            loggers: [{ namespace, level: "info" }],
+          }),
+          LoggingModule.forFeature([{ namespace }]),
+        ],
+        providers: [SUT],
+      }).compile()
+
+      const sut = module.get(SUT)
+      const provider = module.get<Logger>(getLoggerToken(namespace))
+
+      expect(sut.logger).toBe(provider)
+    })
+
+    it("should apply the configured namespace and level to the resolved logger", async () => {
       const logs: any[] = []
       const module = await Test.createTestingModule({
         imports: [
