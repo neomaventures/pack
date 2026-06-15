@@ -617,6 +617,118 @@ registrations.forEach(([name, register]) => {
         })
       })
 
+      describe("Given Google returns 200 with no access_token", () => {
+        let service: GoogleAuthService
+        let fetchSpy: jest.SpyInstance
+
+        beforeEach(async () => {
+          const module = await buildModule({
+            entities: [User, OAuthToken],
+            authenticatable: User,
+            oauthToken: OAuthToken,
+            register,
+          })
+          service = module.get<GoogleAuthService>(GoogleAuthService)
+        })
+
+        afterEach(() => {
+          fetchSpy?.mockRestore()
+        })
+
+        it("should throw GoogleTokenException with reason 'missing access_token in token response'", async () => {
+          const idToken = googleFakes.idToken({ email: faker.internet.email() })
+          fetchSpy = jest
+            .spyOn(global, "fetch")
+            .mockResolvedValue(
+              new Response(
+                JSON.stringify({ id_token: idToken, expires_in: 3600 }),
+                { status: 200 },
+              ),
+            )
+
+          await expect(
+            service.authenticate(faker.string.alphanumeric(20)),
+          ).rejects.toMatchError(GoogleTokenException, {
+            reason: "missing access_token in token response",
+          })
+        })
+      })
+
+      describe("Given Google returns 200 with no expires_in", () => {
+        let service: GoogleAuthService
+        let fetchSpy: jest.SpyInstance
+
+        beforeEach(async () => {
+          const module = await buildModule({
+            entities: [User, OAuthToken],
+            authenticatable: User,
+            oauthToken: OAuthToken,
+            register,
+          })
+          service = module.get<GoogleAuthService>(GoogleAuthService)
+        })
+
+        afterEach(() => {
+          fetchSpy?.mockRestore()
+        })
+
+        it("should throw GoogleTokenException with reason 'missing expires_in in token response'", async () => {
+          const idToken = googleFakes.idToken({ email: faker.internet.email() })
+          fetchSpy = jest.spyOn(global, "fetch").mockResolvedValue(
+            new Response(
+              JSON.stringify({
+                id_token: idToken,
+                access_token: faker.string.alphanumeric(40),
+              }),
+              { status: 200 },
+            ),
+          )
+
+          await expect(
+            service.authenticate(faker.string.alphanumeric(20)),
+          ).rejects.toMatchError(GoogleTokenException, {
+            reason: "missing expires_in in token response",
+          })
+        })
+      })
+
+      describe("Given Google returns 200 with no id_token", () => {
+        let service: GoogleAuthService
+        let fetchSpy: jest.SpyInstance
+
+        beforeEach(async () => {
+          const module = await buildModule({
+            entities: [User, OAuthToken],
+            authenticatable: User,
+            oauthToken: OAuthToken,
+            register,
+          })
+          service = module.get<GoogleAuthService>(GoogleAuthService)
+        })
+
+        afterEach(() => {
+          fetchSpy?.mockRestore()
+        })
+
+        it("should throw GoogleTokenException with reason 'missing id_token in token response'", async () => {
+          fetchSpy = jest.spyOn(global, "fetch").mockResolvedValue(
+            new Response(
+              JSON.stringify({
+                access_token: faker.string.alphanumeric(40),
+                expires_in: 3600,
+              }),
+              { status: 200 },
+            ),
+          )
+
+          await expect(
+            service.authenticate(faker.string.alphanumeric(20)),
+          ).rejects.toMatchError(GoogleTokenException, {
+            reason: "missing id_token in token response",
+          })
+        })
+      })
+
       describe("Given the ID token is missing the sub claim", () => {
         let service: GoogleAuthService
 

@@ -1,9 +1,4 @@
-import {
-  Authenticated,
-  OAuthToken,
-  type OAuthTokenSnapshot,
-  Principal,
-} from "@neomaventures/auth"
+import { Authenticated, Principal } from "@neomaventures/auth"
 import { ErrorTemplate } from "@neomaventures/exceptions"
 import {
   StoredFile,
@@ -51,14 +46,34 @@ export class ProfileController {
   /**
    * Renders the profile page for the authenticated user.
    *
-   * @returns An empty view model; the template reads the avatar via the
-   *   `GET /profile/avatar` endpoint rather than receiving it inline.
+   * Avatar bytes are loaded by the page itself via `GET /profile/avatar`
+   * rather than threaded through the view model. Connected third-party
+   * accounts are passed inline as a sanitised view of
+   * `account.oauthTokens` — `accessToken` and `refreshToken` are
+   * deliberately omitted so they never reach the rendered HTML.
+   *
+   * @param account - The authenticated account, injected via `@Principal()`.
+   * @returns A view model with the connected-accounts list.
    */
   @Get("profile")
   @Authenticated()
   @Render("profile")
-  public index(): Record<string, never> {
-    return {}
+  public index(@Principal() account: Account): {
+    connectedAccounts: Array<{
+      provider: string
+      scopes: string[]
+      expiresAt: Date
+      active: boolean
+    }>
+  } {
+    const now = Date.now()
+    const connectedAccounts = (account.oauthTokens ?? []).map((token) => ({
+      provider: token.provider,
+      scopes: token.scopes,
+      expiresAt: token.expiresAt,
+      active: new Date(token.expiresAt).getTime() > now,
+    }))
+    return { connectedAccounts }
   }
 
   /**
@@ -144,28 +159,5 @@ export class ProfileController {
   ): Promise<void> {
     await this.accountService.setAvatar(account, upload)
     res.redirect("/profile")
-  }
-
-  /**
-   * Returns the active Google OAuth token snapshot for the authenticated
-   * account, or `null` when no usable token is on file. Demonstrates the
-   * `@OAuthToken(provider)` parameter decorator and is consumed by the
-   * end-to-end suite that exercises {@link OAuthTokenService} through the
-   * HTTP boundary.
-   *
-   * The snapshot deliberately excludes the refresh token — that field is
-   * internal to the auth package and never crosses the controller.
-   *
-   * @param token - The active Google token snapshot, resolved by
-   *   `@OAuthToken("google")`. `null` when the principal has no Google
-   *   tokens on file or the stored token has expired.
-   * @returns A JSON envelope with the snapshot under `token`.
-   */
-  @Get("api/oauth-tokens/google")
-  @Authenticated()
-  public googleToken(@OAuthToken("google") token: OAuthTokenSnapshot | null): {
-    token: OAuthTokenSnapshot | null
-  } {
-    return { token }
   }
 }
