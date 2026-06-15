@@ -1,5 +1,6 @@
 import { faker } from "@faker-js/faker"
 import { executionContext } from "@neomaventures/fixtures"
+import { google } from "@neomaventures/google-fixtures"
 import { RequestContextModule } from "@neomaventures/request-context"
 import { type ExecutionContext } from "@nestjs/common"
 import { ROUTE_ARGS_METADATA } from "@nestjs/common/constants"
@@ -27,7 +28,7 @@ const buildToken = (
   id: faker.string.uuid(),
   principal: { id: faker.string.uuid(), email: faker.internet.email() },
   provider: "google",
-  accessToken: faker.string.alphanumeric(40),
+  accessToken: google.accessToken(),
   refreshToken: faker.string.alphanumeric(40),
   expiresAt: new Date(Date.now() + 3600 * 1000),
   scopes: ["openid", "email", "profile"],
@@ -65,7 +66,7 @@ describe("OAuthTokenDecorator", () => {
   })
 
   describe("Given no principal is in context", () => {
-    it("should return null (delegating to the shared resolver)", () => {
+    it("should return null", () => {
       cls.run(() => {
         expect(factory(providerArg, context)).toBeNull()
       })
@@ -73,8 +74,8 @@ describe("OAuthTokenDecorator", () => {
   })
 
   describe("Given a principal with an active token is in context", () => {
-    it("should return the snapshot from the shared resolver", () => {
-      const accessToken = faker.string.alphanumeric(40)
+    it("should return the snapshot for the requested provider", () => {
+      const accessToken = google.accessToken()
       const expiresAt = new Date(Date.now() + 3600 * 1000)
       const scopes = ["openid", "email"]
       const stored = buildToken({ accessToken, expiresAt, scopes })
