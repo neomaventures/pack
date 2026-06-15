@@ -2,6 +2,7 @@ import { type DynamicModule, Module, type Provider } from "@nestjs/common"
 import { APP_INTERCEPTOR } from "@nestjs/core"
 
 import { RequestLoggerInterceptor } from "./interceptors/request-logger.interceptor"
+import { type LoggerConfig } from "./interfaces/logger-config.interface"
 import {
   type LoggingModuleAsyncOptions,
   type LoggingModuleOptions,
@@ -9,6 +10,7 @@ import {
 import { ApplicationLogger } from "./services/application-logger"
 import { LoggerFactory } from "./services/logger-factory"
 import { LOGGING_MODULE_OPTIONS } from "./symbols"
+import { getLoggerToken } from "./tokens"
 
 const APP_LOGGER_PROVIDER: Provider = {
   provide: ApplicationLogger,
@@ -96,6 +98,57 @@ export class LoggingModule {
         ...PROVIDERS,
       ],
       exports: EXPORTS,
+    }
+  }
+
+  /**
+   * Register one or more namespaced loggers for a feature module or package.
+   *
+   * Each entry produces a non-global provider keyed by
+   * `getLoggerToken(namespace)`, exported from the returned dynamic module so
+   * the module's own providers can inject it via `@InjectLogger(namespace)`.
+   *
+   * Accepts the shorthand `string` form — equivalent to
+   * `{ namespace: '<string>' }` with no level (package default applies; floor
+   * is `'error'`). Use the shorthand when a package only needs to claim its
+   * namespace and is happy with the floor.
+   *
+   * @param configs - Per-namespace configs. Use a string for namespace-only;
+   *   use the object form to set a package default `level` or `name`.
+   * @returns A `DynamicModule` to be added to the package module's `imports`.
+   *
+   * @example
+   * ```ts
+   * // Shorthand — package claims its namespace, level floors at 'error'.
+   * @Module({
+   *   imports: [LoggingModule.forFeature(["neomaventures:auth"])],
+   *   providers: [AuthService],
+   * })
+   * export class AuthModule {}
+   *
+   * // Object form — package sets its own default.
+   * LoggingModule.forFeature([
+   *   { namespace: "neomaventures:auth", level: "warn" },
+   * ])
+   * ```
+   *
+   * @see InjectLogger — to inject the registered logger.
+   * @see getLoggerToken — the token used under the hood.
+   */
+  public static forFeature(
+    configs: ReadonlyArray<LoggerConfig | string>,
+  ): DynamicModule {
+    const normalised: LoggerConfig[] = configs.map((c) =>
+      typeof c === "string" ? { namespace: c } : c,
+    )
+    return {
+      module: LoggingModule,
+      providers: normalised.map((cfg) => ({
+        provide: getLoggerToken(cfg.namespace),
+        useFactory: (factory: LoggerFactory) => factory.create(cfg),
+        inject: [LoggerFactory],
+      })),
+      exports: normalised.map((cfg) => getLoggerToken(cfg.namespace)),
     }
   }
 }
