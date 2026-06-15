@@ -266,7 +266,7 @@ The template uses [Tailwind CSS v4](https://tailwindcss.com/docs) with the CSS-f
 
 ## Logging
 
-`ApplicationLoggerService` from `@neomaventures/logging` is the structured logger for application code. It automatically enriches each log entry with the current request context (request ID, method, path) via `@neomaventures/request-context`. No manual threading is needed.
+`ApplicationLogger` from `@neomaventures/logging` is the structured logger for application code. It automatically enriches each log entry with the current request context (request ID, method, path) via `@neomaventures/request-context`. No manual threading is needed.
 
 Nest's own framework logs (module init, route registration, etc.) continue to use the default `ConsoleLogger`. The template does not call `app.useLogger()` — the two loggers serve different purposes.
 

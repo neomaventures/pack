@@ -18,7 +18,7 @@ import { validationFactory } from "./pipes/validation.factory"
  *
  * ## Required companions
  *
- * `NeomaExceptionFilter` injects `ApplicationLoggerService` from
+ * `NeomaExceptionFilter` injects `ApplicationLogger` from
  * `@neomaventures/logging`, so consumers **must** install `LoggingModule.forRoot()`
  * (typically alongside `RequestContextModule.forRoot()`):
  *
@@ -34,9 +34,9 @@ import { validationFactory } from "./pipes/validation.factory"
  * ```
  *
  * Once these are in place, all exceptions are automatically caught and
- * routed through `ApplicationLoggerService`. Bootstrap with
+ * routed through `ApplicationLogger`. Bootstrap with
  * `NestFactory.create(AppModule, { bufferLogs: true })` and
- * `app.useLogger(app.get(ApplicationLoggerService))` to capture Nest's own
+ * `app.useLogger(app.get(ApplicationLogger))` to capture Nest's own
  * internal logs through the same sink.
  *
  * ## Default Logging Levels

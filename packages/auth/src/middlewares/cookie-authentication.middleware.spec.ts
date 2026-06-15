@@ -1,6 +1,7 @@
 import { faker } from "@faker-js/faker"
-import { MockLoggerService, express } from "@neomaventures/fixtures"
-import { ApplicationLoggerService } from "@neomaventures/logging"
+import { express } from "@neomaventures/fixtures"
+import { ApplicationLogger } from "@neomaventures/logging"
+import { MockLogger } from "@neomaventures/logging/testing"
 import { RequestContextModule } from "@neomaventures/request-context"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { type Request, type Response } from "express"
@@ -17,21 +18,21 @@ import { CookieAuthenticationMiddleware } from "./cookie-authentication.middlewa
 describe("CookieAuthenticationMiddleware", () => {
   let service: any
   let middleware: CookieAuthenticationMiddleware
-  let logger: MockLoggerService
+  let logger: MockLogger
   let cls: ClsService
 
   const buildModule = async (cookieOptions?: {
     name?: string
   }): Promise<void> => {
     service = { authenticate: jest.fn() }
-    logger = new MockLoggerService()
+    logger = new MockLogger()
 
     const module: TestingModule = await Test.createTestingModule({
       imports: [RequestContextModule.forRoot()],
       providers: [
         CookieAuthenticationMiddleware,
         { provide: AuthenticationService, useValue: service },
-        { provide: ApplicationLoggerService, useValue: logger },
+        { provide: ApplicationLogger, useValue: logger },
         {
           provide: AUTH_OPTIONS,
           useValue: { cookie: cookieOptions },
@@ -170,7 +171,7 @@ describe("CookieAuthenticationMiddleware", () => {
       })
     })
 
-    it("should log a warning via the injected ApplicationLoggerService", (done) => {
+    it("should log a warning via the injected ApplicationLogger", (done) => {
       const req = express.request({
         headers: {
           cookie: "auth.sid=" + encodeURIComponent(sid),

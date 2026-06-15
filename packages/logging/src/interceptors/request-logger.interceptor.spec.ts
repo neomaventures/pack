@@ -10,8 +10,10 @@ import {
 import { Test, type TestingModule } from "@nestjs/testing"
 import { lastValueFrom, type Observable, of, throwError } from "rxjs"
 
-import { type LoggingConfiguration } from "../interfaces"
-import { ApplicationLoggerService } from "../services"
+import { MockLogger } from "@neomaventures/logging/testing"
+
+import { type LoggingModuleOptions } from "../interfaces/logging-module-options.interface"
+import { ApplicationLogger } from "../services/application-logger"
 import { LOGGING_MODULE_OPTIONS } from "../symbols"
 
 import { RequestLoggerInterceptor } from "./request-logger.interceptor"
@@ -42,23 +44,23 @@ const invocation = ({
 }
 
 const build = async (
-  config: Partial<LoggingConfiguration> = {},
+  config: Partial<LoggingModuleOptions> = {},
 ): Promise<{
   interceptor: RequestLoggerInterceptor
-  logger: jest.Mocked<Pick<ApplicationLoggerService, "debug" | "error">>
+  logger: MockLogger
 }> => {
-  const loggerMock = { debug: jest.fn(), error: jest.fn() }
+  const logger = new MockLogger()
   const module: TestingModule = await Test.createTestingModule({
     providers: [
       RequestLoggerInterceptor,
       { provide: LOGGING_MODULE_OPTIONS, useValue: config },
-      { provide: ApplicationLoggerService, useValue: loggerMock },
+      { provide: ApplicationLogger, useValue: logger },
     ],
   }).compile()
 
   return {
     interceptor: module.get(RequestLoggerInterceptor),
-    logger: loggerMock as any,
+    logger,
   }
 }
 
@@ -66,7 +68,7 @@ describe("RequestLoggerInterceptor", () => {
   describe("intercept()", () => {
     describe("Given the handler succeeds", () => {
       let interceptor: RequestLoggerInterceptor
-      let logger: jest.Mocked<Pick<ApplicationLoggerService, "debug" | "error">>
+      let logger: MockLogger
 
       beforeEach(async () => {
         ;({ interceptor, logger } = await build())
@@ -112,9 +114,37 @@ describe("RequestLoggerInterceptor", () => {
       })
     })
 
+    describe("Given the handler throws and logErrors is unset (defaults to true)", () => {
+      let interceptor: RequestLoggerInterceptor
+      let logger: MockLogger
+
+      beforeEach(async () => {
+        ;({ interceptor, logger } = await build())
+      })
+
+      it("logs the error with metadata, duration, and the error", async () => {
+        const { ctx, handler } = invocation({
+          response: throwError(() => new Error("Test error")),
+        })
+
+        await expect(
+          lastValueFrom(interceptor.intercept(ctx, handler)),
+        ).rejects.toThrow("Test error")
+
+        expect(logger.error).toHaveBeenCalledWith(
+          "Error processing an incoming request in the route handler.",
+          expect.objectContaining({
+            ...routeMetaData,
+            duration: expect.stringMatching(/^\d+ms$/),
+            err: expect.objectContaining({ message: "Test error" }),
+          }),
+        )
+      })
+    })
+
     describe("Given the handler throws and logErrors is true", () => {
       let interceptor: RequestLoggerInterceptor
-      let logger: jest.Mocked<Pick<ApplicationLoggerService, "debug" | "error">>
+      let logger: MockLogger
 
       beforeEach(async () => {
         ;({ interceptor, logger } = await build({ logErrors: true }))
@@ -152,7 +182,7 @@ describe("RequestLoggerInterceptor", () => {
 
     describe("Given the handler throws and logErrors is false", () => {
       let interceptor: RequestLoggerInterceptor
-      let logger: jest.Mocked<Pick<ApplicationLoggerService, "debug" | "error">>
+      let logger: MockLogger
 
       beforeEach(async () => {
         ;({ interceptor, logger } = await build({ logErrors: false }))

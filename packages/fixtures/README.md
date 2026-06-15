@@ -87,17 +87,22 @@ ctx.getHandler() // => UserController.prototype.findAll
 ctx.getClass()   // => UserController
 ```
 
-### MockLoggerService
+### MockLogger
+
+Moved to `@neomaventures/logging/testing`. Import it from there:
 
 ```typescript
-import { MockLoggerService } from '@neomaventures/fixtures'
+import { MockLogger } from '@neomaventures/logging/testing'
 
-const logger = new MockLoggerService()
-// Use anywhere NestJS expects a LoggerService
-// All methods (log, error, warn, debug, verbose, trace, fatal, setLogLevels) are jest.fn()
+const logger = new MockLogger()
+// Implements the `Logger` contract from `@neomaventures/logging`.
+// All six methods (trace, debug, info, warn, error, fatal) are jest.fn().
 
-logger.error('something failed')
-expect(logger.error).toHaveBeenCalledWith('something failed')
+logger.error('something failed', { err: new Error('boom') })
+expect(logger.error).toHaveBeenCalledWith(
+  'something failed',
+  expect.objectContaining({ err: expect.any(Error) }),
+)
 ```
 
 ### Custom Jest matchers

@@ -2,102 +2,55 @@ import { type DynamicModule, Module, type Provider } from "@nestjs/common"
 import { APP_INTERCEPTOR } from "@nestjs/core"
 
 import { RequestLoggerInterceptor } from "./interceptors/request-logger.interceptor"
+import { type LoggerConfig } from "./interfaces/logger-config.interface"
 import {
-  type LoggingConfiguration,
   type LoggingModuleAsyncOptions,
-} from "./interfaces"
-import { ApplicationLoggerService } from "./services"
+  type LoggingModuleOptions,
+} from "./interfaces/logging-module-options.interface"
+import { ApplicationLogger } from "./services/application-logger"
+import { createLogger } from "./services/create-logger"
 import { LOGGING_MODULE_OPTIONS } from "./symbols"
+import { getLoggerToken } from "./tokens"
 
 const PROVIDERS: Provider[] = [
-  ApplicationLoggerService,
+  ApplicationLogger,
   { provide: APP_INTERCEPTOR, useClass: RequestLoggerInterceptor },
 ]
-const EXPORTS = [ApplicationLoggerService]
+// `LOGGING_MODULE_OPTIONS` is exported so `forFeature` providers can resolve
+// it without re-registering. It remains internal to consumers — only the
+// per-namespace logger token is meant to be injected.
+const EXPORTS = [ApplicationLogger, LOGGING_MODULE_OPTIONS]
 
 /**
- * NestJS module providing structured logging with request-scoped context.
+ * NestJS module providing structured logging.
  *
- * Features:
- * - **Structured logging** via `ApplicationLoggerService`, which reads the
- *   current request from `@neomaventures/request-context` and attaches it to log
- *   entries as a `req` field.
- * - **Automatic request logging** via `RequestLoggerInterceptor` when
- *   `logLevel: 'debug'`.
- * - **Error interceptor**: Configurable automatic error logging with
- *   `logErrors`.
- * - **Field redaction**: Configurable sensitive data masking.
- * - **Context injection**: Merge custom metadata into all log entries.
- * - **Performance optimized**: pino under the hood.
+ * Register the root via `forRoot()` / `forRootAsync()` once at the app's
+ * root module; register per-package namespaced loggers via `forFeature()`
+ * inside each package's own module.
  *
- * Note: per-request trace ID generation is not yet restored — tracked in #69.
- *
- * Register via `forRoot()` or `forRootAsync()` (both make the module global).
- * The module is not designed to be imported bare.
- *
- * ## Required companion: `@neomaventures/request-context`
- *
- * `ApplicationLoggerService` reads the active request via `getRequest()` from
- * `@neomaventures/request-context`. For the `req` field to appear on log entries the
- * consumer app **must** also install the request-context boundary:
- *
- * ```typescript
- * imports: [
- *   RequestContextModule.forRoot(),  // <-- required for getRequest() to work
- *   LoggingModule.forRoot({ logLevel: 'debug' }),
- * ]
- * ```
- *
- * Without `RequestContextModule.forRoot()`, log entries still emit but `req`
- * will always be absent.
- *
- * ## Not a Nest `LoggerService`
- *
- * `ApplicationLoggerService` deliberately does not implement
- * `@nestjs/common`'s `LoggerService` interface. It is **not** the app's main
- * logger — `app.useLogger(applicationLoggerService)` will not type-check, and
- * is not the intended integration. Nest's own framework logs continue to flow
- * through Nest's `ConsoleLogger`; this service is the **structured logger for
- * application code** and the rest of the Neoma ecosystem.
- *
- * Two access paths:
- *
- * 1. **Inject `ApplicationLoggerService`** anywhere in the DI graph for the
- *    typed structured API.
- * 2. **Static delegates** — `ApplicationLoggerService.log(...)`,
- *    `ApplicationLoggerService.error(...)`, etc. — for decorators and other
- *    non-DI code that still needs the structured pipeline.
- *
- * ## Convention for `@neomaventures/*` packages
- *
- * Inside other Neoma packages, **inject `ApplicationLoggerService`**. Every
- * Neoma package that logs declares `@neomaventures/logging` as a peerDependency.
- * Consumers install `LoggingModule.forRoot()` once at the root; the singleton
- * is available to every package below.
- *
- * @example
- * // Static registration at the app root — available everywhere
- * imports: [
- *   RequestContextModule.forRoot(),
- *   LoggingModule.forRoot({ logLevel: 'debug' }),
- * ]
- *
- * @example
- * // Async registration — resolve options from DI (e.g. ConfigService)
- * imports: [
- *   RequestContextModule.forRoot(),
- *   LoggingModule.forRootAsync({
- *     inject: [ConfigService],
- *     useFactory: (config: ConfigService) => ({
- *       logLevel: config.get('LOG_LEVEL'),
- *       logRedact: ['password', '*.secret'],
- *     }),
- *   }),
- * ]
+ * @see LoggingModule.forFeature — for per-package logger registration.
  */
 @Module({})
 export class LoggingModule {
-  public static forRoot(options: LoggingConfiguration = {}): DynamicModule {
+  /**
+   * Register the logging root for the application. Call **once** in the
+   * application's root module. Provides {@link ApplicationLogger}, the
+   * `RequestLoggerInterceptor`, and the internal `LOGGING_MODULE_OPTIONS`
+   * token. Module is global.
+   *
+   * @param options - App-wide configuration. Omit for defaults (`info` level,
+   *   stdout destination, no overrides).
+   * @returns A `DynamicModule` ready to be added to `AppModule.imports`.
+   *
+   * @example
+   * ```ts
+   * @Module({
+   *   imports: [LoggingModule.forRoot({ defaultLevel: "debug" })],
+   * })
+   * export class AppModule {}
+   * ```
+   */
+  public static forRoot(options: LoggingModuleOptions = {}): DynamicModule {
     return {
       global: true,
       module: LoggingModule,
@@ -109,6 +62,22 @@ export class LoggingModule {
     }
   }
 
+  /**
+   * Async variant of {@link LoggingModule.forRoot}. Use when options must be
+   * resolved from `ConfigService` or another async source.
+   *
+   * @param options - Async options descriptor with `useFactory`.
+   * @returns A `DynamicModule` ready to be added to `AppModule.imports`.
+   *
+   * @example
+   * ```ts
+   * LoggingModule.forRootAsync({
+   *   imports: [ConfigModule],
+   *   inject: [ConfigService],
+   *   useFactory: (cfg: ConfigService) => ({ defaultLevel: cfg.get("LOG_LEVEL") }),
+   * })
+   * ```
+   */
   public static forRootAsync(
     options: LoggingModuleAsyncOptions,
   ): DynamicModule {
@@ -125,6 +94,56 @@ export class LoggingModule {
         ...PROVIDERS,
       ],
       exports: EXPORTS,
+    }
+  }
+
+  /**
+   * Register one or more namespaced loggers for a feature module or package.
+   *
+   * Each entry produces a non-global provider keyed by the internal logger
+   * token for that namespace, exported from the returned dynamic module so the
+   * module's own providers can inject it via `@InjectLogger(namespace)`.
+   *
+   * Accepts the shorthand `string` form — equivalent to
+   * `{ namespace: '<string>' }` with no level (package default applies; floor
+   * is `'error'`). Use the shorthand when a package only needs to claim its
+   * namespace and is happy with the floor.
+   *
+   * @param configs - Per-namespace configs. Use a string for namespace-only;
+   *   use the object form to set a package default `level` or `name`.
+   * @returns A `DynamicModule` to be added to the package module's `imports`.
+   *
+   * @example
+   * ```ts
+   * // Shorthand — package claims its namespace, level floors at 'error'.
+   * @Module({
+   *   imports: [LoggingModule.forFeature(["neomaventures:auth"])],
+   *   providers: [AuthService],
+   * })
+   * export class AuthModule {}
+   *
+   * // Object form — package sets its own default.
+   * LoggingModule.forFeature([
+   *   { namespace: "neomaventures:auth", level: "warn" },
+   * ])
+   * ```
+   *
+   * @see InjectLogger — to inject the registered logger.
+   */
+  public static forFeature(
+    configs: ReadonlyArray<LoggerConfig | string>,
+  ): DynamicModule {
+    const normalised: LoggerConfig[] = configs.map((c) =>
+      typeof c === "string" ? { namespace: c } : c,
+    )
+    return {
+      module: LoggingModule,
+      providers: normalised.map((cfg) => ({
+        provide: getLoggerToken(cfg.namespace),
+        useFactory: (opts: LoggingModuleOptions) => createLogger(opts, cfg),
+        inject: [LOGGING_MODULE_OPTIONS],
+      })),
+      exports: normalised.map((cfg) => getLoggerToken(cfg.namespace)),
     }
   }
 }

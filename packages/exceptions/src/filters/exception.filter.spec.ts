@@ -1,10 +1,7 @@
 import { faker } from "@faker-js/faker"
-import {
-  MockLoggerService,
-  executionContext,
-  express,
-} from "@neomaventures/fixtures"
-import { ApplicationLoggerService } from "@neomaventures/logging"
+import { executionContext, express } from "@neomaventures/fixtures"
+import { ApplicationLogger } from "@neomaventures/logging"
+import { MockLogger } from "@neomaventures/logging/testing"
 import {
   type ArgumentsHost,
   BadRequestException,
@@ -46,14 +43,14 @@ const unhandledExceptions = [
 
 describe("new NeomaExceptionFilter()", () => {
   let filter: NeomaExceptionFilter
-  let logger: MockLoggerService
+  let logger: MockLogger
 
   beforeEach(async () => {
-    logger = new MockLoggerService()
+    logger = new MockLogger()
     const module = await Test.createTestingModule({
       providers: [
         NeomaExceptionFilter,
-        { provide: ApplicationLoggerService, useValue: logger },
+        { provide: ApplicationLogger, useValue: logger },
       ],
     }).compile()
 
@@ -114,7 +111,7 @@ describe("new NeomaExceptionFilter()", () => {
 
   describe("Logging", () => {
     warnExceptions.forEach((err: HttpException) => {
-      it(`should log a warning via the injected ApplicationLoggerService for ${err.name}s`, () => {
+      it(`should log a warning via the injected ApplicationLogger for ${err.name}s`, () => {
         const host = executionContext() as ArgumentsHost
         filter.catch(err, host)
 
@@ -128,7 +125,7 @@ describe("new NeomaExceptionFilter()", () => {
     })
 
     debugExceptions.forEach((err: HttpException) => {
-      it(`should log via the injected ApplicationLoggerService to log a debug message for ${err.name}s`, () => {
+      it(`should log via the injected ApplicationLogger to log a debug message for ${err.name}s`, () => {
         const host = executionContext() as ArgumentsHost
         filter.catch(err, host)
 
@@ -142,7 +139,7 @@ describe("new NeomaExceptionFilter()", () => {
     })
 
     errorExceptions.forEach((err: HttpException) => {
-      it(`should log via the injected ApplicationLoggerService to log an error for ${err.name}s`, () => {
+      it(`should log via the injected ApplicationLogger to log an error for ${err.name}s`, () => {
         const host = executionContext() as ArgumentsHost
         filter.catch(err, host)
 
@@ -156,7 +153,7 @@ describe("new NeomaExceptionFilter()", () => {
     })
 
     unhandledExceptions.forEach((err: Error) => {
-      it(`should log via the injected ApplicationLoggerService to log an error for uncaught (non-http) exceptions of type ${err.constructor.name}`, () => {
+      it(`should log via the injected ApplicationLogger to log an error for uncaught (non-http) exceptions of type ${err.constructor.name}`, () => {
         const host = executionContext() as ArgumentsHost
         filter.catch(err, host)
 
@@ -169,7 +166,7 @@ describe("new NeomaExceptionFilter()", () => {
       })
     })
 
-    it("should log via the injected ApplicationLoggerService to log a debug message if a duck typed exception's getStatus function returns a 404", () => {
+    it("should log via the injected ApplicationLogger to log a debug message if a duck typed exception's getStatus function returns a 404", () => {
       const name = faker.hacker.noun()
       const statusCode = HttpStatus.NOT_FOUND
       const customException = {
@@ -194,7 +191,7 @@ describe("new NeomaExceptionFilter()", () => {
       expect(logger.error).not.toHaveBeenCalled()
     })
 
-    it("should log via the injected ApplicationLoggerService to log a warning message if a duck typed exception's getStatus function returns a 4xx (excluding 404)", () => {
+    it("should log via the injected ApplicationLogger to log a warning message if a duck typed exception's getStatus function returns a 4xx (excluding 404)", () => {
       const name = faker.hacker.noun()
       let statusCode = faker.number.int({
         min: HttpStatus.BAD_REQUEST,
@@ -226,7 +223,7 @@ describe("new NeomaExceptionFilter()", () => {
       expect(logger.error).not.toHaveBeenCalled()
     })
 
-    it("should log via the injected ApplicationLoggerService to log an error message if a duck typed exception's getStatus function returns a 5xx", () => {
+    it("should log via the injected ApplicationLogger to log an error message if a duck typed exception's getStatus function returns a 5xx", () => {
       const name = faker.hacker.noun()
       const statusCode = faker.number.int({
         min: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -255,7 +252,7 @@ describe("new NeomaExceptionFilter()", () => {
     })
 
     describe("And the exception implements a log method", () => {
-      it("should call the exception's log method with the injected ApplicationLoggerService", () => {
+      it("should call the exception's log method with the injected ApplicationLogger", () => {
         const customException = {
           ...new Error(),
           name: faker.hacker.noun(),

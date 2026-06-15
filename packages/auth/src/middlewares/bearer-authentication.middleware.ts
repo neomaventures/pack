@@ -1,4 +1,4 @@
-import { ApplicationLoggerService } from "@neomaventures/logging"
+import { ApplicationLogger } from "@neomaventures/logging"
 import { Injectable, NestMiddleware } from "@nestjs/common"
 import { Request, NextFunction } from "express"
 
@@ -28,7 +28,7 @@ import { AuthenticationService } from "../services/authentication.service"
 export class BearerAuthenticationMiddleware implements NestMiddleware {
   public constructor(
     private readonly service: AuthenticationService,
-    private readonly logger: ApplicationLoggerService,
+    private readonly logger: ApplicationLogger,
   ) {}
 
   public async use(
