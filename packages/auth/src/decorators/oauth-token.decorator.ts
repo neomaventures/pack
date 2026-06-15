@@ -2,7 +2,7 @@ import { createParamDecorator } from "@nestjs/common"
 
 import { type OAuthAuthenticatable } from "../interfaces/oauth-authenticatable.interface"
 import { getPrincipal } from "../principal/principal.slot"
-import { findActiveToken } from "../services/oauth-token.service"
+import { OAuthTokenService } from "../services/oauth-token.service"
 import { type OAuthProvider } from "../types/oauth-provider.type"
 import { type OAuthTokenSnapshot } from "../types/oauth-token-snapshot.type"
 
@@ -10,7 +10,7 @@ import { type OAuthTokenSnapshot } from "../types/oauth-token-snapshot.type"
  * Parameter decorator that resolves the active OAuth token snapshot for
  * the current principal. Equivalent to calling
  * `OAuthTokenService.getActiveToken(provider)` from a service — both
- * delegate to the shared `findActiveToken` resolver.
+ * delegate to the shared resolver.
  *
  * Returns `null` when the principal is anonymous, has no stored tokens
  * for the provider, or the stored token has expired (refresh-on-expiry
@@ -34,6 +34,6 @@ import { type OAuthTokenSnapshot } from "../types/oauth-token-snapshot.type"
 export const OAuthToken = createParamDecorator(
   (provider: OAuthProvider): OAuthTokenSnapshot | null => {
     const principal = getPrincipal() as OAuthAuthenticatable | undefined
-    return findActiveToken(principal ?? null, provider)
+    return OAuthTokenService.getActiveTokenFor(principal ?? null, provider)
   },
 )

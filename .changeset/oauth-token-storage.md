@@ -51,6 +51,8 @@ public count(@OAuthToken("google") token: OAuthTokenSnapshot | null): unknown {
 
 The snapshot omits `refreshToken` — that's internal to the package's future refresh logic (#171). When the stored `expiresAt` is in the past, both the service and decorator return `null`.
 
+`OAuthTokenService` is exposed as a static-method namespace with no DI dependencies — call `OAuthTokenService.getActiveToken(provider)` or `OAuthTokenService.getActiveTokenFor(principal, provider)` directly. It is not registered as a provider and should not be injected.
+
 The refresh-token preservation is intentional: Google only returns `refresh_token` on first consent / re-consent, so on subsequent logins the upsert preserves the existing refresh token rather than nulling it.
 
 Consumers using Google OAuth should create an `oauth_token` table via their own migration (the auth package does not ship migrations).

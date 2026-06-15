@@ -32,30 +32,30 @@ const buildToken = (
 })
 
 describe("OAuthTokenService", () => {
-  let service: OAuthTokenService
   let cls: ClsService
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [RequestContextModule.forRoot()],
-      providers: [OAuthTokenService],
     }).compile()
 
-    service = module.get(OAuthTokenService)
     cls = module.get(ClsService)
   })
 
   describe("getActiveTokenFor()", () => {
     describe("Given a null principal", () => {
       it("should return null", () => {
-        expect(service.getActiveTokenFor(null, "google")).toBeNull()
+        expect(OAuthTokenService.getActiveTokenFor(null, "google")).toBeNull()
       })
     })
 
     describe("Given the principal has no oauthTokens field", () => {
       it("should return null", () => {
         expect(
-          service.getActiveTokenFor(buildPrincipal(undefined), "google"),
+          OAuthTokenService.getActiveTokenFor(
+            buildPrincipal(undefined),
+            "google",
+          ),
         ).toBeNull()
       })
     })
@@ -63,7 +63,7 @@ describe("OAuthTokenService", () => {
     describe("Given the principal has an empty oauthTokens array", () => {
       it("should return null", () => {
         expect(
-          service.getActiveTokenFor(buildPrincipal([]), "google"),
+          OAuthTokenService.getActiveTokenFor(buildPrincipal([]), "google"),
         ).toBeNull()
       })
     })
@@ -71,7 +71,9 @@ describe("OAuthTokenService", () => {
     describe("Given the principal has no token for the requested provider", () => {
       it("should return null", () => {
         const principal = buildPrincipal([buildToken({ provider: "github" })])
-        expect(service.getActiveTokenFor(principal, "google")).toBeNull()
+        expect(
+          OAuthTokenService.getActiveTokenFor(principal, "google"),
+        ).toBeNull()
       })
     })
 
@@ -83,7 +85,9 @@ describe("OAuthTokenService", () => {
         const stored = buildToken({ accessToken, expiresAt, scopes })
         const principal = buildPrincipal([stored])
 
-        expect(service.getActiveTokenFor(principal, "google")).toEqual({
+        expect(
+          OAuthTokenService.getActiveTokenFor(principal, "google"),
+        ).toEqual({
           accessToken,
           expiresAt,
           scopes,
@@ -97,7 +101,10 @@ describe("OAuthTokenService", () => {
           expiresAt: new Date(Date.now() - 60 * 1000),
         })
         expect(
-          service.getActiveTokenFor(buildPrincipal([expired]), "google"),
+          OAuthTokenService.getActiveTokenFor(
+            buildPrincipal([expired]),
+            "google",
+          ),
         ).toBeNull()
       })
     })
@@ -111,7 +118,7 @@ describe("OAuthTokenService", () => {
           expiresAt: expiresAt.toISOString() as unknown as Date,
         }
 
-        const snapshot = service.getActiveTokenFor(
+        const snapshot = OAuthTokenService.getActiveTokenFor(
           buildPrincipal([stored]),
           "google",
         )
@@ -128,7 +135,7 @@ describe("OAuthTokenService", () => {
     describe("Given no principal is in context", () => {
       it("should return null", () => {
         cls.run(() => {
-          expect(service.getActiveToken("google")).toBeNull()
+          expect(OAuthTokenService.getActiveToken("google")).toBeNull()
         })
       })
     })
@@ -140,7 +147,7 @@ describe("OAuthTokenService", () => {
 
         cls.run(() => {
           setPrincipal(principal)
-          expect(service.getActiveToken("google")).toEqual({
+          expect(OAuthTokenService.getActiveToken("google")).toEqual({
             accessToken: stored.accessToken,
             expiresAt: stored.expiresAt,
             scopes: stored.scopes,
