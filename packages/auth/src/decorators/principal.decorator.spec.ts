@@ -5,9 +5,8 @@ import { ROUTE_ARGS_METADATA } from "@nestjs/common/constants"
 import { CustomParamFactory } from "@nestjs/common/interfaces"
 import { Test } from "@nestjs/testing"
 import { ClsService } from "nestjs-cls"
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
 
-import { Authenticatable } from "../interfaces/authenticatable.interface"
+import { Account } from "../entities/account.entity"
 import { setPrincipal } from "../principal/principal.slot"
 
 import { Principal } from "./principal.decorator"
@@ -19,18 +18,6 @@ import { Principal } from "./principal.decorator"
  */
 type Args = Record<string, { factory: CustomParamFactory }>
 
-@Entity()
-class User implements Authenticatable {
-  @PrimaryGeneratedColumn()
-  public id!: number
-
-  @Column()
-  public email!: string
-
-  @Column()
-  public password!: string
-}
-
 describe("PrincipalDecorator", () => {
   let factory: CustomParamFactory
   let cls: ClsService
@@ -38,7 +25,7 @@ describe("PrincipalDecorator", () => {
   beforeAll(async () => {
     class PrincipalDecoratorTest {
       // eslint-disable-next-line
-      public test(@Principal() _value: User): void {}
+      public test(@Principal() _value: Account): void {}
     }
 
     const args = <Args>(
@@ -56,11 +43,9 @@ describe("PrincipalDecorator", () => {
 
   describe("Given a principal has been stored in the CLS context", () => {
     it("should return the principal", () => {
-      const principal = {
-        id: faker.string.uuid(),
-        email: faker.internet.email(),
-        password: faker.internet.password(),
-      }
+      const principal = new Account()
+      principal.id = faker.string.uuid()
+      principal.email = faker.internet.email()
 
       cls.run(() => {
         setPrincipal(principal)

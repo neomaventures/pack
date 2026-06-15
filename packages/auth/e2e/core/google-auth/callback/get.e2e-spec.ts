@@ -87,7 +87,7 @@ appModules.forEach(([name, modulePath]) => {
         const email = faker.internet.email().toLowerCase()
 
         // Create user first
-        const repo = datasource.getRepository("User")
+        const repo = datasource.getRepository("Account")
         const existingUser = repo.create({ email })
         await repo.save(existingUser)
 
@@ -117,7 +117,7 @@ appModules.forEach(([name, modulePath]) => {
       it("should find existing user with case-insensitive email lookup", async () => {
         const email = "existing@example.com"
 
-        const repo = datasource.getRepository("User")
+        const repo = datasource.getRepository("Account")
         const existingUser = repo.create({ email })
         await repo.save(existingUser)
 
@@ -362,7 +362,7 @@ appModules.forEach(([name, modulePath]) => {
           expect(meResponse.body.id).toBe(googleUserId)
 
           // Verify the profile data in the database
-          const repo = datasource.getRepository("User")
+          const repo = datasource.getRepository("Account")
           const user = await repo.findOne({
             where: { email },
           })
@@ -409,7 +409,7 @@ appModules.forEach(([name, modulePath]) => {
           expect(googleResponse.body.isNewUser).toBe(false)
 
           // Step 4: Verify Google profile data was written
-          const repo = datasource.getRepository("User")
+          const repo = datasource.getRepository("Account")
           const user = await repo.findOne({
             where: { email },
           })

@@ -1,33 +1,24 @@
 import { faker } from "@faker-js/faker"
-import { DynamicModule } from "@nestjs/common"
-import { Test, TestingModule } from "@nestjs/testing"
+import { type DynamicModule } from "@nestjs/common"
+import { Test, type TestingModule } from "@nestjs/testing"
 import { TypeOrmModule } from "@nestjs/typeorm"
 import * as jwt from "jsonwebtoken"
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
 
 import { AuthModule } from "../auth.module"
-import { AuthOptions, MailerOptions } from "../auth.options"
+import { type AuthOptions, type MailerOptions } from "../auth.options"
+import { Account } from "../entities/account.entity"
+import { OAuthToken } from "../entities/oauth-token.entity"
 import { TokenFailedVerificationException } from "../exceptions/token-failed-verification.exception"
 import { TokenMalformedException } from "../exceptions/token-malformed.exception"
-import { Authenticatable } from "../interfaces/authenticatable.interface"
 
 import { TokenService } from "./token.service"
 
-@Entity()
-class User implements Authenticatable {
-  @PrimaryGeneratedColumn("uuid")
-  public id!: any
-
-  @Column({ unique: true })
-  public email!: string
-}
-
-const registrations: [string, (opts: AuthOptions<User>) => DynamicModule][] = [
+const registrations: [string, (opts: AuthOptions) => DynamicModule][] = [
   ["forRoot", (opts): DynamicModule => AuthModule.forRoot(opts)],
   [
     "forRootAsync",
     (opts): DynamicModule =>
-      AuthModule.forRootAsync({ useFactory: (): AuthOptions<User> => opts }),
+      AuthModule.forRootAsync({ useFactory: (): AuthOptions => opts }),
   ],
 ]
 
@@ -43,13 +34,12 @@ registrations.forEach(([name, register]) => {
           TypeOrmModule.forRoot({
             type: "sqlite",
             database: ":memory:",
-            entities: [User],
+            entities: [Account, OAuthToken],
             synchronize: true,
           }),
           register({
             secret,
             expiresIn,
-            entities: { authenticatable: User },
             magicLink: { mailer: {} as MailerOptions },
           }),
         ],

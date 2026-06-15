@@ -4,24 +4,14 @@ import "./types/express-principal"
 export * from "./auth.module"
 export * from "./auth.options"
 
-// Entities
-// `OAuthToken` is exported here as `OAuthTokenEntity` to avoid colliding
-// with the existing `@OAuthToken(provider)` parameter decorator. Slice 3
-// of #244 renames the decorator to `@ActiveOAuthToken` and re-exports
-// the entity under its canonical name.
-export { Account } from "./entities/account.entity"
-export { OAuthToken as OAuthTokenEntity } from "./entities/oauth-token.entity"
-
-// Interfaces consumers implement
-export * from "./interfaces/authenticatable.interface"
-export * from "./interfaces/oauth-authenticatable.interface"
-export * from "./interfaces/oauth-tokenable.interface"
+// Entities (register with TypeOrmModule.forFeature)
+export * from "./entities/account.entity"
+export * from "./entities/oauth-token.entity"
 
 // Services injected via DI
 export * from "./services/authentication.service"
 export * from "./services/google-auth.service"
 export * from "./services/magic-link.service"
-export * from "./services/oauth-token.service"
 export * from "./services/permission.service"
 export * from "./services/session.service"
 export * from "./services/token.service"
@@ -38,14 +28,14 @@ export {
   type AuthenticatedOptions,
   ON_UNAUTHENTICATED_KEY,
 } from "./decorators/authenticated.decorator"
+export * from "./decorators/active-oauth-token.decorator"
 export * from "./decorators/google-auth-result.decorator"
 export * from "./decorators/google-callback.decorator"
 export * from "./decorators/principal.decorator"
 export * from "./decorators/requires-permission.decorator"
 export * from "./decorators/requires-any-permission.decorator"
 
-// OAuth tokens
-export * from "./decorators/oauth-token.decorator"
+// OAuth token types
 export * from "./types/oauth-provider.type"
 export * from "./types/oauth-token-snapshot.type"
 
@@ -71,4 +61,5 @@ export * from "./events/registered.event"
 export * from "./events/authenticated.event"
 
 // Types
+export * from "./types/auth-profile.type"
 export * from "./types/auth-provider"

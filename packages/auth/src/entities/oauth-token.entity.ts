@@ -53,7 +53,7 @@ export class OAuthToken {
   @Column({ type: "text", nullable: true })
   public refreshToken!: string | null
 
-  @Column()
+  @Column({ type: Date })
   public expiresAt!: Date
 
   @Column("simple-array")

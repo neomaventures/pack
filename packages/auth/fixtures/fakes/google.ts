@@ -5,6 +5,8 @@ import {
 } from "@neomaventures/auth"
 import { google as googleFakes } from "@neomaventures/google-fixtures"
 
+import { principal } from "./principal"
+
 const { internet, person, string } = faker
 
 /**
@@ -26,11 +28,9 @@ export const google = {
    * const customResult = google.authResult({ isNewUser: false })
    * ```
    */
-  authResult(
-    overrides: Partial<GoogleAuthResult<any>> = {},
-  ): GoogleAuthResult<any> {
+  authResult(overrides: Partial<GoogleAuthResult> = {}): GoogleAuthResult {
     return {
-      entity: { id: string.uuid(), email: internet.email() },
+      entity: principal(),
       isNewUser: true,
       profile: {
         sub: string.numeric(10),

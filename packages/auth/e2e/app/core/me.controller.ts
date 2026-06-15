@@ -1,26 +1,24 @@
-import { Authenticated, Principal } from "@neomaventures/auth"
+import { Account, Authenticated, Principal } from "@neomaventures/auth"
 import { Controller, Get } from "@nestjs/common"
 
-import { User } from "../user.entity"
-
 /**
- * A test Controller for accessing the authenticated user
+ * A test Controller for accessing the authenticated account
  * using Auth's @Authenticated decorator and Principal decorator.
  */
 @Controller("me")
 @Authenticated()
 export class MeController {
   /**
-   * Returns the authenticated user's id and email.
+   * Returns the authenticated account's id and email.
    *
-   * @param user - The authenticated user from the Principal decorator
-   * @returns An object containing the user's id and email
+   * @param account - The authenticated account from the Principal decorator
+   * @returns An object containing the account's id and email
    */
   @Get()
-  public get(@Principal() user: User): { id: string; email: string } {
+  public get(@Principal() account: Account): { id: string; email: string } {
     return {
-      id: user.id,
-      email: user.email,
+      id: account.id,
+      email: account.email,
     }
   }
 }

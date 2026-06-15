@@ -1,10 +1,12 @@
 import { createContextSlot } from "@neomaventures/request-context"
 
-import { type Authenticatable } from "../interfaces/authenticatable.interface"
+import { type Account } from "../entities/account.entity"
 
 /**
  * Context slot for the authenticated principal, backed by `AsyncLocalStorage`
- * via `@neomaventures/request-context`.
+ * via `@neomaventures/request-context`. The principal is always an
+ * `Account` — auth ships the concrete entity, so there is no consumer
+ * generic to thread through.
  *
  * ## Which form to use
  *
@@ -32,23 +34,23 @@ import { type Authenticatable } from "../interfaces/authenticatable.interface"
  *
  * @example Extract in a controller method
  * ```typescript
- * import { Principal } from "@neomaventures/auth"
+ * import { Principal, Account } from "@neomaventures/auth"
  *
  * @Authenticated()
  * @Get("me")
- * public me(@Principal() principal: User): User {
- *   return principal
+ * public me(@Principal() account: Account): Account {
+ *   return account
  * }
  * ```
  *
  * @example Inject into a singleton service (behind a guard)
  * ```typescript
- * import { CurrentPrincipal, Authenticatable } from "@neomaventures/auth"
+ * import { CurrentPrincipal, Account } from "@neomaventures/auth"
  *
  * @Injectable()
  * export class BillingService {
  *   public constructor(
- *     @Inject(CurrentPrincipal) private readonly principal: Authenticatable,
+ *     @Inject(CurrentPrincipal) private readonly principal: Account,
  *   ) {}
  *
  *   public getOwnerId(): string {
@@ -57,7 +59,7 @@ import { type Authenticatable } from "../interfaces/authenticatable.interface"
  * }
  * ```
  */
-const principalSlot = createContextSlot<Authenticatable>(
+const principalSlot = createContextSlot<Account>(
   "@neomaventures/auth:principal",
 )
 

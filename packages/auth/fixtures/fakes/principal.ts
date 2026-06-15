@@ -1,19 +1,18 @@
 import { faker } from "@faker-js/faker"
 
-import { type Authenticatable } from "../../src/interfaces/authenticatable.interface"
+import { Account } from "../../src/entities/account.entity"
 
 /**
- * Creates a random {@link Authenticatable} principal.
+ * Creates a random {@link Account} principal for tests.
  *
  * @param overrides - Optional partial overrides for specific properties.
- * @returns A principal suitable for unit and e2e tests.
+ * @returns An Account instance suitable for unit and e2e tests.
  */
-export function principal(
-  overrides?: Partial<Authenticatable>,
-): Authenticatable {
-  return {
-    id: faker.string.uuid(),
-    email: faker.internet.email(),
-    ...overrides,
-  }
+export function principal(overrides?: Partial<Account>): Account {
+  const account = new Account()
+  account.id = faker.string.uuid()
+  account.email = faker.internet.email()
+  account.permissions = []
+  Object.assign(account, overrides)
+  return account
 }

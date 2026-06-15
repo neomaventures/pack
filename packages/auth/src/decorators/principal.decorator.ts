@@ -12,8 +12,8 @@
  * ```typescript
  * @Authenticated()
  * @Get("me")
- * public me(@Principal() user: User): User {
- *   return user
+ * public me(@Principal() account: Account): Account {
+ *   return account
  * }
  * ```
  */

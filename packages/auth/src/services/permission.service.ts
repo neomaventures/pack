@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common"
 
+import { Account } from "../entities/account.entity"
 import { PermissionDeniedException } from "../exceptions/permission-denied.exception"
-import { Authenticatable } from "../interfaces/authenticatable.interface"
 
 /**
  * Service for checking and enforcing permissions on principals.
@@ -56,10 +56,7 @@ export class PermissionService {
    * @param permission - The permission to check for
    * @returns true if the principal has the permission, false otherwise
    */
-  public hasPermission(
-    principal: Authenticatable,
-    permission: string,
-  ): boolean {
+  public hasPermission(principal: Account, permission: string): boolean {
     const permissions = principal.permissions ?? []
     return permissions.some((p) => this.matchesPermission(p, permission))
   }
@@ -71,10 +68,7 @@ export class PermissionService {
    * @param permissions - The permissions to check for (AND logic)
    * @returns true if the principal has all permissions, false otherwise
    */
-  public hasAllPermissions(
-    principal: Authenticatable,
-    permissions: string[],
-  ): boolean {
+  public hasAllPermissions(principal: Account, permissions: string[]): boolean {
     return permissions.every((p) => this.hasPermission(principal, p))
   }
 
@@ -85,10 +79,7 @@ export class PermissionService {
    * @param permissions - The permissions to check for (OR logic)
    * @returns true if the principal has at least one permission, false otherwise
    */
-  public hasAnyPermission(
-    principal: Authenticatable,
-    permissions: string[],
-  ): boolean {
+  public hasAnyPermission(principal: Account, permissions: string[]): boolean {
     return permissions.some((p) => this.hasPermission(principal, p))
   }
 
@@ -99,10 +90,7 @@ export class PermissionService {
    * @param permission - The permission required
    * @throws {PermissionDeniedException} If the principal lacks the permission
    */
-  public requirePermission(
-    principal: Authenticatable,
-    permission: string,
-  ): void {
+  public requirePermission(principal: Account, permission: string): void {
     if (!this.hasPermission(principal, permission)) {
       throw new PermissionDeniedException(
         [permission],
@@ -121,7 +109,7 @@ export class PermissionService {
    * @throws {PermissionDeniedException} If the principal lacks any permission
    */
   public requireAllPermissions(
-    principal: Authenticatable,
+    principal: Account,
     permissions: string[],
   ): void {
     const missing = permissions.filter((p) => !this.hasPermission(principal, p))
@@ -142,10 +130,7 @@ export class PermissionService {
    * @param permissions - The permissions to check (OR logic)
    * @throws {PermissionDeniedException} If the principal has none of the permissions
    */
-  public requireAnyPermission(
-    principal: Authenticatable,
-    permissions: string[],
-  ): void {
+  public requireAnyPermission(principal: Account, permissions: string[]): void {
     if (permissions.length === 0) {
       throw new Error("requireAnyPermission() requires at least one permission")
     }

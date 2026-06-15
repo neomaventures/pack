@@ -7,7 +7,7 @@ import { Test } from "@nestjs/testing"
 import { ClsService } from "nestjs-cls"
 
 import * as fakes from "../../fixtures/fakes/principal"
-import { type Authenticatable } from "../interfaces/authenticatable.interface"
+import { type Account } from "../entities/account.entity"
 
 import {
   CurrentPrincipal,
@@ -81,7 +81,7 @@ describe("principal.slot", () => {
     class TestService {
       public constructor(
         @Inject(CurrentPrincipal)
-        private readonly principal: Authenticatable,
+        private readonly principal: Account,
       ) {}
 
       public getId(): string | undefined {

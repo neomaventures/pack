@@ -42,7 +42,7 @@ appModules.forEach(([name, modulePath]) => {
         faker.internet.email(),
       )
 
-      const repo = datasource.getRepository("User")
+      const repo = datasource.getRepository("Account")
       await repo.update(user.id, { permissions })
 
       return { id: user.id, email: user.email, token }

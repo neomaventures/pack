@@ -1,4 +1,9 @@
-import { EmailDto, MagicLinkService, SessionService } from "@neomaventures/auth"
+import {
+  Account,
+  EmailDto,
+  MagicLinkService,
+  SessionService,
+} from "@neomaventures/auth"
 import {
   Body,
   Controller,
@@ -13,11 +18,9 @@ import {
 } from "@nestjs/common"
 import { type Response } from "express"
 
-import { User } from "../user.entity"
-
 interface VerifyResponse {
   token: string
-  user: User
+  user: Account
   isNewUser: boolean
 }
 
@@ -40,8 +43,7 @@ export class MagicLinkController {
     @Query("token") token: string,
     @Res({ passthrough: true }) res: Response,
   ): Promise<VerifyResponse> {
-    const { entity, isNewUser } =
-      await this.magicLinkService.verify<User>(token)
+    const { entity, isNewUser } = await this.magicLinkService.verify(token)
 
     const { token: sessionToken } = this.sessionService.create(res, entity)
 

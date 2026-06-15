@@ -4,24 +4,18 @@ import {
   GoogleOAuthClient,
 } from "@neomaventures/google-fixtures"
 import { mockserver } from "@neomaventures/mockserver/fixture"
-import { DynamicModule } from "@nestjs/common"
+import { type DynamicModule } from "@nestjs/common"
 import { EventEmitter2 } from "@nestjs/event-emitter"
-import { Test, TestingModule } from "@nestjs/testing"
+import { Test, type TestingModule } from "@nestjs/testing"
 import { getRepositoryToken, TypeOrmModule } from "@nestjs/typeorm"
 import { google } from "fixtures/fakes/google"
 import * as jwt from "jsonwebtoken"
-import {
-  Column,
-  Entity,
-  ManyToOne,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  Repository,
-  Unique,
-} from "typeorm"
+import { type Repository } from "typeorm"
 
 import { AuthModule } from "../auth.module"
-import { AuthOptions } from "../auth.options"
+import { type AuthOptions } from "../auth.options"
+import { Account } from "../entities/account.entity"
+import { OAuthToken } from "../entities/oauth-token.entity"
 import { AuthenticatedEvent } from "../events/authenticated.event"
 import { RegisteredEvent } from "../events/registered.event"
 import { EmailNotVerifiedException } from "../exceptions/email-not-verified.exception"
@@ -29,66 +23,8 @@ import { GoogleCodeExchangeException } from "../exceptions/google-code-exchange.
 import { GoogleNetworkException } from "../exceptions/google-network.exception"
 import { GoogleServiceException } from "../exceptions/google-service.exception"
 import { GoogleTokenException } from "../exceptions/google-token.exception"
-import {
-  Authenticatable,
-  AuthenticatableProfile,
-} from "../interfaces/authenticatable.interface"
-import { type OAuthAuthenticatable } from "../interfaces/oauth-authenticatable.interface"
-import { type OAuthTokenable } from "../interfaces/oauth-tokenable.interface"
 
 import { GoogleAuthService } from "./google-auth.service"
-
-@Entity()
-class User implements OAuthAuthenticatable {
-  @PrimaryGeneratedColumn("uuid")
-  public id!: any
-
-  @Column({ unique: true })
-  public email!: string
-
-  @OneToMany(() => OAuthToken, (t) => t.principal, {
-    eager: true,
-    cascade: false,
-  })
-  public oauthTokens?: OAuthToken[]
-}
-
-@Entity()
-class UserWithProfile implements Authenticatable {
-  @PrimaryGeneratedColumn("uuid")
-  public id!: any
-
-  @Column({ unique: true })
-  public email!: string
-
-  @Column({ type: "simple-json", nullable: true })
-  public authProfile?: AuthenticatableProfile
-}
-
-@Entity()
-@Unique(["principal", "provider"])
-class OAuthToken implements OAuthTokenable {
-  @PrimaryGeneratedColumn("uuid")
-  public id!: any
-
-  @ManyToOne(() => User)
-  public principal!: User
-
-  @Column()
-  public provider!: string
-
-  @Column()
-  public accessToken!: string
-
-  @Column({ type: "text", nullable: true })
-  public refreshToken!: string | null
-
-  @Column()
-  public expiresAt!: Date
-
-  @Column("simple-array")
-  public scopes!: string[]
-}
 
 const googleOAuthClient = new GoogleOAuthClient(mockserver)
 
@@ -96,20 +32,12 @@ const googleAuth = google.authOptions({
   tokenEndpoint: googleOAuthClient.tokenEndpoint(),
 })
 
-type AnyEntityCtor = new () => unknown
-
 interface BuildModuleOptions {
-  entities: AnyEntityCtor[]
-  authenticatable: new () => Authenticatable
-  oauthToken?: new () => OAuthTokenable
   register: (opts: AuthOptions) => DynamicModule
   overrides?: Partial<AuthOptions>
 }
 
 async function buildModule({
-  entities,
-  authenticatable,
-  oauthToken,
   register,
   overrides,
 }: BuildModuleOptions): Promise<TestingModule> {
@@ -118,16 +46,13 @@ async function buildModule({
       TypeOrmModule.forRoot({
         type: "sqlite",
         database: ":memory:",
-        entities,
+        entities: [Account, OAuthToken],
         synchronize: true,
       }),
-      TypeOrmModule.forFeature(entities),
+      TypeOrmModule.forFeature([Account, OAuthToken]),
       register({
         secret: faker.internet.password(),
         expiresIn: "1h",
-        entities: oauthToken
-          ? { authenticatable, oauthToken }
-          : { authenticatable },
         googleAuth,
         ...overrides,
       } as AuthOptions),
@@ -183,12 +108,7 @@ registrations.forEach(([name, register]) => {
         let service: GoogleAuthService
 
         beforeEach(async () => {
-          const module = await buildModule({
-            entities: [User, OAuthToken],
-            authenticatable: User,
-            oauthToken: OAuthToken,
-            register,
-          })
+          const module = await buildModule({ register })
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
@@ -208,9 +128,6 @@ registrations.forEach(([name, register]) => {
 
         beforeEach(async () => {
           const module = await buildModule({
-            entities: [User, OAuthToken],
-            authenticatable: User,
-            oauthToken: OAuthToken,
             register,
             overrides: {
               googleAuth: {
@@ -238,8 +155,6 @@ registrations.forEach(([name, register]) => {
 
         beforeEach(async () => {
           const module = await buildModule({
-            entities: [User, OAuthToken],
-            authenticatable: User,
             register,
             overrides: {
               googleAuth: undefined,
@@ -273,22 +188,19 @@ registrations.forEach(([name, register]) => {
     describe("authenticate", () => {
       describe("Given a valid code for a new email", () => {
         let service: GoogleAuthService
-        let repository: Repository<User>
+        let repository: Repository<Account>
         let eventEmitter: EventEmitter2
 
         beforeEach(async () => {
-          const module = await buildModule({
-            entities: [User, OAuthToken],
-            authenticatable: User,
-            oauthToken: OAuthToken,
-            register,
-          })
+          const module = await buildModule({ register })
           service = module.get<GoogleAuthService>(GoogleAuthService)
-          repository = module.get<Repository<User>>(getRepositoryToken(User))
+          repository = module.get<Repository<Account>>(
+            getRepositoryToken(Account),
+          )
           eventEmitter = module.get<EventEmitter2>(EventEmitter2)
         })
 
-        it("should create a new user entity", async () => {
+        it("should create a new Account entity", async () => {
           const code = faker.string.alphanumeric(20)
           const email = faker.internet.email()
           const idToken = googleFakes.idToken({ email })
@@ -296,9 +208,9 @@ registrations.forEach(([name, register]) => {
 
           await service.authenticate(code)
 
-          const users = await repository.find()
-          expect(users).toHaveLength(1)
-          expect(users[0].email).toBe(email.toLowerCase())
+          const accounts = await repository.find()
+          expect(accounts).toHaveLength(1)
+          expect(accounts[0].email).toBe(email.toLowerCase())
         })
 
         it("should return the new entity with isNewUser: true", async () => {
@@ -307,9 +219,9 @@ registrations.forEach(([name, register]) => {
           const idToken = googleFakes.idToken({ email })
           await mockSuccess(code, { id_token: idToken })
 
-          const result = await service.authenticate<User>(code)
+          const result = await service.authenticate(code)
 
-          expect(result.entity).toBeInstanceOf(User)
+          expect(result.entity).toBeInstanceOf(Account)
           expect(result.entity.email).toBe(email.toLowerCase())
           expect(result.isNewUser).toBe(true)
         })
@@ -321,7 +233,7 @@ registrations.forEach(([name, register]) => {
           await mockSuccess(code, { id_token: idToken })
           const emitSpy = jest.spyOn(eventEmitter, "emit")
 
-          const result = await service.authenticate<User>(code)
+          const result = await service.authenticate(code)
 
           expect(emitSpy).toHaveBeenCalledWith(
             RegisteredEvent.EVENT_NAME,
@@ -361,102 +273,6 @@ registrations.forEach(([name, register]) => {
 
           expect(result.profile).toEqual({ sub, name: googleName, picture })
         })
-      })
-
-      describe("Given a valid code for an existing email", () => {
-        let service: GoogleAuthService
-        let repository: Repository<User>
-        let eventEmitter: EventEmitter2
-        let existingUser: User
-
-        beforeEach(async () => {
-          const module = await buildModule({
-            entities: [User, OAuthToken],
-            authenticatable: User,
-            oauthToken: OAuthToken,
-            register,
-          })
-          service = module.get<GoogleAuthService>(GoogleAuthService)
-          repository = module.get<Repository<User>>(getRepositoryToken(User))
-          eventEmitter = module.get<EventEmitter2>(EventEmitter2)
-
-          const created = repository.create({
-            email: faker.internet.email().toLowerCase(),
-          })
-          await repository.save(created)
-          // Reload through the repository so the eager `oauthTokens`
-          // relation is hydrated as [] (matching what the production
-          // code path sees after its own findOne).
-          existingUser = await repository.findOneByOrFail({ id: created.id })
-        })
-
-        it("should return the existing entity with isNewUser: false", async () => {
-          const code = faker.string.alphanumeric(20)
-          const idToken = googleFakes.idToken({ email: existingUser.email })
-          await mockSuccess(code, { id_token: idToken })
-
-          const result = await service.authenticate<User>(code)
-
-          expect(result.entity.id).toBe(existingUser.id)
-          expect(result.entity.email).toBe(existingUser.email)
-          expect(result.isNewUser).toBe(false)
-        })
-
-        it("should not create a new user", async () => {
-          const code = faker.string.alphanumeric(20)
-          const idToken = googleFakes.idToken({ email: existingUser.email })
-          await mockSuccess(code, { id_token: idToken })
-
-          await service.authenticate(code)
-
-          const users = await repository.find()
-          expect(users).toHaveLength(1)
-        })
-
-        it("should emit a AuthenticatedEvent with provider 'google'", async () => {
-          const code = faker.string.alphanumeric(20)
-          const idToken = googleFakes.idToken({ email: existingUser.email })
-          await mockSuccess(code, { id_token: idToken })
-          const emitSpy = jest.spyOn(eventEmitter, "emit")
-
-          await service.authenticate(code)
-
-          expect(emitSpy).toHaveBeenCalledWith(
-            AuthenticatedEvent.EVENT_NAME,
-            new AuthenticatedEvent(existingUser, "google"),
-          )
-        })
-
-        it("should not emit a RegisteredEvent", async () => {
-          const code = faker.string.alphanumeric(20)
-          const idToken = googleFakes.idToken({ email: existingUser.email })
-          await mockSuccess(code, { id_token: idToken })
-          const emitSpy = jest.spyOn(eventEmitter, "emit")
-
-          await service.authenticate(code)
-
-          expect(emitSpy).not.toHaveBeenCalledWith(
-            RegisteredEvent.EVENT_NAME,
-            expect.anything(),
-          )
-        })
-      })
-
-      describe("Given a valid code and entity with an authProfile column", () => {
-        let service: GoogleAuthService
-        let repository: Repository<UserWithProfile>
-
-        beforeEach(async () => {
-          const module = await buildModule({
-            entities: [UserWithProfile],
-            authenticatable: UserWithProfile,
-            register,
-          })
-          service = module.get<GoogleAuthService>(GoogleAuthService)
-          repository = module.get<Repository<UserWithProfile>>(
-            getRepositoryToken(UserWithProfile),
-          )
-        })
 
         it("should write Google profile data to entity.authProfile.google", async () => {
           const code = faker.string.alphanumeric(20)
@@ -472,7 +288,7 @@ registrations.forEach(([name, register]) => {
           })
           await mockSuccess(code, { id_token: idToken })
 
-          const result = await service.authenticate<UserWithProfile>(code)
+          const result = await service.authenticate(code)
 
           await expect(
             repository.findOneByOrFail({ id: result.entity.id }),
@@ -482,41 +298,95 @@ registrations.forEach(([name, register]) => {
         })
       })
 
-      describe("Given a valid code and entity WITHOUT profile property", () => {
+      describe("Given a valid code for an existing email", () => {
         let service: GoogleAuthService
+        let repository: Repository<Account>
+        let eventEmitter: EventEmitter2
+        let existingAccount: Account
 
         beforeEach(async () => {
-          const module = await buildModule({
-            entities: [User, OAuthToken],
-            authenticatable: User,
-            oauthToken: OAuthToken,
-            register,
-          })
+          const module = await buildModule({ register })
           service = module.get<GoogleAuthService>(GoogleAuthService)
+          repository = module.get<Repository<Account>>(
+            getRepositoryToken(Account),
+          )
+          eventEmitter = module.get<EventEmitter2>(EventEmitter2)
+
+          const created = repository.create({
+            email: faker.internet.email().toLowerCase(),
+          })
+          await repository.save(created)
+          // Reload through the repository so the eager `oauthTokens`
+          // relation is hydrated as [] (matching what the production
+          // code path sees after its own findOne).
+          existingAccount = await repository.findOneByOrFail({ id: created.id })
         })
 
-        it("should not throw (profile writing is skipped gracefully)", async () => {
+        it("should return the existing entity with isNewUser: false", async () => {
           const code = faker.string.alphanumeric(20)
-          const idToken = googleFakes.idToken({ email: faker.internet.email() })
+          const idToken = googleFakes.idToken({ email: existingAccount.email })
           await mockSuccess(code, { id_token: idToken })
 
-          await expect(service.authenticate(code)).resolves.not.toThrow()
+          const result = await service.authenticate(code)
+
+          expect(result.entity.id).toBe(existingAccount.id)
+          expect(result.entity.email).toBe(existingAccount.email)
+          expect(result.isNewUser).toBe(false)
+        })
+
+        it("should not create a new account", async () => {
+          const code = faker.string.alphanumeric(20)
+          const idToken = googleFakes.idToken({ email: existingAccount.email })
+          await mockSuccess(code, { id_token: idToken })
+
+          await service.authenticate(code)
+
+          const accounts = await repository.find()
+          expect(accounts).toHaveLength(1)
+        })
+
+        it("should emit a AuthenticatedEvent with provider 'google'", async () => {
+          const code = faker.string.alphanumeric(20)
+          const idToken = googleFakes.idToken({ email: existingAccount.email })
+          await mockSuccess(code, { id_token: idToken })
+          const emitSpy = jest.spyOn(eventEmitter, "emit")
+
+          await service.authenticate(code)
+
+          expect(emitSpy).toHaveBeenCalledWith(
+            AuthenticatedEvent.EVENT_NAME,
+            expect.objectContaining({
+              entity: expect.objectContaining({ id: existingAccount.id }),
+              provider: "google",
+            }),
+          )
+        })
+
+        it("should not emit a RegisteredEvent", async () => {
+          const code = faker.string.alphanumeric(20)
+          const idToken = googleFakes.idToken({ email: existingAccount.email })
+          await mockSuccess(code, { id_token: idToken })
+          const emitSpy = jest.spyOn(eventEmitter, "emit")
+
+          await service.authenticate(code)
+
+          expect(emitSpy).not.toHaveBeenCalledWith(
+            RegisteredEvent.EVENT_NAME,
+            expect.anything(),
+          )
         })
       })
 
       describe("Email normalization", () => {
         let service: GoogleAuthService
-        let repository: Repository<User>
+        let repository: Repository<Account>
 
         beforeEach(async () => {
-          const module = await buildModule({
-            entities: [User, OAuthToken],
-            authenticatable: User,
-            oauthToken: OAuthToken,
-            register,
-          })
+          const module = await buildModule({ register })
           service = module.get<GoogleAuthService>(GoogleAuthService)
-          repository = module.get<Repository<User>>(getRepositoryToken(User))
+          repository = module.get<Repository<Account>>(
+            getRepositoryToken(Account),
+          )
         })
 
         it("should store email as lowercase regardless of Google ID token case", async () => {
@@ -525,25 +395,25 @@ registrations.forEach(([name, register]) => {
           const idToken = googleFakes.idToken({ email })
           await mockSuccess(code, { id_token: idToken })
 
-          const result = await service.authenticate<User>(code)
+          const result = await service.authenticate(code)
 
           expect(result.entity.email).toBe(email.toLowerCase())
         })
 
-        it("should find existing user with case-insensitive email lookup", async () => {
+        it("should find existing account with case-insensitive email lookup", async () => {
           const code = faker.string.alphanumeric(20)
           const email = "existing@example.com"
-          const existingUser = repository.create({ email })
-          await repository.save(existingUser)
+          const existingAccount = repository.create({ email })
+          await repository.save(existingAccount)
 
           const idToken = googleFakes.idToken({
             email: "EXISTING@EXAMPLE.COM",
           })
           await mockSuccess(code, { id_token: idToken })
 
-          const result = await service.authenticate<User>(code)
+          const result = await service.authenticate(code)
 
-          expect(result.entity.id).toBe(existingUser.id)
+          expect(result.entity.id).toBe(existingAccount.id)
           expect(result.isNewUser).toBe(false)
         })
       })
@@ -552,12 +422,7 @@ registrations.forEach(([name, register]) => {
         let service: GoogleAuthService
 
         beforeEach(async () => {
-          const module = await buildModule({
-            entities: [User, OAuthToken],
-            authenticatable: User,
-            oauthToken: OAuthToken,
-            register,
-          })
+          const module = await buildModule({ register })
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
@@ -575,12 +440,7 @@ registrations.forEach(([name, register]) => {
         let service: GoogleAuthService
 
         beforeEach(async () => {
-          const module = await buildModule({
-            entities: [User, OAuthToken],
-            authenticatable: User,
-            oauthToken: OAuthToken,
-            register,
-          })
+          const module = await buildModule({ register })
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
@@ -598,12 +458,7 @@ registrations.forEach(([name, register]) => {
         let service: GoogleAuthService
 
         beforeEach(async () => {
-          const module = await buildModule({
-            entities: [User, OAuthToken],
-            authenticatable: User,
-            oauthToken: OAuthToken,
-            register,
-          })
+          const module = await buildModule({ register })
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
@@ -622,12 +477,7 @@ registrations.forEach(([name, register]) => {
         let fetchSpy: jest.SpyInstance
 
         beforeEach(async () => {
-          const module = await buildModule({
-            entities: [User, OAuthToken],
-            authenticatable: User,
-            oauthToken: OAuthToken,
-            register,
-          })
+          const module = await buildModule({ register })
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
@@ -659,12 +509,7 @@ registrations.forEach(([name, register]) => {
         let fetchSpy: jest.SpyInstance
 
         beforeEach(async () => {
-          const module = await buildModule({
-            entities: [User, OAuthToken],
-            authenticatable: User,
-            oauthToken: OAuthToken,
-            register,
-          })
+          const module = await buildModule({ register })
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
@@ -697,12 +542,7 @@ registrations.forEach(([name, register]) => {
         let fetchSpy: jest.SpyInstance
 
         beforeEach(async () => {
-          const module = await buildModule({
-            entities: [User, OAuthToken],
-            authenticatable: User,
-            oauthToken: OAuthToken,
-            register,
-          })
+          const module = await buildModule({ register })
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
@@ -733,12 +573,7 @@ registrations.forEach(([name, register]) => {
         let service: GoogleAuthService
 
         beforeEach(async () => {
-          const module = await buildModule({
-            entities: [User, OAuthToken],
-            authenticatable: User,
-            oauthToken: OAuthToken,
-            register,
-          })
+          const module = await buildModule({ register })
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
@@ -763,12 +598,7 @@ registrations.forEach(([name, register]) => {
         let service: GoogleAuthService
 
         beforeEach(async () => {
-          const module = await buildModule({
-            entities: [User, OAuthToken],
-            authenticatable: User,
-            oauthToken: OAuthToken,
-            register,
-          })
+          const module = await buildModule({ register })
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
@@ -793,12 +623,7 @@ registrations.forEach(([name, register]) => {
         let service: GoogleAuthService
 
         beforeEach(async () => {
-          const module = await buildModule({
-            entities: [User, OAuthToken],
-            authenticatable: User,
-            oauthToken: OAuthToken,
-            register,
-          })
+          const module = await buildModule({ register })
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
@@ -829,12 +654,7 @@ registrations.forEach(([name, register]) => {
         let service: GoogleAuthService
 
         beforeEach(async () => {
-          const module = await buildModule({
-            entities: [User, OAuthToken],
-            authenticatable: User,
-            oauthToken: OAuthToken,
-            register,
-          })
+          const module = await buildModule({ register })
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
@@ -852,12 +672,7 @@ registrations.forEach(([name, register]) => {
         let service: GoogleAuthService
 
         beforeEach(async () => {
-          const module = await buildModule({
-            entities: [User, OAuthToken],
-            authenticatable: User,
-            oauthToken: OAuthToken,
-            register,
-          })
+          const module = await buildModule({ register })
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
@@ -871,27 +686,24 @@ registrations.forEach(([name, register]) => {
         })
       })
 
-      describe("Given entities.oauthToken is configured", () => {
+      describe("OAuth token persistence", () => {
         let service: GoogleAuthService
-        let principalRepo: Repository<User>
+        let accountRepo: Repository<Account>
         let tokenRepo: Repository<OAuthToken>
 
         beforeEach(async () => {
-          const module = await buildModule({
-            entities: [User, OAuthToken],
-            authenticatable: User,
-            oauthToken: OAuthToken,
-            register,
-          })
+          const module = await buildModule({ register })
           service = module.get<GoogleAuthService>(GoogleAuthService)
-          principalRepo = module.get<Repository<User>>(getRepositoryToken(User))
+          accountRepo = module.get<Repository<Account>>(
+            getRepositoryToken(Account),
+          )
           tokenRepo = module.get<Repository<OAuthToken>>(
             getRepositoryToken(OAuthToken),
           )
         })
 
-        describe("on first sign-in (new user)", () => {
-          it("should persist a google OAuthToken row linked to the principal with access/refresh tokens, expiresAt, and scopes", async () => {
+        describe("on first sign-in (new account)", () => {
+          it("should persist a google OAuthToken row linked to the account with access/refresh tokens, expiresAt, and scopes", async () => {
             const code = faker.string.alphanumeric(20)
             const email = faker.internet.email()
             const refreshToken = faker.string.alphanumeric(40)
@@ -906,11 +718,11 @@ registrations.forEach(([name, register]) => {
             })
 
             const before = Date.now()
-            const result = await service.authenticate<User>(code)
+            const result = await service.authenticate(code)
             const after = Date.now()
 
             const tokens = await tokenRepo.find({
-              where: { principal: { id: result.entity.id } },
+              where: { account: { id: result.entity.id } },
             })
             expect(tokens).toHaveLength(1)
             const stored = tokens[0]
@@ -927,7 +739,7 @@ registrations.forEach(([name, register]) => {
             )
           })
 
-          it("should eagerly load the token onto principal.oauthTokens on subsequent reads", async () => {
+          it("should eagerly load the token onto account.oauthTokens on subsequent reads", async () => {
             const code = faker.string.alphanumeric(20)
             const email = faker.internet.email()
             await googleOAuthClient.mockCodeExchange({
@@ -939,8 +751,8 @@ registrations.forEach(([name, register]) => {
               refreshToken: faker.string.alphanumeric(40),
             })
 
-            const result = await service.authenticate<User>(code)
-            const loaded = await principalRepo.findOneByOrFail({
+            const result = await service.authenticate(code)
+            const loaded = await accountRepo.findOneByOrFail({
               id: result.entity.id,
             })
 
@@ -963,7 +775,7 @@ registrations.forEach(([name, register]) => {
               idToken: googleFakes.idToken({ email }),
               refreshToken: originalRefreshToken,
             })
-            await service.authenticate<User>(firstCode)
+            await service.authenticate(firstCode)
 
             const secondCode = faker.string.alphanumeric(20)
             const secondResponse = await googleOAuthClient.mockCodeExchange({
@@ -974,10 +786,10 @@ registrations.forEach(([name, register]) => {
               idToken: googleFakes.idToken({ email }),
             })
 
-            const result = await service.authenticate<User>(secondCode)
+            const result = await service.authenticate(secondCode)
 
             const tokens = await tokenRepo.find({
-              where: { principal: { id: result.entity.id } },
+              where: { account: { id: result.entity.id } },
             })
             expect(tokens).toHaveLength(1)
             expect(tokens[0].accessToken).toBe(secondResponse.access_token)
@@ -998,7 +810,7 @@ registrations.forEach(([name, register]) => {
               idToken: googleFakes.idToken({ email }),
               refreshToken: faker.string.alphanumeric(40),
             })
-            await service.authenticate<User>(firstCode)
+            await service.authenticate(firstCode)
 
             const secondCode = faker.string.alphanumeric(20)
             const newRefreshToken = faker.string.alphanumeric(40)
@@ -1011,24 +823,22 @@ registrations.forEach(([name, register]) => {
               refreshToken: newRefreshToken,
             })
 
-            const result = await service.authenticate<User>(secondCode)
+            const result = await service.authenticate(secondCode)
             const tokens = await tokenRepo.find({
-              where: { principal: { id: result.entity.id } },
+              where: { account: { id: result.entity.id } },
             })
 
             expect(tokens[0].refreshToken).toBe(newRefreshToken)
           })
         })
 
-        describe("when the principal already has a token entry for a different provider", () => {
+        describe("when the account already has a token entry for a different provider", () => {
           it("should leave the other provider's entry untouched", async () => {
             const email = faker.internet.email().toLowerCase()
-            const seeded = await principalRepo.save(
-              principalRepo.create({ email }),
-            )
+            const seeded = await accountRepo.save(accountRepo.create({ email }))
             await tokenRepo.save(
               tokenRepo.create({
-                principal: seeded,
+                account: seeded,
                 provider: "github",
                 accessToken: faker.string.alphanumeric(40),
                 refreshToken: faker.string.alphanumeric(40),
@@ -1047,9 +857,9 @@ registrations.forEach(([name, register]) => {
               refreshToken: faker.string.alphanumeric(40),
             })
 
-            const result = await service.authenticate<User>(code)
+            const result = await service.authenticate(code)
             const tokens = await tokenRepo.find({
-              where: { principal: { id: result.entity.id } },
+              where: { account: { id: result.entity.id } },
             })
 
             expect(tokens).toHaveLength(2)
@@ -1065,8 +875,6 @@ registrations.forEach(([name, register]) => {
 
         beforeEach(async () => {
           const module = await buildModule({
-            entities: [User, OAuthToken],
-            authenticatable: User,
             register,
             overrides: {
               googleAuth: undefined,

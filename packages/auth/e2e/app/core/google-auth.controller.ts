@@ -1,4 +1,5 @@
 import {
+  Account,
   GetGoogleAuthResult,
   GoogleAuthResult,
   GoogleCallback,
@@ -7,11 +8,9 @@ import {
 import { Controller, Get, Res } from "@nestjs/common"
 import { type Response } from "express"
 
-import { User } from "../user.entity"
-
 interface GoogleCallbackResponse {
   token: string
-  user: User
+  user: Account
   isNewUser: boolean
 }
 
@@ -25,16 +24,16 @@ export class GoogleAuthController {
 
   /**
    * Handles the Google OAuth callback by exchanging the authorization code,
-   * creating a session, and returning the user and token.
+   * creating a session, and returning the account and token.
    *
    * @param result - The Google authentication result from the interceptor
    * @param res - The Express response for setting session cookies
-   * @returns The session token, user entity, and isNewUser flag
+   * @returns The session token, account, and isNewUser flag
    */
   @Get("callback")
   @GoogleCallback()
   public async callback(
-    @GetGoogleAuthResult() result: GoogleAuthResult<User>,
+    @GetGoogleAuthResult() result: GoogleAuthResult,
     @Res({ passthrough: true }) res: Response,
   ): Promise<GoogleCallbackResponse> {
     const { token } = this.sessionService.create(res, result.entity)

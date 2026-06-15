@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker"
 
+import { Account } from "../entities/account.entity"
 import { PermissionDeniedException } from "../exceptions/permission-denied.exception"
-import { type Authenticatable } from "../interfaces/authenticatable.interface"
 
 import { PermissionService } from "./permission.service"
 
@@ -12,11 +12,13 @@ describe("PermissionService", () => {
     service = new PermissionService()
   })
 
-  const createPrincipal = (permissions: string[] = []): Authenticatable => ({
-    id: faker.string.uuid(),
-    email: faker.internet.email(),
-    permissions,
-  })
+  const createPrincipal = (permissions: string[] = []): Account => {
+    const account = new Account()
+    account.id = faker.string.uuid()
+    account.email = faker.internet.email()
+    account.permissions = permissions
+    return account
+  }
 
   describe("hasPermission()", () => {
     describe("When called with a principal that has no permissions", () => {
@@ -28,10 +30,9 @@ describe("PermissionService", () => {
 
     describe("When called with a principal that has undefined permissions", () => {
       it("should return false for read:users", () => {
-        const principal: Authenticatable = {
-          id: faker.string.uuid(),
-          email: faker.internet.email(),
-        }
+        const principal = new Account()
+        principal.id = faker.string.uuid()
+        principal.email = faker.internet.email()
         expect(service.hasPermission(principal, "read:users")).toBe(false)
       })
     })

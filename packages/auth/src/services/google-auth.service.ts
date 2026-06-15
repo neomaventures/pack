@@ -1,9 +1,11 @@
 import { Inject, Injectable } from "@nestjs/common"
 import { EventEmitter2 } from "@nestjs/event-emitter"
 import * as jwt from "jsonwebtoken"
-import { DataSource, EntityManager, FindOptionsWhere } from "typeorm"
+import { DataSource, EntityManager } from "typeorm"
 
 import { AUTH_OPTIONS, AuthOptions, GoogleAuthOptions } from "../auth.options"
+import { Account } from "../entities/account.entity"
+import { OAuthToken } from "../entities/oauth-token.entity"
 import { AuthenticatedEvent } from "../events/authenticated.event"
 import { RegisteredEvent } from "../events/registered.event"
 import { EmailNotVerifiedException } from "../exceptions/email-not-verified.exception"
@@ -11,11 +13,6 @@ import { GoogleCodeExchangeException } from "../exceptions/google-code-exchange.
 import { GoogleNetworkException } from "../exceptions/google-network.exception"
 import { GoogleServiceException } from "../exceptions/google-service.exception"
 import { GoogleTokenException } from "../exceptions/google-token.exception"
-import {
-  Authenticatable,
-  AuthenticatableProfile,
-} from "../interfaces/authenticatable.interface"
-import { type OAuthTokenable } from "../interfaces/oauth-tokenable.interface"
 
 /**
  * Provider-specific profile data returned from Google OAuth.
@@ -31,12 +28,10 @@ export interface GoogleProfile {
 
 /**
  * Result of authenticating via Google OAuth code exchange.
- *
- * @typeParam T - The entity class implementing Authenticatable
  */
-export interface GoogleAuthResult<T extends Authenticatable> {
-  /** The authenticated or newly created entity */
-  entity: T
+export interface GoogleAuthResult {
+  /** The authenticated or newly created Account */
+  entity: Account
   /** True if this was a new registration, false if existing user */
   isNewUser: boolean
   /** Google profile data extracted from the ID token */
@@ -59,7 +54,7 @@ interface GoogleTokenResponse {
 }
 
 /**
- * Exchanges a Google authorization code for a verified user entity.
+ * Exchanges a Google authorization code for an `Account`.
  *
  * The {@link authenticate} method is intentionally orchestration-only —
  * it delegates each step to a small private helper:
@@ -69,23 +64,23 @@ interface GoogleTokenResponse {
  *    `expires_in`, etc.).
  * 2. {@link decodeIdToken} — JWT-decodes the ID token and validates
  *    the `email`, `email_verified`, and `sub` claims.
- * 3. {@link findOrCreateEntity} — looks up the principal by email or
- *    creates a new one, writing Google profile data when the entity
- *    exposes an `authProfile` column. Runs inside the transaction.
- * 4. {@link persistOAuthToken} — upserts the `(principal, provider)`
+ * 3. {@link findOrCreateAccount} — looks up the Account by email or
+ *    creates a new one, writing Google profile data into
+ *    `account.authProfile.google`. Runs inside the transaction.
+ * 4. {@link persistOAuthToken} — upserts the `(account, provider)`
  *    OAuth token row, preserving `refreshToken` when Google omits it.
  *    Runs inside the same transaction.
  *
  * Steps 3 and 4 run inside a single `DataSource.transaction()` so the
- * principal row and the OAuth-token row stay consistent — either both
+ * Account row and the OAuth-token row stay consistent — either both
  * persist or both roll back. Registration / authentication events fire
  * only after the transaction commits.
  *
  * @example
  * ```typescript
- * const result = await googleAuthService.authenticate<User>(code)
+ * const result = await googleAuthService.authenticate(code)
  * if (result.isNewUser) {
- *   console.log('New user registered via Google:', result.entity.email)
+ *   console.log('New account registered via Google:', result.entity.email)
  * }
  * ```
  */
@@ -130,11 +125,10 @@ export class GoogleAuthService {
   }
 
   /**
-   * Exchanges a Google authorization code for user credentials and finds or
-   * creates the corresponding entity.
+   * Exchanges a Google authorization code for an Account.
    *
    * @param code - The authorization code from Google's OAuth redirect
-   * @returns Object containing the entity, isNewUser flag, and Google profile
+   * @returns Object containing the Account, isNewUser flag, and Google profile
    * @throws {GoogleCodeExchangeException} If Google's token endpoint returns a non-OK HTTP response
    * @throws {GoogleServiceException} If Google's token endpoint returns a 5xx server error
    * @throws {GoogleNetworkException} If the fetch call itself fails (network error, DNS, timeout)
@@ -144,15 +138,13 @@ export class GoogleAuthService {
    *
    * @example
    * ```typescript
-   * const { entity, isNewUser, profile } = await googleAuthService.authenticate<User>(code)
+   * const { entity, isNewUser, profile } = await googleAuthService.authenticate(code)
    * ```
    *
-   * @fires auth.registered - when a new user is created
-   * @fires auth.authenticated - when an existing user is authenticated
+   * @fires auth.registered - when a new account is created
+   * @fires auth.authenticated - when an existing account is authenticated
    */
-  public async authenticate<T extends Authenticatable>(
-    code: string,
-  ): Promise<GoogleAuthResult<T>> {
+  public async authenticate(code: string): Promise<GoogleAuthResult> {
     const googleAuth = this.getGoogleAuth()
 
     const tokenResponse = await this.exchangeCodeForTokens(code, googleAuth)
@@ -160,7 +152,7 @@ export class GoogleAuthService {
 
     const { entity, isNewUser } = await this.datasource.transaction(
       async (manager: EntityManager) => {
-        const found = await this.findOrCreateEntity<T>(manager, email, profile)
+        const found = await this.findOrCreateAccount(manager, email, profile)
         await this.persistOAuthToken(manager, found.entity, tokenResponse)
         return found
       },
@@ -307,55 +299,44 @@ export class GoogleAuthService {
   }
 
   /**
-   * Finds the principal by email (case-insensitive) or creates a new
-   * row. When the entity exposes an `authProfile` column, merges the
-   * Google profile data into it. Runs inside the supplied transactional
-   * `EntityManager`.
+   * Finds the Account by email (case-insensitive) or creates a new row,
+   * merging the Google profile data into `account.authProfile.google`.
+   * Runs inside the supplied transactional `EntityManager`.
    */
-  private async findOrCreateEntity<T extends Authenticatable>(
+  private async findOrCreateAccount(
     manager: EntityManager,
     email: string,
     profile: GoogleProfile,
-  ): Promise<{ entity: T; isNewUser: boolean }> {
+  ): Promise<{ entity: Account; isNewUser: boolean }> {
     const normalizedEmail = email.toLowerCase()
-    const authenticatableClass = this.options.entities.authenticatable
-    const principalRepo = manager.getRepository<T>(authenticatableClass)
+    const repo = manager.getRepository(Account)
 
-    const existing = await principalRepo.findOne({
-      where: { email: normalizedEmail } as FindOptionsWhere<T>,
-    })
+    const existing = await repo.findOne({ where: { email: normalizedEmail } })
 
     if (existing) {
-      if ("authProfile" in existing) {
-        const withProfile = existing as T & {
-          authProfile?: AuthenticatableProfile
-        }
-        withProfile.authProfile = {
-          ...(withProfile.authProfile ?? {}),
-          google: profile,
-        }
-        await principalRepo.save(existing)
+      existing.authProfile = {
+        ...(existing.authProfile ?? {}),
+        google: profile,
       }
+      await repo.save(existing)
       return { entity: existing, isNewUser: false }
     }
 
-    const created = principalRepo.create({ email: normalizedEmail } as T)
-    if ("authProfile" in created) {
-      ;(created as T & { authProfile?: AuthenticatableProfile }).authProfile = {
-        google: profile,
-      }
-    }
-    const saved = await principalRepo.save(created)
+    const created = repo.create({
+      email: normalizedEmail,
+      authProfile: { google: profile },
+    })
+    const saved = await repo.save(created)
     return { entity: saved, isNewUser: true }
   }
 
   /**
-   * Persists the OAuth token row for the given principal, when an
-   * `oauthToken` entity is configured. Performs a read-then-save against
-   * the unique `(principal, provider)` index — the entity-level
-   * `@Unique(["principal", "provider"])` constraint guarantees there is
-   * at most one row per pair, so subsequent logins overwrite that single
-   * row rather than appending new ones.
+   * Persists the OAuth token row for the given Account. Performs a
+   * read-then-save against the unique `(account, provider)` index — the
+   * entity-level `@Index(["account", "provider"], { unique: true })`
+   * constraint guarantees there is at most one row per pair, so
+   * subsequent logins overwrite that single row rather than appending
+   * new ones.
    *
    * The refresh token is preserved when Google omits `refresh_token` on
    * a subsequent consent: Google only returns it the first time the user
@@ -365,20 +346,15 @@ export class GoogleAuthService {
    */
   private async persistOAuthToken(
     manager: EntityManager,
-    principal: Authenticatable,
+    account: Account,
     tokenResponse: GoogleTokenResponse,
   ): Promise<void> {
-    const oauthTokenClass = this.options.entities.oauthToken
-    if (!oauthTokenClass) {
-      return
-    }
-
-    const tokenRepo = manager.getRepository<OAuthTokenable>(oauthTokenClass)
+    const tokenRepo = manager.getRepository(OAuthToken)
     const existing = await tokenRepo.findOne({
       where: {
-        principal: { id: principal.id },
+        account: { id: account.id },
         provider: "google",
-      } as FindOptionsWhere<OAuthTokenable>,
+      },
     })
 
     const expiresAt = new Date(Date.now() + tokenResponse.expires_in * 1000)
@@ -402,13 +378,13 @@ export class GoogleAuthService {
 
     await tokenRepo.save(
       tokenRepo.create({
-        principal,
+        account,
         provider: "google",
         accessToken: tokenResponse.access_token,
         refreshToken,
         expiresAt,
         scopes,
-      } as unknown as OAuthTokenable),
+      }),
     )
   }
 }

@@ -1,18 +1,19 @@
 import { faker } from "@faker-js/faker"
 import { MailpitClient } from "@neomaventures/mailpit"
-import { DynamicModule } from "@nestjs/common"
+import { type DynamicModule } from "@nestjs/common"
 import { EventEmitter2 } from "@nestjs/event-emitter"
-import { Test, TestingModule } from "@nestjs/testing"
+import { Test, type TestingModule } from "@nestjs/testing"
 import { getRepositoryToken, TypeOrmModule } from "@nestjs/typeorm"
-import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm"
+import { type Repository } from "typeorm"
 
 import { AuthModule } from "../auth.module"
-import { AuthOptions, MailerOptions } from "../auth.options"
+import { type AuthOptions, type MailerOptions } from "../auth.options"
+import { Account } from "../entities/account.entity"
+import { OAuthToken } from "../entities/oauth-token.entity"
 import { AuthenticatedEvent } from "../events/authenticated.event"
 import { RegisteredEvent } from "../events/registered.event"
 import { InvalidMagicLinkTokenException } from "../exceptions/invalid-magic-link-token.exception"
 import { TokenFailedVerificationException } from "../exceptions/token-failed-verification.exception"
-import { Authenticatable } from "../interfaces/authenticatable.interface"
 
 import { MAGIC_LINK_AUDIENCE, MagicLinkService } from "./magic-link.service"
 import { TokenService } from "./token.service"
@@ -27,21 +28,12 @@ const welcomeBackHtml =
   '<a href="https://myapp.com/auth/verify?token={{token}}">Sign in</a>'
 const from = faker.internet.email()
 
-@Entity()
-class User implements Authenticatable {
-  @PrimaryGeneratedColumn("uuid")
-  public id!: any
-
-  @Column({ unique: true })
-  public email!: string
-}
-
-const registrations: [string, (opts: AuthOptions<User>) => DynamicModule][] = [
+const registrations: [string, (opts: AuthOptions) => DynamicModule][] = [
   ["forRoot", (opts): DynamicModule => AuthModule.forRoot(opts)],
   [
     "forRootAsync",
     (opts): DynamicModule =>
-      AuthModule.forRootAsync({ useFactory: (): AuthOptions<User> => opts }),
+      AuthModule.forRootAsync({ useFactory: (): AuthOptions => opts }),
   ],
 ]
 
@@ -67,7 +59,7 @@ registrations.forEach(([name, register]) => {
     describe("send", () => {
       let service: MagicLinkService
       let tokenService: TokenService
-      let repository: Repository<User>
+      let repository: Repository<Account>
 
       beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -75,14 +67,14 @@ registrations.forEach(([name, register]) => {
             TypeOrmModule.forRoot({
               type: "sqlite",
               database: ":memory:",
-              entities: [User],
+              entities: [Account, OAuthToken],
               synchronize: true,
             }),
-            TypeOrmModule.forFeature([User]),
+            TypeOrmModule.forFeature([Account, OAuthToken]),
             register({
               secret,
               expiresIn: "1h",
-              entities: { authenticatable: User },
+
               magicLink: { mailer: mailerOptions() },
             }),
           ],
@@ -98,7 +90,9 @@ registrations.forEach(([name, register]) => {
 
         service = module.get<MagicLinkService>(MagicLinkService)
         tokenService = module.get<TokenService>(TokenService)
-        repository = module.get<Repository<User>>(getRepositoryToken(User))
+        repository = module.get<Repository<Account>>(
+          getRepositoryToken(Account),
+        )
       })
 
       afterEach(() => {
@@ -157,7 +151,7 @@ registrations.forEach(([name, register]) => {
     describe("verify", () => {
       let service: MagicLinkService
       let tokenService: TokenService
-      let repository: Repository<User>
+      let repository: Repository<Account>
       let eventEmitter: EventEmitter2
 
       beforeEach(async () => {
@@ -166,14 +160,14 @@ registrations.forEach(([name, register]) => {
             TypeOrmModule.forRoot({
               type: "sqlite",
               database: ":memory:",
-              entities: [User],
+              entities: [Account, OAuthToken],
               synchronize: true,
             }),
-            TypeOrmModule.forFeature([User]),
+            TypeOrmModule.forFeature([Account, OAuthToken]),
             register({
               secret,
               expiresIn: "1h",
-              entities: { authenticatable: User },
+
               magicLink: { mailer: mailerOptions() },
             }),
           ],
@@ -181,7 +175,9 @@ registrations.forEach(([name, register]) => {
 
         service = module.get<MagicLinkService>(MagicLinkService)
         tokenService = module.get<TokenService>(TokenService)
-        repository = module.get<Repository<User>>(getRepositoryToken(User))
+        repository = module.get<Repository<Account>>(
+          getRepositoryToken(Account),
+        )
         eventEmitter = module.get<EventEmitter2>(EventEmitter2)
       })
 
@@ -207,9 +203,9 @@ registrations.forEach(([name, register]) => {
             { expiresIn: "15m" },
           )
 
-          const result = await service.verify<User>(token)
+          const result = await service.verify(token)
 
-          expect(result.entity).toBeInstanceOf(User)
+          expect(result.entity).toBeInstanceOf(Account)
           expect(result.entity.email).toBe(email.toLowerCase())
           expect(result.isNewUser).toBe(true)
         })
@@ -221,7 +217,7 @@ registrations.forEach(([name, register]) => {
           )
           const emitSpy = jest.spyOn(eventEmitter, "emit")
 
-          const result = await service.verify<User>(token)
+          const result = await service.verify(token)
 
           expect(emitSpy).toHaveBeenCalledWith(
             RegisteredEvent.EVENT_NAME,
@@ -236,7 +232,7 @@ registrations.forEach(([name, register]) => {
           )
           const emitSpy = jest.spyOn(eventEmitter, "emit")
 
-          await service.verify<User>(token)
+          await service.verify(token)
 
           expect(emitSpy).not.toHaveBeenCalledWith(
             AuthenticatedEvent.EVENT_NAME,
@@ -246,13 +242,16 @@ registrations.forEach(([name, register]) => {
       })
 
       describe("Given a valid token for an existing email", () => {
-        let existingUser: User
+        let existingUser: Account
 
         beforeEach(async () => {
-          existingUser = repository.create({
+          const created = repository.create({
             email: faker.internet.email().toLowerCase(),
           })
-          await repository.save(existingUser)
+          await repository.save(created)
+          // Reload so eager `oauthTokens` is hydrated as [] — matches
+          // what the service sees from its own findOne.
+          existingUser = await repository.findOneByOrFail({ id: created.id })
         })
 
         it("should return the existing entity with isNewUser: false", async () => {
@@ -261,7 +260,7 @@ registrations.forEach(([name, register]) => {
             { expiresIn: "15m" },
           )
 
-          const result = await service.verify<User>(token)
+          const result = await service.verify(token)
 
           expect(result.entity.id).toBe(existingUser.id)
           expect(result.entity.email).toBe(existingUser.email)
@@ -274,7 +273,7 @@ registrations.forEach(([name, register]) => {
             { expiresIn: "15m" },
           )
 
-          await service.verify<User>(token)
+          await service.verify(token)
 
           const users = await repository.find()
           expect(users).toHaveLength(1)
@@ -287,7 +286,7 @@ registrations.forEach(([name, register]) => {
           )
           const emitSpy = jest.spyOn(eventEmitter, "emit")
 
-          await service.verify<User>(token)
+          await service.verify(token)
 
           expect(emitSpy).toHaveBeenCalledWith(
             AuthenticatedEvent.EVENT_NAME,
@@ -302,7 +301,7 @@ registrations.forEach(([name, register]) => {
           )
           const emitSpy = jest.spyOn(eventEmitter, "emit")
 
-          await service.verify<User>(token)
+          await service.verify(token)
 
           expect(emitSpy).not.toHaveBeenCalledWith(
             RegisteredEvent.EVENT_NAME,
@@ -333,13 +332,13 @@ registrations.forEach(([name, register]) => {
               TypeOrmModule.forRoot({
                 type: "sqlite",
                 database: ":memory:",
-                entities: [User],
+                entities: [Account, OAuthToken],
                 synchronize: true,
               }),
               register({
                 secret: fakeSecret,
                 expiresIn: "1h",
-                entities: { authenticatable: User },
+
                 magicLink: { mailer: mailerOptions() },
               }),
             ],
@@ -418,7 +417,7 @@ registrations.forEach(([name, register]) => {
             { expiresIn: "15m" },
           )
 
-          const result = await service.verify<User>(token)
+          const result = await service.verify(token)
 
           expect(result.entity.email).toBe(email.toLowerCase())
         })
@@ -433,7 +432,7 @@ registrations.forEach(([name, register]) => {
             { expiresIn: "15m" },
           )
 
-          const result = await service.verify<User>(token)
+          const result = await service.verify(token)
 
           expect(result.entity.id).toBe(existingUser.id)
           expect(result.isNewUser).toBe(false)

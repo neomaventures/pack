@@ -1,12 +1,10 @@
-import { AuthModule } from "@neomaventures/auth"
+import { Account, AuthModule, OAuthToken } from "@neomaventures/auth"
 import { LoggingModule } from "@neomaventures/logging"
 import { RequestContextModule } from "@neomaventures/request-context"
 import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
 
 import { AppController } from "./app.controller"
-import { OAuthToken } from "./oauth-token.entity"
-import { User } from "./user.entity"
 
 @Module({
   imports: [
@@ -15,13 +13,13 @@ import { User } from "./user.entity"
     TypeOrmModule.forRoot({
       type: "sqlite",
       database: ":memory:",
-      entities: [User, OAuthToken],
+      entities: [Account, OAuthToken],
       synchronize: true,
     }),
+    TypeOrmModule.forFeature([Account, OAuthToken]),
     AuthModule.forRoot({
       secret: process.env.AUTH_SECRET!,
       expiresIn: "1h",
-      entities: { authenticatable: User, oauthToken: OAuthToken },
       magicLink: {
         mailer: {
           host: process.env.SMTP_HOST!,

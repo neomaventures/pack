@@ -1,4 +1,4 @@
-import { type Authenticatable } from "../interfaces/authenticatable.interface"
+import { type Account } from "../entities/account.entity"
 import { type GoogleAuthResult } from "../services/google-auth.service"
 
 declare global {
@@ -10,8 +10,8 @@ declare global {
        * This property is populated via dual-write for backward compatibility and will be
        * removed in a future major version.
        */
-      principal?: Authenticatable
-      googleAuthResult?: GoogleAuthResult<Authenticatable>
+      principal?: Account
+      googleAuthResult?: GoogleAuthResult
     }
   }
 }

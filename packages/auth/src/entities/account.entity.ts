@@ -7,7 +7,7 @@ import {
   UpdateDateColumn,
 } from "typeorm"
 
-import { type AuthenticatableProfile } from "../interfaces/authenticatable.interface"
+import { type AuthenticatableProfile } from "../types/auth-profile.type"
 import { type OAuthProvider } from "../types/oauth-provider.type"
 import { type OAuthTokenSnapshot } from "../types/oauth-token-snapshot.type"
 
