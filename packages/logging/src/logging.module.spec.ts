@@ -44,6 +44,51 @@ describe("LoggingModule", () => {
     })
   })
 
+  describe("forFeature(string[])", () => {
+    describe("Given a namespace passed as a bare string", () => {
+      it("should register a logger equivalent to { namespace: string }", async () => {
+        const logs: any[] = []
+        const namespace = `neomaventures:${faker.lorem.word()}`
+
+        const stringModule = await Test.createTestingModule({
+          imports: [
+            LoggingModule.forRoot({
+              destination: new ArrayStream(logs),
+              loggers: [{ namespace, level: "debug" }],
+            }),
+            LoggingModule.forFeature([namespace]),
+          ],
+        }).compile()
+
+        const objectModule = await Test.createTestingModule({
+          imports: [
+            LoggingModule.forRoot({
+              destination: new ArrayStream([]),
+              loggers: [{ namespace, level: "debug" }],
+            }),
+            LoggingModule.forFeature([{ namespace }]),
+          ],
+        }).compile()
+
+        const fromString = stringModule.get<Logger>(getLoggerToken(namespace))
+        const fromObject = objectModule.get<Logger>(getLoggerToken(namespace))
+
+        expect(fromString).toBeDefined()
+        expect(fromObject).toBeDefined()
+
+        fromString.debug("shorthand")
+
+        expect(logs).toEqual([
+          expect.objectContaining({
+            level: LogLevelNumber.debug,
+            ns: namespace,
+            msg: "shorthand",
+          }),
+        ])
+      })
+    })
+  })
+
   describe("global registration", () => {
     describe("Given forRoot is imported in a parent module", () => {
       it("should expose ApplicationLogger to feature modules without an explicit import", async () => {
