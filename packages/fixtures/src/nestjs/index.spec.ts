@@ -99,14 +99,12 @@ describe("callHandler", () => {
 
 describe("MockLoggerService", () => {
   const expectedMethods = [
+    "trace",
     "debug",
+    "info",
+    "warn",
     "error",
     "fatal",
-    "log",
-    "trace",
-    "verbose",
-    "warn",
-    "setLogLevels",
   ] as const
 
   it.each(expectedMethods)("should have %s as a jest.fn()", (method) => {
@@ -114,19 +112,28 @@ describe("MockLoggerService", () => {
     expect(jest.isMockFunction(logger[method])).toBe(true)
   })
 
-  it("should implement LoggerService", () => {
+  it("should implement the Logger contract", () => {
     const logger = new MockLoggerService()
-    // Core LoggerService methods exist and are callable
-    logger.log("test")
-    logger.error("test")
-    logger.warn("test")
-    logger.debug("test")
-    logger.verbose("test")
-    logger.fatal("test")
-    logger.trace("test")
-    logger.setLogLevels(["log", "error"])
 
-    expect(logger.log).toHaveBeenCalledWith("test")
-    expect(logger.setLogLevels).toHaveBeenCalledWith(["log", "error"])
+    logger.trace("entering handler", { route: "/foo" })
+    logger.debug("diagnostic", { attempt: 1 })
+    logger.info("user signed in", { userId: "abc" })
+    logger.warn("retrying", { attempt: 2 })
+    logger.error("charge failed", { err: new Error("boom") })
+    logger.fatal("process exiting")
+
+    expect(logger.trace).toHaveBeenCalledWith("entering handler", {
+      route: "/foo",
+    })
+    expect(logger.debug).toHaveBeenCalledWith("diagnostic", { attempt: 1 })
+    expect(logger.info).toHaveBeenCalledWith("user signed in", {
+      userId: "abc",
+    })
+    expect(logger.warn).toHaveBeenCalledWith("retrying", { attempt: 2 })
+    expect(logger.error).toHaveBeenCalledWith(
+      "charge failed",
+      expect.objectContaining({ err: expect.any(Error) }),
+    )
+    expect(logger.fatal).toHaveBeenCalledWith("process exiting")
   })
 })

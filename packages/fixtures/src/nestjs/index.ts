@@ -1,35 +1,30 @@
-import {
-  type CallHandler,
-  type ExecutionContext,
-  type LoggerService,
-} from "@nestjs/common"
+import { type Logger } from "@neomaventures/logging"
+import { type CallHandler, type ExecutionContext } from "@nestjs/common"
 import { of } from "rxjs"
 
 import { type MockRequest, type MockResponse, express } from "../express"
 
 /**
- * A mock service for representing the LoggerService in tests.
+ * A mock service implementing the canonical `Logger` contract from
+ * `@neomaventures/logging`.
  *
- * @property debug A jest function that mocks the debug method from LoggerService.
- * @property error A jest function that mocks the error method from LoggerService.
- * @property fatal A jest function that mocks the fatal method from LoggerService.
- * @property info A jest function that mocks the info method from @neomaventures/logging's Logger interface.
- * @property log A jest function that mocks the log method from LoggerService.
- * @property trace A jest function that mocks the trace method from LoggerService.
- * @property verbose A jest function that mocks the optional verbose method from LoggerService.
- * @property warn A jest function that mocks the warn method from LoggerService.
- * @property setLogLevels A jest function that mocks the optional setLogLevels method from LoggerService.
+ * Each method is a `jest.Mock` matching the `Logger` signature
+ * `(message: string, context?: LogContext) => void`.
+ *
+ * @property trace A jest function that mocks the trace method from Logger.
+ * @property debug A jest function that mocks the debug method from Logger.
+ * @property info A jest function that mocks the info method from Logger.
+ * @property warn A jest function that mocks the warn method from Logger.
+ * @property error A jest function that mocks the error method from Logger.
+ * @property fatal A jest function that mocks the fatal method from Logger.
  */
-export class MockLoggerService implements LoggerService {
+export class MockLoggerService implements Logger {
+  public trace = jest.fn()
   public debug = jest.fn()
+  public info = jest.fn()
+  public warn = jest.fn()
   public error = jest.fn()
   public fatal = jest.fn()
-  public info = jest.fn()
-  public log = jest.fn()
-  public trace = jest.fn()
-  public verbose = jest.fn()
-  public warn = jest.fn()
-  public setLogLevels = jest.fn()
 }
 
 /**

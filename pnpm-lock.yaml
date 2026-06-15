@@ -413,6 +413,9 @@ importers:
         specifier: ^9.0.0
         version: 9.9.0
     devDependencies:
+      '@neomaventures/logging':
+        specifier: workspace:*
+        version: link:../logging
       '@types/express':
         specifier: ^5.0.6
         version: 5.0.6
