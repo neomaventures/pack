@@ -1,5 +1,17 @@
 # **PACKAGE_NAME**
 
+## 0.0.8
+
+### Patch Changes
+
+- Updated dependencies [6f9825f]
+  - @neomaventures/logging@0.2.0
+  - @neomaventures/auth@0.6.1
+  - @neomaventures/exceptions@0.1.3
+  - @neomaventures/healthcheck@0.2.0
+  - @neomaventures/request-context@0.3.0
+  - @neomaventures/storage@0.5.1
+
 ## 0.0.7
 
 ### Patch Changes
