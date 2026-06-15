@@ -1,12 +1,12 @@
-import { type LogLevel } from "@nestjs/common"
+import { type LogLevel } from "@neomaventures/logging"
 
 /**
- * Complete mapping of NestJS log levels to their numeric equivalents.
+ * Complete mapping of pino log levels to their numeric equivalents.
  */
 export enum LogLevelNumber {
-  verbose = 10,
+  trace = 10,
   debug = 20,
-  log = 30,
+  info = 30,
   warn = 40,
   error = 50,
   fatal = 60,
@@ -19,30 +19,12 @@ export const LogMethodTests: Array<{
   method: LogLevel
   level: LogLevelNumber
 }> = [
-  {
-    method: "verbose",
-    level: LogLevelNumber.verbose,
-  },
-  {
-    method: "debug",
-    level: LogLevelNumber.debug,
-  },
-  {
-    method: "log",
-    level: LogLevelNumber.log,
-  },
-  {
-    method: "warn",
-    level: LogLevelNumber.warn,
-  },
-  {
-    method: "error",
-    level: LogLevelNumber.error,
-  },
-  {
-    method: "fatal",
-    level: LogLevelNumber.fatal,
-  },
+  { method: "trace", level: LogLevelNumber.trace },
+  { method: "debug", level: LogLevelNumber.debug },
+  { method: "info", level: LogLevelNumber.info },
+  { method: "warn", level: LogLevelNumber.warn },
+  { method: "error", level: LogLevelNumber.error },
+  { method: "fatal", level: LogLevelNumber.fatal },
 ] as const
 
 /**
@@ -51,16 +33,15 @@ export const LogMethodTests: Array<{
  *
  * @example
  * ```typescript
- * // With LoggingModule in tests
  * const stream = new ArrayStream()
  * const module = await Test.createTestingModule({
- *   imports: [LoggingModule.forRoot({ logDestination: stream })]
+ *   imports: [LoggingModule.forRoot({ destination: stream })]
  * }).compile()
  *
- * const logger = module.get(ApplicationLoggerService)
- * logger.log('test message')
+ * const logger = module.get(ApplicationLogger)
+ * logger.info('test message')
  * expect(stream.logs[0]).toMatchObject({
- *   level: LogLevelNumber.log,
+ *   level: LogLevelNumber.info,
  *   msg: 'test message'
  * })
  * ```
@@ -75,7 +56,6 @@ export class ArrayStream {
 
   /**
    * Writes a log entry to the internal array.
-   * Called by the logger when logging messages.
    *
    * @param chunk - The log object to store
    */
@@ -85,7 +65,6 @@ export class ArrayStream {
 
   /**
    * Returns a copy of all logged entries.
-   * Provides a snapshot of logged data for test assertions.
    *
    * @returns A copy of the internal log array
    */

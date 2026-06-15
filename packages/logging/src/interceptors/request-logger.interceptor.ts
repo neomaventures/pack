@@ -8,8 +8,8 @@ import {
 import { PATH_METADATA } from "@nestjs/common/constants"
 import { type Observable, tap } from "rxjs"
 
-import { type LoggingConfiguration } from "../interfaces"
-import { ApplicationLoggerService } from "../services"
+import { type LoggingModuleOptions } from "../interfaces/logging-module-options.interface"
+import { ApplicationLogger } from "../services/application-logger"
 import { LOGGING_MODULE_OPTIONS } from "../symbols"
 
 /**
@@ -20,14 +20,14 @@ export class RequestLoggerInterceptor implements NestInterceptor {
   /**
    * Creates an instance of RequestLoggerInterceptor.
    *
-   * @param config - Subset of the module's LoggingConfiguration consumed by this interceptor.
-   * @param config.logErrors - Whether to log errors that occur in route handlers (default: false).
-   * @param logger - The ApplicationLoggerService instance used for logging.
+   * @param config - Subset of the module's options consumed by this interceptor.
+   * @param config.logErrors - Whether to log errors that occur in route handlers (default: true).
+   * @param logger - The ApplicationLogger instance used for logging.
    */
   public constructor(
     @Inject(LOGGING_MODULE_OPTIONS)
-    private readonly config: Pick<LoggingConfiguration, "logErrors">,
-    private readonly logger: ApplicationLoggerService,
+    private readonly config: Pick<LoggingModuleOptions, "logErrors">,
+    private readonly logger: ApplicationLogger,
   ) {}
 
   public intercept(
@@ -65,7 +65,7 @@ export class RequestLoggerInterceptor implements NestInterceptor {
           )
         },
         error: (error) => {
-          if (this.config.logErrors) {
+          if (this.config.logErrors !== false) {
             this.logger.error(
               "Error processing an incoming request in the route handler.",
               {
