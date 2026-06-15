@@ -1,31 +1,7 @@
-import { type Logger } from "@neomaventures/logging"
 import { type CallHandler, type ExecutionContext } from "@nestjs/common"
 import { of } from "rxjs"
 
 import { type MockRequest, type MockResponse, express } from "../express"
-
-/**
- * A mock service implementing the canonical `Logger` contract from
- * `@neomaventures/logging`.
- *
- * Each method is a `jest.Mock` matching the `Logger` signature
- * `(message: string, context?: LogContext) => void`.
- *
- * @property trace A jest function that mocks the trace method from Logger.
- * @property debug A jest function that mocks the debug method from Logger.
- * @property info A jest function that mocks the info method from Logger.
- * @property warn A jest function that mocks the warn method from Logger.
- * @property error A jest function that mocks the error method from Logger.
- * @property fatal A jest function that mocks the fatal method from Logger.
- */
-export class MockLoggerService implements Logger {
-  public trace = jest.fn()
-  public debug = jest.fn()
-  public info = jest.fn()
-  public warn = jest.fn()
-  public error = jest.fn()
-  public fatal = jest.fn()
-}
 
 /**
  * Creates a CallHandler that emits the given value via an RxJS observable.

@@ -1,13 +1,14 @@
 import { faker } from "@faker-js/faker"
+import { Injectable } from "@nestjs/common"
+import { Test } from "@nestjs/testing"
+import { ArrayStream, LogLevelNumber } from "fixtures/logging"
+
 import {
   ApplicationLogger,
   InjectLogger,
   type Logger,
   LoggingModule,
 } from "@neomaventures/logging"
-import { Injectable } from "@nestjs/common"
-import { Test } from "@nestjs/testing"
-import { ArrayStream, LogLevelNumber } from "fixtures/logging"
 
 describe("@InjectLogger", () => {
   describe("Given the parameterless form @InjectLogger()", () => {

@@ -59,8 +59,8 @@ export interface MockResponse {
  * header access, and `res` is a {@link MockResponse} rather than a real one.
  *
  * `logger` is intentionally typed as `never` — loggers are no longer attached
- * to requests in the Neoma ecosystem. Use `Logger.overrideLogger(...)` with
- * {@link MockLoggerService} in tests instead.
+ * to requests in the Neoma ecosystem. Use `MockLogger` from
+ * `@neomaventures/logging/testing` in tests instead.
  */
 export type MockRequest = Pick<
   Request,

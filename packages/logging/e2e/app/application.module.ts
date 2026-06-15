@@ -1,5 +1,6 @@
-import { LoggingModule } from "@neomaventures/logging"
 import { Module } from "@nestjs/common"
+
+import { LoggingModule } from "@neomaventures/logging"
 
 import { ApplicationController } from "./application.controller"
 

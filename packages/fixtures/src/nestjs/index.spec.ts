@@ -2,7 +2,7 @@ import { lastValueFrom } from "rxjs"
 
 import { express } from "../express"
 
-import { callHandler, MockLoggerService, executionContext } from "./index"
+import { callHandler, executionContext } from "./index"
 
 describe("executionContext", () => {
   it("should return switchToHttp with req and res", () => {
@@ -94,46 +94,5 @@ describe("callHandler", () => {
     const result = await lastValueFrom(next.handle())
 
     expect(result).toEqual(expected)
-  })
-})
-
-describe("MockLoggerService", () => {
-  const expectedMethods = [
-    "trace",
-    "debug",
-    "info",
-    "warn",
-    "error",
-    "fatal",
-  ] as const
-
-  it.each(expectedMethods)("should have %s as a jest.fn()", (method) => {
-    const logger = new MockLoggerService()
-    expect(jest.isMockFunction(logger[method])).toBe(true)
-  })
-
-  it("should implement the Logger contract", () => {
-    const logger = new MockLoggerService()
-
-    logger.trace("entering handler", { route: "/foo" })
-    logger.debug("diagnostic", { attempt: 1 })
-    logger.info("user signed in", { userId: "abc" })
-    logger.warn("retrying", { attempt: 2 })
-    logger.error("charge failed", { err: new Error("boom") })
-    logger.fatal("process exiting")
-
-    expect(logger.trace).toHaveBeenCalledWith("entering handler", {
-      route: "/foo",
-    })
-    expect(logger.debug).toHaveBeenCalledWith("diagnostic", { attempt: 1 })
-    expect(logger.info).toHaveBeenCalledWith("user signed in", {
-      userId: "abc",
-    })
-    expect(logger.warn).toHaveBeenCalledWith("retrying", { attempt: 2 })
-    expect(logger.error).toHaveBeenCalledWith(
-      "charge failed",
-      expect.objectContaining({ err: expect.any(Error) }),
-    )
-    expect(logger.fatal).toHaveBeenCalledWith("process exiting")
   })
 })

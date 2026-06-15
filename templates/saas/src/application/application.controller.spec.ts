@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker"
-import { MockLoggerService } from "@neomaventures/fixtures"
 import { type HealthResult } from "@neomaventures/healthcheck"
 import { ApplicationLogger } from "@neomaventures/logging"
+import { MockLogger } from "@neomaventures/logging/testing"
 import {
   BadRequestException,
   InternalServerErrorException,
@@ -12,10 +12,10 @@ import { ApplicationController } from "./application.controller"
 
 describe("ApplicationController", () => {
   let controller: ApplicationController
-  let logger: MockLoggerService
+  let logger: MockLogger
 
   beforeEach(async () => {
-    logger = new MockLoggerService()
+    logger = new MockLogger()
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ApplicationController],

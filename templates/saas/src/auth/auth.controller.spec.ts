@@ -4,8 +4,9 @@ import {
   MagicLinkService,
   SessionService,
 } from "@neomaventures/auth"
-import { express, MockLoggerService } from "@neomaventures/fixtures"
+import { express } from "@neomaventures/fixtures"
 import { ApplicationLogger } from "@neomaventures/logging"
+import { MockLogger } from "@neomaventures/logging/testing"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { type Response } from "express"
 
@@ -17,12 +18,12 @@ const entity = { id: faker.string.uuid(), email, permissions: [] }
 
 describe("AuthController", () => {
   let controller: AuthController
-  let logger: MockLoggerService
+  let logger: MockLogger
   let magicLinkService: { send: jest.Mock; verify: jest.Mock }
   let sessionService: { create: jest.Mock; clear: jest.Mock }
 
   beforeEach(async () => {
-    logger = new MockLoggerService()
+    logger = new MockLogger()
     magicLinkService = {
       send: jest.fn().mockImplementation((submitted: string) => {
         if (submitted === email) {

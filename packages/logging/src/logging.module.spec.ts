@@ -1,12 +1,13 @@
 import { faker } from "@faker-js/faker"
+import { Test } from "@nestjs/testing"
+import { ArrayStream, LogLevelNumber } from "fixtures/logging"
+
 import {
   ApplicationLogger,
   getLoggerToken,
   type Logger,
   LoggingModule,
 } from "@neomaventures/logging"
-import { Test } from "@nestjs/testing"
-import { ArrayStream, LogLevelNumber } from "fixtures/logging"
 
 describe("LoggingModule", () => {
   describe("forRoot + forFeature — split precedence", () => {

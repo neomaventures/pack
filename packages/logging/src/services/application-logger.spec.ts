@@ -1,14 +1,15 @@
 import { faker } from "@faker-js/faker"
 import { express } from "@neomaventures/fixtures"
+import { getRequest } from "@neomaventures/request-context"
+import { Test, type TestingModule } from "@nestjs/testing"
+import { type Request } from "express"
+import { LogLevelNumber, LogMethodTests, ArrayStream } from "fixtures/logging"
+
 import {
   ApplicationLogger,
   type LoggingModuleOptions,
   LoggingModule,
 } from "@neomaventures/logging"
-import { getRequest } from "@neomaventures/request-context"
-import { Test, type TestingModule } from "@nestjs/testing"
-import { type Request } from "express"
-import { LogLevelNumber, LogMethodTests, ArrayStream } from "fixtures/logging"
 
 import { LOGGING_MODULE_OPTIONS } from "../symbols"
 

@@ -1,10 +1,7 @@
 import { faker } from "@faker-js/faker"
-import {
-  MockLoggerService,
-  executionContext,
-  express,
-} from "@neomaventures/fixtures"
+import { executionContext, express } from "@neomaventures/fixtures"
 import { ApplicationLogger } from "@neomaventures/logging"
+import { MockLogger } from "@neomaventures/logging/testing"
 import {
   type ArgumentsHost,
   BadRequestException,
@@ -46,10 +43,10 @@ const unhandledExceptions = [
 
 describe("new NeomaExceptionFilter()", () => {
   let filter: NeomaExceptionFilter
-  let logger: MockLoggerService
+  let logger: MockLogger
 
   beforeEach(async () => {
-    logger = new MockLoggerService()
+    logger = new MockLogger()
     const module = await Test.createTestingModule({
       providers: [
         NeomaExceptionFilter,

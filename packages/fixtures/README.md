@@ -87,12 +87,14 @@ ctx.getHandler() // => UserController.prototype.findAll
 ctx.getClass()   // => UserController
 ```
 
-### MockLoggerService
+### MockLogger
+
+Moved to `@neomaventures/logging/testing`. Import it from there:
 
 ```typescript
-import { MockLoggerService } from '@neomaventures/fixtures'
+import { MockLogger } from '@neomaventures/logging/testing'
 
-const logger = new MockLoggerService()
+const logger = new MockLogger()
 // Implements the `Logger` contract from `@neomaventures/logging`.
 // All six methods (trace, debug, info, warn, error, fatal) are jest.fn().
 

@@ -1,5 +1,6 @@
-import { ApplicationLogger } from "@neomaventures/logging"
 import { Controller, Get, HttpCode } from "@nestjs/common"
+
+import { ApplicationLogger } from "@neomaventures/logging"
 
 @Controller()
 export class ApplicationController {
