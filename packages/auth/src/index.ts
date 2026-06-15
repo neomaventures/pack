@@ -4,6 +4,14 @@ import "./types/express-principal"
 export * from "./auth.module"
 export * from "./auth.options"
 
+// Entities
+// `OAuthToken` is exported here as `OAuthTokenEntity` to avoid colliding
+// with the existing `@OAuthToken(provider)` parameter decorator. Slice 3
+// of #244 renames the decorator to `@ActiveOAuthToken` and re-exports
+// the entity under its canonical name.
+export { Account } from "./entities/account.entity"
+export { OAuthToken as OAuthTokenEntity } from "./entities/oauth-token.entity"
+
 // Interfaces consumers implement
 export * from "./interfaces/authenticatable.interface"
 export * from "./interfaces/oauth-authenticatable.interface"
