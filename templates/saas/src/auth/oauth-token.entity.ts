@@ -4,20 +4,11 @@ import {
   Entity,
   ManyToOne,
   PrimaryGeneratedColumn,
+  type Relation,
   Unique,
 } from "typeorm"
 
-import type { Account } from "~auth/account.entity"
-
-/**
- * Postgres uses `timestamptz` to align with the migration's
- * `TIMESTAMP WITH TIME ZONE`; SQLite (used by in-memory unit specs)
- * falls back to `datetime` since `timestamptz` is not a valid SQLite
- * column type.
- */
-const expiresAtColumnType = process.env.DATABASE_URI?.startsWith("postgres")
-  ? "timestamptz"
-  : "datetime"
+import { Account } from "~auth/account.entity"
 
 /**
  * OAuth token persisted by `@neomaventures/auth` whenever a third-party
@@ -46,8 +37,8 @@ export class OAuthToken implements OAuthTokenable {
    * The principal that owns this token row. Backed by the `principalId`
    * FK column (TypeORM-derived).
    */
-  @ManyToOne("Account", { onDelete: "CASCADE" })
-  public principal!: Account
+  @ManyToOne(() => Account, { onDelete: "CASCADE" })
+  public principal!: Relation<Account>
 
   /** OAuth provider — e.g. `"google"`. */
   @Column()
@@ -65,12 +56,8 @@ export class OAuthToken implements OAuthTokenable {
   @Column({ type: "text", nullable: true })
   public refreshToken!: string | null
 
-  /**
-   * Absolute expiry of the access token. Stored as a timezone-aware
-   * timestamp in Postgres; downgraded to plain `datetime` in SQLite for
-   * unit specs that exercise the entity against the in-memory driver.
-   */
-  @Column({ type: expiresAtColumnType })
+  /** Absolute expiry of the access token. */
+  @Column()
   public expiresAt!: Date
 
   /** OAuth scopes granted by the user at consent time. */

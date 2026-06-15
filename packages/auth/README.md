@@ -498,7 +498,7 @@ export class OAuthToken implements OAuthTokenable {
   @Column({ type: "text", nullable: true })
   public refreshToken!: string | null
 
-  @Column({ type: "timestamptz" })
+  @Column()
   public expiresAt!: Date
 
   @Column("simple-array")
@@ -507,6 +507,8 @@ export class OAuthToken implements OAuthTokenable {
 ```
 
 The auth package does not ship migrations — create the `oauth_token` table (with the `principalId` FK and a unique index on `(principalId, provider)`) yourself.
+
+Tokens' `expiresAt` is stored without timezone info (`timestamp without time zone` on Postgres). This template assumes the application runs in UTC. JavaScript `Date` comparisons (`expiresAt < new Date()`) are timezone-safe because Dates are UTC internally.
 
 The upsert and the principal write run inside a single `DataSource.transaction()`, so the principal row and the token row stay consistent — either both commit or both roll back. Events emit only after the transaction returns successfully. On subsequent logins where Google omits `refresh_token` (which it does after the first consent), the existing refresh token is preserved.
 
