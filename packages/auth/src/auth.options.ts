@@ -2,6 +2,7 @@ import { type HttpException } from "@nestjs/common"
 import type * as jwt from "jsonwebtoken"
 
 import { type Authenticatable } from "./interfaces/authenticatable.interface"
+import { type OAuthTokenable } from "./interfaces/oauth-tokenable.interface"
 
 export const AUTH_OPTIONS = Symbol("AUTH_OPTIONS")
 
@@ -112,17 +113,59 @@ export interface GoogleAuthOptions {
 }
 
 /**
+ * The set of entity classes auth needs repository handles for. Always
+ * includes the principal under `authenticatable`; when `googleAuth` is
+ * configured the OAuth-token entity is required under `oauthToken` so
+ * that {@link GoogleAuthService} can persist tokens from the code
+ * exchange.
+ *
+ * @typeParam T - The principal class implementing Authenticatable
+ * @typeParam U - The OAuth-token class implementing OAuthTokenable
+ *
+ * @example Magic link only — no token entity needed
+ * ```typescript
+ * entities: { authenticatable: User }
+ * ```
+ *
+ * @example Google OAuth — token entity is required
+ * ```typescript
+ * entities: { authenticatable: User, oauthToken: OAuthToken }
+ * ```
+ */
+export interface AuthEntities<
+  T extends Authenticatable = Authenticatable,
+  U extends OAuthTokenable = OAuthTokenable,
+> {
+  /**
+   * The entity class used for registration, authentication, and
+   * principal lookup.
+   */
+  authenticatable: new () => T
+  /**
+   * The entity class used to persist OAuth tokens captured during
+   * third-party sign-in. Required when `googleAuth` is configured.
+   */
+  oauthToken?: new () => U
+}
+
+/**
  * Base configuration options shared by all auth strategies.
  *
- * @typeParam T - The entity class implementing Authenticatable
+ * @typeParam T - The principal class implementing Authenticatable
+ * @typeParam U - The OAuth-token class implementing OAuthTokenable
  */
-interface AuthBaseOptions<T extends Authenticatable = Authenticatable> {
+interface AuthBaseOptions<
+  T extends Authenticatable = Authenticatable,
+  U extends OAuthTokenable = OAuthTokenable,
+> {
   /** Secret key used to sign and verify JWTs */
   secret: string
   /** Token expiration time (e.g., "1h", "7d", or seconds as number) */
   expiresIn: jwt.SignOptions["expiresIn"]
-  /** The entity class used for registration, authentication, and principal lookup */
-  entity: new () => T
+  /**
+   * Entity classes auth resolves at runtime. See {@link AuthEntities}.
+   */
+  entities: AuthEntities<T, U>
   /** Session cookie configuration */
   cookie?: CookieOptions
   /**
@@ -137,25 +180,21 @@ interface AuthBaseOptions<T extends Authenticatable = Authenticatable> {
 /**
  * Configuration options for the authentication module.
  *
- * At least one authentication strategy (`magicLink` or `googleAuth`) must be provided.
+ * At least one authentication strategy (`magicLink` or `googleAuth`)
+ * must be provided. When `googleAuth` is configured, `entities.oauthToken`
+ * is also required so tokens captured during the code exchange can be
+ * persisted.
  *
- * @typeParam T - The entity class implementing Authenticatable
+ * @typeParam T - The principal class implementing Authenticatable
+ * @typeParam U - The OAuth-token class implementing OAuthTokenable
  *
  * @example Magic link only
  * ```typescript
  * AuthModule.forRoot({
  *   secret: process.env.JWT_SECRET,
- *   expiresIn: '1h',
- *   entity: User,
- *   magicLink: {
- *     mailer: {
- *       host: 'smtp.example.com',
- *       port: 587,
- *       from: 'noreply@example.com',
- *       welcome: { subject: 'Welcome', html: '...' },
- *       welcomeBack: { subject: 'Welcome back', html: '...' },
- *     },
- *   },
+ *   expiresIn: "1h",
+ *   entities: { authenticatable: User },
+ *   magicLink: { mailer: { ... } },
  * })
  * ```
  *
@@ -163,20 +202,26 @@ interface AuthBaseOptions<T extends Authenticatable = Authenticatable> {
  * ```typescript
  * AuthModule.forRoot({
  *   secret: process.env.JWT_SECRET,
- *   expiresIn: '1h',
- *   entity: User,
+ *   expiresIn: "1h",
+ *   entities: { authenticatable: User, oauthToken: OAuthToken },
  *   magicLink: { mailer: { ... } },
  *   googleAuth: {
  *     clientId: process.env.GOOGLE_CLIENT_ID,
  *     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
- *     redirectUri: 'https://myapp.com/auth/google/callback',
+ *     redirectUri: "https://myapp.com/auth/google/callback",
  *   },
  * })
  * ```
  */
-export type AuthOptions<T extends Authenticatable = Authenticatable> =
-  AuthBaseOptions<T> &
-    (
-      | { magicLink: MagicLinkOptions; googleAuth?: GoogleAuthOptions }
-      | { magicLink?: MagicLinkOptions; googleAuth: GoogleAuthOptions }
-    )
+export type AuthOptions<
+  T extends Authenticatable = Authenticatable,
+  U extends OAuthTokenable = OAuthTokenable,
+> = AuthBaseOptions<T, U> &
+  (
+    | { magicLink: MagicLinkOptions; googleAuth?: never }
+    | {
+        magicLink?: MagicLinkOptions
+        googleAuth: GoogleAuthOptions
+        entities: AuthEntities<T, U> & { oauthToken: new () => U }
+      }
+  )

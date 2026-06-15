@@ -108,7 +108,7 @@ import { User } from "./user.entity"
     AuthModule.forRoot({
       secret: process.env.JWT_SECRET,
       expiresIn: "1h",
-      entity: User,
+      entities: { authenticatable: User },
       magicLink: {
         mailer: {
           host: process.env.SMTP_HOST,
@@ -161,7 +161,7 @@ import { User } from "./user.entity"
       useFactory: (config: ConfigService) => ({
         secret: config.getOrThrow("JWT_SECRET"),
         expiresIn: "1h",
-        entity: User,
+        entities: { authenticatable: User },
         magicLink: {
           mailer: {
             host: config.getOrThrow("SMTP_HOST"),
@@ -195,7 +195,7 @@ export class AppModule {}
 AuthModule.forRoot({
   secret: process.env.JWT_SECRET,
   expiresIn: "1h",
-  entity: User,
+  entities: { authenticatable: User, oauthToken: OAuthToken },
   googleAuth: {
     clientId: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -210,7 +210,7 @@ AuthModule.forRoot({
 AuthModule.forRoot({
   secret: process.env.JWT_SECRET,
   expiresIn: "1h",
-  entity: User,
+  entities: { authenticatable: User, oauthToken: OAuthToken },
   magicLink: {
     mailer: {
       host: process.env.SMTP_HOST,
@@ -439,6 +439,115 @@ export class GoogleAuthController {
 ```
 
 The `@GoogleCallback()` decorator applies the `GoogleCallbackInterceptor`, which extracts the `code` query parameter, exchanges it with Google, and attaches the `GoogleAuthResult` to the request. The `@GetGoogleAuthResult()` parameter decorator then extracts it for use in your handler.
+
+### Persisting OAuth tokens
+
+`GoogleAuthService.authenticate()` captures the full token response from Google — `access_token`, `refresh_token`, `expires_in`, `scope` — and persists it as a row in a dedicated `oauth_token` table. Tokens are upserted on the `(principal, provider)` pair: a re-login replaces the existing row in place rather than appending.
+
+To opt in:
+
+1. Declare an entity that implements `OAuthTokenable` with a `@ManyToOne` navigation to your principal entity. TypeORM derives the `principalId` FK column from the property name.
+2. Add the inverse `@OneToMany` navigation on the principal entity and mark it `eager: true` so `OAuthTokenService` and `@OAuthToken()` resolve without an explicit join.
+3. Pass both classes under `entities` in `AuthModule.forRoot(...)`.
+
+```typescript
+import {
+  Authenticatable,
+  OAuthAuthenticatable,
+  OAuthTokenable,
+} from "@neomaventures/auth"
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  Unique,
+} from "typeorm"
+
+@Entity()
+export class User implements OAuthAuthenticatable {
+  @PrimaryGeneratedColumn("uuid")
+  public id!: string
+
+  @Column({ unique: true })
+  public email!: string
+
+  @OneToMany(() => OAuthToken, (t) => t.principal, {
+    eager: true,
+    cascade: false,
+  })
+  public oauthTokens?: OAuthToken[]
+}
+
+@Entity()
+@Unique(["principal", "provider"])
+export class OAuthToken implements OAuthTokenable {
+  @PrimaryGeneratedColumn("uuid")
+  public id!: string
+
+  @ManyToOne(() => User)
+  public principal!: User
+
+  @Column()
+  public provider!: string
+
+  @Column()
+  public accessToken!: string
+
+  @Column({ type: "text", nullable: true })
+  public refreshToken!: string | null
+
+  @Column()
+  public expiresAt!: Date
+
+  @Column("simple-array")
+  public scopes!: string[]
+}
+```
+
+The auth package does not ship migrations — create the `oauth_token` table (with the `principalId` FK and a unique index on `(principalId, provider)`) yourself.
+
+Tokens' `expiresAt` is stored without timezone info (`timestamp without time zone` on Postgres). This template assumes the application runs in UTC. JavaScript `Date` comparisons (`expiresAt < new Date()`) are timezone-safe because Dates are UTC internally.
+
+The upsert and the principal write run inside a single `DataSource.transaction()`, so the principal row and the token row stay consistent — either both commit or both roll back. Events emit only after the transaction returns successfully. On subsequent logins where Google omits `refresh_token` (which it does after the first consent), the existing refresh token is preserved.
+
+Read the active token for the current principal via `OAuthTokenService` or the `@OAuthToken(provider)` parameter decorator:
+
+```typescript
+import {
+  Authenticated,
+  OAuthToken,
+  OAuthTokenSnapshot,
+  OAuthTokenService,
+} from "@neomaventures/auth"
+import { Controller, Get, Injectable } from "@nestjs/common"
+
+@Controller("inbox")
+@Authenticated()
+export class InboxController {
+  @Get("count")
+  public count(
+    @OAuthToken("google") token: OAuthTokenSnapshot | null,
+  ): { count: number } {
+    if (!token) return { count: 0 }
+    return { count: callGmailWith(token.accessToken) }
+  }
+}
+
+@Injectable()
+export class GmailService {
+  public constructor(private readonly oauthTokens: OAuthTokenService) {}
+
+  public list(): unknown {
+    const token = this.oauthTokens.getActiveToken("google")
+    if (!token) throw new Error("Google token not available")
+    return callGmailWith(token.accessToken)
+  }
+}
+```
+
+The snapshot includes `accessToken`, `expiresAt`, and `scopes`. It deliberately omits `refreshToken` — refresh is an internal concern of the auth package (see #171). When the stored token has `expiresAt <= now`, the service and decorator both return `null`; automatic refresh-on-expiry is not yet implemented.
 
 ## Example Requests
 

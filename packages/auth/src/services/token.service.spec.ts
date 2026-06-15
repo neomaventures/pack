@@ -49,7 +49,7 @@ registrations.forEach(([name, register]) => {
           register({
             secret,
             expiresIn,
-            entity: User,
+            entities: { authenticatable: User },
             magicLink: { mailer: {} as MailerOptions },
           }),
         ],

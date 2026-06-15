@@ -14,7 +14,7 @@ import { CookieAuthenticationMiddleware } from "./middlewares/cookie-authenticat
  * AuthModule.forRoot({
  *   secret: process.env.JWT_SECRET,
  *   expiresIn: '1h',
- *   entity: User,
+ *   entities: { authenticatable: User },
  *   magicLink: { mailer: { ... } },
  * })
  * ```
@@ -26,7 +26,7 @@ import { CookieAuthenticationMiddleware } from "./middlewares/cookie-authenticat
  *   useFactory: (config: ConfigService) => ({
  *     secret: config.get('JWT_SECRET'),
  *     expiresIn: '1h',
- *     entity: User,
+ *     entities: { authenticatable: User },
  *     magicLink: { mailer: { ... } },
  *   }),
  *   inject: [ConfigService],

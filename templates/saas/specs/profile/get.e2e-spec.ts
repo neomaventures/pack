@@ -48,6 +48,7 @@ describe("GET /profile", () => {
         {
           npmPackageName,
           npmPackageVersion,
+          connectedAccounts: [],
         },
         { filename: join(process.cwd(), "views", "profile.ejs") },
       )

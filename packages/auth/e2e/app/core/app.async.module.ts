@@ -4,6 +4,7 @@ import { RequestContextModule } from "@neomaventures/request-context"
 import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
 
+import { OAuthToken } from "../oauth-token.entity"
 import { User } from "../user.entity"
 
 import { GoogleAuthController } from "./google-auth.controller"
@@ -20,14 +21,14 @@ import { AdminController, ProtectedController } from "./protected.controller"
     TypeOrmModule.forRoot({
       type: "sqlite",
       database: ":memory:",
-      entities: [User],
+      entities: [User, OAuthToken],
       synchronize: true,
     }),
     AuthModule.forRootAsync({
-      useFactory: (): AuthOptions<User> => ({
+      useFactory: (): AuthOptions<User, OAuthToken> => ({
         secret: process.env.AUTH_SECRET!,
         expiresIn: "1h",
-        entity: User,
+        entities: { authenticatable: User, oauthToken: OAuthToken },
         magicLink: {
           mailer: {
             host: process.env.SMTP_HOST!,

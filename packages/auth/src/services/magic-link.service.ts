@@ -83,7 +83,9 @@ export class MagicLinkService {
       { expiresIn: "15m" },
     )
 
-    const repo = this.datasource.getRepository(this.options.entity)
+    const repo = this.datasource.getRepository(
+      this.options.entities.authenticatable,
+    )
     const exists = await repo.exists({
       where: {
         email: email.toLowerCase(),
@@ -139,7 +141,9 @@ export class MagicLinkService {
     }
 
     const email = (payload.email as string).toLowerCase()
-    const repo = this.datasource.getRepository<T>(this.options.entity)
+    const repo = this.datasource.getRepository<T>(
+      this.options.entities.authenticatable,
+    )
 
     const existing = await repo.findOne({
       where: { email } as FindOptionsWhere<T>,

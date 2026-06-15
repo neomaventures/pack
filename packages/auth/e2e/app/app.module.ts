@@ -5,6 +5,7 @@ import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
 
 import { AppController } from "./app.controller"
+import { OAuthToken } from "./oauth-token.entity"
 import { User } from "./user.entity"
 
 @Module({
@@ -14,13 +15,13 @@ import { User } from "./user.entity"
     TypeOrmModule.forRoot({
       type: "sqlite",
       database: ":memory:",
-      entities: [User],
+      entities: [User, OAuthToken],
       synchronize: true,
     }),
     AuthModule.forRoot({
       secret: process.env.AUTH_SECRET!,
       expiresIn: "1h",
-      entity: User,
+      entities: { authenticatable: User, oauthToken: OAuthToken },
       magicLink: {
         mailer: {
           host: process.env.SMTP_HOST!,

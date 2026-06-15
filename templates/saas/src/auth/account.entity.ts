@@ -1,22 +1,26 @@
 import {
-  type Authenticatable,
   type AuthenticatableProfile,
+  type OAuthAuthenticatable,
 } from "@neomaventures/auth"
 import {
   Column,
   Entity,
   JoinColumn,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from "typeorm"
 
+import { OAuthToken } from "~auth/oauth-token.entity"
 import { Upload } from "~auth/upload.entity"
 
 /**
  * Represents an authenticated account in the application.
  *
- * Implements {@link Authenticatable} so that `@neomaventures/auth` can
- * resolve, create, and authorise accounts via magic-link or OAuth flows.
+ * Implements {@link OAuthAuthenticatable} so that `@neomaventures/auth`
+ * can resolve, create, and authorise accounts via magic-link or OAuth
+ * flows and read the eagerly-loaded `oauthTokens` relation through the
+ * `OAuthTokenService` and `@OAuthToken()` decorator.
  *
  * @example
  * ```typescript
@@ -25,7 +29,7 @@ import { Upload } from "~auth/upload.entity"
  * ```
  */
 @Entity()
-export class Account implements Authenticatable {
+export class Account implements OAuthAuthenticatable {
   /** UUID primary key, auto-generated on insert. */
   @PrimaryGeneratedColumn("uuid")
   public id!: string
@@ -46,6 +50,18 @@ export class Account implements Authenticatable {
   /** Optional provider-specific profile data (e.g. Google OAuth claims). */
   @Column("simple-json", { nullable: true })
   public authProfile?: AuthenticatableProfile
+
+  /**
+   * Persisted OAuth tokens captured during third-party sign-in.
+   * Eagerly loaded so that `OAuthTokenService.getActiveToken()` and the
+   * `@OAuthToken()` parameter decorator can resolve from the principal
+   * without an extra query.
+   */
+  @OneToMany(() => OAuthToken, (token) => token.principal, {
+    eager: true,
+    cascade: false,
+  })
+  public oauthTokens?: OAuthToken[]
 
   /**
    * The account holder's avatar image, or `null` when no avatar has been

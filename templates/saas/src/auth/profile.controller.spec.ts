@@ -3,6 +3,7 @@ import { express } from "@neomaventures/fixtures"
 
 import { type Account } from "~auth/account.entity"
 import { type AccountService } from "~auth/account.service"
+import { type OAuthToken } from "~auth/oauth-token.entity"
 import { ProfileController } from "~auth/profile.controller"
 import { type Upload } from "~auth/upload.entity"
 
@@ -18,9 +19,66 @@ describe("ProfileController", () => {
   })
 
   describe("index()", () => {
-    describe("Given an authenticated principal", () => {
-      it("should render the profile template", () => {
-        expect(controller.index()).toEqual({})
+    describe("Given an authenticated principal with no oauthTokens", () => {
+      it("should return an empty connectedAccounts list", () => {
+        const account = {
+          id: faker.string.uuid(),
+          email: faker.internet.email(),
+        } as Account
+
+        expect(controller.index(account)).toEqual({ connectedAccounts: [] })
+      })
+    })
+
+    describe("Given an authenticated principal with an active Google token", () => {
+      it("should return a connectedAccounts entry with active: true and no access/refresh tokens", () => {
+        const expiresAt = new Date(Date.now() + 3600 * 1000)
+        const scopes = ["openid", "email", "profile"]
+        const account = {
+          id: faker.string.uuid(),
+          email: faker.internet.email(),
+          oauthTokens: [
+            {
+              provider: "google",
+              accessToken: faker.string.alphanumeric(40),
+              refreshToken: faker.string.alphanumeric(40),
+              expiresAt,
+              scopes,
+            } as OAuthToken,
+          ],
+        } as Account
+
+        const result = controller.index(account)
+
+        expect(result.connectedAccounts).toEqual([
+          { provider: "google", scopes, expiresAt, active: true },
+        ])
+        expect(result.connectedAccounts[0]).not.toHaveProperty("accessToken")
+        expect(result.connectedAccounts[0]).not.toHaveProperty("refreshToken")
+      })
+    })
+
+    describe("Given an authenticated principal with an expired Google token", () => {
+      it("should return a connectedAccounts entry with active: false", () => {
+        const expiresAt = new Date(Date.now() - 60 * 1000)
+        const account = {
+          id: faker.string.uuid(),
+          email: faker.internet.email(),
+          oauthTokens: [
+            {
+              provider: "google",
+              accessToken: faker.string.alphanumeric(40),
+              refreshToken: null,
+              expiresAt,
+              scopes: ["openid", "email"],
+            } as OAuthToken,
+          ],
+        } as Account
+
+        const result = controller.index(account)
+
+        expect(result.connectedAccounts).toHaveLength(1)
+        expect(result.connectedAccounts[0].active).toBe(false)
       })
     })
   })

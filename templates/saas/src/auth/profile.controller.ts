@@ -35,7 +35,7 @@ import { Upload } from "~auth/upload.entity"
  * to an unauthenticated caller.
  *
  * `@Principal()` is typed as {@link Account} here because the auth module
- * is configured with `entity: Account` (see `ApplicationModule`), so the
+ * is configured with `entities.authenticatable: Account` (see `ApplicationModule`), so the
  * principal slot always carries the loaded account row — including the
  * eagerly-joined `avatar` relation.
  */
@@ -46,14 +46,34 @@ export class ProfileController {
   /**
    * Renders the profile page for the authenticated user.
    *
-   * @returns An empty view model; the template reads the avatar via the
-   *   `GET /profile/avatar` endpoint rather than receiving it inline.
+   * Avatar bytes are loaded by the page itself via `GET /profile/avatar`
+   * rather than threaded through the view model. Connected third-party
+   * accounts are passed inline as a sanitised view of
+   * `account.oauthTokens` — `accessToken` and `refreshToken` are
+   * deliberately omitted so they never reach the rendered HTML.
+   *
+   * @param account - The authenticated account, injected via `@Principal()`.
+   * @returns A view model with the connected-accounts list.
    */
   @Get("profile")
   @Authenticated()
   @Render("profile")
-  public index(): Record<string, never> {
-    return {}
+  public index(@Principal() account: Account): {
+    connectedAccounts: Array<{
+      provider: string
+      scopes: string[]
+      expiresAt: Date
+      active: boolean
+    }>
+  } {
+    const now = Date.now()
+    const connectedAccounts = (account.oauthTokens ?? []).map((token) => ({
+      provider: token.provider,
+      scopes: token.scopes,
+      expiresAt: token.expiresAt,
+      active: new Date(token.expiresAt).getTime() > now,
+    }))
+    return { connectedAccounts }
   }
 
   /**

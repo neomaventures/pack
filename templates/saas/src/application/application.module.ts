@@ -19,6 +19,7 @@ import { ApplicationController } from "~application/application.controller"
 import { ViewLocalsMiddleware } from "~application/view-locals.middleware"
 import { Account } from "~auth/account.entity"
 import { SaasAuthModule } from "~auth/auth.module"
+import { OAuthToken } from "~auth/oauth-token.entity"
 import { Upload } from "~auth/upload.entity"
 import { DashboardModule } from "~dashboard/dashboard.module"
 import { DatabaseModule } from "~database/database.module"
@@ -83,7 +84,7 @@ interface AppConfig {
       useFactory: (config: TypedConfig<AppConfig>) => ({
         secret: config.jwtSecret,
         expiresIn: "7d",
-        entity: Account,
+        entities: { authenticatable: Account, oauthToken: OAuthToken },
         onUnauthenticated: "/auth/register",
         cookie: {
           secure: config.appUrl.startsWith("https"),

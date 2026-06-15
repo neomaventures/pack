@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common"
 import { EventEmitter2 } from "@nestjs/event-emitter"
 import * as jwt from "jsonwebtoken"
-import { DataSource, FindOptionsWhere } from "typeorm"
+import { DataSource, EntityManager, FindOptionsWhere } from "typeorm"
 
 import { AUTH_OPTIONS, AuthOptions, GoogleAuthOptions } from "../auth.options"
 import { AuthenticatedEvent } from "../events/authenticated.event"
@@ -15,6 +15,7 @@ import {
   Authenticatable,
   AuthenticatableProfile,
 } from "../interfaces/authenticatable.interface"
+import { type OAuthTokenable } from "../interfaces/oauth-tokenable.interface"
 
 /**
  * Provider-specific profile data returned from Google OAuth.
@@ -43,14 +44,42 @@ export interface GoogleAuthResult<T extends Authenticatable> {
 }
 
 /**
+ * Shape of a successful response from Google's token endpoint. The
+ * fields `access_token`, `expires_in`, `id_token`, and `scope` are
+ * required by the OAuth 2.0 spec on a 200 response — we validate them
+ * up front rather than treating absence as silently optional. The
+ * `refresh_token` is only present on first consent.
+ */
+interface GoogleTokenResponse {
+  id_token: string
+  access_token: string
+  refresh_token?: string
+  expires_in: number
+  scope?: string
+}
+
+/**
  * Exchanges a Google authorization code for a verified user entity.
  *
- * Follows the same find-or-create-by-email pattern as MagicLinkService.verify():
- * 1. Exchanges the code with Google's token endpoint
- * 2. Decodes the ID token to extract user info
- * 3. Finds an existing user by email or creates a new one
- * 4. Optionally writes Google profile data to the entity
- * 5. Emits registration or authentication events
+ * The {@link authenticate} method is intentionally orchestration-only —
+ * it delegates each step to a small private helper:
+ *
+ * 1. {@link exchangeCodeForTokens} — POSTs to Google's token endpoint
+ *    and validates the response shape (presence of `access_token`,
+ *    `expires_in`, etc.).
+ * 2. {@link decodeIdToken} — JWT-decodes the ID token and validates
+ *    the `email`, `email_verified`, and `sub` claims.
+ * 3. {@link findOrCreateEntity} — looks up the principal by email or
+ *    creates a new one, writing Google profile data when the entity
+ *    exposes an `authProfile` column. Runs inside the transaction.
+ * 4. {@link persistOAuthToken} — upserts the `(principal, provider)`
+ *    OAuth token row, preserving `refreshToken` when Google omits it.
+ *    Runs inside the same transaction.
+ *
+ * Steps 3 and 4 run inside a single `DataSource.transaction()` so the
+ * principal row and the OAuth-token row stay consistent — either both
+ * persist or both roll back. Registration / authentication events fire
+ * only after the transaction commits.
  *
  * @example
  * ```typescript
@@ -101,6 +130,58 @@ export class GoogleAuthService {
   }
 
   /**
+   * Exchanges a Google authorization code for user credentials and finds or
+   * creates the corresponding entity.
+   *
+   * @param code - The authorization code from Google's OAuth redirect
+   * @returns Object containing the entity, isNewUser flag, and Google profile
+   * @throws {GoogleCodeExchangeException} If Google's token endpoint returns a non-OK HTTP response
+   * @throws {GoogleServiceException} If Google's token endpoint returns a 5xx server error
+   * @throws {GoogleNetworkException} If the fetch call itself fails (network error, DNS, timeout)
+   * @throws {GoogleTokenException} If the token response is missing required fields (`access_token`, `expires_in`, `id_token`) or the ID token is missing/has no `email` or `sub` claim
+   * @throws {EmailNotVerifiedException} If the ID token has `email_verified` explicitly set to false
+   * @throws {Error} If googleAuth is not configured
+   *
+   * @example
+   * ```typescript
+   * const { entity, isNewUser, profile } = await googleAuthService.authenticate<User>(code)
+   * ```
+   *
+   * @fires auth.registered - when a new user is created
+   * @fires auth.authenticated - when an existing user is authenticated
+   */
+  public async authenticate<T extends Authenticatable>(
+    code: string,
+  ): Promise<GoogleAuthResult<T>> {
+    const googleAuth = this.getGoogleAuth()
+
+    const tokenResponse = await this.exchangeCodeForTokens(code, googleAuth)
+    const { email, profile } = this.decodeIdToken(tokenResponse.id_token)
+
+    const { entity, isNewUser } = await this.datasource.transaction(
+      async (manager: EntityManager) => {
+        const found = await this.findOrCreateEntity<T>(manager, email, profile)
+        await this.persistOAuthToken(manager, found.entity, tokenResponse)
+        return found
+      },
+    )
+
+    if (isNewUser) {
+      this.eventEmitter.emit(
+        RegisteredEvent.EVENT_NAME,
+        new RegisteredEvent(entity, "google"),
+      )
+    } else {
+      this.eventEmitter.emit(
+        AuthenticatedEvent.EVENT_NAME,
+        new AuthenticatedEvent(entity, "google"),
+      )
+    }
+
+    return { entity, isNewUser, profile }
+  }
+
+  /**
    * Returns the Google OAuth options, throwing if not configured.
    *
    * @returns The Google OAuth configuration
@@ -117,31 +198,22 @@ export class GoogleAuthService {
   }
 
   /**
-   * Exchanges a Google authorization code for user credentials and finds or
-   * creates the corresponding entity.
+   * POSTs the authorization code to Google's token endpoint and validates
+   * the response. The OAuth 2.0 spec requires `access_token` on a 200
+   * response and Google always returns `expires_in`; absence of either
+   * is treated as a malformed response. `refresh_token` is optional —
+   * Google omits it on subsequent consents.
    *
-   * @param code - The authorization code from Google's OAuth redirect
-   * @returns Object containing the entity, isNewUser flag, and Google profile
-   * @throws {GoogleCodeExchangeException} If Google's token endpoint returns a non-OK HTTP response
-   * @throws {GoogleServiceException} If Google's token endpoint returns a 5xx server error
-   * @throws {GoogleNetworkException} If the fetch call itself fails (network error, DNS, timeout)
-   * @throws {GoogleTokenException} If the ID token is missing, has no email claim, or has no sub claim
-   * @throws {EmailNotVerifiedException} If the ID token has email_verified explicitly set to false
-   * @throws {Error} If googleAuth is not configured
-   *
-   * @example
-   * ```typescript
-   * const { entity, isNewUser, profile } = await googleAuthService.authenticate<User>(code)
-   * ```
-   *
-   * @fires auth.registered - when a new user is created
-   * @fires auth.authenticated - when an existing user is authenticated
+   * @throws {GoogleNetworkException} On fetch failure (DNS, TCP, timeout)
+   * @throws {GoogleServiceException} On 5xx responses from Google
+   * @throws {GoogleCodeExchangeException} On 4xx responses from Google
+   * @throws {GoogleTokenException} When the response is 200 but missing
+   *   `access_token`, `expires_in`, or `id_token`
    */
-  public async authenticate<T extends Authenticatable>(
+  private async exchangeCodeForTokens(
     code: string,
-  ): Promise<GoogleAuthResult<T>> {
-    const googleAuth = this.getGoogleAuth()
-
+    googleAuth: GoogleAuthOptions,
+  ): Promise<GoogleTokenResponse> {
     const tokenEndpoint =
       googleAuth.tokenEndpoint ?? GoogleAuthService.DEFAULT_TOKEN_ENDPOINT
 
@@ -179,13 +251,40 @@ export class GoogleAuthService {
       throw new GoogleCodeExchangeException(description)
     }
 
-    const tokenData = (await response.json()) as { id_token: string }
-    // The ID token is received directly from Google's token endpoint over HTTPS
-    // in a server-to-server exchange (not from a client). Signature verification
-    // is unnecessary in the auth code flow — the token's authenticity is ensured
-    // by the TLS connection and the client_secret used in the exchange.
-    // See: https://developers.google.com/identity/openid-connect/openid-connect#obtainuserinfo
-    const decoded = jwt.decode(tokenData.id_token) as Record<string, any> | null
+    const data = (await response.json()) as Partial<GoogleTokenResponse>
+
+    if (!data.id_token) {
+      throw new GoogleTokenException("missing id_token in token response")
+    }
+    if (!data.access_token) {
+      throw new GoogleTokenException("missing access_token in token response")
+    }
+    if (typeof data.expires_in !== "number") {
+      throw new GoogleTokenException("missing expires_in in token response")
+    }
+
+    return data as GoogleTokenResponse
+  }
+
+  /**
+   * Decodes the Google ID token and validates the claims this package
+   * relies on. The ID token is received directly from Google's token
+   * endpoint over HTTPS in a server-to-server exchange (not from a
+   * client), so signature verification is unnecessary — authenticity
+   * is guaranteed by TLS and the `client_secret` used in the exchange.
+   *
+   * See: https://developers.google.com/identity/openid-connect/openid-connect#obtainuserinfo
+   *
+   * @throws {GoogleTokenException} If the token is missing the `email`
+   *   or `sub` claim
+   * @throws {EmailNotVerifiedException} If `email_verified` is explicitly
+   *   `false`
+   */
+  private decodeIdToken(idToken: string): {
+    email: string
+    profile: GoogleProfile
+  } {
+    const decoded = jwt.decode(idToken) as Record<string, any> | null
 
     const email = decoded?.email as string | undefined
     if (!email) {
@@ -200,48 +299,116 @@ export class GoogleAuthService {
     if (!sub) {
       throw new GoogleTokenException("missing sub in ID token")
     }
+
     const name = decoded?.name as string | undefined
     const picture = decoded?.picture as string | undefined
-    const profile: GoogleProfile = { sub, name, picture }
 
+    return { email, profile: { sub, name, picture } }
+  }
+
+  /**
+   * Finds the principal by email (case-insensitive) or creates a new
+   * row. When the entity exposes an `authProfile` column, merges the
+   * Google profile data into it. Runs inside the supplied transactional
+   * `EntityManager`.
+   */
+  private async findOrCreateEntity<T extends Authenticatable>(
+    manager: EntityManager,
+    email: string,
+    profile: GoogleProfile,
+  ): Promise<{ entity: T; isNewUser: boolean }> {
     const normalizedEmail = email.toLowerCase()
-    const repo = this.datasource.getRepository<T>(this.options.entity)
+    const authenticatableClass = this.options.entities.authenticatable
+    const principalRepo = manager.getRepository<T>(authenticatableClass)
 
-    const existing = await repo.findOne({
+    const existing = await principalRepo.findOne({
       where: { email: normalizedEmail } as FindOptionsWhere<T>,
     })
 
     if (existing) {
       if ("authProfile" in existing) {
-        const entityProfile =
-          (existing.authProfile as AuthenticatableProfile) ?? {}
-        ;(existing as any).authProfile = {
-          ...entityProfile,
-          google: { sub, name, picture },
+        const withProfile = existing as T & {
+          authProfile?: AuthenticatableProfile
         }
-        await repo.save(existing)
+        withProfile.authProfile = {
+          ...(withProfile.authProfile ?? {}),
+          google: profile,
+        }
+        await principalRepo.save(existing)
       }
-
-      this.eventEmitter.emit(
-        AuthenticatedEvent.EVENT_NAME,
-        new AuthenticatedEvent(existing, "google"),
-      )
-      return { entity: existing, isNewUser: false, profile }
+      return { entity: existing, isNewUser: false }
     }
 
-    const toSave = repo.create({ email: normalizedEmail } as T)
+    const created = principalRepo.create({ email: normalizedEmail } as T)
+    if ("authProfile" in created) {
+      ;(created as T & { authProfile?: AuthenticatableProfile }).authProfile = {
+        google: profile,
+      }
+    }
+    const saved = await principalRepo.save(created)
+    return { entity: saved, isNewUser: true }
+  }
 
-    if ("authProfile" in toSave) {
-      ;(toSave as any).authProfile = { google: { sub, name, picture } }
+  /**
+   * Persists the OAuth token row for the given principal, when an
+   * `oauthToken` entity is configured. Performs a read-then-save against
+   * the unique `(principal, provider)` index — the entity-level
+   * `@Unique(["principal", "provider"])` constraint guarantees there is
+   * at most one row per pair, so subsequent logins overwrite that single
+   * row rather than appending new ones.
+   *
+   * The refresh token is preserved when Google omits `refresh_token` on
+   * a subsequent consent: Google only returns it the first time the user
+   * grants access, and dropping it would force a re-consent flow.
+   *
+   * Runs inside the supplied transactional `EntityManager`.
+   */
+  private async persistOAuthToken(
+    manager: EntityManager,
+    principal: Authenticatable,
+    tokenResponse: GoogleTokenResponse,
+  ): Promise<void> {
+    const oauthTokenClass = this.options.entities.oauthToken
+    if (!oauthTokenClass) {
+      return
     }
 
-    const saved = await repo.save(toSave)
+    const tokenRepo = manager.getRepository<OAuthTokenable>(oauthTokenClass)
+    const existing = await tokenRepo.findOne({
+      where: {
+        principal: { id: principal.id },
+        provider: "google",
+      } as FindOptionsWhere<OAuthTokenable>,
+    })
 
-    this.eventEmitter.emit(
-      RegisteredEvent.EVENT_NAME,
-      new RegisteredEvent(saved, "google"),
+    const expiresAt = new Date(Date.now() + tokenResponse.expires_in * 1000)
+    const scopes = tokenResponse.scope ? tokenResponse.scope.split(" ") : []
+    // Preserve the existing refresh token when Google omits it on a
+    // subsequent consent — Google only returns refresh_token on the
+    // first consent.
+    const refreshToken =
+      tokenResponse.refresh_token ?? existing?.refreshToken ?? null
+
+    if (existing) {
+      await tokenRepo.save({
+        ...existing,
+        accessToken: tokenResponse.access_token,
+        refreshToken,
+        expiresAt,
+        scopes,
+      })
+      return
+    }
+
+    await tokenRepo.save(
+      tokenRepo.create({
+        principal,
+        provider: "google",
+        accessToken: tokenResponse.access_token,
+        refreshToken,
+        expiresAt,
+        scopes,
+      } as unknown as OAuthTokenable),
     )
-
-    return { entity: saved, isNewUser: true, profile }
   }
 }
