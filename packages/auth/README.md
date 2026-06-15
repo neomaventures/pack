@@ -40,6 +40,24 @@ npm install @neomaventures/auth
 npm install @nestjs/common @nestjs/core @nestjs/platform-express @nestjs/event-emitter @nestjs/typeorm rxjs reflect-metadata class-validator typeorm
 ```
 
+## Concrete entities (replaces interfaces — #244)
+
+> **Status: in progress.** This section is a placeholder. The final API ships
+> concrete `Account` and `OAuthToken` entity classes from
+> `@neomaventures/auth`, and the `Authenticatable` / `OAuthAuthenticatable` /
+> `OAuthTokenable` interfaces are removed.
+>
+> TODO — written as part of #244:
+>
+> - Replace the "Create your User entity" section below with a direct
+>   `TypeOrmModule.forFeature([Account, OAuthToken])` example.
+> - Document the `@ActiveOAuthToken("google")` decorator that replaces
+>   `@OAuthToken(provider)`.
+> - Add a "Customization via composition" section showing how to attach
+>   custom fields via an FK-linked `Profile` entity.
+> - Remove all references to the dropped interfaces, the `entities` config
+>   slot, generics on `AuthOptions`, and `OAuthTokenService`.
+
 ## Getting Started
 
 ### 1. Create your User entity
