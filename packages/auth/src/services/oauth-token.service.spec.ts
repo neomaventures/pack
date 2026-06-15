@@ -134,15 +134,17 @@ describe("OAuthTokenService", () => {
     })
 
     describe("Given a principal with an active token is in context", () => {
-      it("should return the same snapshot as getActiveTokenFor", () => {
+      it("should return the snapshot for the requested provider", () => {
         const stored = buildToken()
         const principal = buildPrincipal([stored])
 
         cls.run(() => {
           setPrincipal(principal)
-          expect(service.getActiveToken("google")).toEqual(
-            service.getActiveTokenFor(principal, "google"),
-          )
+          expect(service.getActiveToken("google")).toEqual({
+            accessToken: stored.accessToken,
+            expiresAt: stored.expiresAt,
+            scopes: stored.scopes,
+          })
         })
       })
     })

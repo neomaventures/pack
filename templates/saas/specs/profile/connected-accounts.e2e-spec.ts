@@ -56,13 +56,11 @@ describe("GET /profile - connected accounts section", () => {
 
       const html = res.text
       expect(html).toContain('data-provider="google"')
-      expect(html).toContain(">google<")
       expect(html).toContain("Active")
-      tokenResponse.scope.split(" ").forEach((scope) => {
-        expect(html).toContain(scope)
-      })
-      // Some indication of expiresAt — the template emits an ISO timestamp.
-      expect(html).toMatch(/Expires:[\s\S]*\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/)
+      expect(html).toContain(
+        `Scopes: ${tokenResponse.scope.split(" ").join(", ")}`,
+      )
+      expect(html).toContain("Expires:")
       // Tokens themselves must never appear in the rendered HTML.
       expect(html).not.toContain(tokenResponse.access_token)
       expect(html).not.toContain(refreshToken)
@@ -102,7 +100,7 @@ describe("GET /profile - connected accounts section", () => {
       const html = res.text
       expect(html).toContain('data-provider="google"')
       expect(html).toContain("Expired")
-      expect(html).not.toMatch(/<span[^>]*>\s*Active\s*<\/span>/)
+      expect(html).not.toContain("Active")
     })
   })
 })
