@@ -8,22 +8,18 @@ import {
   type LoggingModuleOptions,
 } from "./interfaces/logging-module-options.interface"
 import { ApplicationLogger } from "./services/application-logger"
-import { LoggerFactory } from "./services/logger-factory"
+import { createLogger } from "./services/create-logger"
 import { LOGGING_MODULE_OPTIONS } from "./symbols"
 import { getLoggerToken } from "./tokens"
 
-const APP_LOGGER_PROVIDER: Provider = {
-  provide: ApplicationLogger,
-  useFactory: (factory: LoggerFactory) => factory.createApplicationLogger(),
-  inject: [LoggerFactory],
-}
-
 const PROVIDERS: Provider[] = [
-  LoggerFactory,
-  APP_LOGGER_PROVIDER,
+  ApplicationLogger,
   { provide: APP_INTERCEPTOR, useClass: RequestLoggerInterceptor },
 ]
-const EXPORTS = [ApplicationLogger, LoggerFactory]
+// `LOGGING_MODULE_OPTIONS` is exported so `forFeature` providers can resolve
+// it without re-registering. It remains internal to consumers — only the
+// per-namespace logger token is meant to be injected.
+const EXPORTS = [ApplicationLogger, LOGGING_MODULE_OPTIONS]
 
 /**
  * NestJS module providing structured logging.
@@ -38,9 +34,9 @@ const EXPORTS = [ApplicationLogger, LoggerFactory]
 export class LoggingModule {
   /**
    * Register the logging root for the application. Call **once** in the
-   * application's root module. Provides {@link ApplicationLogger},
-   * {@link LoggerFactory}, the `RequestLoggerInterceptor`, and the internal
-   * `LOGGING_MODULE_OPTIONS` token. Module is global.
+   * application's root module. Provides {@link ApplicationLogger}, the
+   * `RequestLoggerInterceptor`, and the internal `LOGGING_MODULE_OPTIONS`
+   * token. Module is global.
    *
    * @param options - App-wide configuration. Omit for defaults (`info` level,
    *   stdout destination, no overrides).
@@ -104,9 +100,9 @@ export class LoggingModule {
   /**
    * Register one or more namespaced loggers for a feature module or package.
    *
-   * Each entry produces a non-global provider keyed by
-   * `getLoggerToken(namespace)`, exported from the returned dynamic module so
-   * the module's own providers can inject it via `@InjectLogger(namespace)`.
+   * Each entry produces a non-global provider keyed by the internal logger
+   * token for that namespace, exported from the returned dynamic module so the
+   * module's own providers can inject it via `@InjectLogger(namespace)`.
    *
    * Accepts the shorthand `string` form — equivalent to
    * `{ namespace: '<string>' }` with no level (package default applies; floor
@@ -133,7 +129,6 @@ export class LoggingModule {
    * ```
    *
    * @see InjectLogger — to inject the registered logger.
-   * @see getLoggerToken — the token used under the hood.
    */
   public static forFeature(
     configs: ReadonlyArray<LoggerConfig | string>,
@@ -145,8 +140,8 @@ export class LoggingModule {
       module: LoggingModule,
       providers: normalised.map((cfg) => ({
         provide: getLoggerToken(cfg.namespace),
-        useFactory: (factory: LoggerFactory) => factory.create(cfg),
-        inject: [LoggerFactory],
+        useFactory: (opts: LoggingModuleOptions) => createLogger(opts, cfg),
+        inject: [LOGGING_MODULE_OPTIONS],
       })),
       exports: normalised.map((cfg) => getLoggerToken(cfg.namespace)),
     }

@@ -14,8 +14,7 @@ import { getLoggerToken } from "../tokens"
  *
  * - `@InjectLogger(namespace)` — injects the namespaced {@link Logger}
  *   registered by `LoggingModule.forFeature([{ namespace }])` in the same
- *   module (or one of its imports). Equivalent to
- *   `@Inject(getLoggerToken(namespace))`.
+ *   module (or one of its imports).
  *
  * @param namespace - Optional namespace; omit for {@link ApplicationLogger}.
  * @returns A `ParameterDecorator` for a constructor parameter.
@@ -42,7 +41,6 @@ import { getLoggerToken } from "../tokens"
  *   supplied but no `forFeature` entry has registered it in scope.
  *
  * @see LoggingModule.forFeature
- * @see getLoggerToken
  */
 export const InjectLogger = (namespace?: string): ParameterDecorator =>
   Inject(namespace ? getLoggerToken(namespace) : ApplicationLogger)

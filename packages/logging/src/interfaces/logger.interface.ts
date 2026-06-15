@@ -46,13 +46,13 @@ export type LogContext = {
 
 /**
  * Structured logger contract implemented by both `ApplicationLogger` and the
- * per-namespace loggers produced by `LoggerFactory.create`.
+ * per-namespace loggers registered via `LoggingModule.forFeature`.
  *
  * Each level method writes a single structured entry. Calls below the
  * resolved level for this logger are no-ops (pino enforces this at the child
  * level).
  *
- * @see LoggerFactory.create — to obtain a namespaced `Logger`.
+ * @see LoggingModule.forFeature — to register a namespaced `Logger`.
  * @see ApplicationLogger — for the app-wide instance.
  */
 export interface Logger {

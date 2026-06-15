@@ -1,5 +1,5 @@
 import { getRequest } from "@neomaventures/request-context"
-import { Injectable } from "@nestjs/common"
+import { Inject, Injectable } from "@nestjs/common"
 import pino from "pino"
 
 import {
@@ -7,25 +7,27 @@ import {
   type Logger,
   type LogLevel,
 } from "../interfaces/logger.interface"
+import { type LoggingModuleOptions } from "../interfaces/logging-module-options.interface"
+import { LOGGING_MODULE_OPTIONS } from "../symbols"
+
+import { getPinoRoot } from "./create-logger"
+
+const APP_DEFAULT: LogLevel = "info"
 
 /**
  * App-wide default logger. The class itself doubles as its DI token —
  * `@Inject(ApplicationLogger)` (or `@InjectLogger()`) resolves an instance.
  *
- * Built by {@link LoggerFactory.createApplicationLogger} — consumers do not
- * construct this directly.
- *
  * - Bound to `LoggingModuleOptions.defaultLevel` (default `'info'`) with no
  *   namespace.
  * - Shares a single underlying pino root with every namespaced logger
- *   produced by {@link LoggerFactory.create}.
+ *   produced by {@link createLogger}.
  * - Retains the **static delegate** pattern: `ApplicationLogger.info(...)`,
  *   `ApplicationLogger.error(...)`, etc., write through the most recently
  *   constructed instance. Static calls before the module boots are no-ops.
  *   Provided for code paths that cannot use DI (bootstrap, top-level scripts).
  *
  * @see Logger — the instance method contract.
- * @see LoggerFactory.createApplicationLogger — the factory entrypoint.
  *
  * @example
  * ```ts
@@ -40,11 +42,19 @@ import {
 export class ApplicationLogger implements Logger {
   private static instance: ApplicationLogger | null = null
 
+  private readonly pino: pino.Logger
+
   /**
-   * @param pino - The pino child logger built by
-   *   {@link LoggerFactory.createApplicationLogger}.
+   * @param options - The resolved root options, injected from the internal
+   *   `LOGGING_MODULE_OPTIONS` token. The `defaultLevel` field controls the
+   *   level of the app-wide logger (`'info'` if omitted).
    */
-  public constructor(private readonly pino: pino.Logger) {
+  public constructor(
+    @Inject(LOGGING_MODULE_OPTIONS)
+    options: LoggingModuleOptions = {},
+  ) {
+    const level = options.defaultLevel ?? APP_DEFAULT
+    this.pino = getPinoRoot(options).child({}, { level })
     ApplicationLogger.instance = this
   }
 
@@ -128,6 +138,26 @@ export class ApplicationLogger implements Logger {
   ): void {
     const request = getRequest()
     const reqField = request ? { req: request } : {}
-    this.pino[level]({ ...context, ...reqField }, message)
+    const payload = { ...context, ...reqField }
+    switch (level) {
+      case "trace":
+        this.pino.trace(payload, message)
+        return
+      case "debug":
+        this.pino.debug(payload, message)
+        return
+      case "info":
+        this.pino.info(payload, message)
+        return
+      case "warn":
+        this.pino.warn(payload, message)
+        return
+      case "error":
+        this.pino.error(payload, message)
+        return
+      case "fatal":
+        this.pino.fatal(payload, message)
+        return
+    }
   }
 }

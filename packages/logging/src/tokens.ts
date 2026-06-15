@@ -1,5 +1,8 @@
 /**
- * Build the DI token used to register and inject a namespaced logger.
+ * Build the internal DI token used to register and inject a namespaced
+ * logger. Consumers should use `@InjectLogger(namespace)` rather than reaching
+ * for the token directly — this helper is not exported from the package
+ * barrel.
  *
  * Returns a **string** (not a symbol) deliberately: symbols are reference-
  * equal only within a single module realm. Two packages calling
@@ -13,13 +16,7 @@
  * @param namespace - The logger's globally-unique namespace.
  * @returns The DI token, of the form `NEOMA_LOGGER:<namespace>`.
  *
- * @example
- * ```ts
- * @Inject(getLoggerToken("neomaventures:auth"))
- * private readonly logger: Logger
- * ```
- *
- * @see InjectLogger — the sugar around this token.
+ * @internal
  */
 export const getLoggerToken = (namespace: string): string =>
   `NEOMA_LOGGER:${namespace}`

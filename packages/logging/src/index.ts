@@ -15,8 +15,6 @@ export {
 
 // Services
 export { ApplicationLogger } from "./services/application-logger"
-export { LoggerFactory } from "./services/logger-factory"
 
 // DI helpers
-export { getLoggerToken } from "./tokens"
 export { InjectLogger } from "./decorators/inject-logger.decorator"
