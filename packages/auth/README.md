@@ -1,27 +1,40 @@
 # @neomaventures/auth
 
-Passwordless authentication for NestJS applications. Auth provides magic link authentication, Google OAuth, JWT session management, cookie-based sessions, and route protection out of the box.
+Passwordless authentication for NestJS applications. Auth ships concrete
+`Account` and `OAuthToken` entities and provides magic-link authentication,
+Google OAuth, JWT session management, cookie-based sessions, and route
+protection out of the box.
 
 ## Why Passwordless?
 
-Password authentication requires secure hashing, strength validation, reset flows, and breach checking. Magic links and Google OAuth eliminate all of this complexity. The email IS the verification - simpler for developers, fewer security footguns.
+Password authentication requires secure hashing, strength validation,
+reset flows, and breach checking. Magic links and Google OAuth eliminate
+all of this complexity. The email IS the verification — simpler for
+developers, fewer security footguns.
 
 ## Features
 
+- Concrete `Account` and `OAuthToken` entities — register them with
+  TypeORM and you're done. No interfaces to implement, no generics to
+  thread through.
 - Magic link authentication (send & verify)
 - Google OAuth auth code flow with account linking by verified email
-- JWT session tokens with HS256 algorithm enforcement and audience validation
-- Cookie-based sessions (httpOnly, secure, sameSite) with configurable options
+- JWT session tokens with HS256 algorithm enforcement and audience
+  validation
+- Cookie-based sessions (httpOnly, secure, sameSite) with configurable
+  options
 - Dual transport: Bearer token and cookie authentication middlewares
 - Route protection with guards and decorators
-- Permission-based authorization with wildcard support (`@RequiresPermission`, `@RequiresAnyPermission`)
+- Permission-based authorization with wildcard support
+  (`@RequiresPermission`, `@RequiresAnyPermission`)
 - Webhook signature verification (Svix-standard HMAC-SHA256)
 - Email normalization (case-insensitive)
 - Event emission for registration and authentication
 
 ## Installation
 
-`@neomaventures/*` packages publish privately to GitHub Packages. Configure `.npmrc` to resolve the `@neoma` scope first:
+`@neomaventures/*` packages publish privately to GitHub Packages. Configure
+`.npmrc` to resolve the `@neomaventures` scope first:
 
 ```
 @neomaventures:registry=https://npm.pkg.github.com
@@ -37,96 +50,50 @@ npm install @neomaventures/auth
 ### Peer Dependencies
 
 ```bash
-npm install @nestjs/common @nestjs/core @nestjs/platform-express @nestjs/event-emitter @nestjs/typeorm rxjs reflect-metadata class-validator typeorm
+npm install @nestjs/common @nestjs/core @nestjs/platform-express \
+  @nestjs/event-emitter @nestjs/typeorm rxjs reflect-metadata \
+  class-validator typeorm
 ```
-
-## Concrete entities (replaces interfaces — #244)
-
-> **Status: in progress.** This section is a placeholder. The final API ships
-> concrete `Account` and `OAuthToken` entity classes from
-> `@neomaventures/auth`, and the `Authenticatable` / `OAuthAuthenticatable` /
-> `OAuthTokenable` interfaces are removed.
->
-> TODO — written as part of #244:
->
-> - Replace the "Create your User entity" section below with a direct
->   `TypeOrmModule.forFeature([Account, OAuthToken])` example.
-> - Document the `@ActiveOAuthToken("google")` decorator that replaces
->   `@OAuthToken(provider)`.
-> - Add a "Customization via composition" section showing how to attach
->   custom fields via an FK-linked `Profile` entity.
-> - Remove all references to the dropped interfaces, the `entities` config
->   slot, generics on `AuthOptions`, and `OAuthTokenService`.
 
 ## Getting Started
 
-### 1. Create your User entity
+### 1. Register the entities with TypeORM
 
-Your user entity must implement the `Authenticatable` interface:
-
-```typescript
-import { Authenticatable } from "@neomaventures/auth"
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
-
-@Entity()
-export class User implements Authenticatable {
-  @PrimaryGeneratedColumn("uuid")
-  public id: string
-
-  @Column({ unique: true })
-  public email: string
-
-  @Column("simple-array", { default: "" })
-  public permissions: string[]
-}
-```
-
-If you are using Google OAuth and want to store provider profile data (e.g., Google `sub`, `name`, `picture`), add the optional `authProfile` column:
+Auth ships its own `Account` and `OAuthToken` classes. Register them in
+your application module alongside any other entities:
 
 ```typescript
-import { Authenticatable, AuthenticatableProfile } from "@neomaventures/auth"
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
-
-@Entity()
-export class User implements Authenticatable {
-  @PrimaryGeneratedColumn("uuid")
-  public id: string
-
-  @Column({ unique: true })
-  public email: string
-
-  @Column("simple-array", { default: "" })
-  public permissions: string[]
-
-  @Column("simple-json", { nullable: true })
-  public authProfile?: AuthenticatableProfile
-}
-```
-
-### 2. Configure AuthModule
-
-Import and configure `AuthModule` in your application module. You can use `forRoot` with a static options object, or `forRootAsync` to resolve configuration via the NestJS DI container.
-
-#### Static configuration
-
-```typescript
-import { AuthModule } from "@neomaventures/auth"
+import { Account, OAuthToken } from "@neomaventures/auth"
 import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
-
-import { User } from "./user.entity"
 
 @Module({
   imports: [
     TypeOrmModule.forRoot({
       type: "postgres",
       // ... your database config
-      entities: [User],
+      entities: [Account, OAuthToken /* , YourOtherEntities */],
     }),
+    TypeOrmModule.forFeature([Account, OAuthToken]),
+  ],
+})
+export class AppModule {}
+```
+
+Generate migrations against `Account` and `OAuthToken` the same way you do
+for any TypeORM entity — auth does not ship migrations.
+
+### 2. Configure `AuthModule`
+
+```typescript
+import { AuthModule } from "@neomaventures/auth"
+import { Module } from "@nestjs/common"
+
+@Module({
+  imports: [
     AuthModule.forRoot({
       secret: process.env.JWT_SECRET,
       expiresIn: "1h",
-      entities: { authenticatable: User },
       magicLink: {
         mailer: {
           host: process.env.SMTP_HOST,
@@ -147,11 +114,10 @@ import { User } from "./user.entity"
         },
       },
       cookie: {
-        name: "auth.sid",  // default
-        secure: true,       // default
-        sameSite: "lax",    // default
-        path: "/",          // default
-        // domain: ".yourapp.com",  // optional
+        name: "auth.sid", // default
+        secure: true, // default
+        sameSite: "lax", // default
+        path: "/", // default
       },
     }),
   ],
@@ -159,115 +125,63 @@ import { User } from "./user.entity"
 export class AppModule {}
 ```
 
-#### Async configuration
-
-Use `forRootAsync` when you need to inject a config service or resolve options at runtime:
+Use `forRootAsync` when you need to inject a config service:
 
 ```typescript
-import { AuthModule } from "@neomaventures/auth"
-import { Module } from "@nestjs/common"
-import { ConfigModule, ConfigService } from "@nestjs/config"
-import { TypeOrmModule } from "@nestjs/typeorm"
-
-import { User } from "./user.entity"
-
-@Module({
-  imports: [
-    TypeOrmModule.forRoot({ /* ... */ }),
-    AuthModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (config: ConfigService) => ({
-        secret: config.getOrThrow("JWT_SECRET"),
-        expiresIn: "1h",
-        entities: { authenticatable: User },
-        magicLink: {
-          mailer: {
-            host: config.getOrThrow("SMTP_HOST"),
-            port: config.getOrThrow<number>("SMTP_PORT"),
-            from: "auth@yourapp.com",
-            welcome: {
-              subject: "Welcome to YourApp",
-              html: '<a href="https://yourapp.com/auth/verify?token={{token}}">Sign up</a>',
-            },
-            welcomeBack: {
-              subject: "Sign in to YourApp",
-              html: '<a href="https://yourapp.com/auth/verify?token={{token}}">Sign in</a>',
-            },
-            auth: {
-              user: config.getOrThrow("SMTP_USER"),
-              pass: config.getOrThrow("SMTP_PASS"),
-            },
-          },
-        },
-      }),
-      inject: [ConfigService],
-    }),
-  ],
-})
-export class AppModule {}
-```
-
-#### Google OAuth only
-
-```typescript
-AuthModule.forRoot({
-  secret: process.env.JWT_SECRET,
-  expiresIn: "1h",
-  entities: { authenticatable: User, oauthToken: OAuthToken },
-  googleAuth: {
-    clientId: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    redirectUri: "https://yourapp.com/auth/google/callback",
-  },
-})
-```
-
-#### Both magic link and Google OAuth
-
-```typescript
-AuthModule.forRoot({
-  secret: process.env.JWT_SECRET,
-  expiresIn: "1h",
-  entities: { authenticatable: User, oauthToken: OAuthToken },
-  magicLink: {
-    mailer: {
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT),
-      from: "auth@yourapp.com",
-      welcome: {
-        subject: "Welcome to YourApp",
-        html: '<a href="https://yourapp.com/auth/verify?token={{token}}">Sign up</a>',
-      },
-      welcomeBack: {
-        subject: "Sign in to YourApp",
-        html: '<a href="https://yourapp.com/auth/verify?token={{token}}">Sign in</a>',
-      },
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+AuthModule.forRootAsync({
+  imports: [ConfigModule],
+  useFactory: (config: ConfigService) => ({
+    secret: config.getOrThrow("JWT_SECRET"),
+    expiresIn: "1h",
+    magicLink: {
+      mailer: {
+        /* ... */
       },
     },
-  },
+  }),
+  inject: [ConfigService],
+})
+```
+
+`AuthOptions` is not generic — `Account` is concrete, so no `<User>` type
+parameter is threaded through. The `entities` slot is gone — auth owns
+its schema.
+
+#### Google OAuth
+
+```typescript
+AuthModule.forRoot({
+  secret: process.env.JWT_SECRET,
+  expiresIn: "1h",
   googleAuth: {
     clientId: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     redirectUri: "https://yourapp.com/auth/google/callback",
+  },
+  magicLink: {
+    /* ... */
   },
 })
 ```
 
 ### 3. Enable validation
 
-Auth exports `EmailDto` with `class-validator` decorators. For validation to work, enable `ValidationPipe` in your application.
-
-See the [NestJS Validation documentation](https://docs.nestjs.com/techniques/validation) for setup instructions.
+Auth exports `EmailDto` with `class-validator` decorators. For validation
+to work, enable `ValidationPipe` in your application. See the
+[NestJS Validation documentation](https://docs.nestjs.com/techniques/validation)
+for setup instructions.
 
 ### 4. Create authentication endpoints
 
 Use the provided services to build your authentication endpoints:
 
 ```typescript
-import { EmailDto, MagicLinkService, SessionService } from "@neomaventures/auth"
+import {
+  Account,
+  EmailDto,
+  MagicLinkService,
+  SessionService,
+} from "@neomaventures/auth"
 import {
   Body,
   Controller,
@@ -279,8 +193,6 @@ import {
   Res,
 } from "@nestjs/common"
 import { Response } from "express"
-
-import { User } from "./user.entity"
 
 @Controller("auth")
 export class AuthController {
@@ -299,52 +211,60 @@ export class AuthController {
   public async verify(
     @Query("token") token: string,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<{ token: string; user: User; isNewUser: boolean }> {
-    const { entity, isNewUser } = await this.magicLinkService.verify<User>(token)
+  ): Promise<{ token: string; account: Account; isNewUser: boolean }> {
+    const { entity, isNewUser } = await this.magicLinkService.verify(token)
     const { token: sessionToken } = this.sessionService.create(res, entity)
-    return { token: sessionToken, user: entity, isNewUser }
+    return { token: sessionToken, account: entity, isNewUser }
   }
 }
 ```
 
-`SessionService.create()` issues a session JWT and sets it as an httpOnly cookie on the response. The cookie's `Max-Age` is automatically aligned with the JWT's expiry.
+`SessionService.create()` issues a session JWT and sets it as an httpOnly
+cookie on the response. The cookie's `Max-Age` is automatically aligned
+with the JWT's expiry.
 
 ### 5. Protect routes
 
-Use the `@Authenticated()` decorator and `@Principal()` decorator to protect routes:
+Use the `@Authenticated()` decorator and `@Principal()` decorator to
+protect routes. `@Principal()` returns a concrete `Account`.
 
 ```typescript
-import { Authenticated, Principal } from "@neomaventures/auth"
+import { Account, Authenticated, Principal } from "@neomaventures/auth"
 import { Controller, Get } from "@nestjs/common"
-
-import { User } from "./user.entity"
 
 @Controller("me")
 @Authenticated()
 export class ProfileController {
   @Get()
-  public get(@Principal() user: User): { id: string; email: string } {
+  public get(@Principal() account: Account): {
+    id: string
+    email: string
+  } {
     return {
-      id: user.id,
-      email: user.email,
+      id: account.id,
+      email: account.email,
     }
   }
 }
 ```
 
-`AuthModule` automatically applies `BearerAuthenticationMiddleware` and `CookieAuthenticationMiddleware` to all routes. They extract the JWT from the `Authorization: Bearer <token>` header or the `auth.sid` cookie respectively, and attach the authenticated user to `req.principal`. Bearer takes priority when both are present.
+`AuthModule` automatically applies `BearerAuthenticationMiddleware` and
+`CookieAuthenticationMiddleware` to all routes. They extract the JWT from
+the `Authorization: Bearer <token>` header or the `auth.sid` cookie
+respectively, and attach the authenticated account. Bearer takes priority
+when both are present.
 
 #### Choosing an unauthenticated strategy
 
-Different route types want different responses when the caller is anonymous. `@Authenticated()` accepts an `onUnauthenticated` option that takes either a redirect URL or an `HttpException` class:
+Different route types want different responses when the caller is
+anonymous. `@Authenticated()` accepts an `onUnauthenticated` option that
+takes either a redirect URL or an `HttpException` class:
 
-| Route type | Pass | Result |
-|------------|------|--------|
-| API endpoint | _(omit)_ | `UnauthorizedException` (401) |
-| Page route | `"/auth/magic-link"` | `UnauthorizedRedirectException` (401) with `redirect: { url, status: 303 }` in the body |
-| Asset endpoint (e.g. avatar image) | `NotFoundException` | 404, indistinguishable from "no such route" |
-
-By default, the redirect strategy responds with `401` and a self-describing body — `{ statusCode, message, redirect: { url, status } }` — so consumers without a redirect-aware exception filter can still observe the intended target (handy for tests and JSON clients). The `message` is resource-aware (`Unauthenticated, access to resource <request-url> denied. Redirecting to login.`) so server logs and the body carry context about which resource was denied. To turn it into an actual HTTP redirect, install a filter that calls `getRedirect()` on the exception, or use [`@neomaventures/exceptions`](https://www.npmjs.com/package/@neomaventures/exceptions), which ships one out of the box.
+| Route type   | Pass                              | Result                                                                              |
+| ------------ | --------------------------------- | ----------------------------------------------------------------------------------- |
+| API endpoint | _(omit)_                          | `UnauthorizedException` (401)                                                       |
+| Page route   | `"/auth/magic-link"`              | `UnauthorizedRedirectException` (401) with `redirect: { url, status: 303 }` in body |
+| Asset route  | `NotFoundException`               | 404, indistinguishable from "no such route"                                         |
 
 ```typescript
 import { Authenticated } from "@neomaventures/auth"
@@ -357,79 +277,199 @@ export class RoutesController {
   @Authenticated()
   public me(): unknown {}
 
-  // 401 with redirect body — pair with a filter (or @neomaventures/exceptions) for an actual 303
+  // 401 with redirect body — pair with a filter (or @neomaventures/exceptions)
+  // for an actual 303
   @Get("dashboard")
   @Authenticated({ onUnauthenticated: "/auth/magic-link" })
   public dashboard(): unknown {}
 
   // 404 — right for asset endpoints behind a per-user session
-  // (401 leaks resource existence; 303 to a login page makes <img> render a broken icon)
+  // (401 leaks resource existence; 303 to a login page makes <img>
+  // render a broken icon)
   @Get("users/:id/avatar")
   @Authenticated({ onUnauthenticated: NotFoundException })
   public avatar(): unknown {}
 }
 ```
 
-#### Behaviour note: exception class constructors
-
-Class strategies passed to `onUnauthenticated` are instantiated as `new strategy(message)` with a single string message argument. Pass classes whose constructor is `(message?: string | Record<string, any>)` — required extra arguments will throw at request time.
-
-Safe choices include all standard Nest 4xx exceptions: `UnauthorizedException`, `ForbiddenException`, `NotFoundException`, `BadRequestException`, `ConflictException`, `GoneException`, `UnprocessableEntityException`, etc. Custom exceptions are fine too, provided their constructor follows the same single-optional-message shape.
-
-#### Module-level default
-
-Set `onUnauthenticated` on `AuthModule.forRoot()` to pick the default strategy for the whole app. Per-route values override the module default; the built-in `UnauthorizedException` (401) applies when neither is set.
+Set `onUnauthenticated` on `AuthModule.forRoot()` to pick the default for
+the whole app. Per-route values override the module default; the
+built-in `UnauthorizedException` (401) applies when neither is set.
 
 ```typescript
 AuthModule.forRoot({
   // ...other options
-  onUnauthenticated: "/auth/magic-link",  // page-style default for the whole app
+  onUnauthenticated: "/auth/magic-link",
 })
 ```
 
-#### Migration from the previous API
+## Customization via composition
 
-`Authenticated` used to be a guard class instantiated with `new`. It is now a decorator factory — drop `@UseGuards()` and call it directly.
+`Account` is deliberately minimal. When your application needs more
+fields than auth ships — a display name, an avatar, a subscription tier,
+a Stripe customer id — attach them via a separate consumer-owned entity
+linked to `Account` by foreign key.
 
 ```typescript
-// Before
-@UseGuards(Authenticated)
-@UseGuards(new Authenticated("/auth/magic-link"))
-// (no previous equivalent — class strategies are new)
+import { Account } from "@neomaventures/auth"
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from "typeorm"
 
-// After
-@Authenticated()
-@Authenticated({ onUnauthenticated: "/auth/magic-link" })
-@Authenticated({ onUnauthenticated: NotFoundException })
+import { Upload } from "./upload.entity"
+
+@Entity()
+export class Profile {
+  @PrimaryGeneratedColumn("uuid")
+  public id!: string
+
+  @OneToOne(() => Account)
+  @JoinColumn()
+  public account!: Account
+
+  @Column({ type: "varchar", nullable: true })
+  public displayName!: string | null
+
+  @OneToOne(() => Upload, { eager: true, nullable: true })
+  @JoinColumn()
+  public avatar?: Upload | null
+}
 ```
+
+Look up the profile by `accountId` in your controller — the principal
+slot gives you the account directly:
+
+```typescript
+@Get("profile")
+@Authenticated()
+public async profile(
+  @Principal() account: Account,
+): Promise<Profile | null> {
+  return this.profiles.findOne({
+    where: { account: { id: account.id } },
+  })
+}
+```
+
+The SaaS template under `templates/saas/` carries a working `Profile`
+example.
+
+**Single-table inheritance / `@ChildEntity`** is explicitly unsupported.
+The FK relation between `OAuthToken.account` and `Account` is final;
+extending `Account` breaks the type contract on the FK side.
+
+## OAuth tokens
+
+`GoogleAuthService.authenticate()` captures the full token response from
+Google — `access_token`, `refresh_token`, `expires_in`, `scope` — and
+upserts a row in the `oauth_token` table. The unique index on
+`(account, provider)` enforces one row per pair; subsequent logins
+overwrite that row in place rather than appending.
+
+The upsert and the principal write run inside a single
+`DataSource.transaction()`, so the account row and the token row stay
+consistent — either both commit or both roll back. Events emit only
+after the transaction returns successfully.
+
+On subsequent logins where Google omits `refresh_token` (which it does
+after the first consent), the existing refresh token is preserved.
+
+### Reading the active token
+
+`Account.activeToken(provider)` returns a snapshot of the active token
+for the requested provider, or `null` when none exists or the stored
+token has expired:
+
+```typescript
+import { Account, OAuthTokenSnapshot } from "@neomaventures/auth"
+
+@Get("inbox/count")
+@Authenticated()
+public count(@Principal() account: Account): { count: number } {
+  const token = account.activeToken("google")
+  if (!token) return { count: 0 }
+  return this.gmail.count(token.accessToken)
+}
+```
+
+The snapshot includes `accessToken`, `expiresAt`, and `scopes`. It
+deliberately omits `refreshToken` — refresh is an internal concern of
+the auth package. When the stored `expiresAt` is in the past,
+`activeToken()` returns `null`; automatic refresh-on-expiry is not yet
+implemented.
+
+### The `@ActiveOAuthToken` decorator
+
+For controller-handler ergonomics, `@ActiveOAuthToken(provider)` returns
+the same snapshot directly as a parameter:
+
+```typescript
+import {
+  ActiveOAuthToken,
+  Authenticated,
+  OAuthTokenSnapshot,
+} from "@neomaventures/auth"
+
+@Controller("inbox")
+@Authenticated()
+export class InboxController {
+  @Get("count")
+  public count(
+    @ActiveOAuthToken("google") token: OAuthTokenSnapshot | null,
+  ): { count: number } {
+    if (!token) return { count: 0 }
+    return { count: callGmailWith(token.accessToken) }
+  }
+}
+```
+
+`@ActiveOAuthToken` exists to avoid the name collision with the
+`OAuthToken` entity class — importing both would otherwise force an
+alias.
 
 ## Magic Link Flow
 
 1. User submits email -> `POST /auth/magic-link`
-2. Server generates JWT with `aud: "magic-link"` and emails verification link
+2. Server generates JWT with `aud: "magic-link"` and emails verification
+   link
 3. User clicks link -> `GET /auth/verify?token=...`
-4. Server validates token, creates user (if new) or finds existing user
-5. Server issues session JWT with `aud: "session"` and sets httpOnly cookie
-6. Subsequent requests authenticate via cookie or `Authorization: Bearer <token>` header
+4. Server validates token, creates account (if new) or finds existing
+5. Server issues session JWT with `aud: "session"` and sets httpOnly
+   cookie
+6. Subsequent requests authenticate via cookie or
+   `Authorization: Bearer <token>` header
 
 ## Google OAuth Flow
 
 1. Your frontend redirects the user to Google's OAuth consent screen
-2. Google redirects back to your callback URL with a `code` query parameter
-3. The `@GoogleCallback()` interceptor exchanges the code with Google's token endpoint server-to-server
+2. Google redirects back to your callback URL with a `code` query
+   parameter
+3. The `@GoogleCallback()` interceptor exchanges the code with Google's
+   token endpoint server-to-server
 4. The ID token is decoded to extract the user's email, name, and picture
-5. The email is used to find an existing user or create a new one (same find-or-create-by-email pattern as magic links)
-6. If the entity has an `authProfile` column, Google profile data is written to it
-7. Your controller receives the result via `@GetGoogleAuthResult()` and issues a session
+5. The email is used to find an existing account or create a new one
+   (same find-or-create-by-email pattern as magic links)
+6. Google profile data is written to `Account.authProfile.google`
+7. Your controller receives the result via `@GetGoogleAuthResult()` and
+   issues a session
 
 ### Account Linking
 
-Account linking happens automatically by verified email. If a user signs up via magic link with `alice@example.com` and later signs in with Google using the same email, they get the same user account. This works because both flows verify email ownership -- magic links by definition, and Google OAuth by checking the `email_verified` claim in the ID token.
+Account linking happens automatically by verified email. If a user signs
+up via magic link with `alice@example.com` and later signs in with
+Google using the same email, they get the same account. This works
+because both flows verify email ownership — magic links by definition,
+and Google OAuth by checking the `email_verified` claim in the ID token.
 
 ### Google OAuth Controller Example
 
 ```typescript
 import {
+  Account,
   GetGoogleAuthResult,
   GoogleAuthResult,
   GoogleCallback,
@@ -438,8 +478,6 @@ import {
 import { Controller, Get, Res } from "@nestjs/common"
 import { Response } from "express"
 
-import { User } from "./user.entity"
-
 @Controller("auth/google")
 export class GoogleAuthController {
   public constructor(private readonly sessionService: SessionService) {}
@@ -447,586 +485,139 @@ export class GoogleAuthController {
   @Get("callback")
   @GoogleCallback()
   public handleCallback(
-    @GetGoogleAuthResult() result: GoogleAuthResult<User>,
+    @GetGoogleAuthResult() result: GoogleAuthResult,
     @Res({ passthrough: true }) res: Response,
-  ): { token: string; user: User; isNewUser: boolean } {
+  ): { token: string; account: Account; isNewUser: boolean } {
     const { token } = this.sessionService.create(res, result.entity)
-    return { token, user: result.entity, isNewUser: result.isNewUser }
+    return { token, account: result.entity, isNewUser: result.isNewUser }
   }
 }
 ```
-
-The `@GoogleCallback()` decorator applies the `GoogleCallbackInterceptor`, which extracts the `code` query parameter, exchanges it with Google, and attaches the `GoogleAuthResult` to the request. The `@GetGoogleAuthResult()` parameter decorator then extracts it for use in your handler.
-
-### Persisting OAuth tokens
-
-`GoogleAuthService.authenticate()` captures the full token response from Google — `access_token`, `refresh_token`, `expires_in`, `scope` — and persists it as a row in a dedicated `oauth_token` table. Tokens are upserted on the `(principal, provider)` pair: a re-login replaces the existing row in place rather than appending.
-
-To opt in:
-
-1. Declare an entity that implements `OAuthTokenable` with a `@ManyToOne` navigation to your principal entity. TypeORM derives the `principalId` FK column from the property name.
-2. Add the inverse `@OneToMany` navigation on the principal entity and mark it `eager: true` so `OAuthTokenService` and `@OAuthToken()` resolve without an explicit join.
-3. Pass both classes under `entities` in `AuthModule.forRoot(...)`.
-
-```typescript
-import {
-  Authenticatable,
-  OAuthAuthenticatable,
-  OAuthTokenable,
-} from "@neomaventures/auth"
-import {
-  Column,
-  Entity,
-  ManyToOne,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  Unique,
-} from "typeorm"
-
-@Entity()
-export class User implements OAuthAuthenticatable {
-  @PrimaryGeneratedColumn("uuid")
-  public id!: string
-
-  @Column({ unique: true })
-  public email!: string
-
-  @OneToMany(() => OAuthToken, (t) => t.principal, {
-    eager: true,
-    cascade: false,
-  })
-  public oauthTokens?: OAuthToken[]
-}
-
-@Entity()
-@Unique(["principal", "provider"])
-export class OAuthToken implements OAuthTokenable {
-  @PrimaryGeneratedColumn("uuid")
-  public id!: string
-
-  @ManyToOne(() => User)
-  public principal!: User
-
-  @Column()
-  public provider!: string
-
-  @Column()
-  public accessToken!: string
-
-  @Column({ type: "text", nullable: true })
-  public refreshToken!: string | null
-
-  @Column()
-  public expiresAt!: Date
-
-  @Column("simple-array")
-  public scopes!: string[]
-}
-```
-
-The auth package does not ship migrations — create the `oauth_token` table (with the `principalId` FK and a unique index on `(principalId, provider)`) yourself.
-
-Tokens' `expiresAt` is stored without timezone info (`timestamp without time zone` on Postgres). This template assumes the application runs in UTC. JavaScript `Date` comparisons (`expiresAt < new Date()`) are timezone-safe because Dates are UTC internally.
-
-The upsert and the principal write run inside a single `DataSource.transaction()`, so the principal row and the token row stay consistent — either both commit or both roll back. Events emit only after the transaction returns successfully. On subsequent logins where Google omits `refresh_token` (which it does after the first consent), the existing refresh token is preserved.
-
-Read the active token for the current principal via `OAuthTokenService` or the `@OAuthToken(provider)` parameter decorator:
-
-```typescript
-import {
-  Authenticated,
-  OAuthToken,
-  OAuthTokenSnapshot,
-  OAuthTokenService,
-} from "@neomaventures/auth"
-import { Controller, Get, Injectable } from "@nestjs/common"
-
-@Controller("inbox")
-@Authenticated()
-export class InboxController {
-  @Get("count")
-  public count(
-    @OAuthToken("google") token: OAuthTokenSnapshot | null,
-  ): { count: number } {
-    if (!token) return { count: 0 }
-    return { count: callGmailWith(token.accessToken) }
-  }
-}
-
-@Injectable()
-export class GmailService {
-  public constructor(private readonly oauthTokens: OAuthTokenService) {}
-
-  public list(): unknown {
-    const token = this.oauthTokens.getActiveToken("google")
-    if (!token) throw new Error("Google token not available")
-    return callGmailWith(token.accessToken)
-  }
-}
-```
-
-The snapshot includes `accessToken`, `expiresAt`, and `scopes`. It deliberately omits `refreshToken` — refresh is an internal concern of the auth package (see #171). When the stored token has `expiresAt <= now`, the service and decorator both return `null`; automatic refresh-on-expiry is not yet implemented.
-
-## Example Requests
-
-### Request Magic Link
-
-```bash
-curl -X POST http://localhost:3000/auth/magic-link \
-  -H "Content-Type: application/json" \
-  -d '{"email": "user@example.com"}'
-```
-
-**Success (202 Accepted):** Empty response, email sent.
-
-**Validation error (400 Bad Request):**
-```json
-{
-  "statusCode": 400,
-  "message": ["Please enter a valid email address."],
-  "error": "Bad Request"
-}
-```
-
-### Verify Magic Link
-
-```bash
-curl "http://localhost:3000/auth/verify?token=eyJhbGciOiJIUzI1NiIs..."
-```
-
-**Success (200 OK):**
-```json
-{
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "email": "user@example.com"
-  },
-  "isNewUser": true
-}
-```
-
-The response also includes a `Set-Cookie` header with the session token.
-
-**Invalid token (401 Unauthorized):**
-```json
-{
-  "statusCode": 401,
-  "message": "Invalid magic link token: invalid audience",
-  "reason": "invalid audience",
-  "error": "Unauthorized"
-}
-```
-
-### Accessing Protected Routes
-
-Via Bearer token:
-```bash
-curl http://localhost:3000/me \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-```
-
-Via cookie (set automatically by the verify endpoint):
-```bash
-curl http://localhost:3000/me \
-  -b "auth.sid=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-```
-
-**Success (200 OK):**
-```json
-{
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "email": "user@example.com"
-}
-```
-
-**Not authenticated (401 Unauthorized):**
-```json
-{
-  "statusCode": 401,
-  "message": "Unauthenticated, access to resource /me denied",
-  "error": "Unauthorized"
-}
-```
-
-The `message` follows the format `Unauthenticated, access to resource <request-url> denied`, where `<request-url>` is the URL of the denied request. The same string is also passed to the exception class for the redirect / class strategies, so it surfaces in server logs and in the response body regardless of which `onUnauthenticated` strategy resolves. For the redirect strategy, the body's `message` becomes `"<resource-message>. Redirecting to login."`.
 
 ## API Reference
 
-### AuthModule
+### Entities
 
-#### `AuthModule.forRoot(options)`
+#### `Account`
 
-Configures the authentication module with a static options object. The module is global — import it once in your root module.
+```ts
+@Entity({ name: "account" })
+class Account {
+  id: string                              // uuid PK
+  email: string                           // unique, lowercased on write
+  permissions: string[]                   // simple-array, default []
+  authProfile?: AuthenticatableProfile    // simple-json, nullable
+  createdAt: Date
+  updatedAt: Date
+  oauthTokens?: OAuthToken[]              // @OneToMany, eager
 
-| Option | Type | Description |
-|--------|------|-------------|
-| `secret` | `string` | JWT signing secret |
-| `expiresIn` | `string \| number` | Session token expiration (e.g., "1h", "7d") |
-| `entity` | `Type<Authenticatable>` | Your user entity class |
-| `magicLink` | `MagicLinkOptions` | Magic link configuration (optional -- at least one of `magicLink` or `googleAuth` is required) |
-| `googleAuth` | `GoogleAuthOptions` | Google OAuth configuration (optional -- at least one of `magicLink` or `googleAuth` is required) |
-| `cookie` | `CookieOptions` | Session cookie configuration (optional) |
-| `webhook` | `WebhookOptions` | Webhook signature verification configuration (optional) |
-| `onUnauthenticated` | `string \| HttpException class` | Default strategy used by `@Authenticated()` when no principal is found. String → 303 redirect to that URL. Class → `throw new Class(...)`. Per-route values override this. When omitted, the built-in `UnauthorizedException` (401) applies. |
-
-#### `AuthModule.forRootAsync(options)`
-
-Configures the authentication module with options resolved via the NestJS DI container.
-
-| Option | Type | Description |
-|--------|------|-------------|
-| `imports` | `any[]` | Modules to import (e.g., `ConfigModule`) |
-| `useFactory` | `(...args) => AuthOptions \| Promise<AuthOptions>` | Factory function that returns the options |
-| `inject` | `any[]` | Providers to inject into the factory |
-
-#### MagicLinkOptions
-
-| Option | Type | Description |
-|--------|------|-------------|
-| `mailer` | `MailerOptions` | Mailer configuration for sending magic link emails |
-
-#### MailerOptions
-
-| Option | Type | Description |
-|--------|------|-------------|
-| `host` | `string` | SMTP host |
-| `port` | `number` | SMTP port |
-| `from` | `string` | Sender email address |
-| `welcome` | `MailerTemplate` | Template sent to new users (registration) |
-| `welcomeBack` | `MailerTemplate` | Template sent to existing users (login) |
-| `auth.user` | `string` | SMTP username |
-| `auth.pass` | `string` | SMTP password |
-
-#### MailerTemplate
-
-| Option | Type | Description |
-|--------|------|-------------|
-| `subject` | `string` | Email subject line |
-| `html` | `string` | Email HTML body (use `{{token}}` placeholder) |
-
-#### GoogleAuthOptions
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `clientId` | `string` | — | Google OAuth client ID |
-| `clientSecret` | `string` | — | Google OAuth client secret |
-| `redirectUri` | `string` | — | OAuth redirect URI (must match your Google Cloud Console configuration) |
-| `scopes` | `string[]` | `["openid", "email", "profile"]` | OAuth scopes to request during authorization |
-| `tokenEndpoint` | `string` | `"https://oauth2.googleapis.com/token"` | Google OAuth token endpoint URL. Do not override in production -- this exists for testing purposes only (e.g., pointing to a mock server) |
-
-#### CookieOptions
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `name` | `string` | `"auth.sid"` | Cookie name |
-| `domain` | `string` | — | Cookie domain |
-| `path` | `string` | `"/"` | Cookie path |
-| `secure` | `boolean` | `true` | Only send over HTTPS |
-| `sameSite` | `"strict" \| "lax" \| "none"` | `"lax"` | SameSite attribute |
-
-#### WebhookOptions
-
-| Option | Type | Description |
-|--------|------|-------------|
-| `secret` | `string` | Webhook signing secret in Svix format (`whsec_` prefix + base64-encoded key) |
-
-### Services
-
-#### MagicLinkService
-
-- `send(email: string): Promise<void>` - Sends a magic link email (uses `welcome` template for new users, `welcomeBack` for existing)
-- `verify<T>(token: string): Promise<{ entity: T; isNewUser: boolean }>` - Validates token and returns/creates user
-
-#### GoogleAuthService
-
-- `authorizeUrl: URL | null` (getter) - Returns the Google OAuth authorize URL built from the configured client ID, redirect URI, and scopes. Returns `null` when Google OAuth is not configured.
-- `authenticate<T>(code: string): Promise<GoogleAuthResult<T>>` - Exchanges a Google authorization code for user credentials. Finds or creates the user by email (same pattern as `MagicLinkService.verify()`). Returns the entity, an `isNewUser` flag, and the Google profile. If the entity has an `authProfile` column, Google profile data is persisted automatically.
-
-#### SessionService
-
-- `create(res: Response, entity: Authenticatable): { token: string; payload: JwtPayload }` - Issues a session JWT and sets it as an httpOnly cookie
-- `clear(res: Response): void` - Clears the session cookie
-
-#### AuthenticationService
-
-- `authenticate<T>(token: string): Promise<T>` - Validates a raw session JWT and returns the user
-
-#### TokenService
-
-- `issue(payload, options?): { token: string; payload: JwtPayload }` - Issues a JWT (HS256)
-- `verify(token: string): JwtPayload` - Verifies a token (HS256 only)
-
-### Middlewares
-
-#### BearerAuthenticationMiddleware
-
-Extracts JWT from the `Authorization: Bearer <token>` header. Throws `InvalidCredentialsException` for malformed headers. Logs and continues for authentication failures.
-
-#### CookieAuthenticationMiddleware
-
-Extracts JWT from the configured cookie (default `auth.sid`). Logs and continues for authentication failures.
-
-Both middlewares are automatically applied by `AuthModule`. Bearer runs first; if it sets `req.principal`, the cookie middleware skips.
-
-#### PermissionService
-
-- `hasPermission(principal, permission): boolean` - Check if a principal has a specific permission
-- `hasAllPermissions(principal, permissions): boolean` - Check if a principal has ALL permissions (AND logic)
-- `hasAnyPermission(principal, permissions): boolean` - Check if a principal has at least one permission (OR logic)
-- `requirePermission(principal, permission): void` - Throws `PermissionDeniedException` if missing
-- `requireAllPermissions(principal, permissions): void` - Throws if any are missing (AND)
-- `requireAnyPermission(principal, permissions): void` - Throws if all are missing (OR)
-
-Valid permission formats:
-- `*` — matches all permissions
-- `name` — single-segment, exact match only (e.g., `admin`)
-- `action:resource` — exact match (e.g., `read:users`)
-- `*:resource` — matches any action on that resource (e.g., `*:articles` matches `read:articles`)
-- `action:*` — matches an action on any resource (e.g., `read:*` matches `read:users`)
-
-Invalid formats (e.g., `read:users:admin`, empty strings) throw at decoration time or at runtime.
-
-### Constants
-
-- `MAGIC_LINK_AUDIENCE` - Value: `"magic-link"` - Used for magic link tokens
-- `SESSION_AUDIENCE` - Value: `"session"` - Used for session tokens
-
-### Guards
-
-#### Authenticated
-
-A decorator factory that ensures `req.principal` exists. Applied at method or class level. By default throws `UnauthorizedException` (401) when no principal is found.
-
-```typescript
-@Authenticated()
-@Controller("protected")
-export class ProtectedController {}
-```
-
-Pass an `onUnauthenticated` option to change the strategy. See [Choosing an unauthenticated strategy](#choosing-an-unauthenticated-strategy) for the full table.
-
-```typescript
-// Redirect to a login page (303 via UnauthorizedRedirectException)
-@Authenticated({ onUnauthenticated: "/auth/magic-link" })
-@Controller("dashboard")
-export class DashboardController {}
-
-// Return 404 for asset endpoints behind a per-user session
-@Authenticated({ onUnauthenticated: NotFoundException })
-@Controller("avatars")
-export class AvatarController {}
-```
-
-The module-level `AuthModule.forRoot({ onUnauthenticated })` option sets the default strategy for the whole app; per-route values override it.
-
-#### WebhookSignatureGuard
-
-A guard that verifies Svix-standard HMAC-SHA256 webhook signatures. Validates the `svix-signature` header against the request's raw body using the secret configured in `AuthOptions.webhook`.
-
-Requires `rawBody: true` on the NestJS application factory:
-
-```typescript
-const app = await NestFactory.create(AppModule, { rawBody: true })
-```
-
-Configure the webhook secret in your module options:
-
-```typescript
-AuthModule.forRoot({
-  // ... other options
-  webhook: {
-    secret: process.env.WEBHOOK_SECRET, // e.g. "whsec_MfKQ9r8GKYqrTwjUPD..."
-  },
-})
-```
-
-Apply the guard to webhook endpoints:
-
-```typescript
-@Post("webhooks/inbound-email")
-@UseGuards(WebhookSignatureGuard)
-async handleInboundEmail(@Body() payload: InboundEmailPayload) {
-  // Guard already verified the signature
+  activeToken(provider: OAuthProvider): OAuthTokenSnapshot | null
 }
 ```
 
-The guard:
-- Checks for required Svix headers (`svix-id`, `svix-timestamp`, `svix-signature`)
-- Strips the `whsec_` prefix from the secret and base64-decodes the key
-- Computes HMAC-SHA256 over `${svix-id}.${svix-timestamp}.${rawBody}`
-- Supports multiple signatures in the header (space-separated)
-- Uses `crypto.timingSafeEqual` for constant-time signature comparison
-- Throws `UnauthorizedException` (401) for any verification failure
+#### `OAuthToken`
 
-The Svix signing standard is used by Resend, Clerk, Svix, and other webhook providers.
+```ts
+@Entity({ name: "oauth_token" })
+@Index(["account", "provider"], { unique: true })
+class OAuthToken {
+  id: string
+  account: Relation<Account>              // @ManyToOne, FK `accountId`
+  provider: string
+  accessToken: string
+  refreshToken: string | null
+  expiresAt: Date
+  scopes: string[]                        // simple-array
+}
+```
+
+### Configuration
+
+| Option              | Type                                | Description                                                                                                                                                                                                |
+| ------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `secret`            | `string`                            | JWT signing secret                                                                                                                                                                                         |
+| `expiresIn`         | `string \| number`                  | Session token expiration (e.g., "1h", "7d")                                                                                                                                                                |
+| `magicLink`         | `MagicLinkOptions`                  | Magic link configuration (optional — at least one of `magicLink` or `googleAuth` is required)                                                                                                              |
+| `googleAuth`        | `GoogleAuthOptions`                 | Google OAuth configuration (optional — at least one of `magicLink` or `googleAuth` is required)                                                                                                            |
+| `cookie`            | `CookieOptions`                     | Session cookie configuration (optional)                                                                                                                                                                    |
+| `webhook`           | `WebhookOptions`                    | Webhook signature verification configuration (optional)                                                                                                                                                    |
+| `onUnauthenticated` | `string \| HttpException class`     | Default strategy used by `@Authenticated()` when no principal is found. String → 303 redirect. Class → `throw new Class(...)`. Per-route values override this. Defaults to `UnauthorizedException` (401).  |
 
 ### Decorators
 
-#### Principal
+| Decorator                       | Returns                       | Notes                                                                                                  |
+| ------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `@Principal()`                  | `Account \| undefined`        | Concrete type. Use behind `@Authenticated()` to guarantee a value.                                     |
+| `@ActiveOAuthToken(provider)`   | `OAuthTokenSnapshot \| null`  | Calls `account.activeToken(provider)` under the hood. Renamed from `@OAuthToken` to avoid the entity name collision. |
+| `@Authenticated(options?)`      | guard                         | unchanged                                                                                              |
+| `@RequiresPermission(perm)`     | guard                         | unchanged                                                                                              |
+| `@RequiresAnyPermission(perms)` | guard                         | unchanged                                                                                              |
+| `@GoogleCallback()`             | interceptor                   | unchanged                                                                                              |
+| `@GetGoogleAuthResult()`        | `GoogleAuthResult`            | concrete                                                                                               |
 
-Extracts the authenticated user from the request.
+### Services
 
-```typescript
-@Get()
-public getProfile(@Principal() user: User): User {
-  return user
-}
-```
-
-#### GoogleCallback
-
-Method decorator that applies the `GoogleCallbackInterceptor`. Extracts the `code` query parameter from the request, exchanges it with Google's token endpoint via `GoogleAuthService`, and attaches the result to `req.googleAuthResult`. Use with `@GetGoogleAuthResult()` to extract the result in your handler.
-
-```typescript
-@Get("callback")
-@GoogleCallback()
-public handleCallback(@GetGoogleAuthResult() result: GoogleAuthResult<User>): void {
-  // result.entity, result.isNewUser, result.profile
-}
-```
-
-#### GetGoogleAuthResult
-
-Parameter decorator that extracts the `GoogleAuthResult` from the request. Must be used on routes decorated with `@GoogleCallback()`. Throws if `@GoogleCallback()` was not applied.
-
-```typescript
-@Get("callback")
-@GoogleCallback()
-public handleCallback(
-  @GetGoogleAuthResult() result: GoogleAuthResult<User>,
-): void {
-  // result.entity, result.isNewUser, result.profile
-}
-```
-
-#### RequiresPermission
-
-Enforces that the authenticated user has **all** of the specified permissions (AND logic). Automatically applies authentication and the permission guard.
-
-```typescript
-// Single permission
-@Get("articles")
-@RequiresPermission("read:articles")
-public getArticles() {}
-
-// Multiple permissions (AND — user must have both)
-@Get("articles/edit")
-@RequiresPermission("read:articles", "write:articles")
-public editArticles() {}
-
-// Class-level — applies to all methods
-@Controller("admin")
-@RequiresPermission("read:admin")
-export class AdminController {}
-```
-
-#### RequiresAnyPermission
-
-Enforces that the authenticated user has **at least one** of the specified permissions (OR logic).
-
-```typescript
-// User must have admin OR delete:articles
-@Get("articles/delete")
-@RequiresAnyPermission("admin", "delete:articles")
-public deleteArticles() {}
-```
-
-Both decorators can be combined on a single method:
-
-```typescript
-// User must have read:reports AND (admin OR write:reports)
-@Get("reports")
-@RequiresPermission("read:reports")
-@RequiresAnyPermission("admin", "write:reports")
-public getReports() {}
-```
-
-### DTOs
-
-#### EmailDto
-
-- `email` - Required, must be valid email format
-
-### Exceptions
-
-| Exception | Status | When |
-|-----------|--------|------|
-| `InvalidMagicLinkTokenException` | 401 | Magic link token invalid or wrong audience |
-| `TokenFailedVerificationException` | 401 | JWT verification failed (expired, invalid signature) |
-| `IncorrectCredentialsException` | 401 | User not found for valid token |
-| `InvalidCredentialsException` | 401 | Token invalid, wrong audience, or malformed header |
-| `GoogleCodeExchangeException` | 401 | Google rejected the authorization code (4xx from token endpoint) |
-| `GoogleTokenException` | 401 | ID token missing or lacks email claim |
-| `GoogleServiceException` | 502 | Google returned a server error (5xx from token endpoint) |
-| `GoogleNetworkException` | 502 | Network failure reaching Google's token endpoint |
-| `EmailNotVerifiedException` | 403 | Google account email not verified |
-| `UnauthorizedRedirectException` | 401 | Unauthenticated request on a route with a redirect URL. Response body includes `redirect: { url, status }` so the target is observable without a filter; `getRedirect()` exposes the same data for filters that turn it into an actual HTTP redirect |
-| `PermissionDeniedException` | 403 | User lacks required permission(s) |
+- **`MagicLinkService`**
+  - `send(email): Promise<void>` — sends a magic link email
+  - `verify(token): Promise<{ entity: Account; isNewUser: boolean }>`
+- **`GoogleAuthService`**
+  - `authorizeUrl: URL | null` — Google OAuth consent URL
+  - `authenticate(code): Promise<GoogleAuthResult>`
+- **`SessionService`**
+  - `create(res, account): { token; payload }`
+  - `clear(res): void`
+- **`AuthenticationService`**
+  - `authenticate(token): Promise<Account>`
+- **`TokenService`**
+  - `issue(payload, options?): { token; payload }`
+  - `verify(token): JwtPayload`
+- **`PermissionService`** — `hasPermission`, `hasAllPermissions`,
+  `hasAnyPermission`, `requirePermission`, `requireAllPermissions`,
+  `requireAnyPermission`. Wildcard support: `*`, `*:resource`, `action:*`.
 
 ### Events
 
-Both events include a `provider` property of type `AuthProvider` (`"magic-link" | "google" | "session"`) indicating which authentication method triggered the event.
-
-#### RegisteredEvent
-
-Emitted when a new user is created via magic link verification or Google OAuth.
+`RegisteredEvent` and `AuthenticatedEvent` both carry `entity: Account`
+and `provider: AuthProvider`. No generics.
 
 ```typescript
-import { RegisteredEvent } from "@neomaventures/auth"
-import { OnEvent } from "@nestjs/event-emitter"
-
-@Injectable()
-export class NotificationService {
-  @OnEvent(RegisteredEvent.EVENT_NAME)
-  public async onRegistered(event: RegisteredEvent): Promise<void> {
-    console.log(`New user registered via ${event.provider}`)
-    // Send welcome email, etc.
-  }
+@OnEvent(RegisteredEvent.EVENT_NAME)
+public async onRegistered(event: RegisteredEvent): Promise<void> {
+  await this.emailService.sendWelcome(event.entity.email)
 }
 ```
 
-#### AuthenticatedEvent
+### Exceptions
 
-Emitted when an existing user verifies a magic link (provider `"magic-link"`), authenticates via session token (provider `"session"`), or signs in with Google OAuth (provider `"google"`).
-
-### Interfaces
-
-#### Authenticatable
-
-```typescript
-interface Authenticatable {
-  id: any
-  email: string
-  permissions?: string[]
-  authProfile?: AuthenticatableProfile
-}
-```
-
-Implement this on any entity you want to authenticate. The `permissions` field is optional -- only needed if you use the permission decorators. The `authProfile` field is optional -- only needed if you want to store provider-specific metadata (e.g., Google profile data).
-
-#### AuthenticatableProfile
-
-```typescript
-interface AuthenticatableProfile {
-  google?: { sub: string; name?: string; picture?: string }
-  [provider: string]: Record<string, any> | undefined
-}
-```
-
-Provider-specific profile data stored on the authenticatable entity. Each key is a provider name (e.g., `"google"`) mapping to provider-specific claims. When Google OAuth authenticates a user and the entity has an `authProfile` column, the `google` key is populated automatically with the `sub`, `name`, and `picture` from the ID token.
+| Exception                          | Status | When                                                                              |
+| ---------------------------------- | ------ | --------------------------------------------------------------------------------- |
+| `InvalidMagicLinkTokenException`   | 401    | Magic link token invalid or wrong audience                                        |
+| `TokenFailedVerificationException` | 401    | JWT verification failed (expired, invalid signature)                              |
+| `IncorrectCredentialsException`    | 401    | Account not found for valid token                                                 |
+| `InvalidCredentialsException`      | 401    | Token invalid, wrong audience, or malformed header                                |
+| `GoogleCodeExchangeException`      | 401    | Google rejected the authorization code (4xx)                                      |
+| `GoogleTokenException`             | 401    | ID token missing required claims                                                  |
+| `GoogleServiceException`           | 502    | Google returned 5xx                                                               |
+| `GoogleNetworkException`           | 502    | Network failure reaching Google                                                   |
+| `EmailNotVerifiedException`        | 403    | Google account email not verified                                                 |
+| `UnauthorizedRedirectException`    | 401    | Unauthenticated route with redirect strategy. Body includes `redirect: { url, status }` |
+| `PermissionDeniedException`        | 403    | User lacks required permission(s)                                                 |
 
 ## Security
 
-- JWTs are signed and verified with HS256 only -- other algorithms are rejected
-- Magic link tokens use `aud: "magic-link"`, session tokens use `aud: "session"` -- cross-use is prevented
-- Session cookies are httpOnly (not accessible to JavaScript), secure (HTTPS only), and SameSite=Lax by default
-- Cookie `Max-Age` is automatically aligned with JWT expiry
-- Error responses use a generic message -- internal details are logged server-side only
-- Email lookups are case-insensitive (normalized to lowercase)
+- JWTs signed and verified with HS256 only — other algorithms rejected
+- Magic link tokens use `aud: "magic-link"`, session tokens use
+  `aud: "session"` — cross-use is prevented
+- Session cookies are httpOnly, secure, SameSite=Lax by default
+- Cookie `Max-Age` aligned with JWT expiry
+- Error responses use generic messages — details logged server-side
+- Email lookups case-insensitive (lowercased on write)
 - Magic links expire after 15 minutes
-- Google ID tokens are decoded but not signature-verified, because they are received directly from Google's token endpoint over TLS in a server-to-server exchange, not from a client. The token is trusted because it is obtained via an authenticated channel using the `client_secret`
-- Google accounts with unverified emails are rejected (`EmailNotVerifiedException`)
+- Google ID tokens decoded but not signature-verified, because they are
+  received directly from Google's token endpoint over TLS in a
+  server-to-server exchange
+- Google accounts with unverified emails are rejected
+  (`EmailNotVerifiedException`)
 
 ## License
 
