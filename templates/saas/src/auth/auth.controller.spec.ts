@@ -5,7 +5,7 @@ import {
   SessionService,
 } from "@neomaventures/auth"
 import { express, MockLoggerService } from "@neomaventures/fixtures"
-import { ApplicationLoggerService } from "@neomaventures/logging"
+import { ApplicationLogger } from "@neomaventures/logging"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { type Response } from "express"
 
@@ -51,7 +51,7 @@ describe("AuthController", () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [
-        { provide: ApplicationLoggerService, useValue: logger },
+        { provide: ApplicationLogger, useValue: logger },
         { provide: MagicLinkService, useValue: magicLinkService },
         { provide: SessionService, useValue: sessionService },
         // GoogleAuthService is called by the @GoogleCallback() interceptor,
@@ -66,7 +66,7 @@ describe("AuthController", () => {
   describe("register()", () => {
     it("should log that the registration page was requested", () => {
       controller.register()
-      expect(logger.log).toHaveBeenCalledWith("Registration page requested")
+      expect(logger.info).toHaveBeenCalledWith("Registration page requested")
     })
   })
 

@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker"
 import { MockLoggerService } from "@neomaventures/fixtures"
 import { type HealthResult } from "@neomaventures/healthcheck"
-import { ApplicationLoggerService } from "@neomaventures/logging"
+import { ApplicationLogger } from "@neomaventures/logging"
 import {
   BadRequestException,
   InternalServerErrorException,
@@ -19,7 +19,7 @@ describe("ApplicationController", () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ApplicationController],
-      providers: [{ provide: ApplicationLoggerService, useValue: logger }],
+      providers: [{ provide: ApplicationLogger, useValue: logger }],
     }).compile()
 
     controller = module.get<ApplicationController>(ApplicationController)
@@ -29,7 +29,7 @@ describe("ApplicationController", () => {
     it("should log that the welcome page was requested", () => {
       controller.index()
 
-      expect(logger.log).toHaveBeenCalledWith("Welcome page requested")
+      expect(logger.info).toHaveBeenCalledWith("Welcome page requested")
     })
   })
 

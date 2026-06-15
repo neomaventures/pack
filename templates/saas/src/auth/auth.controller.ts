@@ -7,7 +7,7 @@ import {
   SessionService,
 } from "@neomaventures/auth"
 import { ErrorTemplate } from "@neomaventures/exceptions"
-import { ApplicationLoggerService } from "@neomaventures/logging"
+import { ApplicationLogger } from "@neomaventures/logging"
 import {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- used in JSDoc {@link}
   type BadRequestException,
@@ -39,7 +39,7 @@ export class AuthController {
    * @param sessionService - Creates and clears JWT session cookies.
    */
   public constructor(
-    private readonly logger: ApplicationLoggerService,
+    private readonly logger: ApplicationLogger,
     private readonly magicLinkService: MagicLinkService,
     private readonly sessionService: SessionService,
   ) {}
@@ -50,7 +50,7 @@ export class AuthController {
   @Get("register")
   @Render("auth/register")
   public register(): void {
-    this.logger.log("Registration page requested")
+    this.logger.info("Registration page requested")
   }
 
   /**
@@ -71,7 +71,7 @@ export class AuthController {
   public async submitRegister(
     @Body() { email }: EmailDto,
   ): Promise<{ url: string }> {
-    this.logger.log(`Registration submitted for ${email}`)
+    this.logger.info(`Registration submitted for ${email}`)
     await this.magicLinkService.send(email)
     return { url: `/auth/magic-link/sent?email=${encodeURIComponent(email)}` }
   }

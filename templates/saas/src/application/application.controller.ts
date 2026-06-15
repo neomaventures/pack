@@ -4,7 +4,7 @@ import {
   type HealthResult,
   HealthStatus,
 } from "@neomaventures/healthcheck"
-import { ApplicationLoggerService } from "@neomaventures/logging"
+import { ApplicationLogger } from "@neomaventures/logging"
 import {
   BadRequestException,
   Controller,
@@ -20,7 +20,7 @@ import {
  */
 @Controller()
 export class ApplicationController {
-  public constructor(private readonly logger: ApplicationLoggerService) {}
+  public constructor(private readonly logger: ApplicationLogger) {}
 
   /**
    * Renders the welcome page.
@@ -28,7 +28,7 @@ export class ApplicationController {
   @Get()
   @Render("welcome")
   public index(): void {
-    this.logger.log("Welcome page requested")
+    this.logger.info("Welcome page requested")
   }
 
   /**

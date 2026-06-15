@@ -1,4 +1,4 @@
-import { ApplicationLoggerService } from "@neomaventures/logging"
+import { ApplicationLogger } from "@neomaventures/logging"
 import { Inject, Injectable, NestMiddleware } from "@nestjs/common"
 import * as cookie from "cookie"
 import { Request, NextFunction } from "express"
@@ -27,7 +27,7 @@ export class CookieAuthenticationMiddleware implements NestMiddleware {
 
   public constructor(
     private readonly service: AuthenticationService,
-    private readonly logger: ApplicationLoggerService,
+    private readonly logger: ApplicationLogger,
     @Inject(AUTH_OPTIONS) options: AuthOptions,
   ) {
     this.cookieName = options.cookie?.name ?? "auth.sid"

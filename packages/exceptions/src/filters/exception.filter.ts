@@ -1,4 +1,4 @@
-import { ApplicationLoggerService } from "@neomaventures/logging"
+import { ApplicationLogger } from "@neomaventures/logging"
 import {
   ArgumentsHost,
   Catch,
@@ -59,7 +59,7 @@ import {
  *     }
  *   }
  *
- *   public log(logger: ApplicationLoggerService): void {
+ *   public log(logger: ApplicationLogger): void {
  *     logger.error('Payment failed', { transactionId: this.transactionId })
  *   }
  * }
@@ -68,13 +68,13 @@ import {
  * ## Custom Logging
  *
  * Implement the `log(logger)` method to override default logging behavior.
- * The logger passed is the injected `ApplicationLoggerService` from
+ * The logger passed is the injected `ApplicationLogger` from
  * `@neomaventures/logging`. Implementing an empty `log()` method disables logging
  * for that exception entirely.
  *
  * ## Logger Setup
  *
- * The filter depends on `ApplicationLoggerService` via DI, so consumers
+ * The filter depends on `ApplicationLogger` via DI, so consumers
  * **must** install `LoggingModule.forRoot()` (typically alongside
  * `RequestContextModule.forRoot()` for request-scoped log fields):
  *
@@ -87,7 +87,7 @@ import {
  * ```
  *
  * All filter logs (and any consumer-implemented `log()` callbacks) flow
- * through the same `ApplicationLoggerService` — structured `(message, { err })`
+ * through the same `ApplicationLogger` — structured `(message, { err })`
  * calls land as structured log entries.
  *
  * ## Default Logging Strategy
@@ -179,7 +179,7 @@ import {
  */
 @Catch()
 export class NeomaExceptionFilter implements ExceptionFilter {
-  public constructor(private readonly logger: ApplicationLoggerService) {}
+  public constructor(private readonly logger: ApplicationLogger) {}
 
   /**
    * Catches and handles all exceptions thrown in the application.

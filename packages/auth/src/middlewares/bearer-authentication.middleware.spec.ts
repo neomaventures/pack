@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker"
 import { MockLoggerService, express } from "@neomaventures/fixtures"
-import { ApplicationLoggerService } from "@neomaventures/logging"
+import { ApplicationLogger } from "@neomaventures/logging"
 import { RequestContextModule } from "@neomaventures/request-context"
 import { type TestingModule, Test } from "@nestjs/testing"
 import { type Request, type Response } from "express"
@@ -54,7 +54,7 @@ describe("BearerAuthenticationMiddleware", () => {
       providers: [
         BearerAuthenticationMiddleware,
         { provide: AuthenticationService, useValue: service },
-        { provide: ApplicationLoggerService, useValue: logger },
+        { provide: ApplicationLogger, useValue: logger },
       ],
     }).compile()
 
@@ -165,7 +165,7 @@ describe("BearerAuthenticationMiddleware", () => {
       })
     })
 
-    it("should log a warning via the injected ApplicationLoggerService", (done) => {
+    it("should log a warning via the injected ApplicationLogger", (done) => {
       const req = express.request({
         headers: {
           authorization: bearer,
