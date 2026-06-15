@@ -1,4 +1,5 @@
 import { faker } from "@faker-js/faker"
+import { executionContext } from "@neomaventures/fixtures"
 import { RequestContextModule } from "@neomaventures/request-context"
 import { type ExecutionContext } from "@nestjs/common"
 import { ROUTE_ARGS_METADATA } from "@nestjs/common/constants"
@@ -37,6 +38,7 @@ describe("OAuthTokenDecorator", () => {
   let factory: CustomParamFactory
   let providerArg: unknown
   let cls: ClsService
+  let context: ExecutionContext
 
   beforeAll(async () => {
     class OAuthTokenDecoratorTest {
@@ -59,42 +61,19 @@ describe("OAuthTokenDecorator", () => {
     }).compile()
 
     cls = module.get(ClsService)
+    context = executionContext() as ExecutionContext
   })
 
   describe("Given no principal is in context", () => {
-    it("should return null", () => {
+    it("should return null (delegating to the shared resolver)", () => {
       cls.run(() => {
-        expect(
-          factory(providerArg, {} as unknown as ExecutionContext),
-        ).toBeNull()
+        expect(factory(providerArg, context)).toBeNull()
       })
     })
   })
 
-  describe("Given the principal has no oauthTokens field", () => {
-    it("should return null", () => {
-      cls.run(() => {
-        setPrincipal(buildPrincipal(undefined))
-        expect(
-          factory(providerArg, {} as unknown as ExecutionContext),
-        ).toBeNull()
-      })
-    })
-  })
-
-  describe("Given the principal has no token for the requested provider", () => {
-    it("should return null", () => {
-      cls.run(() => {
-        setPrincipal(buildPrincipal([buildToken({ provider: "github" })]))
-        expect(
-          factory(providerArg, {} as unknown as ExecutionContext),
-        ).toBeNull()
-      })
-    })
-  })
-
-  describe("Given the principal has an active token for the provider", () => {
-    it("should return the snapshot without refreshToken", () => {
+  describe("Given a principal with an active token is in context", () => {
+    it("should return the snapshot from the shared resolver", () => {
       const accessToken = faker.string.alphanumeric(40)
       const expiresAt = new Date(Date.now() + 3600 * 1000)
       const scopes = ["openid", "email"]
@@ -102,25 +81,11 @@ describe("OAuthTokenDecorator", () => {
 
       cls.run(() => {
         setPrincipal(buildPrincipal([stored]))
-
-        const result = factory(providerArg, {} as unknown as ExecutionContext)
-        expect(result).toEqual({ accessToken, expiresAt, scopes })
-        expect(result).not.toHaveProperty("refreshToken")
-      })
-    })
-  })
-
-  describe("Given the principal has an expired token for the provider", () => {
-    it("should return null", () => {
-      const expired = buildToken({
-        expiresAt: new Date(Date.now() - 60 * 1000),
-      })
-
-      cls.run(() => {
-        setPrincipal(buildPrincipal([expired]))
-        expect(
-          factory(providerArg, {} as unknown as ExecutionContext),
-        ).toBeNull()
+        expect(factory(providerArg, context)).toEqual({
+          accessToken,
+          expiresAt,
+          scopes,
+        })
       })
     })
   })
