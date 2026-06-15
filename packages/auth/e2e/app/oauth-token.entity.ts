@@ -4,6 +4,7 @@ import {
   Entity,
   ManyToOne,
   PrimaryGeneratedColumn,
+  type Relation,
   Unique,
 } from "typeorm"
 
@@ -16,7 +17,7 @@ export class OAuthToken implements OAuthTokenable {
   public id!: string
 
   @ManyToOne(() => User)
-  public principal!: User
+  public principal!: Relation<User>
 
   @Column()
   public provider!: string
@@ -27,7 +28,7 @@ export class OAuthToken implements OAuthTokenable {
   @Column({ type: "text", nullable: true })
   public refreshToken!: string | null
 
-  @Column()
+  @Column({ type: "datetime" })
   public expiresAt!: Date
 
   @Column("simple-array")
