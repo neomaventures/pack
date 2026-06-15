@@ -1,6 +1,6 @@
 {
   "name": "@neomaventures/auth",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Authentication and authorization for NestJS. Magic links, Google OAuth, cookie/bearer sessions, and wildcard permissions.",
   "author": "Daniel Bruce",
   "repository": {

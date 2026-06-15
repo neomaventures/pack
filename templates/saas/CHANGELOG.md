@@ -1,5 +1,12 @@
 # **PACKAGE_NAME**
 
+## 0.0.7
+
+### Patch Changes
+
+- Updated dependencies [bf2f260]
+  - @neomaventures/auth@0.6.0
+
 ## 0.0.6
 
 ### Patch Changes
