@@ -7,18 +7,28 @@ import {
   type LoggingModuleOptions,
 } from "./interfaces/logging-module-options.interface"
 import { ApplicationLogger } from "./services/application-logger"
+import { LoggerFactory } from "./services/logger-factory"
 import { LOGGING_MODULE_OPTIONS } from "./symbols"
 
+const APP_LOGGER_PROVIDER: Provider = {
+  provide: ApplicationLogger,
+  useFactory: (factory: LoggerFactory) => factory.createApplicationLogger(),
+  inject: [LoggerFactory],
+}
+
 const PROVIDERS: Provider[] = [
-  ApplicationLogger,
+  LoggerFactory,
+  APP_LOGGER_PROVIDER,
   { provide: APP_INTERCEPTOR, useClass: RequestLoggerInterceptor },
 ]
-const EXPORTS = [ApplicationLogger]
+const EXPORTS = [ApplicationLogger, LoggerFactory]
 
 /**
  * NestJS module providing structured logging.
  *
- * Register via `forRoot()` or `forRootAsync()` — both make the module global.
+ * Register the root via `forRoot()` / `forRootAsync()` once at the app's
+ * root module; register per-package namespaced loggers via `forFeature()`
+ * inside each package's own module.
  *
  * @see LoggingModule.forFeature — for per-package logger registration.
  */
@@ -26,9 +36,9 @@ const EXPORTS = [ApplicationLogger]
 export class LoggingModule {
   /**
    * Register the logging root for the application. Call **once** in the
-   * application's root module. Provides {@link ApplicationLogger}, the
-   * `RequestLoggerInterceptor`, and the internal `LOGGING_MODULE_OPTIONS`
-   * token. Module is global.
+   * application's root module. Provides {@link ApplicationLogger},
+   * {@link LoggerFactory}, the `RequestLoggerInterceptor`, and the internal
+   * `LOGGING_MODULE_OPTIONS` token. Module is global.
    *
    * @param options - App-wide configuration. Omit for defaults (`info` level,
    *   stdout destination, no overrides).

@@ -1,5 +1,5 @@
 import { getRequest } from "@neomaventures/request-context"
-import { Inject, Injectable } from "@nestjs/common"
+import { Injectable } from "@nestjs/common"
 import pino from "pino"
 
 import {
@@ -7,23 +7,25 @@ import {
   type Logger,
   type LogLevel,
 } from "../interfaces/logger.interface"
-import { type LoggingModuleOptions } from "../interfaces/logging-module-options.interface"
-import { LOGGING_MODULE_OPTIONS } from "../symbols"
-
-const REDACTED = "[REDACTED]"
 
 /**
  * App-wide default logger. The class itself doubles as its DI token —
  * `@Inject(ApplicationLogger)` (or `@InjectLogger()`) resolves an instance.
  *
+ * Built by {@link LoggerFactory.createApplicationLogger} — consumers do not
+ * construct this directly.
+ *
  * - Bound to `LoggingModuleOptions.defaultLevel` (default `'info'`) with no
  *   namespace.
+ * - Shares a single underlying pino root with every namespaced logger
+ *   produced by {@link LoggerFactory.create}.
  * - Retains the **static delegate** pattern: `ApplicationLogger.info(...)`,
  *   `ApplicationLogger.error(...)`, etc., write through the most recently
  *   constructed instance. Static calls before the module boots are no-ops.
  *   Provided for code paths that cannot use DI (bootstrap, top-level scripts).
  *
  * @see Logger — the instance method contract.
+ * @see LoggerFactory.createApplicationLogger — the factory entrypoint.
  *
  * @example
  * ```ts
@@ -38,28 +40,11 @@ const REDACTED = "[REDACTED]"
 export class ApplicationLogger implements Logger {
   private static instance: ApplicationLogger | null = null
 
-  private readonly pino: pino.Logger
-
-  public constructor(
-    @Inject(LOGGING_MODULE_OPTIONS)
-    {
-      destination = null,
-      defaultLevel = "info",
-      redact = [],
-      context = {},
-    }: LoggingModuleOptions = {},
-  ) {
-    this.pino = pino(
-      {
-        level: defaultLevel,
-        redact: { paths: [...redact], censor: REDACTED },
-        base: { ...context },
-      },
-      // `destination` is typed `any` on LoggingModuleOptions to accept
-      // anything pino can write to (streams, sonic-boom, transports, etc.).
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      destination,
-    )
+  /**
+   * @param pino - The pino child logger built by
+   *   {@link LoggerFactory.createApplicationLogger}.
+   */
+  public constructor(private readonly pino: pino.Logger) {
     ApplicationLogger.instance = this
   }
 
@@ -124,6 +109,16 @@ export class ApplicationLogger implements Logger {
   /** @see ApplicationLogger.trace */
   public static fatal(message: string, context?: LogContext): void {
     ApplicationLogger.instance?.fatal(message, context)
+  }
+
+  /**
+   * Test hook — reset the static instance pointer. Used in unit specs so a
+   * fresh module compile is not contaminated by a prior test's instance.
+   *
+   * @internal
+   */
+  public static resetForTests(): void {
+    ApplicationLogger.instance = null
   }
 
   private logAtLevel(
