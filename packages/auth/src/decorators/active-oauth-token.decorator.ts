@@ -1,15 +1,15 @@
 import { createParamDecorator } from "@nestjs/common"
 
-import { getPrincipal } from "../principal/principal.slot"
+import { getAccount } from "../account/account.slot"
 import { type OAuthProvider } from "../types/oauth-provider.type"
 import { type OAuthTokenSnapshot } from "../types/oauth-token-snapshot.type"
 
 /**
  * Parameter decorator that resolves the active OAuth token snapshot for
- * the current principal. Delegates to `Account.activeToken(provider)`
+ * the current account. Delegates to `Account.activeToken(provider)`
  * under the hood.
  *
- * Returns `null` when the principal is anonymous, has no stored tokens
+ * Returns `null` when the account is anonymous, has no stored tokens
  * for the provider, or the stored token has expired (refresh-on-expiry
  * lands in a follow-up issue).
  *
@@ -32,7 +32,7 @@ import { type OAuthTokenSnapshot } from "../types/oauth-token-snapshot.type"
  */
 export const ActiveOAuthToken = createParamDecorator(
   (provider: OAuthProvider): OAuthTokenSnapshot | null => {
-    const principal = getPrincipal()
-    return principal?.activeToken?.(provider) ?? null
+    const account = getAccount()
+    return account?.activeToken?.(provider) ?? null
   },
 )

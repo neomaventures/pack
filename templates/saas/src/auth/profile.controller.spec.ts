@@ -23,7 +23,7 @@ describe("ProfileController", () => {
   })
 
   describe("index()", () => {
-    describe("Given an authenticated principal with no oauthTokens", () => {
+    describe("Given an authenticated account with no oauthTokens", () => {
       it("should return an empty connectedAccounts list", () => {
         const account = {
           id: faker.string.uuid(),
@@ -34,7 +34,7 @@ describe("ProfileController", () => {
       })
     })
 
-    describe("Given an authenticated principal with an active Google token", () => {
+    describe("Given an authenticated account with an active Google token", () => {
       it("should return a connectedAccounts entry with active: true and no access/refresh tokens", () => {
         const expiresAt = new Date(Date.now() + 3600 * 1000)
         const scopes = ["openid", "email", "profile"]
@@ -62,7 +62,7 @@ describe("ProfileController", () => {
       })
     })
 
-    describe("Given an authenticated principal with an expired Google token", () => {
+    describe("Given an authenticated account with an expired Google token", () => {
       it("should return a connectedAccounts entry with active: false", () => {
         const expiresAt = new Date(Date.now() - 60 * 1000)
         const account = {
@@ -116,7 +116,7 @@ describe("ProfileController", () => {
   })
 
   describe("uploadAvatar()", () => {
-    describe("Given an authenticated principal and a stored Upload", () => {
+    describe("Given an authenticated account and a stored Upload", () => {
       it("should call profileService.setAvatar and redirect to /profile", async () => {
         const account = {
           id: faker.string.uuid(),

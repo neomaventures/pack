@@ -1,4 +1,4 @@
-import { Account, Authenticated, Principal } from "@neomaventures/auth"
+import { Account, Authenticated, CurrentAccount } from "@neomaventures/auth"
 import { ErrorTemplate } from "@neomaventures/exceptions"
 import {
   StoredFile,
@@ -50,13 +50,13 @@ export class ProfileController {
    * `account.oauthTokens` — `accessToken` and `refreshToken` are
    * deliberately omitted so they never reach the rendered HTML.
    *
-   * @param account - The authenticated account, injected via `@Principal()`.
+   * @param account - The authenticated account, injected via `@CurrentAccount()`.
    * @returns A view model with the connected-accounts list.
    */
   @Get("profile")
   @Authenticated()
   @Render("profile")
-  public index(@Principal() account: Account): {
+  public index(@CurrentAccount() account: Account): {
     connectedAccounts: Array<{
       provider: string
       scopes: string[]
@@ -78,7 +78,7 @@ export class ProfileController {
    * Serves the authenticated user's avatar.
    *
    * Delegates to {@link ProfileService.getAvatar}, which loads the
-   * `Profile` row for the principal and returns the eagerly-joined
+   * `Profile` row for the account and returns the eagerly-joined
    * `Upload`. When no profile or avatar is set, `null` causes the
    * framework to redirect to the static silhouette under
    * `/img/default-avatar.svg`.
@@ -86,7 +86,7 @@ export class ProfileController {
    * Unauthenticated callers get a 404 — asset endpoints don't confirm
    * resource existence.
    *
-   * @param account - The authenticated account, injected via `@Principal()`.
+   * @param account - The authenticated account, injected via `@CurrentAccount()`.
    * @returns The avatar `Upload`, or `null` when none is set.
    *
    * @example
@@ -100,7 +100,9 @@ export class ProfileController {
     default: "/img/default-avatar.svg",
     cacheControl: "private, max-age=30",
   })
-  public async avatar(@Principal() account: Account): Promise<Upload | null> {
+  public async avatar(
+    @CurrentAccount() account: Account,
+  ): Promise<Upload | null> {
     return this.profileService.getAvatar(account)
   }
 
@@ -126,7 +128,7 @@ export class ProfileController {
    * Unauthenticated callers get a 404 — same asset-endpoint contract as
    * `GET /profile/avatar`.
    *
-   * @param account - The authenticated account, injected via `@Principal()`.
+   * @param account - The authenticated account, injected via `@CurrentAccount()`.
    * @param upload - The `Upload` entity created by the storage interceptor.
    * @param res - The Express response, used to send the 302 to `/profile`.
    */
@@ -144,7 +146,7 @@ export class ProfileController {
     key: AccountAvatarKeyResolver,
   })
   public async uploadAvatar(
-    @Principal() account: Account,
+    @CurrentAccount() account: Account,
     @StoredFile() upload: Upload,
     @Res() res: Response,
   ): Promise<void> {

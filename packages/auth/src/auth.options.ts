@@ -5,7 +5,7 @@ export const AUTH_OPTIONS = Symbol("AUTH_OPTIONS")
 
 /**
  * Strategy describing what should happen when an authenticated route is hit
- * without a principal.
+ * without an account.
  *
  * - A `string` is interpreted as a redirect URL: the {@link AuthenticatedGuard}
  *   throws an `UnauthorizedRedirectException` with a 303 See Other status.
@@ -125,7 +125,7 @@ interface AuthBaseOptions {
   cookie?: CookieOptions
   /**
    * Default strategy used by the `@Authenticated()` decorator when a route is
-   * accessed without an authenticated principal. Per-route metadata supplied
+   * accessed without an authenticated account. Per-route metadata supplied
    * to `@Authenticated({ onUnauthenticated })` takes precedence over this
    * default. When omitted, the guard throws a plain `UnauthorizedException`.
    */

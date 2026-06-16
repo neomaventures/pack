@@ -6,17 +6,17 @@ import { Inject, Injectable } from "@nestjs/common"
 import { Test } from "@nestjs/testing"
 import { ClsService } from "nestjs-cls"
 
-import * as fakes from "../../fixtures/fakes/principal"
+import * as fakes from "../../fixtures/fakes/account"
 import { type Account } from "../entities/account.entity"
 
 import {
-  CurrentPrincipal,
-  getPrincipal,
-  principalProvider,
-  setPrincipal,
-} from "./principal.slot"
+  accountProvider,
+  CurrentAccountToken,
+  getAccount,
+  setAccount,
+} from "./account.slot"
 
-describe("principal.slot", () => {
+describe("account.slot", () => {
   let cls: ClsService
 
   beforeEach(async () => {
@@ -27,69 +27,69 @@ describe("principal.slot", () => {
     cls = module.get(ClsService)
   })
 
-  describe("getPrincipal()", () => {
-    describe("Given a CLS context with a principal set via setPrincipal()", () => {
-      it("should return the principal", () => {
-        const principal = fakes.principal()
+  describe("getAccount()", () => {
+    describe("Given a CLS context with an account set via setAccount()", () => {
+      it("should return the account", () => {
+        const account = fakes.account()
 
         const result = cls.run(() => {
-          setPrincipal(principal)
-          return getPrincipal()
+          setAccount(account)
+          return getAccount()
         })
 
-        expect(result).toBe(principal)
+        expect(result).toBe(account)
       })
     })
 
-    describe("Given an active CLS context with no principal set", () => {
+    describe("Given an active CLS context with no account set", () => {
       it("should return undefined", () => {
-        const result = cls.run(() => getPrincipal())
+        const result = cls.run(() => getAccount())
         expect(result).toBeUndefined()
       })
     })
 
     describe("Given no active CLS context", () => {
       it("should return undefined", () => {
-        expect(getPrincipal()).toBeUndefined()
+        expect(getAccount()).toBeUndefined()
       })
     })
   })
 
-  describe("setPrincipal()", () => {
+  describe("setAccount()", () => {
     describe("Given an active CLS context", () => {
-      it("should store the principal so getPrincipal() can retrieve it", () => {
-        const principal = fakes.principal()
+      it("should store the account so getAccount() can retrieve it", () => {
+        const account = fakes.account()
 
         const result = cls.run(() => {
-          setPrincipal(principal)
-          return getPrincipal()
+          setAccount(account)
+          return getAccount()
         })
 
-        expect(result).toBe(principal)
+        expect(result).toBe(account)
       })
     })
 
     describe("Given no active CLS context", () => {
       it("should throw NoContextError", () => {
-        expect(() => setPrincipal(fakes.principal())).toThrow(NoContextError)
+        expect(() => setAccount(fakes.account())).toThrow(NoContextError)
       })
     })
   })
 
-  describe("CurrentPrincipal (@Inject)", () => {
+  describe("CurrentAccountToken (@Inject)", () => {
     @Injectable()
     class TestService {
       public constructor(
-        @Inject(CurrentPrincipal)
-        private readonly principal: Account,
+        @Inject(CurrentAccountToken)
+        private readonly account: Account,
       ) {}
 
       public getId(): string | undefined {
-        return this.principal?.id
+        return this.account?.id
       }
 
       public getEmail(): string | undefined {
-        return this.principal?.email
+        return this.account?.email
       }
     }
 
@@ -98,26 +98,26 @@ describe("principal.slot", () => {
     beforeEach(async () => {
       const module = await Test.createTestingModule({
         imports: [RequestContextModule.forRoot()],
-        providers: [principalProvider, TestService],
+        providers: [accountProvider, TestService],
       }).compile()
 
       cls = module.get(ClsService)
       service = module.get(TestService)
     })
 
-    describe("Given a principal has been stored in the CLS context", () => {
-      it("should resolve the principal's properties via the proxy", () => {
-        const principal = fakes.principal()
+    describe("Given an account has been stored in the CLS context", () => {
+      it("should resolve the account's properties via the proxy", () => {
+        const account = fakes.account()
 
         cls.run(() => {
-          setPrincipal(principal)
-          expect(service.getId()).toBe(principal.id)
-          expect(service.getEmail()).toBe(principal.email)
+          setAccount(account)
+          expect(service.getId()).toBe(account.id)
+          expect(service.getEmail()).toBe(account.email)
         })
       })
     })
 
-    describe("Given no principal has been stored in the CLS context", () => {
+    describe("Given no account has been stored in the CLS context", () => {
       it("should return undefined for property access", () => {
         cls.run(() => {
           expect(service.getId()).toBeUndefined()

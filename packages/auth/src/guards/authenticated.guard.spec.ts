@@ -16,11 +16,11 @@ import { Reflector } from "@nestjs/core"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { ClsService } from "nestjs-cls"
 
-import * as fakes from "../../fixtures/fakes/principal"
+import * as fakes from "../../fixtures/fakes/account"
+import { setAccount } from "../account/account.slot"
 import { type AuthOptions, AUTH_OPTIONS } from "../auth.options"
 import { Authenticated } from "../decorators/authenticated.decorator"
 import { UnauthorizedRedirectException } from "../exceptions/unauthorized-redirect.exception"
-import { setPrincipal } from "../principal/principal.slot"
 
 import { AuthenticatedGuard } from "./authenticated.guard"
 
@@ -67,7 +67,7 @@ describe("AuthenticatedGuard", () => {
     expectedMessage = `Unauthenticated, access to resource ${requestUrl} denied`
   })
 
-  describe("Given an authenticated principal in the request context", () => {
+  describe("Given an authenticated account in the request context", () => {
     beforeEach(async () => {
       const module = await buildModule()
       guard = module.get(AuthenticatedGuard)
@@ -81,13 +81,13 @@ describe("AuthenticatedGuard", () => {
       })
 
       cls.run(() => {
-        setPrincipal(fakes.principal())
+        setAccount(fakes.account())
         expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
       })
     })
   })
 
-  describe("Given no principal in the request context", () => {
+  describe("Given no account in the request context", () => {
     describe("And no per-route metadata", () => {
       describe("And no module-level onUnauthenticated", () => {
         beforeEach(async () => {

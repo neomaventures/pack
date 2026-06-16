@@ -26,14 +26,14 @@ const authOptions: AuthOptions = {
   },
 }
 
-const buildPrincipal = (): Account => {
+const buildAccount = (): Account => {
   const account = new Account()
   account.id = faker.string.uuid()
   account.email = faker.internet.email()
   account.permissions = []
   return account
 }
-const principal = buildPrincipal()
+const account = buildAccount()
 
 describe("DashboardController", () => {
   let controller: DashboardController
@@ -51,10 +51,10 @@ describe("DashboardController", () => {
   })
 
   describe("index()", () => {
-    describe("Given an authenticated principal", () => {
-      it("should return the principal's email for the template", () => {
-        expect(controller.index(principal)).toMatchObject({
-          email: principal.email,
+    describe("Given an authenticated account", () => {
+      it("should return the account's email for the template", () => {
+        expect(controller.index(account)).toMatchObject({
+          email: account.email,
         })
       })
     })

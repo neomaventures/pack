@@ -1,4 +1,4 @@
-import "./types/express-principal"
+import "./types/express-account"
 
 // Module & Configuration
 export * from "./auth.module"
@@ -19,8 +19,8 @@ export * from "./services/token.service"
 // DTO for request validation
 export * from "./dtos/email.dto"
 
-// Principal (context slot)
-export { getPrincipal, CurrentPrincipal } from "./principal/principal.slot"
+// Account (context slot)
+export { getAccount, CurrentAccountToken } from "./account/account.slot"
 
 // Decorators used in consumer controllers
 export {
@@ -31,7 +31,7 @@ export {
 export * from "./decorators/active-oauth-token.decorator"
 export * from "./decorators/google-auth-result.decorator"
 export * from "./decorators/google-callback.decorator"
-export * from "./decorators/principal.decorator"
+export * from "./decorators/current-account.decorator"
 export * from "./decorators/requires-permission.decorator"
 export * from "./decorators/requires-any-permission.decorator"
 

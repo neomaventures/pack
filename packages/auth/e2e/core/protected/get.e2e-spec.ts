@@ -58,7 +58,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with write:articles", () => {
+      describe("When a request is made as an account with write:articles", () => {
         it("should respond with HTTP 403", async () => {
           const { token } = await createUserWithPermissions(["write:articles"])
 
@@ -75,7 +75,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with no permissions", () => {
+      describe("When a request is made as an account with no permissions", () => {
         it("should respond with HTTP 403", async () => {
           const { token } = await createUserWithPermissions([])
 
@@ -92,7 +92,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with read:articles", () => {
+      describe("When a request is made as an account with read:articles", () => {
         it("should respond with HTTP 200", async () => {
           const { token } = await createUserWithPermissions(["read:articles"])
 
@@ -104,7 +104,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with *", () => {
+      describe("When a request is made as an account with *", () => {
         it("should respond with HTTP 200", async () => {
           const { token } = await createUserWithPermissions(["*"])
 
@@ -116,7 +116,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with *:articles", () => {
+      describe("When a request is made as an account with *:articles", () => {
         it("should respond with HTTP 200", async () => {
           const { token } = await createUserWithPermissions(["*:articles"])
 
@@ -128,7 +128,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with read:*", () => {
+      describe("When a request is made as an account with read:*", () => {
         it("should respond with HTTP 200", async () => {
           const { token } = await createUserWithPermissions(["read:*"])
 
@@ -151,7 +151,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with neither required permission", () => {
+      describe("When a request is made as an account with neither required permission", () => {
         it("should respond with HTTP 403 listing all missing permissions", async () => {
           const { token } = await createUserWithPermissions(["delete:users"])
 
@@ -169,7 +169,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with only read:articles", () => {
+      describe("When a request is made as an account with only read:articles", () => {
         it("should respond with HTTP 403 for missing write:articles", async () => {
           const { token } = await createUserWithPermissions(["read:articles"])
 
@@ -186,7 +186,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with only write:articles", () => {
+      describe("When a request is made as an account with only write:articles", () => {
         it("should respond with HTTP 403 for missing read:articles", async () => {
           const { token } = await createUserWithPermissions(["write:articles"])
 
@@ -203,7 +203,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with read:articles and write:articles", () => {
+      describe("When a request is made as an account with read:articles and write:articles", () => {
         it("should respond with HTTP 200", async () => {
           const { token } = await createUserWithPermissions([
             "read:articles",
@@ -218,7 +218,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with *:articles", () => {
+      describe("When a request is made as an account with *:articles", () => {
         it("should respond with HTTP 200", async () => {
           const { token } = await createUserWithPermissions(["*:articles"])
 
@@ -230,7 +230,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with *", () => {
+      describe("When a request is made as an account with *", () => {
         it("should respond with HTTP 200", async () => {
           const { token } = await createUserWithPermissions(["*"])
 
@@ -242,7 +242,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with read:*", () => {
+      describe("When a request is made as an account with read:*", () => {
         it("should respond with HTTP 403 for missing write:articles", async () => {
           const { token } = await createUserWithPermissions(["read:*"])
 
@@ -259,7 +259,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with write:*", () => {
+      describe("When a request is made as an account with write:*", () => {
         it("should respond with HTTP 403 for missing read:articles", async () => {
           const { token } = await createUserWithPermissions(["write:*"])
 
@@ -287,7 +287,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with neither admin nor delete:articles", () => {
+      describe("When a request is made as an account with neither admin nor delete:articles", () => {
         it("should respond with HTTP 403", async () => {
           const { token } = await createUserWithPermissions(["read:articles"])
 
@@ -305,7 +305,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with admin", () => {
+      describe("When a request is made as an account with admin", () => {
         it("should respond with HTTP 200", async () => {
           const { token } = await createUserWithPermissions(["admin"])
 
@@ -317,7 +317,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with delete:articles", () => {
+      describe("When a request is made as an account with delete:articles", () => {
         it("should respond with HTTP 200", async () => {
           const { token } = await createUserWithPermissions(["delete:articles"])
 
@@ -329,7 +329,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with admin and delete:articles", () => {
+      describe("When a request is made as an account with admin and delete:articles", () => {
         it("should respond with HTTP 200", async () => {
           const { token } = await createUserWithPermissions([
             "admin",
@@ -344,7 +344,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with *", () => {
+      describe("When a request is made as an account with *", () => {
         it("should respond with HTTP 200", async () => {
           const { token } = await createUserWithPermissions(["*"])
 
@@ -356,7 +356,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with *:articles", () => {
+      describe("When a request is made as an account with *:articles", () => {
         it("should respond with HTTP 200", async () => {
           const { token } = await createUserWithPermissions(["*:articles"])
 
@@ -368,7 +368,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with delete:*", () => {
+      describe("When a request is made as an account with delete:*", () => {
         it("should respond with HTTP 200", async () => {
           const { token } = await createUserWithPermissions(["delete:*"])
 
@@ -380,7 +380,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with no permissions", () => {
+      describe("When a request is made as an account with no permissions", () => {
         it("should respond with HTTP 403", async () => {
           const { token } = await createUserWithPermissions([])
 
@@ -409,7 +409,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with only read:reports", () => {
+      describe("When a request is made as an account with only read:reports", () => {
         it("should respond with HTTP 403", async () => {
           const { token } = await createUserWithPermissions(["read:reports"])
 
@@ -426,7 +426,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with only admin", () => {
+      describe("When a request is made as an account with only admin", () => {
         it("should respond with HTTP 403", async () => {
           const { token } = await createUserWithPermissions(["admin"])
 
@@ -443,7 +443,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with read:reports and admin", () => {
+      describe("When a request is made as an account with read:reports and admin", () => {
         it("should respond with HTTP 200", async () => {
           const { token } = await createUserWithPermissions([
             "read:reports",
@@ -458,7 +458,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with read:reports and write:reports", () => {
+      describe("When a request is made as an account with read:reports and write:reports", () => {
         it("should respond with HTTP 200", async () => {
           const { token } = await createUserWithPermissions([
             "read:reports",
@@ -491,7 +491,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with an unrelated permission", () => {
+      describe("When a request is made as an account with an unrelated permission", () => {
         it("should respond with HTTP 403 for /admin/dashboard", async () => {
           const { token } = await createUserWithPermissions(["read:articles"])
 
@@ -508,7 +508,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with read:admin", () => {
+      describe("When a request is made as an account with read:admin", () => {
         it("should respond with HTTP 200 for /admin/dashboard", async () => {
           const { token } = await createUserWithPermissions(["read:admin"])
 
@@ -535,7 +535,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with write:admin", () => {
+      describe("When a request is made as an account with write:admin", () => {
         it("should respond with HTTP 403 for /admin/settings (also requires read:admin from class)", async () => {
           const { token } = await createUserWithPermissions(["write:admin"])
 
@@ -552,7 +552,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with read:admin and write:admin", () => {
+      describe("When a request is made as an account with read:admin and write:admin", () => {
         it("should respond with HTTP 200 for /admin/settings", async () => {
           const { token } = await createUserWithPermissions([
             "read:admin",
@@ -567,7 +567,7 @@ appModules.forEach(([name, modulePath]) => {
         })
       })
 
-      describe("When a request is made as a principal with *", () => {
+      describe("When a request is made as an account with *", () => {
         it("should respond with HTTP 200 for both endpoints", async () => {
           const { token } = await createUserWithPermissions(["*"])
 

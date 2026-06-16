@@ -211,13 +211,13 @@ export class DashboardController {
   @Get()
   @Render("dashboard")
   @UseGuards(new Authenticated("/auth/register"))
-  public index(@Principal() principal: Account): { email: string } {
-    return { email: principal.email }
+  public index(@CurrentAccount() account: Account): { email: string } {
+    return { email: account.email }
   }
 }
 ```
 
-`@Principal()` is a parameter decorator that resolves the authenticated account from the JWT session.
+`@CurrentAccount()` is a parameter decorator that resolves the authenticated account from the JWT session.
 
 ### Auth routes
 
@@ -307,7 +307,7 @@ my-app/
 │   │   └── account.entity.ts               # Account entity (id, email, permissions)
 │   ├── dashboard/
 │   │   ├── dashboard.module.ts              # Dashboard module
-│   │   └── dashboard.controller.ts          # Protected dashboard (@Authenticated + @Principal)
+│   │   └── dashboard.controller.ts          # Protected dashboard (@Authenticated + @CurrentAccount)
 │   ├── database/
 │   │   ├── database.module.ts              # Database config (SQLite dev / Postgres prod)
 │   │   └── database.module.spec.ts         # Unit tests for databaseOptions()

@@ -8,8 +8,8 @@ import * as jwt from "jsonwebtoken"
 import { ClsService } from "nestjs-cls"
 import { v4 } from "uuid"
 
+import { getAccount } from "../account/account.slot"
 import { AUTH_OPTIONS } from "../auth.options"
-import { getPrincipal } from "../principal/principal.slot"
 import { AuthenticationService } from "../services/authentication.service"
 
 import { CookieAuthenticationMiddleware } from "./cookie-authentication.middleware"
@@ -47,15 +47,15 @@ describe("CookieAuthenticationMiddleware", () => {
     await buildModule()
   })
 
-  describe("When req.principal is already set", () => {
+  describe("When req.account is already set", () => {
     it("should skip authentication and call next", (done) => {
-      const existingPrincipal = { id: v4(), email: faker.internet.email() }
+      const existingAccount = { id: v4(), email: faker.internet.email() }
       const sid = jwt.sign({ sub: v4() }, v4())
       const req = express.request({
         headers: {
           cookie: "auth.sid=" + encodeURIComponent(sid),
         },
-        principal: existingPrincipal,
+        account: existingAccount,
       })
 
       cls.run(() => {
@@ -64,7 +64,7 @@ describe("CookieAuthenticationMiddleware", () => {
           express.response() as unknown as Response,
           () => {
             expect(service.authenticate).not.toHaveBeenCalled()
-            expect(req.principal).toBe(existingPrincipal)
+            expect(req.account).toBe(existingAccount)
             done()
           },
         )
@@ -73,11 +73,11 @@ describe("CookieAuthenticationMiddleware", () => {
   })
 
   describe("When called with a auth.sid cookie", () => {
-    it("should use it to authenticate and assign the result to req.principal", (done) => {
+    it("should use it to authenticate and assign the result to req.account", (done) => {
       const id = v4()
       const sid = jwt.sign({ sub: id }, v4())
-      const principal = { id, email: faker.internet.email() }
-      service.authenticate.mockResolvedValue(principal)
+      const account = { id, email: faker.internet.email() }
+      service.authenticate.mockResolvedValue(account)
 
       const req = express.request({
         headers: {
@@ -91,8 +91,8 @@ describe("CookieAuthenticationMiddleware", () => {
           express.response() as unknown as Response,
           () => {
             expect(service.authenticate).toHaveBeenCalledWith(sid)
-            expect(req.principal).toBe(principal)
-            expect(getPrincipal()).toBe(principal)
+            expect(req.account).toBe(account)
+            expect(getAccount()).toBe(account)
             done()
           },
         )
@@ -110,8 +110,8 @@ describe("CookieAuthenticationMiddleware", () => {
           express.response() as unknown as Response,
           () => {
             expect(service.authenticate).not.toHaveBeenCalled()
-            expect(req.principal).toBeUndefined()
-            expect(getPrincipal()).toBeUndefined()
+            expect(req.account).toBeUndefined()
+            expect(getAccount()).toBeUndefined()
             done()
           },
         )
@@ -133,8 +133,8 @@ describe("CookieAuthenticationMiddleware", () => {
           express.response() as unknown as Response,
           () => {
             expect(service.authenticate).not.toHaveBeenCalled()
-            expect(req.principal).toBeUndefined()
-            expect(getPrincipal()).toBeUndefined()
+            expect(req.account).toBeUndefined()
+            expect(getAccount()).toBeUndefined()
             done()
           },
         )
@@ -150,7 +150,7 @@ describe("CookieAuthenticationMiddleware", () => {
       service.authenticate.mockRejectedValue(error)
     })
 
-    it("should call next without setting principal", (done) => {
+    it("should call next without setting account", (done) => {
       const req = express.request({
         headers: {
           cookie: "auth.sid=" + encodeURIComponent(sid),
@@ -162,8 +162,8 @@ describe("CookieAuthenticationMiddleware", () => {
           req as unknown as Request,
           express.response() as unknown as Response,
           () => {
-            expect(req.principal).toBeUndefined()
-            expect(getPrincipal()).toBeUndefined()
+            expect(req.account).toBeUndefined()
+            expect(getAccount()).toBeUndefined()
             done()
           },
         )
@@ -201,8 +201,8 @@ describe("CookieAuthenticationMiddleware", () => {
     it("should use the custom cookie name", (done) => {
       const id = v4()
       const sid = jwt.sign({ sub: id }, v4())
-      const principal = { id, email: faker.internet.email() }
-      service.authenticate.mockResolvedValue(principal)
+      const account = { id, email: faker.internet.email() }
+      service.authenticate.mockResolvedValue(account)
 
       const req = express.request({
         headers: {
@@ -216,8 +216,8 @@ describe("CookieAuthenticationMiddleware", () => {
           express.response() as unknown as Response,
           () => {
             expect(service.authenticate).toHaveBeenCalledWith(sid)
-            expect(req.principal).toBe(principal)
-            expect(getPrincipal()).toBe(principal)
+            expect(req.account).toBe(account)
+            expect(getAccount()).toBe(account)
             done()
           },
         )
@@ -239,8 +239,8 @@ describe("CookieAuthenticationMiddleware", () => {
           express.response() as unknown as Response,
           () => {
             expect(service.authenticate).not.toHaveBeenCalled()
-            expect(req.principal).toBeUndefined()
-            expect(getPrincipal()).toBeUndefined()
+            expect(req.account).toBeUndefined()
+            expect(getAccount()).toBeUndefined()
             done()
           },
         )

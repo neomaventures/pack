@@ -1,4 +1,4 @@
-import { getPrincipal } from "@neomaventures/auth"
+import { getAccount } from "@neomaventures/auth"
 import {
   type OriginalFileInfo,
   type StorageIdGenerator,
@@ -16,8 +16,8 @@ import { type Request } from "express"
  * collect, and a single FK on `Account` is always pointing at the live
  * object.
  *
- * The handler is guarded by `Authenticated` so the principal is always
- * present by the time this resolver runs. A missing principal would
+ * The handler is guarded by `Authenticated` so the account is always
+ * present by the time this resolver runs. A missing account would
  * indicate a guard misconfiguration upstream and is treated as a 401.
  *
  * @example
@@ -33,14 +33,14 @@ export class AccountAvatarKeyResolver implements StorageKeyResolver {
   /**
    * Builds the per-account avatar key.
    *
-   * @param _req - The Express request (unused; principal comes from
-   *   `getPrincipal()` which reads from the request-scoped context).
+   * @param _req - The Express request (unused; account comes from
+   *   `getAccount()` which reads from the request-scoped context).
    * @param _idGenerator - Ignored — the key is stable per account so no
    *   random component is needed.
    * @param _file - Ignored — `file.defaultKey` is not used because we
    *   want overwrite-on-replace semantics.
    * @returns `accounts/${accountId}/avatar`.
-   * @throws {UnauthorizedException} If no authenticated principal is set
+   * @throws {UnauthorizedException} If no authenticated account is set
    *   on the request context.
    */
   /* eslint-disable @typescript-eslint/no-unused-vars -- signature dictated by StorageKeyResolver */
@@ -50,12 +50,12 @@ export class AccountAvatarKeyResolver implements StorageKeyResolver {
     _file: OriginalFileInfo & { defaultKey: string },
   ): string {
     /* eslint-enable @typescript-eslint/no-unused-vars */
-    const principal = getPrincipal()
+    const account = getAccount()
 
-    if (!principal) {
+    if (!account) {
       throw new UnauthorizedException()
     }
 
-    return `accounts/${principal.id as string}/avatar`
+    return `accounts/${account.id as string}/avatar`
   }
 }

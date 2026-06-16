@@ -225,18 +225,18 @@ with the JWT's expiry.
 
 ### 5. Protect routes
 
-Use the `@Authenticated()` decorator and `@Principal()` decorator to
-protect routes. `@Principal()` returns a concrete `Account`.
+Use the `@Authenticated()` decorator and `@CurrentAccount()` decorator to
+protect routes. `@CurrentAccount()` returns a concrete `Account`.
 
 ```typescript
-import { Account, Authenticated, Principal } from "@neomaventures/auth"
+import { Account, Authenticated, CurrentAccount } from "@neomaventures/auth"
 import { Controller, Get } from "@nestjs/common"
 
 @Controller("me")
 @Authenticated()
 export class ProfileController {
   @Get()
-  public get(@Principal() account: Account): {
+  public get(@CurrentAccount() account: Account): {
     id: string
     email: string
   } {
@@ -340,14 +340,14 @@ export class Profile {
 }
 ```
 
-Look up the profile by `accountId` in your controller — the principal
+Look up the profile by `accountId` in your controller — the account
 slot gives you the account directly:
 
 ```typescript
 @Get("profile")
 @Authenticated()
 public async profile(
-  @Principal() account: Account,
+  @CurrentAccount() account: Account,
 ): Promise<Profile | null> {
   return this.profiles.findOne({
     where: { account: { id: account.id } },
@@ -370,7 +370,7 @@ upserts a row in the `oauth_token` table. The unique index on
 `(account, provider)` enforces one row per pair; subsequent logins
 overwrite that row in place rather than appending.
 
-The upsert and the principal write run inside a single
+The upsert and the account write run inside a single
 `DataSource.transaction()`, so the account row and the token row stay
 consistent — either both commit or both roll back. Events emit only
 after the transaction returns successfully.
@@ -389,7 +389,7 @@ import { Account, OAuthTokenSnapshot } from "@neomaventures/auth"
 
 @Get("inbox/count")
 @Authenticated()
-public count(@Principal() account: Account): { count: number } {
+public count(@CurrentAccount() account: Account): { count: number } {
   const token = account.activeToken("google")
   if (!token) return { count: 0 }
   return this.gmail.count(token.accessToken)
@@ -541,13 +541,13 @@ class OAuthToken {
 | `googleAuth`        | `GoogleAuthOptions`                 | Google OAuth configuration (optional — at least one of `magicLink` or `googleAuth` is required)                                                                                                            |
 | `cookie`            | `CookieOptions`                     | Session cookie configuration (optional)                                                                                                                                                                    |
 | `webhook`           | `WebhookOptions`                    | Webhook signature verification configuration (optional)                                                                                                                                                    |
-| `onUnauthenticated` | `string \| HttpException class`     | Default strategy used by `@Authenticated()` when no principal is found. String → 303 redirect. Class → `throw new Class(...)`. Per-route values override this. Defaults to `UnauthorizedException` (401).  |
+| `onUnauthenticated` | `string \| HttpException class`     | Default strategy used by `@Authenticated()` when no account is found. String → 303 redirect. Class → `throw new Class(...)`. Per-route values override this. Defaults to `UnauthorizedException` (401).  |
 
 ### Decorators
 
 | Decorator                       | Returns                       | Notes                                                                                                  |
 | ------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `@Principal()`                  | `Account \| undefined`        | Concrete type. Use behind `@Authenticated()` to guarantee a value.                                     |
+| `@CurrentAccount()`                  | `Account \| undefined`        | Concrete type. Use behind `@Authenticated()` to guarantee a value.                                     |
 | `@ActiveOAuthToken(provider)`   | `OAuthTokenSnapshot \| null`  | Calls `account.activeToken(provider)` under the hood. Renamed from `@OAuthToken` to avoid the entity name collision. |
 | `@Authenticated(options?)`      | guard                         | unchanged                                                                                              |
 | `@RequiresPermission(perm)`     | guard                         | unchanged                                                                                              |

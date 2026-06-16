@@ -8,9 +8,9 @@ import { CustomParamFactory } from "@nestjs/common/interfaces"
 import { Test } from "@nestjs/testing"
 import { ClsService } from "nestjs-cls"
 
+import { setAccount } from "../account/account.slot"
 import { Account } from "../entities/account.entity"
 import { OAuthToken } from "../entities/oauth-token.entity"
-import { setPrincipal } from "../principal/principal.slot"
 
 import { ActiveOAuthToken } from "./active-oauth-token.decorator"
 
@@ -67,7 +67,7 @@ describe("ActiveOAuthTokenDecorator", () => {
     context = executionContext() as ExecutionContext
   })
 
-  describe("Given no principal is in context", () => {
+  describe("Given no account is in context", () => {
     it("should return null", () => {
       cls.run(() => {
         expect(factory(providerArg, context)).toBeNull()
@@ -75,7 +75,7 @@ describe("ActiveOAuthTokenDecorator", () => {
     })
   })
 
-  describe("Given a principal with an active token is in context", () => {
+  describe("Given a account with an active token is in context", () => {
     it("should return the snapshot for the requested provider", () => {
       const accessToken = google.accessToken()
       const expiresAt = new Date(Date.now() + 3600 * 1000)
@@ -83,7 +83,7 @@ describe("ActiveOAuthTokenDecorator", () => {
       const stored = buildToken({ accessToken, expiresAt, scopes })
 
       cls.run(() => {
-        setPrincipal(buildAccount([stored]))
+        setAccount(buildAccount([stored]))
         expect(factory(providerArg, context)).toEqual({
           accessToken,
           expiresAt,
@@ -93,12 +93,12 @@ describe("ActiveOAuthTokenDecorator", () => {
     })
   })
 
-  describe("Given a principal without an activeToken method is in context", () => {
+  describe("Given a account without an activeToken method is in context", () => {
     it("should return null without throwing", () => {
       cls.run(() => {
-        // Defensive: a fixture or stale principal object might not be a
+        // Defensive: a fixture or stale account object might not be a
         // real Account instance.
-        setPrincipal({ id: "x", email: "y" } as unknown as Account)
+        setAccount({ id: "x", email: "y" } as unknown as Account)
         expect(factory(providerArg, context)).toBeNull()
       })
     })

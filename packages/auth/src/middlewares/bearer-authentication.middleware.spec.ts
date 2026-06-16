@@ -8,8 +8,8 @@ import * as jwt from "jsonwebtoken"
 import { ClsService } from "nestjs-cls"
 import { v4 } from "uuid"
 
+import { getAccount } from "../account/account.slot"
 import { InvalidCredentialsException } from "../exceptions/invalid-credentials.exception"
-import { getPrincipal } from "../principal/principal.slot"
 import { AuthenticationService } from "../services/authentication.service"
 
 import { BearerAuthenticationMiddleware } from "./bearer-authentication.middleware"
@@ -62,14 +62,14 @@ describe("BearerAuthenticationMiddleware", () => {
     cls = module.get(ClsService)
   })
 
-  describe("When req.principal is already set", () => {
+  describe("When req.account is already set", () => {
     it("should skip authentication and call next", (done) => {
-      const existingPrincipal = { id: v4(), email: faker.internet.email() }
+      const existingAccount = { id: v4(), email: faker.internet.email() }
       const req = express.request({
         headers: {
           authorization: `Bearer ${jwt.sign({ sub: v4() }, v4())}`,
         },
-        principal: existingPrincipal,
+        account: existingAccount,
       })
 
       cls.run(() => {
@@ -78,7 +78,7 @@ describe("BearerAuthenticationMiddleware", () => {
           express.response() as unknown as Response,
           () => {
             expect(service.authenticate).not.toHaveBeenCalled()
-            expect(req.principal).toBe(existingPrincipal)
+            expect(req.account).toBe(existingAccount)
             done()
           },
         )
@@ -92,8 +92,8 @@ describe("BearerAuthenticationMiddleware", () => {
         const id = v4()
         const token = jwt.sign({ sub: id }, v4())
         const header = `${bearer} ${token}`
-        const principal = { id, email: faker.internet.email() }
-        service.authenticate.mockResolvedValue(principal)
+        const account = { id, email: faker.internet.email() }
+        service.authenticate.mockResolvedValue(account)
 
         const req = express.request({
           headers: {
@@ -107,8 +107,8 @@ describe("BearerAuthenticationMiddleware", () => {
             express.response() as unknown as Response,
             () => {
               expect(service.authenticate).toHaveBeenCalledWith(token)
-              expect(req.principal).toBe(principal)
-              expect(getPrincipal()).toBe(principal)
+              expect(req.account).toBe(account)
+              expect(getAccount()).toBe(account)
               done()
             },
           )
@@ -127,8 +127,8 @@ describe("BearerAuthenticationMiddleware", () => {
           express.response() as unknown as Response,
           () => {
             expect(service.authenticate).not.toHaveBeenCalled()
-            expect(req.principal).toBeUndefined()
-            expect(getPrincipal()).toBeUndefined()
+            expect(req.account).toBeUndefined()
+            expect(getAccount()).toBeUndefined()
             done()
           },
         )
@@ -145,7 +145,7 @@ describe("BearerAuthenticationMiddleware", () => {
       service.authenticate.mockRejectedValue(error)
     })
 
-    it("should call next without setting principal", (done) => {
+    it("should call next without setting account", (done) => {
       const req = express.request({
         headers: {
           authorization: bearer,
@@ -157,8 +157,8 @@ describe("BearerAuthenticationMiddleware", () => {
           req as unknown as Request,
           express.response() as unknown as Response,
           () => {
-            expect(req.principal).toBeUndefined()
-            expect(getPrincipal()).toBeUndefined()
+            expect(req.account).toBeUndefined()
+            expect(getAccount()).toBeUndefined()
             done()
           },
         )

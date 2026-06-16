@@ -6,10 +6,10 @@ import { CustomParamFactory } from "@nestjs/common/interfaces"
 import { Test } from "@nestjs/testing"
 import { ClsService } from "nestjs-cls"
 
+import { setAccount } from "../account/account.slot"
 import { Account } from "../entities/account.entity"
-import { setPrincipal } from "../principal/principal.slot"
 
-import { Principal } from "./principal.decorator"
+import { CurrentAccount } from "./current-account.decorator"
 
 /**
  * Definition of the object returned from Reflect.getMetadata
@@ -18,18 +18,22 @@ import { Principal } from "./principal.decorator"
  */
 type Args = Record<string, { factory: CustomParamFactory }>
 
-describe("PrincipalDecorator", () => {
+describe("CurrentAccountDecorator", () => {
   let factory: CustomParamFactory
   let cls: ClsService
 
   beforeAll(async () => {
-    class PrincipalDecoratorTest {
+    class CurrentAccountDecoratorTest {
       // eslint-disable-next-line
-      public test(@Principal() _value: Account): void {}
+      public test(@CurrentAccount() _value: Account): void {}
     }
 
     const args = <Args>(
-      Reflect.getMetadata(ROUTE_ARGS_METADATA, PrincipalDecoratorTest, "test")
+      Reflect.getMetadata(
+        ROUTE_ARGS_METADATA,
+        CurrentAccountDecoratorTest,
+        "test",
+      )
     )
 
     factory = args[Object.keys(args)[0]].factory
@@ -41,22 +45,22 @@ describe("PrincipalDecorator", () => {
     cls = module.get(ClsService)
   })
 
-  describe("Given a principal has been stored in the CLS context", () => {
-    it("should return the principal", () => {
-      const principal = new Account()
-      principal.id = faker.string.uuid()
-      principal.email = faker.internet.email()
+  describe("Given an account has been stored in the CLS context", () => {
+    it("should return the account", () => {
+      const account = new Account()
+      account.id = faker.string.uuid()
+      account.email = faker.internet.email()
 
       cls.run(() => {
-        setPrincipal(principal)
+        setAccount(account)
         expect(factory(null, {} as unknown as ExecutionContext)).toEqual(
-          principal,
+          account,
         )
       })
     })
   })
 
-  describe("Given a principal hasn't been stored in the CLS context", () => {
+  describe("Given an account hasn't been stored in the CLS context", () => {
     it("should return undefined", () => {
       cls.run(() => {
         expect(factory(null, {} as unknown as ExecutionContext)).toBeUndefined()

@@ -38,7 +38,7 @@ import { OAuthToken } from "./oauth-token.entity"
  * ```typescript
  * @Get("inbox/count")
  * @Authenticated()
- * public count(@Principal() account: Account): unknown {
+ * public count(@CurrentAccount() account: Account): unknown {
  *   const token = account.activeToken("google")
  *   if (!token) return { count: 0 }
  *   return this.gmail.count(token.accessToken)

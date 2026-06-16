@@ -22,7 +22,7 @@ export interface AuthenticatedOptions {
 }
 
 /**
- * Marks a controller or handler as requiring an authenticated principal.
+ * Marks a controller or handler as requiring an authenticated account.
  *
  * Applies the {@link AuthenticatedGuard} and stamps the per-route
  * unauthenticated strategy as metadata. Per-route strategy beats the
