@@ -1,6 +1,11 @@
 import { Controller, Get } from "@nestjs/common"
 
-import { Account, Authenticated, CurrentAccount } from "@neomaventures/auth"
+import {
+  Account,
+  Authenticated,
+  CurrentAccount,
+  type AuthenticatableProfile,
+} from "@neomaventures/auth"
 
 /**
  * A test Controller for accessing the authenticated account
@@ -23,6 +28,24 @@ export class MeController {
     return {
       id: account.id,
       email: account.email,
+    }
+  }
+
+  /**
+   * Returns the authenticated account with provider profile data, used by
+   * e2e specs that need to assert post-auth side effects (e.g. Google
+   * profile claims persisted on `Account.authProfile`).
+   */
+  @Get("detailed")
+  public detailed(@CurrentAccount() account: Account): {
+    id: string
+    email: string
+    authProfile?: AuthenticatableProfile | null
+  } {
+    return {
+      id: account.id,
+      email: account.email,
+      authProfile: account.authProfile,
     }
   }
 }
