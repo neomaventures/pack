@@ -1,10 +1,10 @@
 import { Injectable } from "@nestjs/common"
 
+import { Account } from "../entities/account.entity"
 import { PermissionDeniedException } from "../exceptions/permission-denied.exception"
-import { Authenticatable } from "../interfaces/authenticatable.interface"
 
 /**
- * Service for checking and enforcing permissions on principals.
+ * Service for checking and enforcing permissions on accounts.
  *
  * Supports permission strings in the format `action:resource` with wildcard matching:
  * - `*` → matches all permissions (wildcard)
@@ -50,112 +50,94 @@ export class PermissionService {
     }
   }
   /**
-   * Checks if a principal has a specific permission.
+   * Checks if an account has a specific permission.
    *
-   * @param principal - The authenticated entity to check
+   * @param account - The authenticated entity to check
    * @param permission - The permission to check for
-   * @returns true if the principal has the permission, false otherwise
+   * @returns true if the account has the permission, false otherwise
    */
-  public hasPermission(
-    principal: Authenticatable,
-    permission: string,
-  ): boolean {
-    const permissions = principal.permissions ?? []
+  public hasPermission(account: Account, permission: string): boolean {
+    const permissions = account.permissions ?? []
     return permissions.some((p) => this.matchesPermission(p, permission))
   }
 
   /**
-   * Checks if a principal has all of the specified permissions.
+   * Checks if an account has all of the specified permissions.
    *
-   * @param principal - The authenticated entity to check
+   * @param account - The authenticated entity to check
    * @param permissions - The permissions to check for (AND logic)
-   * @returns true if the principal has all permissions, false otherwise
+   * @returns true if the account has all permissions, false otherwise
    */
-  public hasAllPermissions(
-    principal: Authenticatable,
-    permissions: string[],
-  ): boolean {
-    return permissions.every((p) => this.hasPermission(principal, p))
+  public hasAllPermissions(account: Account, permissions: string[]): boolean {
+    return permissions.every((p) => this.hasPermission(account, p))
   }
 
   /**
-   * Checks if a principal has any of the specified permissions.
+   * Checks if an account has any of the specified permissions.
    *
-   * @param principal - The authenticated entity to check
+   * @param account - The authenticated entity to check
    * @param permissions - The permissions to check for (OR logic)
-   * @returns true if the principal has at least one permission, false otherwise
+   * @returns true if the account has at least one permission, false otherwise
    */
-  public hasAnyPermission(
-    principal: Authenticatable,
-    permissions: string[],
-  ): boolean {
-    return permissions.some((p) => this.hasPermission(principal, p))
+  public hasAnyPermission(account: Account, permissions: string[]): boolean {
+    return permissions.some((p) => this.hasPermission(account, p))
   }
 
   /**
-   * Requires a principal to have a specific permission, throws if not.
+   * Requires an account to have a specific permission, throws if not.
    *
-   * @param principal - The authenticated entity to check
+   * @param account - The authenticated entity to check
    * @param permission - The permission required
-   * @throws {PermissionDeniedException} If the principal lacks the permission
+   * @throws {PermissionDeniedException} If the account lacks the permission
    */
-  public requirePermission(
-    principal: Authenticatable,
-    permission: string,
-  ): void {
-    if (!this.hasPermission(principal, permission)) {
+  public requirePermission(account: Account, permission: string): void {
+    if (!this.hasPermission(account, permission)) {
       throw new PermissionDeniedException(
         [permission],
         "all",
-        principal.id,
-        principal.permissions,
+        account.id,
+        account.permissions,
       )
     }
   }
 
   /**
-   * Requires a principal to have all specified permissions, throws if not.
+   * Requires an account to have all specified permissions, throws if not.
    *
-   * @param principal - The authenticated entity to check
+   * @param account - The authenticated entity to check
    * @param permissions - The permissions required (AND logic)
-   * @throws {PermissionDeniedException} If the principal lacks any permission
+   * @throws {PermissionDeniedException} If the account lacks any permission
    */
-  public requireAllPermissions(
-    principal: Authenticatable,
-    permissions: string[],
-  ): void {
-    const missing = permissions.filter((p) => !this.hasPermission(principal, p))
+  public requireAllPermissions(account: Account, permissions: string[]): void {
+    const missing = permissions.filter((p) => !this.hasPermission(account, p))
     if (missing.length > 0) {
       throw new PermissionDeniedException(
         missing,
         "all",
-        principal.id,
-        principal.permissions,
+        account.id,
+        account.permissions,
       )
     }
   }
 
   /**
-   * Requires a principal to have at least one of the specified permissions.
+   * Requires an account to have at least one of the specified permissions.
    *
-   * @param principal - The authenticated entity to check
+   * @param account - The authenticated entity to check
    * @param permissions - The permissions to check (OR logic)
-   * @throws {PermissionDeniedException} If the principal has none of the permissions
+   * @throws {PermissionDeniedException} If the account has none of the permissions
    */
-  public requireAnyPermission(
-    principal: Authenticatable,
-    permissions: string[],
-  ): void {
+  public requireAnyPermission(account: Account, permissions: string[]): void {
     if (permissions.length === 0) {
       throw new Error("requireAnyPermission() requires at least one permission")
     }
 
-    if (!this.hasAnyPermission(principal, permissions)) {
+    if (!this.hasAnyPermission(account, permissions)) {
       throw new PermissionDeniedException(
         permissions,
         "any",
-        principal.id,
-        principal.permissions,
+        account.id,
+        account.permissions,
       )
     }
   }
@@ -167,7 +149,7 @@ export class PermissionService {
    * - `*:resource` matches any action on that resource
    * - `action:*` matches that action on any resource
    *
-   * @param granted - The permission the principal has
+   * @param granted - The permission the account has
    * @param required - The permission being checked
    * @returns true if the granted permission satisfies the requirement
    */

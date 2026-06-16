@@ -21,12 +21,10 @@ appModules.forEach(([name, modulePath]) => {
     let app: Awaited<ReturnType<typeof managedAppInstance>>
 
     beforeEach(async () => {
-      jest.useFakeTimers({ doNotFake: ["setImmediate"] })
       app = await managedAppInstance(modulePath)
     })
 
     afterEach(() => {
-      jest.useRealTimers()
       return mailpit.clear()
     })
 
@@ -92,7 +90,7 @@ appModules.forEach(([name, modulePath]) => {
 
         // Pre-create the user
         const datasource = app.get(DataSource)
-        const repo = datasource.getRepository("User")
+        const repo = datasource.getRepository("Account")
         const user = repo.create({ email })
         await repo.save(user)
 

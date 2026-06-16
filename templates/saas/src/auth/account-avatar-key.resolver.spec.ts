@@ -10,7 +10,7 @@ import { AccountAvatarKeyResolver } from "~auth/account-avatar-key.resolver"
 
 /**
  * The resolver runs inside the storage interceptor after `@Authenticated()`
- * has accepted the request, so in production the principal is always present.
+ * has accepted the request, so in production the account is always present.
  * We exercise the happy path here and keep a single defensive test on the
  * `throw new UnauthorizedException` branch — even though it's only reachable
  * via guard misconfiguration, the contract is part of the resolver's public
@@ -18,7 +18,7 @@ import { AccountAvatarKeyResolver } from "~auth/account-avatar-key.resolver"
  */
 describe("AccountAvatarKeyResolver", () => {
   let resolver: AccountAvatarKeyResolver
-  let getPrincipalSpy: jest.SpyInstance
+  let getAccountSpy: jest.SpyInstance
 
   const idGenerator: StorageIdGenerator = {
     generate: (): string => "unused",
@@ -33,18 +33,18 @@ describe("AccountAvatarKeyResolver", () => {
 
   beforeEach(() => {
     resolver = new AccountAvatarKeyResolver()
-    getPrincipalSpy = jest.spyOn(auth, "getPrincipal")
+    getAccountSpy = jest.spyOn(auth, "getAccount")
   })
 
   afterEach(() => {
-    getPrincipalSpy.mockRestore()
+    getAccountSpy.mockRestore()
   })
 
   describe("resolve()", () => {
     describe("Given an authenticated request", () => {
       it("should return accounts/${accountId}/avatar", () => {
         const accountId = faker.string.uuid()
-        getPrincipalSpy.mockReturnValue({
+        getAccountSpy.mockReturnValue({
           id: accountId,
           email: faker.internet.email(),
         })
@@ -55,9 +55,9 @@ describe("AccountAvatarKeyResolver", () => {
       })
     })
 
-    describe("Given no principal on the request context", () => {
+    describe("Given no account on the request context", () => {
       it("should throw UnauthorizedException", () => {
-        getPrincipalSpy.mockReturnValue(undefined)
+        getAccountSpy.mockReturnValue(undefined)
 
         expect(() => resolver.resolve(req, idGenerator, fileInfo)).toThrow(
           /Unauthorized/i,

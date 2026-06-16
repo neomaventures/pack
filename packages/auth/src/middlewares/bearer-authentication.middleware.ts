@@ -2,16 +2,16 @@ import { ApplicationLogger } from "@neomaventures/logging"
 import { Injectable, NestMiddleware } from "@nestjs/common"
 import { Request, NextFunction } from "express"
 
+import { setAccount } from "../account/account.slot"
 import { InvalidCredentialsException } from "../exceptions/invalid-credentials.exception"
-import { setPrincipal } from "../principal/principal.slot"
 import { AuthenticationService } from "../services/authentication.service"
 
 /**
  * Middleware that attempts to authenticate the request using a Bearer token
  * in the Authorization header. If authentication is successful, the
- * authenticated principal is assigned to req.principal.
+ * authenticated account is assigned to req.account.
  *
- * If req.principal is already set (by a previous middleware), this
+ * If req.account is already set (by a previous middleware), this
  * middleware skips authentication and calls next.
  *
  * If no Authorization header is present, the request proceeds
@@ -21,7 +21,7 @@ import { AuthenticationService } from "../services/authentication.service"
  * missing token), an InvalidCredentialsException is thrown.
  *
  * If the header is well-formed but authentication fails (invalid JWT,
- * expired token, user not found), no principal is assigned and the
+ * expired token, user not found), no account is assigned and the
  * request proceeds unauthenticated with a warning logged.
  */
 @Injectable()
@@ -36,7 +36,7 @@ export class BearerAuthenticationMiddleware implements NestMiddleware {
     _res: Express.Response,
     next: NextFunction,
   ): Promise<void> {
-    if (req.principal) {
+    if (req.account) {
       return next()
     }
 
@@ -60,15 +60,15 @@ export class BearerAuthenticationMiddleware implements NestMiddleware {
     }
 
     try {
-      req.principal = await this.service.authenticate(token)
+      req.account = await this.service.authenticate(token)
     } catch (err) {
       this.logger.warn("Authentication via authorization header failed", {
         err,
       })
     }
 
-    if (req.principal) {
-      setPrincipal(req.principal)
+    if (req.account) {
+      setAccount(req.account)
     }
 
     next()

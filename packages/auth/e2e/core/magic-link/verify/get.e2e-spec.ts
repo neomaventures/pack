@@ -1,10 +1,11 @@
 import { faker } from "@faker-js/faker"
-import { MAGIC_LINK_AUDIENCE, SESSION_AUDIENCE } from "@neomaventures/auth"
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
 import * as jwt from "jsonwebtoken"
 import request from "supertest"
 import { DataSource } from "typeorm"
+
+import { MAGIC_LINK_AUDIENCE, SESSION_AUDIENCE } from "@neomaventures/auth"
 
 const { OK, UNAUTHORIZED } = HttpStatus
 
@@ -72,7 +73,7 @@ appModules.forEach(([name, modulePath]) => {
         const email = faker.internet.email().toLowerCase()
 
         // Create user first
-        const repo = datasource.getRepository("User")
+        const repo = datasource.getRepository("Account")
         const existingUser = repo.create({ email })
         await repo.save(existingUser)
 
@@ -99,7 +100,7 @@ appModules.forEach(([name, modulePath]) => {
       it("should find existing user with case-insensitive email lookup", async () => {
         const email = "existing@example.com"
 
-        const repo = datasource.getRepository("User")
+        const repo = datasource.getRepository("Account")
         const existingUser = repo.create({ email })
         await repo.save(existingUser)
 

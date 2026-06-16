@@ -1,7 +1,7 @@
 import {
-  type Authenticatable,
+  type Account,
   Authenticated,
-  Principal,
+  AuthenticatedAccount,
 } from "@neomaventures/auth"
 import { Controller, Get, Render } from "@nestjs/common"
 
@@ -16,14 +16,14 @@ export class DashboardController {
   /**
    * Renders the dashboard page for the authenticated user.
    *
-   * @param principal - The authenticated user, injected via the `@Principal()` decorator.
+   * @param account - The authenticated user, injected via the `@AuthenticatedAccount()` decorator.
    *
    * @returns The user's email address for display in the template.
    */
   @Get("dashboard")
   @Authenticated()
   @Render("dashboard")
-  public index(@Principal() principal: Authenticatable): { email: string } {
-    return { email: principal.email }
+  public index(@AuthenticatedAccount() account: Account): { email: string } {
+    return { email: account.email }
   }
 }

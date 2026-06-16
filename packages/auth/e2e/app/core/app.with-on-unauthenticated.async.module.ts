@@ -1,11 +1,14 @@
-import { AuthModule, AuthOptions } from "@neomaventures/auth"
 import { LoggingModule } from "@neomaventures/logging"
 import { RequestContextModule } from "@neomaventures/request-context"
 import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
 
-import { OAuthToken } from "../oauth-token.entity"
-import { User } from "../user.entity"
+import {
+  Account,
+  AuthModule,
+  AuthOptions,
+  OAuthToken,
+} from "@neomaventures/auth"
 
 import { MagicLinkController } from "./magic-link.controller"
 import { OnUnauthenticatedController } from "./on-unauthenticated.controller"
@@ -17,14 +20,14 @@ import { OnUnauthenticatedController } from "./on-unauthenticated.controller"
     TypeOrmModule.forRoot({
       type: "sqlite",
       database: ":memory:",
-      entities: [User, OAuthToken],
+      entities: [Account, OAuthToken],
       synchronize: true,
     }),
+    TypeOrmModule.forFeature([Account, OAuthToken]),
     AuthModule.forRootAsync({
-      useFactory: (): AuthOptions<User> => ({
+      useFactory: (): AuthOptions => ({
         secret: process.env.AUTH_SECRET!,
         expiresIn: "1h",
-        entities: { authenticatable: User, oauthToken: OAuthToken },
         onUnauthenticated: "/login",
         magicLink: {
           mailer: {

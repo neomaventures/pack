@@ -5,12 +5,11 @@ import { ROUTE_ARGS_METADATA } from "@nestjs/common/constants"
 import { CustomParamFactory } from "@nestjs/common/interfaces"
 import { Test } from "@nestjs/testing"
 import { ClsService } from "nestjs-cls"
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
 
-import { Authenticatable } from "../interfaces/authenticatable.interface"
-import { setPrincipal } from "../principal/principal.slot"
+import { setAccount } from "../account/account.slot"
+import { Account } from "../entities/account.entity"
 
-import { Principal } from "./principal.decorator"
+import { AuthenticatedAccount } from "./authenticated-account.decorator"
 
 /**
  * Definition of the object returned from Reflect.getMetadata
@@ -19,30 +18,22 @@ import { Principal } from "./principal.decorator"
  */
 type Args = Record<string, { factory: CustomParamFactory }>
 
-@Entity()
-class User implements Authenticatable {
-  @PrimaryGeneratedColumn()
-  public id!: number
-
-  @Column()
-  public email!: string
-
-  @Column()
-  public password!: string
-}
-
-describe("PrincipalDecorator", () => {
+describe("AuthenticatedAccountDecorator", () => {
   let factory: CustomParamFactory
   let cls: ClsService
 
   beforeAll(async () => {
-    class PrincipalDecoratorTest {
+    class AuthenticatedAccountDecoratorTest {
       // eslint-disable-next-line
-      public test(@Principal() _value: User): void {}
+      public test(@AuthenticatedAccount() _value: Account): void {}
     }
 
     const args = <Args>(
-      Reflect.getMetadata(ROUTE_ARGS_METADATA, PrincipalDecoratorTest, "test")
+      Reflect.getMetadata(
+        ROUTE_ARGS_METADATA,
+        AuthenticatedAccountDecoratorTest,
+        "test",
+      )
     )
 
     factory = args[Object.keys(args)[0]].factory
@@ -54,24 +45,22 @@ describe("PrincipalDecorator", () => {
     cls = module.get(ClsService)
   })
 
-  describe("Given a principal has been stored in the CLS context", () => {
-    it("should return the principal", () => {
-      const principal = {
-        id: faker.string.uuid(),
-        email: faker.internet.email(),
-        password: faker.internet.password(),
-      }
+  describe("Given an account has been stored in the CLS context", () => {
+    it("should return the account", () => {
+      const account = new Account()
+      account.id = faker.string.uuid()
+      account.email = faker.internet.email()
 
       cls.run(() => {
-        setPrincipal(principal)
+        setAccount(account)
         expect(factory(null, {} as unknown as ExecutionContext)).toEqual(
-          principal,
+          account,
         )
       })
     })
   })
 
-  describe("Given a principal hasn't been stored in the CLS context", () => {
+  describe("Given an account hasn't been stored in the CLS context", () => {
     it("should return undefined", () => {
       cls.run(() => {
         expect(factory(null, {} as unknown as ExecutionContext)).toBeUndefined()

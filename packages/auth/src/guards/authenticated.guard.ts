@@ -8,6 +8,7 @@ import {
 } from "@nestjs/common"
 import { Reflector } from "@nestjs/core"
 
+import { getAccount } from "../account/account.slot"
 import {
   type AuthOptions,
   AUTH_OPTIONS,
@@ -15,13 +16,12 @@ import {
 } from "../auth.options"
 import { ON_UNAUTHENTICATED_KEY } from "../decorators/authenticated.decorator"
 import { UnauthorizedRedirectException } from "../exceptions/unauthorized-redirect.exception"
-import { getPrincipal } from "../principal/principal.slot"
 
 import { buildUnauthenticatedMessage } from "./unauthenticated-message"
 
 /**
  * Guard wired up by the `@Authenticated()` decorator that gates a route
- * behind the presence of an authenticated principal in the ALS-backed
+ * behind the presence of an authenticated account in the ALS-backed
  * request context.
  *
  * Resolution order for the unauthenticated response:
@@ -51,19 +51,19 @@ export class AuthenticatedGuard implements CanActivate {
   ) {}
 
   /**
-   * Allows the request when a principal is present; otherwise throws
+   * Allows the request when an account is present; otherwise throws
    * according to the strategy resolved from per-route metadata or the
    * module-level default.
    *
    * @param context - Execution context providing handler + class metadata.
-   * @returns `true` if a principal is present.
+   * @returns `true` if an account is present.
    *
    * @throws {UnauthorizedException} When no strategy is configured.
    * @throws {UnauthorizedRedirectException} When a redirect string is configured.
    * @throws {HttpException} When an exception class is configured.
    */
   public canActivate(context: ExecutionContext): boolean {
-    if (getPrincipal()) {
+    if (getAccount()) {
       return true
     }
 

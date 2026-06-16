@@ -1,14 +1,13 @@
-import { faker } from "@faker-js/faker"
 import {
-  type Authenticatable,
+  Account,
   AuthModule,
   type AuthOptions,
+  OAuthToken,
 } from "@neomaventures/auth"
+import { entities } from "@neomaventures/auth/testing"
 import { ManagedDatabaseModule } from "@neomaventures/managed-database"
 import { Test, type TestingModule } from "@nestjs/testing"
 
-import { Account } from "~auth/account.entity"
-import { OAuthToken } from "~auth/oauth-token.entity"
 import { Upload } from "~auth/upload.entity"
 import { DashboardController } from "~dashboard/dashboard.controller"
 import { DashboardModule } from "~dashboard/dashboard.module"
@@ -16,7 +15,6 @@ import { DashboardModule } from "~dashboard/dashboard.module"
 const authOptions: AuthOptions = {
   secret: "test-secret",
   expiresIn: "1h",
-  entities: { authenticatable: Account },
   magicLink: {
     mailer: {
       host: "localhost",
@@ -28,11 +26,7 @@ const authOptions: AuthOptions = {
   },
 }
 
-const principal: Authenticatable = {
-  id: faker.string.uuid(),
-  email: faker.internet.email(),
-  permissions: [],
-}
+const account = entities.account()
 
 describe("DashboardController", () => {
   let controller: DashboardController
@@ -50,10 +44,10 @@ describe("DashboardController", () => {
   })
 
   describe("index()", () => {
-    describe("Given an authenticated principal", () => {
-      it("should return the principal's email for the template", () => {
-        expect(controller.index(principal)).toMatchObject({
-          email: principal.email,
+    describe("Given an authenticated account", () => {
+      it("should return the account's email for the template", () => {
+        expect(controller.index(account)).toMatchObject({
+          email: account.email,
         })
       })
     })

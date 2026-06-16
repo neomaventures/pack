@@ -1,6 +1,7 @@
-import { SessionService } from "@neomaventures/auth"
 import { Controller, HttpCode, HttpStatus, Post, Res } from "@nestjs/common"
 import { type Response } from "express"
+
+import { SessionService } from "@neomaventures/auth"
 
 @Controller("logout")
 export class LogoutController {

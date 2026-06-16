@@ -1,36 +1,27 @@
 import { faker } from "@faker-js/faker"
 import { express } from "@neomaventures/fixtures"
-import { DynamicModule } from "@nestjs/common"
-import { Test, TestingModule } from "@nestjs/testing"
+import { type DynamicModule } from "@nestjs/common"
+import { Test, type TestingModule } from "@nestjs/testing"
 import { TypeOrmModule } from "@nestjs/typeorm"
 import * as cookie from "cookie"
-import { Response } from "express"
+import { type Response } from "express"
 import * as jwt from "jsonwebtoken"
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
-import { v4 } from "uuid"
 
 import { AuthModule } from "../auth.module"
-import { AuthOptions, MailerOptions } from "../auth.options"
-import { Authenticatable } from "../interfaces/authenticatable.interface"
+import { type AuthOptions, type MailerOptions } from "../auth.options"
+import { Account } from "../entities/account.entity"
+import { OAuthToken } from "../entities/oauth-token.entity"
+import { entities } from "../testing"
 
 import { SESSION_AUDIENCE } from "./magic-link.service"
 import { SessionService } from "./session.service"
 
-@Entity()
-class User implements Authenticatable {
-  @PrimaryGeneratedColumn("uuid")
-  public id!: any
-
-  @Column({ unique: true })
-  public email!: string
-}
-
-const registrations: [string, (opts: AuthOptions<User>) => DynamicModule][] = [
+const registrations: [string, (opts: AuthOptions) => DynamicModule][] = [
   ["forRoot", (opts): DynamicModule => AuthModule.forRoot(opts)],
   [
     "forRootAsync",
     (opts): DynamicModule =>
-      AuthModule.forRootAsync({ useFactory: (): AuthOptions<User> => opts }),
+      AuthModule.forRootAsync({ useFactory: (): AuthOptions => opts }),
   ],
 ]
 
@@ -51,13 +42,12 @@ registrations.forEach(([name, register]) => {
           TypeOrmModule.forRoot({
             type: "sqlite",
             database: ":memory:",
-            entities: [User],
+            entities: [Account, OAuthToken],
             synchronize: true,
           }),
           register({
             secret,
             expiresIn,
-            entities: { authenticatable: User },
             magicLink: { mailer: {} as MailerOptions },
             cookie: cookieOptions,
           }),
@@ -69,15 +59,16 @@ registrations.forEach(([name, register]) => {
 
     describe("create", () => {
       let service: SessionService
-      const entity = { id: v4(), email: faker.internet.email() }
+      let entity: Account
 
       beforeEach(async () => {
         service = await buildModule()
+        entity = entities.account()
       })
 
       it("should issue a token with sub and session audience", () => {
         const res = express.response() as unknown as Response
-        const result = service.create(res, entity as Authenticatable)
+        const result = service.create(res, entity)
 
         const payload = jwt.verify(result.token, secret) as jwt.JwtPayload
         expect(payload.sub).toBe(entity.id)
@@ -86,7 +77,7 @@ registrations.forEach(([name, register]) => {
 
       it("should return the token and decoded payload", () => {
         const res = express.response() as unknown as Response
-        const result = service.create(res, entity as Authenticatable)
+        const result = service.create(res, entity)
 
         expect(result.token).toBeDefined()
         expect(result.payload).toBeDefined()
@@ -96,7 +87,7 @@ registrations.forEach(([name, register]) => {
 
       it("should set a Set-Cookie header with auth.sid by default", () => {
         const res = express.response() as unknown as Response
-        service.create(res, entity as Authenticatable)
+        service.create(res, entity)
 
         const parsed = cookie.parse(res.get("set-cookie")!)
         expect(parsed["auth.sid"]).toBeDefined()
@@ -105,7 +96,7 @@ registrations.forEach(([name, register]) => {
       it("should append to existing Set-Cookie headers rather than overwrite", () => {
         const res = express.response() as unknown as Response
         res.setHeader("Set-Cookie", "existing=value")
-        service.create(res, entity as Authenticatable)
+        service.create(res, entity)
 
         const header = res.getHeader("set-cookie") as string[]
         expect(header).toHaveLength(2)
@@ -115,35 +106,35 @@ registrations.forEach(([name, register]) => {
 
       it("should set httpOnly=true", () => {
         const res = express.response() as unknown as Response
-        service.create(res, entity as Authenticatable)
+        service.create(res, entity)
 
         expect(res.get("set-cookie")!.toLowerCase()).toContain("httponly")
       })
 
       it("should set Secure by default", () => {
         const res = express.response() as unknown as Response
-        service.create(res, entity as Authenticatable)
+        service.create(res, entity)
 
         expect(res.get("set-cookie")!.toLowerCase()).toContain("secure")
       })
 
       it("should set SameSite=Lax by default", () => {
         const res = express.response() as unknown as Response
-        service.create(res, entity as Authenticatable)
+        service.create(res, entity)
 
         expect(res.get("set-cookie")!.toLowerCase()).toContain("samesite=lax")
       })
 
       it("should set Path=/ by default", () => {
         const res = express.response() as unknown as Response
-        service.create(res, entity as Authenticatable)
+        service.create(res, entity)
 
         expect(res.get("set-cookie")!).toContain("Path=/")
       })
 
       it("should set Max-Age matching the JWT expiry", () => {
         const res = express.response() as unknown as Response
-        service.create(res, entity as Authenticatable)
+        service.create(res, entity)
 
         // expiresIn is "1h" = 3600 seconds
         expect(res.get("set-cookie")!).toContain("Max-Age=3600")
@@ -162,7 +153,7 @@ registrations.forEach(([name, register]) => {
 
         it("should use the custom cookie name", () => {
           const res = express.response() as unknown as Response
-          service.create(res, entity as Authenticatable)
+          service.create(res, entity)
 
           const parsed = cookie.parse(res.get("set-cookie")!)
           expect(parsed["my-app.sid"]).toBeDefined()
@@ -171,14 +162,14 @@ registrations.forEach(([name, register]) => {
 
         it("should use the custom domain", () => {
           const res = express.response() as unknown as Response
-          service.create(res, entity as Authenticatable)
+          service.create(res, entity)
 
           expect(res.get("set-cookie")!).toContain("Domain=example.com")
         })
 
         it("should use custom SameSite", () => {
           const res = express.response() as unknown as Response
-          service.create(res, entity as Authenticatable)
+          service.create(res, entity)
 
           expect(res.get("set-cookie")!.toLowerCase()).toContain(
             "samesite=strict",
@@ -187,14 +178,14 @@ registrations.forEach(([name, register]) => {
 
         it("should use custom path", () => {
           const res = express.response() as unknown as Response
-          service.create(res, entity as Authenticatable)
+          service.create(res, entity)
 
           expect(res.get("set-cookie")!).toContain("Path=/api")
         })
 
         it("should not include Secure when secure=false", () => {
           const res = express.response() as unknown as Response
-          service.create(res, entity as Authenticatable)
+          service.create(res, entity)
 
           expect(res.get("set-cookie")!.toLowerCase()).not.toContain("secure")
         })

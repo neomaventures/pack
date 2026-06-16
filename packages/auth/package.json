@@ -28,6 +28,16 @@
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "require": "./dist/testing/index.js"
+    }
+  },
   "files": [
     "dist",
     "README.md",
@@ -50,6 +60,8 @@
     "nodemailer": "^8.0.4"
   },
   "peerDependencies": {
+    "@faker-js/faker": ">=9",
+    "@neomaventures/google-fixtures": "*",
     "@neomaventures/logging": "*",
     "@neomaventures/request-context": "*",
     "@nestjs/common": "11.x",
@@ -61,6 +73,10 @@
     "reflect-metadata": ">=0.2",
     "rxjs": ">=7",
     "typeorm": ">=0.3"
+  },
+  "peerDependenciesMeta": {
+    "@faker-js/faker": { "optional": true },
+    "@neomaventures/google-fixtures": { "optional": true }
   },
   "devDependencies": {
     "@faker-js/faker": "^9.6.0",

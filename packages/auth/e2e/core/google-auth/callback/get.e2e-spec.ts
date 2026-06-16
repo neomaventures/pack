@@ -1,5 +1,4 @@
 import { faker } from "@faker-js/faker"
-import { SESSION_AUDIENCE } from "@neomaventures/auth"
 import { google, GoogleOAuthClient } from "@neomaventures/google-fixtures"
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { mockserver } from "@neomaventures/mockserver/fixture"
@@ -8,6 +7,8 @@ import { authenticateViaEmail } from "fixtures/fakes/magic-link"
 import * as jwt from "jsonwebtoken"
 import request from "supertest"
 import { DataSource } from "typeorm"
+
+import { SESSION_AUDIENCE } from "@neomaventures/auth"
 
 const { OK, UNAUTHORIZED, FORBIDDEN, BAD_GATEWAY } = HttpStatus
 
@@ -87,7 +88,7 @@ appModules.forEach(([name, modulePath]) => {
         const email = faker.internet.email().toLowerCase()
 
         // Create user first
-        const repo = datasource.getRepository("User")
+        const repo = datasource.getRepository("Account")
         const existingUser = repo.create({ email })
         await repo.save(existingUser)
 
@@ -117,7 +118,7 @@ appModules.forEach(([name, modulePath]) => {
       it("should find existing user with case-insensitive email lookup", async () => {
         const email = "existing@example.com"
 
-        const repo = datasource.getRepository("User")
+        const repo = datasource.getRepository("Account")
         const existingUser = repo.create({ email })
         await repo.save(existingUser)
 
@@ -361,12 +362,13 @@ appModules.forEach(([name, modulePath]) => {
 
           expect(meResponse.body.id).toBe(googleUserId)
 
-          // Verify the profile data in the database
-          const repo = datasource.getRepository("User")
-          const user = await repo.findOne({
-            where: { email },
-          })
-          expect((user as any).authProfile).toMatchObject({
+          // Verify Google profile data is exposed via the authenticated /me/detailed endpoint
+          const detailedResponse = await request(app.getHttpServer())
+            .get("/me/detailed")
+            .set("Authorization", `Bearer ${magicLinkResult.token}`)
+            .expect(OK)
+
+          expect(detailedResponse.body.authProfile).toMatchObject({
             google: {
               sub: googleSub,
               name: googleName,
@@ -408,12 +410,13 @@ appModules.forEach(([name, modulePath]) => {
           expect(googleResponse.body.user.id).toBe(magicLinkUserId)
           expect(googleResponse.body.isNewUser).toBe(false)
 
-          // Step 4: Verify Google profile data was written
-          const repo = datasource.getRepository("User")
-          const user = await repo.findOne({
-            where: { email },
-          })
-          expect((user as any).authProfile).toMatchObject({
+          // Step 4: Verify Google profile data was written via /me/detailed
+          const detailedResponse = await request(app.getHttpServer())
+            .get("/me/detailed")
+            .set("Authorization", `Bearer ${googleResponse.body.token}`)
+            .expect(OK)
+
+          expect(detailedResponse.body.authProfile).toMatchObject({
             google: {
               sub: googleSub,
               name: googleName,

@@ -1,44 +1,36 @@
 import { faker } from "@faker-js/faker"
-import { DynamicModule } from "@nestjs/common"
+import { type DynamicModule } from "@nestjs/common"
 import { EventEmitter2 } from "@nestjs/event-emitter"
-import { Test, TestingModule } from "@nestjs/testing"
+import { Test, type TestingModule } from "@nestjs/testing"
 import { getRepositoryToken, TypeOrmModule } from "@nestjs/typeorm"
 import * as jwt from "jsonwebtoken"
-import { Column, Entity, PrimaryGeneratedColumn, Repository } from "typeorm"
+import { type Repository } from "typeorm"
 import { v4 } from "uuid"
 
 import { AuthModule } from "../auth.module"
-import { AuthOptions, MailerOptions } from "../auth.options"
+import { type AuthOptions, type MailerOptions } from "../auth.options"
+import { Account } from "../entities/account.entity"
+import { OAuthToken } from "../entities/oauth-token.entity"
 import { AuthenticatedEvent } from "../events/authenticated.event"
 import { IncorrectCredentialsException } from "../exceptions/incorrect-credentials.exception"
 import { InvalidCredentialsException } from "../exceptions/invalid-credentials.exception"
-import { Authenticatable } from "../interfaces/authenticatable.interface"
 
 import { AuthenticationService } from "./authentication.service"
 import { SESSION_AUDIENCE } from "./magic-link.service"
 
-@Entity()
-class User implements Authenticatable {
-  @PrimaryGeneratedColumn("uuid")
-  public id!: any
-
-  @Column({ unique: true })
-  public email!: string
-}
-
-const registrations: [string, (opts: AuthOptions<User>) => DynamicModule][] = [
+const registrations: [string, (opts: AuthOptions) => DynamicModule][] = [
   ["forRoot", (opts): DynamicModule => AuthModule.forRoot(opts)],
   [
     "forRootAsync",
     (opts): DynamicModule =>
-      AuthModule.forRootAsync({ useFactory: (): AuthOptions<User> => opts }),
+      AuthModule.forRootAsync({ useFactory: (): AuthOptions => opts }),
   ],
 ]
 
 registrations.forEach(([name, register]) => {
   describe(`AuthenticationService (${name})`, () => {
     let service: AuthenticationService
-    let repository: Repository<User>
+    let repository: Repository<Account>
     let eventEmitter: EventEmitter2
 
     const email = faker.internet.email()
@@ -51,31 +43,33 @@ registrations.forEach(([name, register]) => {
           TypeOrmModule.forRoot({
             type: "sqlite",
             database: ":memory:",
-            entities: [User],
+            entities: [Account, OAuthToken],
             synchronize: true,
           }),
-          TypeOrmModule.forFeature([User]),
+          TypeOrmModule.forFeature([Account, OAuthToken]),
           register({
             secret,
             expiresIn,
-            entities: { authenticatable: User },
             magicLink: { mailer: {} as MailerOptions },
           }),
         ],
       }).compile()
 
       service = module.get<AuthenticationService>(AuthenticationService)
-      repository = module.get<Repository<User>>(getRepositoryToken(User))
+      repository = module.get<Repository<Account>>(getRepositoryToken(Account))
       eventEmitter = module.get<EventEmitter2>(EventEmitter2)
     })
 
     describe("authenticate", () => {
-      let user: User
+      let user: Account
       let emitSpy: jest.SpyInstance
 
       beforeEach(async () => {
-        user = repository.create({ email: email.toLowerCase() })
-        await repository.save(user)
+        const created = repository.create({ email: email.toLowerCase() })
+        await repository.save(created)
+        // Reload so the eager `oauthTokens` relation is hydrated as []
+        // — matches what the service sees from its own findOne.
+        user = await repository.findOneByOrFail({ id: created.id })
         emitSpy = jest.spyOn(eventEmitter, "emit")
       })
 
@@ -88,7 +82,7 @@ registrations.forEach(([name, register]) => {
         })
 
         it("should return the user entity", async () => {
-          const result = await service.authenticate<User>(token)
+          const result = await service.authenticate(token)
           expect(result).toEqual(user)
         })
 

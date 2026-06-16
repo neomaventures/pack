@@ -23,8 +23,6 @@ import {
 } from "@nestjs/common"
 import { type Response } from "express"
 
-import { type Account } from "~auth/account.entity"
-
 const { FOUND, SEE_OTHER } = HttpStatus
 
 /**
@@ -140,7 +138,7 @@ export class AuthController {
   @ErrorTemplate({ default: "/auth/register" })
   @Redirect("", FOUND)
   public googleCallback(
-    @GetGoogleAuthResult() { entity }: GoogleAuthResult<Account>,
+    @GetGoogleAuthResult() { entity }: GoogleAuthResult,
     @Res({ passthrough: true }) res: Response,
   ): { url: string } {
     this.sessionService.create(res, entity)

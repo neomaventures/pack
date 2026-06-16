@@ -1,9 +1,12 @@
 import { faker } from "@faker-js/faker"
+import { google as googleFakes } from "@neomaventures/google-fixtures"
+
 import {
   type GoogleAuthOptions,
   type GoogleAuthResult,
 } from "@neomaventures/auth"
-import { google as googleFakes } from "@neomaventures/google-fixtures"
+
+import { entities } from "../../src/testing"
 
 const { internet, person, string } = faker
 
@@ -26,11 +29,9 @@ export const google = {
    * const customResult = google.authResult({ isNewUser: false })
    * ```
    */
-  authResult(
-    overrides: Partial<GoogleAuthResult<any>> = {},
-  ): GoogleAuthResult<any> {
+  authResult(overrides: Partial<GoogleAuthResult> = {}): GoogleAuthResult {
     return {
-      entity: { id: string.uuid(), email: internet.email() },
+      entity: entities.account(),
       isNewUser: true,
       profile: {
         sub: string.numeric(10),

@@ -4,7 +4,7 @@ import { Response } from "express"
 import * as jwt from "jsonwebtoken"
 
 import { CookieOptions, AuthOptions, AUTH_OPTIONS } from "../auth.options"
-import { Authenticatable } from "../interfaces/authenticatable.interface"
+import { Account } from "../entities/account.entity"
 
 import { SESSION_AUDIENCE } from "./magic-link.service"
 import { TokenService } from "./token.service"
@@ -51,7 +51,7 @@ export class SessionService {
    */
   public create(
     res: Response,
-    entity: Authenticatable,
+    entity: Account,
   ): { token: string; payload: jwt.JwtPayload } {
     const result = this.tokenService.issue({
       sub: entity.id,

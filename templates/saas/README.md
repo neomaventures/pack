@@ -211,13 +211,13 @@ export class DashboardController {
   @Get()
   @Render("dashboard")
   @UseGuards(new Authenticated("/auth/register"))
-  public index(@Principal() principal: Account): { email: string } {
-    return { email: principal.email }
+  public index(@AuthenticatedAccount() account: Account): { email: string } {
+    return { email: account.email }
   }
 }
 ```
 
-`@Principal()` is a parameter decorator that resolves the authenticated account from the JWT session.
+`@AuthenticatedAccount()` is a parameter decorator that resolves the authenticated account from the JWT session.
 
 ### Auth routes
 
@@ -245,6 +245,14 @@ Set the following environment variables to enable Google OAuth:
 | `GOOGLE_TOKEN_ENDPOINT` | _(test only)_ Override for pointing at MockServer |
 
 When `GOOGLE_CLIENT_ID` is empty, the Google sign-in link is hidden and magic link login is the only option.
+
+## Profile & avatar
+
+Saas-template demonstrates the composition pattern recommended by `@neomaventures/auth`: identity stays on `Account` (managed by auth), presentation-layer fields like `avatar` and `displayName` live on a separate `Profile` entity with a 1:1 FK to `Account`.
+
+Loading the avatar requires an extra query (via `ProfileService.getAvatar`), not a property access on `Account`. That's intentional — `Account` is identity, `Profile` is presentation. Apps can add more identity-adjacent concerns (`Membership`, `Workspace`, `Preferences`, etc.) as separate FK-linked entities without ever touching `Account`.
+
+Avoid extending `Account` via TypeORM inheritance. The bidirectional relation between `Account` and `OAuthToken` is final; subclassing introduces TypeORM relation-graph fragility. Composition stays clean.
 
 ## Tests
 
@@ -299,7 +307,7 @@ my-app/
 │   │   └── account.entity.ts               # Account entity (id, email, permissions)
 │   ├── dashboard/
 │   │   ├── dashboard.module.ts              # Dashboard module
-│   │   └── dashboard.controller.ts          # Protected dashboard (@Authenticated + @Principal)
+│   │   └── dashboard.controller.ts          # Protected dashboard (@Authenticated + @AuthenticatedAccount)
 │   ├── database/
 │   │   ├── database.module.ts              # Database config (SQLite dev / Postgres prod)
 │   │   └── database.module.spec.ts         # Unit tests for databaseOptions()

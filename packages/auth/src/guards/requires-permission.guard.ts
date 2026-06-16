@@ -6,9 +6,9 @@ import {
 } from "@nestjs/common"
 import { Reflector } from "@nestjs/core"
 
+import { getAccount } from "../account/account.slot"
 import { REQUIRED_ANY_PERMISSIONS_KEY } from "../decorators/requires-any-permission.decorator"
 import { REQUIRED_PERMISSIONS_KEY } from "../decorators/requires-permission.decorator"
-import { getPrincipal } from "../principal/principal.slot"
 import { PermissionService } from "../services/permission.service"
 
 import { buildUnauthenticatedMessage } from "./unauthenticated-message"
@@ -17,13 +17,13 @@ import { buildUnauthenticatedMessage } from "./unauthenticated-message"
  * Guard that enforces permission-based authorization.
  *
  * This guard:
- * 1. Checks for an authenticated principal (throws 401 if missing)
+ * 1. Checks for an authenticated account (throws 401 if missing)
  * 2. Checks required permissions based on metadata from decorators:
  *    - `@RequiresPermission()` - requires ALL permissions (AND logic)
  *    - `@RequiresAnyPermission()` - requires ANY permission (OR logic)
  *
- * @throws {UnauthorizedException} If no authenticated principal exists
- * @throws {PermissionDeniedException} If the principal lacks required permissions
+ * @throws {UnauthorizedException} If no authenticated account exists
+ * @throws {PermissionDeniedException} If the account lacks required permissions
  */
 @Injectable()
 export class RequiresPermissionGuard implements CanActivate {
@@ -41,10 +41,10 @@ export class RequiresPermissionGuard implements CanActivate {
    * @throws {PermissionDeniedException} If permission check fails
    */
   public canActivate(context: ExecutionContext): boolean {
-    const principal = getPrincipal()
+    const account = getAccount()
 
     // Check authentication first
-    if (!principal) {
+    if (!account) {
       throw new UnauthorizedException(buildUnauthenticatedMessage(context))
     }
 
@@ -70,12 +70,12 @@ export class RequiresPermissionGuard implements CanActivate {
 
     // Check AND permissions
     if (requiredAll?.length) {
-      this.permissionService.requireAllPermissions(principal, requiredAll)
+      this.permissionService.requireAllPermissions(account, requiredAll)
     }
 
     // Check OR permissions
     if (requiredAny?.length) {
-      this.permissionService.requireAnyPermission(principal, requiredAny)
+      this.permissionService.requireAnyPermission(account, requiredAny)
     }
 
     return true

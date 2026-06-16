@@ -9,12 +9,12 @@ import { Reflector } from "@nestjs/core"
 import { Test, TestingModule } from "@nestjs/testing"
 import { ClsService } from "nestjs-cls"
 
-import * as fakes from "../../fixtures/fakes/principal"
+import { setAccount } from "../account/account.slot"
 import { RequiresAnyPermission } from "../decorators/requires-any-permission.decorator"
 import { RequiresPermission } from "../decorators/requires-permission.decorator"
 import { PermissionDeniedException } from "../exceptions/permission-denied.exception"
-import { setPrincipal } from "../principal/principal.slot"
 import { PermissionService } from "../services/permission.service"
+import { entities } from "../testing"
 
 import { RequiresPermissionGuard } from "./requires-permission.guard"
 
@@ -65,7 +65,7 @@ describe("RequiresPermissionGuard", () => {
     request = express.request()
   })
 
-  describe("When the request has no authenticated principal", () => {
+  describe("When the request has no authenticated account", () => {
     it("should throw UnauthorizedException with the resource-aware message", () => {
       const requestUrl = "/protected/articles"
       const requestWithUrl = express.request({ url: requestUrl })
@@ -85,7 +85,7 @@ describe("RequiresPermissionGuard", () => {
     })
   })
 
-  describe("When the request has an authenticated principal", () => {
+  describe("When the request has an authenticated account", () => {
     describe("Given a handler with no permission decorators", () => {
       it("should return true", () => {
         const ctx = executionContext(request, express.response(), {
@@ -94,22 +94,22 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setPrincipal(fakes.principal({ permissions: [] }))
+          setAccount(entities.account({ permissions: [] }))
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })
     })
 
     describe("Given a handler requiring read:users and write:users", () => {
-      it("should allow a principal with both permissions", () => {
+      it("should allow an account with both permissions", () => {
         const ctx = executionContext(request, express.response(), {
           controller: WithAndPermissions,
           method: "handler",
         })
 
         cls.run(() => {
-          setPrincipal(
-            fakes.principal({
+          setAccount(
+            entities.account({
               permissions: ["read:users", "write:users", "delete:users"],
             }),
           )
@@ -117,14 +117,14 @@ describe("RequiresPermissionGuard", () => {
         })
       })
 
-      it("should deny a principal missing write:users", () => {
+      it("should deny an account missing write:users", () => {
         const ctx = executionContext(request, express.response(), {
           controller: WithAndPermissions,
           method: "handler",
         })
 
         cls.run(() => {
-          setPrincipal(fakes.principal({ permissions: ["read:users"] }))
+          setAccount(entities.account({ permissions: ["read:users"] }))
           expect(() =>
             guard.canActivate(<ExecutionContext>ctx),
           ).toThrowMatching(PermissionDeniedException, {
@@ -133,40 +133,40 @@ describe("RequiresPermissionGuard", () => {
         })
       })
 
-      it("should allow a principal with *", () => {
+      it("should allow an account with *", () => {
         const ctx = executionContext(request, express.response(), {
           controller: WithAndPermissions,
           method: "handler",
         })
 
         cls.run(() => {
-          setPrincipal(fakes.principal({ permissions: ["*"] }))
+          setAccount(entities.account({ permissions: ["*"] }))
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })
     })
 
     describe("Given a handler requiring admin or delete:users", () => {
-      it("should allow a principal with delete:users", () => {
+      it("should allow an account with delete:users", () => {
         const ctx = executionContext(request, express.response(), {
           controller: WithAnyPermissions,
           method: "handler",
         })
 
         cls.run(() => {
-          setPrincipal(fakes.principal({ permissions: ["delete:users"] }))
+          setAccount(entities.account({ permissions: ["delete:users"] }))
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })
 
-      it("should deny a principal with neither", () => {
+      it("should deny an account with neither", () => {
         const ctx = executionContext(request, express.response(), {
           controller: WithAnyPermissions,
           method: "handler",
         })
 
         cls.run(() => {
-          setPrincipal(fakes.principal({ permissions: ["read:users"] }))
+          setAccount(entities.account({ permissions: ["read:users"] }))
           expect(() =>
             guard.canActivate(<ExecutionContext>ctx),
           ).toThrowMatching(PermissionDeniedException, {
@@ -177,28 +177,28 @@ describe("RequiresPermissionGuard", () => {
     })
 
     describe("Given a handler requiring read:users and (admin or write:users)", () => {
-      it("should allow a principal with read:users and write:users", () => {
+      it("should allow an account with read:users and write:users", () => {
         const ctx = executionContext(request, express.response(), {
           controller: WithBothPermissions,
           method: "handler",
         })
 
         cls.run(() => {
-          setPrincipal(
-            fakes.principal({ permissions: ["read:users", "write:users"] }),
+          setAccount(
+            entities.account({ permissions: ["read:users", "write:users"] }),
           )
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })
 
-      it("should deny a principal with read:users but neither admin nor write:users", () => {
+      it("should deny an account with read:users but neither admin nor write:users", () => {
         const ctx = executionContext(request, express.response(), {
           controller: WithBothPermissions,
           method: "handler",
         })
 
         cls.run(() => {
-          setPrincipal(fakes.principal({ permissions: ["read:users"] }))
+          setAccount(entities.account({ permissions: ["read:users"] }))
           expect(() =>
             guard.canActivate(<ExecutionContext>ctx),
           ).toThrowMatching(PermissionDeniedException, {
@@ -207,14 +207,14 @@ describe("RequiresPermissionGuard", () => {
         })
       })
 
-      it("should deny a principal with admin but not read:users", () => {
+      it("should deny an account with admin but not read:users", () => {
         const ctx = executionContext(request, express.response(), {
           controller: WithBothPermissions,
           method: "handler",
         })
 
         cls.run(() => {
-          setPrincipal(fakes.principal({ permissions: ["admin"] }))
+          setAccount(entities.account({ permissions: ["admin"] }))
           expect(() =>
             guard.canActivate(<ExecutionContext>ctx),
           ).toThrowMatching(PermissionDeniedException, {
@@ -225,28 +225,28 @@ describe("RequiresPermissionGuard", () => {
     })
 
     describe("Given a controller requiring read:admin and a method requiring write:admin", () => {
-      it("should allow a principal with both read:admin and write:admin", () => {
+      it("should allow an account with both read:admin and write:admin", () => {
         const ctx = executionContext(request, express.response(), {
           controller: ClassLevelPermissions,
           method: "restrictedHandler",
         })
 
         cls.run(() => {
-          setPrincipal(
-            fakes.principal({ permissions: ["read:admin", "write:admin"] }),
+          setAccount(
+            entities.account({ permissions: ["read:admin", "write:admin"] }),
           )
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })
 
-      it("should deny a principal with only read:admin", () => {
+      it("should deny an account with only read:admin", () => {
         const ctx = executionContext(request, express.response(), {
           controller: ClassLevelPermissions,
           method: "restrictedHandler",
         })
 
         cls.run(() => {
-          setPrincipal(fakes.principal({ permissions: ["read:admin"] }))
+          setAccount(entities.account({ permissions: ["read:admin"] }))
           expect(() =>
             guard.canActivate(<ExecutionContext>ctx),
           ).toThrowMatching(PermissionDeniedException, {
@@ -255,14 +255,14 @@ describe("RequiresPermissionGuard", () => {
         })
       })
 
-      it("should deny a principal with only write:admin", () => {
+      it("should deny an account with only write:admin", () => {
         const ctx = executionContext(request, express.response(), {
           controller: ClassLevelPermissions,
           method: "restrictedHandler",
         })
 
         cls.run(() => {
-          setPrincipal(fakes.principal({ permissions: ["write:admin"] }))
+          setAccount(entities.account({ permissions: ["write:admin"] }))
           expect(() =>
             guard.canActivate(<ExecutionContext>ctx),
           ).toThrowMatching(PermissionDeniedException, {
@@ -273,28 +273,28 @@ describe("RequiresPermissionGuard", () => {
     })
 
     describe("Given a controller requiring read:admin and a method with no additional permissions", () => {
-      it("should allow a principal with read:admin", () => {
+      it("should allow an account with read:admin", () => {
         const ctx = executionContext(request, express.response(), {
           controller: ClassLevelPermissions,
           method: "handler",
         })
 
         cls.run(() => {
-          setPrincipal(fakes.principal({ permissions: ["read:admin"] }))
+          setAccount(entities.account({ permissions: ["read:admin"] }))
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })
     })
 
     describe("Given a controller and method both requiring read:admin", () => {
-      it("should deduplicate and allow a principal with read:admin", () => {
+      it("should deduplicate and allow an account with read:admin", () => {
         const ctx = executionContext(request, express.response(), {
           controller: ClassLevelPermissions,
           method: "duplicateHandler",
         })
 
         cls.run(() => {
-          setPrincipal(fakes.principal({ permissions: ["read:admin"] }))
+          setAccount(entities.account({ permissions: ["read:admin"] }))
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })

@@ -1,13 +1,13 @@
 import { Inject, Injectable } from "@nestjs/common"
 import { EventEmitter2 } from "@nestjs/event-emitter"
 import { createTransport, Transporter } from "nodemailer"
-import { DataSource, FindOptionsWhere } from "typeorm"
+import { DataSource } from "typeorm"
 
 import { AUTH_OPTIONS, AuthOptions, MailerOptions } from "../auth.options"
+import { Account } from "../entities/account.entity"
 import { AuthenticatedEvent } from "../events/authenticated.event"
 import { RegisteredEvent } from "../events/registered.event"
 import { InvalidMagicLinkTokenException } from "../exceptions/invalid-magic-link-token.exception"
-import { Authenticatable } from "../interfaces/authenticatable.interface"
 
 import { TokenService } from "./token.service"
 
@@ -17,11 +17,11 @@ export const SESSION_AUDIENCE = "session"
 /**
  * Result of verifying a magic link token.
  */
-export interface MagicLinkVerifyResult<T extends Authenticatable> {
+export interface MagicLinkVerifyResult {
   /**
-   * The authenticated or newly created entity.
+   * The authenticated or newly created `Account`.
    */
-  entity: T
+  entity: Account
 
   /**
    * True if this was a new registration, false if existing user.
@@ -83,13 +83,9 @@ export class MagicLinkService {
       { expiresIn: "15m" },
     )
 
-    const repo = this.datasource.getRepository(
-      this.options.entities.authenticatable,
-    )
+    const repo = this.datasource.getRepository(Account)
     const exists = await repo.exists({
-      where: {
-        email: email.toLowerCase(),
-      } as FindOptionsWhere<Authenticatable>,
+      where: { email: email.toLowerCase() },
     })
 
     const template = exists ? mailer.welcomeBack : mailer.welcome
@@ -104,15 +100,15 @@ export class MagicLinkService {
   }
 
   /**
-   * Verifies a magic link token and returns/creates the user.
+   * Verifies a magic link token and returns/creates the Account.
    *
    * - Validates token signature and expiry
    * - Validates required claims (aud, email)
-   * - Creates new user if email not found, or returns existing user
-   * - Emits `auth.registered` for new users, `auth.authenticated` for existing
+   * - Creates new Account if email not found, or returns existing
+   * - Emits `auth.registered` for new accounts, `auth.authenticated` for existing
    *
    * @param token - The magic link JWT token
-   * @returns Object containing the entity and whether it's a new user
+   * @returns Object containing the Account and whether it's a new user
    * @throws {@link TokenFailedVerificationException} if token signature invalid or expired
    * @throws {@link InvalidMagicLinkTokenException} if missing required claims or wrong audience
    *
@@ -124,12 +120,10 @@ export class MagicLinkService {
    * }
    * ```
    *
-   * @fires auth.registered - when a new user is created
-   * @fires auth.authenticated - when an existing user is authenticated
+   * @fires auth.registered - when a new account is created
+   * @fires auth.authenticated - when an existing account is authenticated
    */
-  public async verify<T extends Authenticatable>(
-    token: string,
-  ): Promise<MagicLinkVerifyResult<T>> {
+  public async verify(token: string): Promise<MagicLinkVerifyResult> {
     const payload = this.tokenService.verify(token)
 
     if (payload.aud !== MAGIC_LINK_AUDIENCE) {
@@ -141,13 +135,9 @@ export class MagicLinkService {
     }
 
     const email = (payload.email as string).toLowerCase()
-    const repo = this.datasource.getRepository<T>(
-      this.options.entities.authenticatable,
-    )
+    const repo = this.datasource.getRepository(Account)
 
-    const existing = await repo.findOne({
-      where: { email } as FindOptionsWhere<T>,
-    })
+    const existing = await repo.findOne({ where: { email } })
 
     if (existing) {
       this.eventEmitter.emit(
@@ -157,7 +147,7 @@ export class MagicLinkService {
       return { entity: existing, isNewUser: false }
     }
 
-    const toSave = repo.create({ email } as T)
+    const toSave = repo.create({ email })
     const saved = await repo.save(toSave)
 
     this.eventEmitter.emit(

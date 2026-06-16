@@ -9,15 +9,15 @@ import { PermissionService } from "../services/permission.service"
 export const REQUIRED_ANY_PERMISSIONS_KEY = "auth:required_any_permissions"
 
 /**
- * Decorator that requires the authenticated principal to have ANY of the specified permissions.
+ * Decorator that requires the authenticated account to have ANY of the specified permissions.
  *
  * This decorator automatically enforces authentication - there is no need to also use
  * the `@Authenticated()` decorator.
  *
  * @param permissions - The permissions checked (OR logic - at least one must be present)
  *
- * @throws {UnauthorizedException} If no authenticated principal exists
- * @throws {PermissionDeniedException} If the principal has none of the specified permissions
+ * @throws {UnauthorizedException} If no authenticated account exists
+ * @throws {PermissionDeniedException} If the account has none of the specified permissions
  *
  * @example
  * ```typescript

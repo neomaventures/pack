@@ -1,4 +1,5 @@
 import { faker } from "@faker-js/faker"
+import { Account, OAuthToken } from "@neomaventures/auth"
 import { google, GoogleOAuthClient } from "@neomaventures/google-fixtures"
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { mockserver } from "@neomaventures/mockserver/fixture"
@@ -6,8 +7,6 @@ import { HttpStatus } from "@nestjs/common"
 import request from "supertest"
 import { DataSource } from "typeorm"
 
-import { Account } from "~auth/account.entity"
-import { OAuthToken } from "~auth/oauth-token.entity"
 import { authenticate } from "~fixtures/auth/e2e"
 import { configureViewEngine } from "~fixtures/configure-view-engine"
 
@@ -80,7 +79,7 @@ describe("GET /profile - connected accounts section", () => {
       )
       await tokens.save(
         tokens.create({
-          principal: account,
+          account,
           provider: "google",
           accessToken: faker.string.alphanumeric(40),
           refreshToken: faker.string.alphanumeric(40),

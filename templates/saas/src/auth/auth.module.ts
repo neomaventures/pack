@@ -1,31 +1,32 @@
+import { Account, OAuthToken } from "@neomaventures/auth"
 import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
 
 import { AccountAvatarKeyResolver } from "~auth/account-avatar-key.resolver"
-import { Account } from "~auth/account.entity"
-import { AccountService } from "~auth/account.service"
 import { AuthController } from "~auth/auth.controller"
-import { OAuthToken } from "~auth/oauth-token.entity"
 import { ProfileController } from "~auth/profile.controller"
 import { Upload } from "~auth/upload.entity"
+import { ProfileModule } from "~profile/profile.module"
 
 /**
  * SaaS template auth module — owns the authentication ceremony routes
- * and the account domain (profile page, avatar asset endpoints).
+ * and the profile page / avatar asset endpoints.
  *
  * Named `SaasAuthModule` to avoid collision with `AuthModule` from
  * `@neomaventures/auth`, which provides the underlying services
  * (MagicLinkService, SessionService) as global providers.
  *
- * Registers the {@link Account}, {@link OAuthToken}, and {@link Upload}
- * entities with TypeORM so that `MagicLinkService`, `GoogleAuthService`'s
- * relational token upsert, the `Account.avatar` relation, the storage
- * package's `UploadInterceptor`, and {@link AccountService} can resolve
- * them.
+ * Registers the {@link Account} and `OAuthToken` entities from auth (so
+ * the auth services can resolve them via `DataSource.getRepository`),
+ * plus the consumer-owned {@link Upload}. {@link ProfileModule} owns the
+ * `Profile` entity and `ProfileService`.
  */
 @Module({
-  imports: [TypeOrmModule.forFeature([Account, OAuthToken, Upload])],
+  imports: [
+    TypeOrmModule.forFeature([Account, OAuthToken, Upload]),
+    ProfileModule,
+  ],
   controllers: [AuthController, ProfileController],
-  providers: [AccountService, AccountAvatarKeyResolver],
+  providers: [AccountAvatarKeyResolver],
 })
 export class SaasAuthModule {}

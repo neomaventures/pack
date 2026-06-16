@@ -1,10 +1,10 @@
 import { HttpException, HttpStatus } from "@nestjs/common"
 
 /**
- * Thrown when a principal lacks the required permission to perform an action.
+ * Thrown when an account lacks the required permission to perform an action.
  *
- * Returns HTTP 403 Forbidden. The required permissions, principal identifier,
- * and principal's current permissions are available on the exception for
+ * Returns HTTP 403 Forbidden. The required permissions, account identifier,
+ * and account's current permissions are available on the exception for
  * server-side logging/auditing.
  *
  * @example
@@ -25,8 +25,8 @@ export class PermissionDeniedException extends HttpException {
   /**
    * @param requiredPermissions - The permissions that were required but not granted
    * @param mode - Whether all permissions were required ("all") or any one of them ("any")
-   * @param identifier - The identifier of the principal who was denied, for logging
-   * @param permissions - The permissions the principal had at the time, for logging
+   * @param identifier - The identifier of the account who was denied, for logging
+   * @param permissions - The permissions the account had at the time, for logging
    */
   public constructor(
     public readonly requiredPermissions: string[],

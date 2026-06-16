@@ -1,4 +1,3 @@
-import { faker } from "@faker-js/faker"
 import { executionContext } from "@neomaventures/fixtures"
 import { google } from "@neomaventures/google-fixtures"
 import { RequestContextModule } from "@neomaventures/request-context"
@@ -8,48 +7,29 @@ import { CustomParamFactory } from "@nestjs/common/interfaces"
 import { Test } from "@nestjs/testing"
 import { ClsService } from "nestjs-cls"
 
-import { type OAuthAuthenticatable } from "../interfaces/oauth-authenticatable.interface"
-import { type OAuthTokenable } from "../interfaces/oauth-tokenable.interface"
-import { setPrincipal } from "../principal/principal.slot"
+import { setAccount } from "../account/account.slot"
+import { Account } from "../entities/account.entity"
+import { entities } from "../testing"
 
-import { OAuthToken } from "./oauth-token.decorator"
+import { ActiveOAuthToken } from "./active-oauth-token.decorator"
 
 type Args = Record<string, { factory: CustomParamFactory; data: unknown }>
 
-const buildPrincipal = (tokens?: OAuthTokenable[]): OAuthAuthenticatable => ({
-  id: faker.string.uuid(),
-  email: faker.internet.email().toLowerCase(),
-  oauthTokens: tokens,
-})
-
-const buildToken = (
-  overrides: Partial<OAuthTokenable> = {},
-): OAuthTokenable => ({
-  id: faker.string.uuid(),
-  principal: { id: faker.string.uuid(), email: faker.internet.email() },
-  provider: "google",
-  accessToken: google.accessToken(),
-  refreshToken: faker.string.alphanumeric(40),
-  expiresAt: new Date(Date.now() + 3600 * 1000),
-  scopes: ["openid", "email", "profile"],
-  ...overrides,
-})
-
-describe("OAuthTokenDecorator", () => {
+describe("ActiveOAuthTokenDecorator", () => {
   let factory: CustomParamFactory
   let providerArg: unknown
   let cls: ClsService
   let context: ExecutionContext
 
   beforeAll(async () => {
-    class OAuthTokenDecoratorTest {
+    class ActiveOAuthTokenDecoratorTest {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      public test(@OAuthToken("google") _value: unknown): void {}
+      public test(@ActiveOAuthToken("google") _value: unknown): void {}
     }
 
     const args = Reflect.getMetadata(
       ROUTE_ARGS_METADATA,
-      OAuthTokenDecoratorTest,
+      ActiveOAuthTokenDecoratorTest,
       "test",
     ) as Args
 
@@ -65,7 +45,7 @@ describe("OAuthTokenDecorator", () => {
     context = executionContext() as ExecutionContext
   })
 
-  describe("Given no principal is in context", () => {
+  describe("Given no account is in context", () => {
     it("should return null", () => {
       cls.run(() => {
         expect(factory(providerArg, context)).toBeNull()
@@ -73,20 +53,31 @@ describe("OAuthTokenDecorator", () => {
     })
   })
 
-  describe("Given a principal with an active token is in context", () => {
+  describe("Given an account with an active token is in context", () => {
     it("should return the snapshot for the requested provider", () => {
       const accessToken = google.accessToken()
       const expiresAt = new Date(Date.now() + 3600 * 1000)
       const scopes = ["openid", "email"]
-      const stored = buildToken({ accessToken, expiresAt, scopes })
+      const stored = entities.oauthToken({ accessToken, expiresAt, scopes })
 
       cls.run(() => {
-        setPrincipal(buildPrincipal([stored]))
+        setAccount(entities.account({ oauthTokens: [stored] }))
         expect(factory(providerArg, context)).toEqual({
           accessToken,
           expiresAt,
           scopes,
         })
+      })
+    })
+  })
+
+  describe("Given an account without an activeToken method is in context", () => {
+    it("should return null without throwing", () => {
+      cls.run(() => {
+        // Defensive: a fixture or stale account object might not be a
+        // real Account instance.
+        setAccount({ id: "x", email: "y" } as unknown as Account)
+        expect(factory(providerArg, context)).toBeNull()
       })
     })
   })

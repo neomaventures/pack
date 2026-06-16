@@ -1,19 +1,17 @@
-import "./types/express-principal"
+import "./types/express-account"
 
 // Module & Configuration
 export * from "./auth.module"
 export * from "./auth.options"
 
-// Interfaces consumers implement
-export * from "./interfaces/authenticatable.interface"
-export * from "./interfaces/oauth-authenticatable.interface"
-export * from "./interfaces/oauth-tokenable.interface"
+// Entities (register with TypeOrmModule.forFeature)
+export * from "./entities/account.entity"
+export * from "./entities/oauth-token.entity"
 
 // Services injected via DI
 export * from "./services/authentication.service"
 export * from "./services/google-auth.service"
 export * from "./services/magic-link.service"
-export * from "./services/oauth-token.service"
 export * from "./services/permission.service"
 export * from "./services/session.service"
 export * from "./services/token.service"
@@ -21,8 +19,8 @@ export * from "./services/token.service"
 // DTO for request validation
 export * from "./dtos/email.dto"
 
-// Principal (context slot)
-export { getPrincipal, CurrentPrincipal } from "./principal/principal.slot"
+// Account (context slot)
+export { getAccount, CurrentAccountToken } from "./account/account.slot"
 
 // Decorators used in consumer controllers
 export {
@@ -30,14 +28,14 @@ export {
   type AuthenticatedOptions,
   ON_UNAUTHENTICATED_KEY,
 } from "./decorators/authenticated.decorator"
+export * from "./decorators/active-oauth-token.decorator"
 export * from "./decorators/google-auth-result.decorator"
 export * from "./decorators/google-callback.decorator"
-export * from "./decorators/principal.decorator"
+export * from "./decorators/authenticated-account.decorator"
 export * from "./decorators/requires-permission.decorator"
 export * from "./decorators/requires-any-permission.decorator"
 
-// OAuth tokens
-export * from "./decorators/oauth-token.decorator"
+// OAuth token types
 export * from "./types/oauth-provider.type"
 export * from "./types/oauth-token-snapshot.type"
 
@@ -63,4 +61,5 @@ export * from "./events/registered.event"
 export * from "./events/authenticated.event"
 
 // Types
+export * from "./types/oauth-profile.type"
 export * from "./types/auth-provider"

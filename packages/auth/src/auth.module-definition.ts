@@ -1,9 +1,9 @@
 import { ConfigurableModuleBuilder } from "@nestjs/common"
 import { EventEmitterModule } from "@nestjs/event-emitter"
 
+import { accountProvider, CurrentAccountToken } from "./account/account.slot"
 import { type AuthOptions, AUTH_OPTIONS } from "./auth.options"
 import { GoogleCallbackInterceptor } from "./interceptors/google-callback.interceptor"
-import { CurrentPrincipal, principalProvider } from "./principal/principal.slot"
 import { AuthenticationService } from "./services/authentication.service"
 import { GoogleAuthService } from "./services/google-auth.service"
 import { MagicLinkService } from "./services/magic-link.service"
@@ -37,19 +37,19 @@ export const {
     providers: [
       ...(definition.providers ?? []),
       ...AUTH_PROVIDERS,
-      principalProvider,
+      accountProvider,
     ],
     // Services are exported so consumers can inject them directly
     // (e.g. AuthenticationService, SessionService).
     // AUTH_OPTIONS is exported so that guards and services resolved
     // on-demand can access the configuration via @Inject(AUTH_OPTIONS).
-    // CurrentPrincipal is exported so consumers can inject the
-    // per-request principal via @Inject(CurrentPrincipal).
+    // CurrentAccountToken is exported so consumers can inject the
+    // per-request account via @Inject(CurrentAccountToken).
     exports: [
       ...(definition.exports ?? []),
       ...AUTH_PROVIDERS,
       AUTH_OPTIONS,
-      CurrentPrincipal,
+      CurrentAccountToken,
     ],
   }))
   .build()

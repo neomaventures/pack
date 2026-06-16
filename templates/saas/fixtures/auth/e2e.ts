@@ -1,10 +1,8 @@
-import { SESSION_AUDIENCE } from "@neomaventures/auth"
+import { Account, SESSION_AUDIENCE } from "@neomaventures/auth"
 import { type INestApplication } from "@nestjs/common"
 import * as cookie from "cookie"
 import jwt from "jsonwebtoken"
 import { DataSource } from "typeorm"
-
-import { Account } from "~auth/account.entity"
 
 /**
  * Mints a session cookie for the given email and returns the `Cookie`

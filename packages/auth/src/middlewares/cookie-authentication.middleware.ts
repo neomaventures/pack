@@ -3,21 +3,21 @@ import { Inject, Injectable, NestMiddleware } from "@nestjs/common"
 import * as cookie from "cookie"
 import { Request, NextFunction } from "express"
 
+import { setAccount } from "../account/account.slot"
 import { AuthOptions, AUTH_OPTIONS } from "../auth.options"
-import { setPrincipal } from "../principal/principal.slot"
 import { AuthenticationService } from "../services/authentication.service"
 
 /**
  * Middleware that attempts to authenticate the request using the
  * auth.sid cookie (or a custom cookie name from options).
  *
- * If req.principal is already set (by a previous middleware), this
+ * If req.account is already set (by a previous middleware), this
  * middleware skips authentication and calls next.
  *
  * If no cookie header is present or there is no matching cookie,
  * the request proceeds unauthenticated without error.
  *
- * If the cookie is present but authentication fails, no principal
+ * If the cookie is present but authentication fails, no account
  * is assigned and the request proceeds unauthenticated with a
  * warning logged.
  */
@@ -38,7 +38,7 @@ export class CookieAuthenticationMiddleware implements NestMiddleware {
     _res: Express.Response,
     next: NextFunction,
   ): Promise<void> {
-    if (req.principal) {
+    if (req.account) {
       return next()
     }
 
@@ -54,13 +54,13 @@ export class CookieAuthenticationMiddleware implements NestMiddleware {
     }
 
     try {
-      req.principal = await this.service.authenticate(sid)
+      req.account = await this.service.authenticate(sid)
     } catch (err) {
       this.logger.warn("Authentication via cookie failed", { err })
     }
 
-    if (req.principal) {
-      setPrincipal(req.principal)
+    if (req.account) {
+      setAccount(req.account)
     }
 
     next()

@@ -1,7 +1,6 @@
-import { faker } from "@faker-js/faker"
-
+import { type Account } from "../entities/account.entity"
 import { PermissionDeniedException } from "../exceptions/permission-denied.exception"
-import { type Authenticatable } from "../interfaces/authenticatable.interface"
+import { entities } from "../testing"
 
 import { PermissionService } from "./permission.service"
 
@@ -12,132 +11,127 @@ describe("PermissionService", () => {
     service = new PermissionService()
   })
 
-  const createPrincipal = (permissions: string[] = []): Authenticatable => ({
-    id: faker.string.uuid(),
-    email: faker.internet.email(),
-    permissions,
-  })
+  const createAccount = (permissions: string[] = []): Account =>
+    entities.account({ permissions })
 
   describe("hasPermission()", () => {
-    describe("When called with a principal that has no permissions", () => {
+    describe("When called with an account that has no permissions", () => {
       it("should return false for read:users", () => {
-        const principal = createPrincipal([])
-        expect(service.hasPermission(principal, "read:users")).toBe(false)
+        const account = createAccount([])
+        expect(service.hasPermission(account, "read:users")).toBe(false)
       })
     })
 
-    describe("When called with a principal that has undefined permissions", () => {
+    describe("When called with an account that has undefined permissions", () => {
       it("should return false for read:users", () => {
-        const principal: Authenticatable = {
-          id: faker.string.uuid(),
-          email: faker.internet.email(),
-        }
-        expect(service.hasPermission(principal, "read:users")).toBe(false)
+        const account = entities.account()
+        account.permissions = undefined as unknown as string[]
+        expect(service.hasPermission(account, "read:users")).toBe(false)
       })
     })
 
-    describe("When called with a principal that has read:users", () => {
+    describe("When called with an account that has read:users", () => {
       it("should return true for read:users", () => {
-        const principal = createPrincipal(["read:users"])
-        expect(service.hasPermission(principal, "read:users")).toBe(true)
+        const account = createAccount(["read:users"])
+        expect(service.hasPermission(account, "read:users")).toBe(true)
       })
 
       it("should return false for write:users", () => {
-        const principal = createPrincipal(["read:users"])
-        expect(service.hasPermission(principal, "write:users")).toBe(false)
+        const account = createAccount(["read:users"])
+        expect(service.hasPermission(account, "write:users")).toBe(false)
       })
     })
 
-    describe("When called with a principal that has *", () => {
+    describe("When called with an account that has *", () => {
       it("should return true for any permission", () => {
-        const principal = createPrincipal(["*"])
-        expect(service.hasPermission(principal, "read:users")).toBe(true)
-        expect(service.hasPermission(principal, "delete:posts")).toBe(true)
-        expect(service.hasPermission(principal, "admin")).toBe(true)
+        const account = createAccount(["*"])
+        expect(service.hasPermission(account, "read:users")).toBe(true)
+        expect(service.hasPermission(account, "delete:posts")).toBe(true)
+        expect(service.hasPermission(account, "admin")).toBe(true)
       })
     })
 
-    describe("When called with a principal that has *:users", () => {
+    describe("When called with an account that has *:users", () => {
       it("should return true for any action on users", () => {
-        const principal = createPrincipal(["*:users"])
-        expect(service.hasPermission(principal, "read:users")).toBe(true)
-        expect(service.hasPermission(principal, "write:users")).toBe(true)
-        expect(service.hasPermission(principal, "delete:users")).toBe(true)
+        const account = createAccount(["*:users"])
+        expect(service.hasPermission(account, "read:users")).toBe(true)
+        expect(service.hasPermission(account, "write:users")).toBe(true)
+        expect(service.hasPermission(account, "delete:users")).toBe(true)
       })
 
       it("should return false for other resources", () => {
-        const principal = createPrincipal(["*:users"])
-        expect(service.hasPermission(principal, "read:posts")).toBe(false)
+        const account = createAccount(["*:users"])
+        expect(service.hasPermission(account, "read:posts")).toBe(false)
       })
     })
 
-    describe("When called with a principal that has read:*", () => {
+    describe("When called with an account that has read:*", () => {
       it("should return true for read on any resource", () => {
-        const principal = createPrincipal(["read:*"])
-        expect(service.hasPermission(principal, "read:users")).toBe(true)
-        expect(service.hasPermission(principal, "read:posts")).toBe(true)
-        expect(service.hasPermission(principal, "read:comments")).toBe(true)
+        const account = createAccount(["read:*"])
+        expect(service.hasPermission(account, "read:users")).toBe(true)
+        expect(service.hasPermission(account, "read:posts")).toBe(true)
+        expect(service.hasPermission(account, "read:comments")).toBe(true)
       })
 
       it("should return false for other actions", () => {
-        const principal = createPrincipal(["read:*"])
-        expect(service.hasPermission(principal, "write:users")).toBe(false)
+        const account = createAccount(["read:*"])
+        expect(service.hasPermission(account, "write:users")).toBe(false)
       })
     })
 
-    describe("When called with a principal that has admin (single-segment)", () => {
+    describe("When called with an account that has admin (single-segment)", () => {
       it("should return true for admin", () => {
-        const principal = createPrincipal(["admin"])
-        expect(service.hasPermission(principal, "admin")).toBe(true)
+        const account = createAccount(["admin"])
+        expect(service.hasPermission(account, "admin")).toBe(true)
       })
 
       it("should return false for read:users", () => {
-        const principal = createPrincipal(["admin"])
-        expect(service.hasPermission(principal, "read:users")).toBe(false)
+        const account = createAccount(["admin"])
+        expect(service.hasPermission(account, "read:users")).toBe(false)
       })
 
       it("should be matched by *", () => {
-        const principal = createPrincipal(["*"])
-        expect(service.hasPermission(principal, "admin")).toBe(true)
+        const account = createAccount(["*"])
+        expect(service.hasPermission(account, "admin")).toBe(true)
       })
     })
   })
 
   describe("hasAllPermissions()", () => {
-    describe("When called with a principal that has all required permissions", () => {
+    describe("When called with an account that has all required permissions", () => {
       it("should return true", () => {
-        const principal = createPrincipal([
+        const account = createAccount([
           "read:users",
           "write:users",
           "delete:users",
         ])
         expect(
-          service.hasAllPermissions(principal, ["read:users", "write:users"]),
+          service.hasAllPermissions(account, ["read:users", "write:users"]),
         ).toBe(true)
       })
     })
 
-    describe("When called with a principal missing one permission", () => {
+    describe("When called with an account missing one permission", () => {
       it("should return false", () => {
-        const principal = createPrincipal(["read:users"])
+        const account = createAccount(["read:users"])
         expect(
-          service.hasAllPermissions(principal, ["read:users", "write:users"]),
+          service.hasAllPermissions(account, ["read:users", "write:users"]),
         ).toBe(false)
       })
     })
 
     describe("When called with an empty required permissions array", () => {
       it("should return true", () => {
-        const principal = createPrincipal([])
-        expect(service.hasAllPermissions(principal, [])).toBe(true)
+        const account = createAccount([])
+        expect(service.hasAllPermissions(account, [])).toBe(true)
       })
     })
 
-    describe("When called with a principal that has *", () => {
+    describe("When called with an account that has *", () => {
       it("should return true for any permissions", () => {
-        const principal = createPrincipal(["*"])
+        const account = createAccount(["*"])
         expect(
-          service.hasAllPermissions(principal, [
+          service.hasAllPermissions(account, [
             "read:users",
             "write:posts",
             "admin",
@@ -148,50 +142,50 @@ describe("PermissionService", () => {
   })
 
   describe("hasAnyPermission()", () => {
-    describe("When called with a principal that has one matching permission", () => {
+    describe("When called with an account that has one matching permission", () => {
       it("should return true", () => {
-        const principal = createPrincipal(["read:users"])
+        const account = createAccount(["read:users"])
         expect(
-          service.hasAnyPermission(principal, ["read:users", "write:users"]),
+          service.hasAnyPermission(account, ["read:users", "write:users"]),
         ).toBe(true)
       })
     })
 
-    describe("When called with a principal that has no matching permissions", () => {
+    describe("When called with an account that has no matching permissions", () => {
       it("should return false", () => {
-        const principal = createPrincipal(["read:posts"])
+        const account = createAccount(["read:posts"])
         expect(
-          service.hasAnyPermission(principal, ["read:users", "write:users"]),
+          service.hasAnyPermission(account, ["read:users", "write:users"]),
         ).toBe(false)
       })
     })
 
     describe("When called with an empty required permissions array", () => {
       it("should return false", () => {
-        const principal = createPrincipal(["read:users"])
-        expect(service.hasAnyPermission(principal, [])).toBe(false)
+        const account = createAccount(["read:users"])
+        expect(service.hasAnyPermission(account, [])).toBe(false)
       })
     })
   })
 
   describe("requirePermission()", () => {
-    describe("When called with a principal that has the required permission", () => {
+    describe("When called with an account that has the required permission", () => {
       it("should not throw", () => {
-        const principal = createPrincipal(["read:users"])
+        const account = createAccount(["read:users"])
         expect(() =>
-          service.requirePermission(principal, "read:users"),
+          service.requirePermission(account, "read:users"),
         ).not.toThrow()
       })
     })
 
-    describe("When called with a principal that lacks the required permission", () => {
+    describe("When called with an account that lacks the required permission", () => {
       it("should throw PermissionDeniedException with context", () => {
-        const principal = createPrincipal(["read:posts"])
+        const account = createAccount(["read:posts"])
         expect(() =>
-          service.requirePermission(principal, "delete:users"),
+          service.requirePermission(account, "delete:users"),
         ).toThrowMatching(PermissionDeniedException, {
           requiredPermissions: ["delete:users"],
-          identifier: principal.id,
+          identifier: account.id,
           permissions: ["read:posts"],
         })
       })
@@ -199,45 +193,36 @@ describe("PermissionService", () => {
   })
 
   describe("requireAllPermissions()", () => {
-    describe("When called with a principal that has all required permissions", () => {
+    describe("When called with an account that has all required permissions", () => {
       it("should not throw", () => {
-        const principal = createPrincipal(["read:users", "write:users"])
+        const account = createAccount(["read:users", "write:users"])
         expect(() =>
-          service.requireAllPermissions(principal, [
-            "read:users",
-            "write:users",
-          ]),
+          service.requireAllPermissions(account, ["read:users", "write:users"]),
         ).not.toThrow()
       })
     })
 
-    describe("When called with a principal missing one permission", () => {
+    describe("When called with an account missing one permission", () => {
       it("should throw with the missing permission", () => {
-        const principal = createPrincipal(["read:users"])
+        const account = createAccount(["read:users"])
         expect(() =>
-          service.requireAllPermissions(principal, [
-            "read:users",
-            "write:users",
-          ]),
+          service.requireAllPermissions(account, ["read:users", "write:users"]),
         ).toThrowMatching(PermissionDeniedException, {
           requiredPermissions: ["write:users"],
-          identifier: principal.id,
+          identifier: account.id,
           permissions: ["read:users"],
         })
       })
     })
 
-    describe("When called with a principal missing multiple permissions", () => {
+    describe("When called with an account missing multiple permissions", () => {
       it("should throw with all missing permissions", () => {
-        const principal = createPrincipal(["delete:users"])
+        const account = createAccount(["delete:users"])
         expect(() =>
-          service.requireAllPermissions(principal, [
-            "read:users",
-            "write:users",
-          ]),
+          service.requireAllPermissions(account, ["read:users", "write:users"]),
         ).toThrowMatching(PermissionDeniedException, {
           requiredPermissions: ["read:users", "write:users"],
-          identifier: principal.id,
+          identifier: account.id,
           permissions: ["delete:users"],
         })
       })
@@ -245,29 +230,23 @@ describe("PermissionService", () => {
   })
 
   describe("requireAnyPermission()", () => {
-    describe("When called with a principal that has one matching permission", () => {
+    describe("When called with an account that has one matching permission", () => {
       it("should not throw", () => {
-        const principal = createPrincipal(["read:users"])
+        const account = createAccount(["read:users"])
         expect(() =>
-          service.requireAnyPermission(principal, [
-            "read:users",
-            "write:users",
-          ]),
+          service.requireAnyPermission(account, ["read:users", "write:users"]),
         ).not.toThrow()
       })
     })
 
-    describe("When called with a principal that has no matching permissions", () => {
+    describe("When called with an account that has no matching permissions", () => {
       it("should throw with all required permissions", () => {
-        const principal = createPrincipal(["read:posts"])
+        const account = createAccount(["read:posts"])
         expect(() =>
-          service.requireAnyPermission(principal, [
-            "read:users",
-            "write:users",
-          ]),
+          service.requireAnyPermission(account, ["read:users", "write:users"]),
         ).toThrowMatching(PermissionDeniedException, {
           requiredPermissions: ["read:users", "write:users"],
-          identifier: principal.id,
+          identifier: account.id,
           permissions: ["read:posts"],
         })
       })
@@ -275,8 +254,8 @@ describe("PermissionService", () => {
 
     describe("When called with an empty required permissions array", () => {
       it("should throw an Error", () => {
-        const principal = createPrincipal(["read:users"])
-        expect(() => service.requireAnyPermission(principal, [])).toThrow(
+        const account = createAccount(["read:users"])
+        expect(() => service.requireAnyPermission(account, [])).toThrow(
           "requireAnyPermission() requires at least one permission",
         )
       })

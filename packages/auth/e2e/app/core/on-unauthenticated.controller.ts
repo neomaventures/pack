@@ -1,10 +1,11 @@
-import { Authenticated } from "@neomaventures/auth"
 import {
   Controller,
   ForbiddenException,
   Get,
   NotFoundException,
 } from "@nestjs/common"
+
+import { Authenticated } from "@neomaventures/auth"
 
 /**
  * A test Controller exercising the `@Authenticated()` `onUnauthenticated`

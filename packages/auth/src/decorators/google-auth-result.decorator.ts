@@ -1,6 +1,5 @@
 import { createParamDecorator, type ExecutionContext } from "@nestjs/common"
 
-import { type Authenticatable } from "../interfaces/authenticatable.interface"
 import { type GoogleAuthResult } from "../services/google-auth.service"
 
 /**
@@ -26,10 +25,7 @@ import { type GoogleAuthResult } from "../services/google-auth.service"
  * ```
  */
 export const GetGoogleAuthResult = createParamDecorator(
-  (
-    _data: any,
-    context: ExecutionContext,
-  ): GoogleAuthResult<Authenticatable> => {
+  (_data: any, context: ExecutionContext): GoogleAuthResult => {
     const req = context.switchToHttp().getRequest()
     if (!req.googleAuthResult) {
       throw new Error(
