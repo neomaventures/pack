@@ -506,7 +506,7 @@ class Account {
   id: string                              // uuid PK
   email: string                           // unique, lowercased on write
   permissions: string[]                   // simple-array, default []
-  authProfile?: AuthenticatableProfile    // simple-json, nullable
+  authProfile?: OAuthProfile    // simple-json, nullable
   createdAt: Date
   updatedAt: Date
   oauthTokens?: OAuthToken[]              // @OneToMany, eager

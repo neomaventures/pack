@@ -61,5 +61,5 @@ export * from "./events/registered.event"
 export * from "./events/authenticated.event"
 
 // Types
-export * from "./types/auth-profile.type"
+export * from "./types/oauth-profile.type"
 export * from "./types/auth-provider"

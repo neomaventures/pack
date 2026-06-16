@@ -7,7 +7,7 @@ import {
   UpdateDateColumn,
 } from "typeorm"
 
-import { type AuthenticatableProfile } from "../types/auth-profile.type"
+import { type OAuthProfile } from "../types/oauth-profile.type"
 import { type OAuthProvider } from "../types/oauth-provider.type"
 import { type OAuthTokenSnapshot } from "../types/oauth-token-snapshot.type"
 
@@ -57,7 +57,7 @@ export class Account {
   public permissions!: string[]
 
   @Column("simple-json", { nullable: true })
-  public authProfile?: AuthenticatableProfile | null
+  public authProfile?: OAuthProfile | null
 
   @CreateDateColumn()
   public createdAt!: Date

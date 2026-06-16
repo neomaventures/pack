@@ -4,7 +4,7 @@ import {
   Account,
   Authenticated,
   CurrentAccount,
-  type AuthenticatableProfile,
+  type OAuthProfile,
 } from "@neomaventures/auth"
 
 /**
@@ -40,7 +40,7 @@ export class MeController {
   public detailed(@CurrentAccount() account: Account): {
     id: string
     email: string
-    authProfile?: AuthenticatableProfile | null
+    authProfile?: OAuthProfile | null
   } {
     return {
       id: account.id,

@@ -1,11 +1,5 @@
 import { Account } from "@neomaventures/auth"
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  OneToOne,
-  PrimaryGeneratedColumn,
-} from "typeorm"
+import { Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm"
 
 import { Upload } from "~auth/upload.entity"
 
@@ -28,15 +22,13 @@ export class Profile {
 
   /**
    * The {@link Account} this profile belongs to. Unique FK — one profile
-   * per account.
+   * per account. `@JoinColumn()` marks this side as the FK owner; the
+   * column name (`accountId`) is auto-derived by TypeORM from the
+   * property name.
    */
   @OneToOne(() => Account)
-  @JoinColumn({ name: "accountId" })
+  @JoinColumn()
   public account!: Account
-
-  /** Optional display name. Falls back to the account email in the UI. */
-  @Column({ type: "varchar", nullable: true })
-  public displayName!: string | null
 
   /**
    * The avatar image, or `null` when no avatar has been set. Eagerly

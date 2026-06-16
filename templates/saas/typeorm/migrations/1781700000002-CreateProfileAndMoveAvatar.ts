@@ -9,7 +9,7 @@ export class CreateProfileAndMoveAvatar1781700000002 implements MigrationInterfa
         // composition. Create the profile table, backfill from the
         // existing `account.avatarUploadId` column, then drop the column
         // and its constraints from `account`.
-        await queryRunner.query(`CREATE TABLE "profile" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "displayName" character varying, "accountId" uuid NOT NULL, "avatarUploadId" uuid, CONSTRAINT "UQ_profile_accountId" UNIQUE ("accountId"), CONSTRAINT "UQ_profile_avatarUploadId" UNIQUE ("avatarUploadId"), CONSTRAINT "PK_profile_id" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "profile" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "accountId" uuid NOT NULL, "avatarUploadId" uuid, CONSTRAINT "UQ_profile_accountId" UNIQUE ("accountId"), CONSTRAINT "UQ_profile_avatarUploadId" UNIQUE ("avatarUploadId"), CONSTRAINT "PK_profile_id" PRIMARY KEY ("id"))`);
         await queryRunner.query(`ALTER TABLE "profile" ADD CONSTRAINT "FK_profile_accountId" FOREIGN KEY ("accountId") REFERENCES "account"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "profile" ADD CONSTRAINT "FK_profile_avatarUploadId" FOREIGN KEY ("avatarUploadId") REFERENCES "upload"("id") ON DELETE SET NULL ON UPDATE NO ACTION`);
 
