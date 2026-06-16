@@ -225,18 +225,18 @@ with the JWT's expiry.
 
 ### 5. Protect routes
 
-Use the `@Authenticated()` decorator and `@CurrentAccount()` decorator to
-protect routes. `@CurrentAccount()` returns a concrete `Account`.
+Use the `@Authenticated()` decorator and `@AuthenticatedAccount()` decorator to
+protect routes. `@AuthenticatedAccount()` returns a concrete `Account`.
 
 ```typescript
-import { Account, Authenticated, CurrentAccount } from "@neomaventures/auth"
+import { Account, Authenticated, AuthenticatedAccount } from "@neomaventures/auth"
 import { Controller, Get } from "@nestjs/common"
 
 @Controller("me")
 @Authenticated()
 export class ProfileController {
   @Get()
-  public get(@CurrentAccount() account: Account): {
+  public get(@AuthenticatedAccount() account: Account): {
     id: string
     email: string
   } {
@@ -347,7 +347,7 @@ slot gives you the account directly:
 @Get("profile")
 @Authenticated()
 public async profile(
-  @CurrentAccount() account: Account,
+  @AuthenticatedAccount() account: Account,
 ): Promise<Profile | null> {
   return this.profiles.findOne({
     where: { account: { id: account.id } },
@@ -389,7 +389,7 @@ import { Account, OAuthTokenSnapshot } from "@neomaventures/auth"
 
 @Get("inbox/count")
 @Authenticated()
-public count(@CurrentAccount() account: Account): { count: number } {
+public count(@AuthenticatedAccount() account: Account): { count: number } {
   const token = account.activeToken("google")
   if (!token) return { count: 0 }
   return this.gmail.count(token.accessToken)
@@ -547,7 +547,7 @@ class OAuthToken {
 
 | Decorator                       | Returns                       | Notes                                                                                                  |
 | ------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `@CurrentAccount()`                  | `Account \| undefined`        | Concrete type. Use behind `@Authenticated()` to guarantee a value.                                     |
+| `@AuthenticatedAccount()`                  | `Account \| undefined`        | Concrete type. Use behind `@Authenticated()` to guarantee a value.                                     |
 | `@ActiveOAuthToken(provider)`   | `OAuthTokenSnapshot \| null`  | Calls `account.activeToken(provider)` under the hood. Renamed from `@OAuthToken` to avoid the entity name collision. |
 | `@Authenticated(options?)`      | guard                         | unchanged                                                                                              |
 | `@RequiresPermission(perm)`     | guard                         | unchanged                                                                                              |

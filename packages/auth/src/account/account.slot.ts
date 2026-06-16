@@ -13,7 +13,7 @@ import { type Account } from "../entities/account.entity"
  * | Form | Where | Use case |
  * |------|-------|----------|
  * | `getAccount()` | Anywhere | Check existence, guards, non-DI sites |
- * | `@CurrentAccount()` | Controller params | Extract account in handler methods |
+ * | `@AuthenticatedAccount()` | Controller params | Extract account in handler methods |
  * | `@Inject(CurrentAccountToken)` | Constructor injection | Access account in singleton services |
  *
  * **Important:** `@Inject(CurrentAccountToken)` provides a proxy object that is
@@ -34,11 +34,11 @@ import { type Account } from "../entities/account.entity"
  *
  * @example Extract in a controller method
  * ```typescript
- * import { CurrentAccount, Account } from "@neomaventures/auth"
+ * import { AuthenticatedAccount, Account } from "@neomaventures/auth"
  *
  * @Authenticated()
  * @Get("me")
- * public me(@CurrentAccount() account: Account): Account {
+ * public me(@AuthenticatedAccount() account: Account): Account {
  *   return account
  * }
  * ```
@@ -63,6 +63,6 @@ const accountSlot = createContextSlot<Account>("@neomaventures/auth:account")
 
 export const getAccount = accountSlot.get
 export const setAccount = accountSlot.set
-export const CurrentAccount = accountSlot.param
+export const AuthenticatedAccount = accountSlot.param
 export const CurrentAccountToken = accountSlot.token
 export const accountProvider = accountSlot.provider

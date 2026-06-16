@@ -31,7 +31,7 @@ export {
 export * from "./decorators/active-oauth-token.decorator"
 export * from "./decorators/google-auth-result.decorator"
 export * from "./decorators/google-callback.decorator"
-export * from "./decorators/current-account.decorator"
+export * from "./decorators/authenticated-account.decorator"
 export * from "./decorators/requires-permission.decorator"
 export * from "./decorators/requires-any-permission.decorator"
 

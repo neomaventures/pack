@@ -6,17 +6,16 @@
  * Returns `undefined` when no account exists (e.g. unauthenticated request).
  * Use behind `@Authenticated()` to guarantee an account is present.
  *
- * Must be called with parentheses: `@CurrentAccount()`. The decorator name
- * is deliberately verbose to avoid colliding with the `Account` entity class
- * at the call site.
+ * Must be called with parentheses: `@AuthenticatedAccount()`. Pairs with
+ * the `@Authenticated()` guard — they form a coherent contract together.
  *
  * @example
  * ```typescript
  * @Authenticated()
  * @Get("me")
- * public me(@CurrentAccount() account: Account): Account {
+ * public me(@AuthenticatedAccount() account: Account): Account {
  *   return account
  * }
  * ```
  */
-export { CurrentAccount } from "../account/account.slot"
+export { AuthenticatedAccount } from "../account/account.slot"

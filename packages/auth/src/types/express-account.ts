@@ -6,7 +6,7 @@ declare global {
   namespace Express {
     interface Request {
       /**
-       * @deprecated Use `getAccount()`, `@CurrentAccount()`, or
+       * @deprecated Use `getAccount()`, `@AuthenticatedAccount()`, or
        * `@Inject(CurrentAccountToken)` instead. This property is populated via
        * dual-write for backward compatibility and will be removed in a future
        * major version.

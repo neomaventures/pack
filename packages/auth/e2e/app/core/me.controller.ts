@@ -3,13 +3,13 @@ import { Controller, Get } from "@nestjs/common"
 import {
   Account,
   Authenticated,
-  CurrentAccount,
+  AuthenticatedAccount,
   type OAuthProfile,
 } from "@neomaventures/auth"
 
 /**
  * A test Controller for accessing the authenticated account
- * using Auth's @Authenticated decorator and @CurrentAccount decorator.
+ * using Auth's @Authenticated decorator and @AuthenticatedAccount decorator.
  */
 @Controller("me")
 @Authenticated()
@@ -17,11 +17,11 @@ export class MeController {
   /**
    * Returns the authenticated account's id and email.
    *
-   * @param account - The authenticated account from the @CurrentAccount decorator
+   * @param account - The authenticated account from the @AuthenticatedAccount decorator
    * @returns An object containing the account's id and email
    */
   @Get()
-  public get(@CurrentAccount() account: Account): {
+  public get(@AuthenticatedAccount() account: Account): {
     id: string
     email: string
   } {
@@ -37,7 +37,7 @@ export class MeController {
    * profile claims persisted on `Account.authProfile`).
    */
   @Get("detailed")
-  public detailed(@CurrentAccount() account: Account): {
+  public detailed(@AuthenticatedAccount() account: Account): {
     id: string
     email: string
     authProfile?: OAuthProfile | null

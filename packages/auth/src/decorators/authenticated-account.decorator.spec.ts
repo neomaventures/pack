@@ -9,7 +9,7 @@ import { ClsService } from "nestjs-cls"
 import { setAccount } from "../account/account.slot"
 import { Account } from "../entities/account.entity"
 
-import { CurrentAccount } from "./current-account.decorator"
+import { AuthenticatedAccount } from "./authenticated-account.decorator"
 
 /**
  * Definition of the object returned from Reflect.getMetadata
@@ -18,20 +18,20 @@ import { CurrentAccount } from "./current-account.decorator"
  */
 type Args = Record<string, { factory: CustomParamFactory }>
 
-describe("CurrentAccountDecorator", () => {
+describe("AuthenticatedAccountDecorator", () => {
   let factory: CustomParamFactory
   let cls: ClsService
 
   beforeAll(async () => {
-    class CurrentAccountDecoratorTest {
+    class AuthenticatedAccountDecoratorTest {
       // eslint-disable-next-line
-      public test(@CurrentAccount() _value: Account): void {}
+      public test(@AuthenticatedAccount() _value: Account): void {}
     }
 
     const args = <Args>(
       Reflect.getMetadata(
         ROUTE_ARGS_METADATA,
-        CurrentAccountDecoratorTest,
+        AuthenticatedAccountDecoratorTest,
         "test",
       )
     )

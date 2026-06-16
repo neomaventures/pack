@@ -1,4 +1,8 @@
-import { Account, Authenticated, CurrentAccount } from "@neomaventures/auth"
+import {
+  Account,
+  Authenticated,
+  AuthenticatedAccount,
+} from "@neomaventures/auth"
 import { ErrorTemplate } from "@neomaventures/exceptions"
 import {
   StoredFile,
@@ -50,13 +54,13 @@ export class ProfileController {
    * `account.oauthTokens` — `accessToken` and `refreshToken` are
    * deliberately omitted so they never reach the rendered HTML.
    *
-   * @param account - The authenticated account, injected via `@CurrentAccount()`.
+   * @param account - The authenticated account, injected via `@AuthenticatedAccount()`.
    * @returns A view model with the connected-accounts list.
    */
   @Get("profile")
   @Authenticated()
   @Render("profile")
-  public index(@CurrentAccount() account: Account): {
+  public index(@AuthenticatedAccount() account: Account): {
     connectedAccounts: Array<{
       provider: string
       scopes: string[]
@@ -86,7 +90,7 @@ export class ProfileController {
    * Unauthenticated callers get a 404 — asset endpoints don't confirm
    * resource existence.
    *
-   * @param account - The authenticated account, injected via `@CurrentAccount()`.
+   * @param account - The authenticated account, injected via `@AuthenticatedAccount()`.
    * @returns The avatar `Upload`, or `null` when none is set.
    *
    * @example
@@ -101,7 +105,7 @@ export class ProfileController {
     cacheControl: "private, max-age=30",
   })
   public async avatar(
-    @CurrentAccount() account: Account,
+    @AuthenticatedAccount() account: Account,
   ): Promise<Upload | null> {
     return this.profileService.getAvatar(account)
   }
@@ -128,7 +132,7 @@ export class ProfileController {
    * Unauthenticated callers get a 404 — same asset-endpoint contract as
    * `GET /profile/avatar`.
    *
-   * @param account - The authenticated account, injected via `@CurrentAccount()`.
+   * @param account - The authenticated account, injected via `@AuthenticatedAccount()`.
    * @param upload - The `Upload` entity created by the storage interceptor.
    * @param res - The Express response, used to send the 302 to `/profile`.
    */
@@ -146,7 +150,7 @@ export class ProfileController {
     key: AccountAvatarKeyResolver,
   })
   public async uploadAvatar(
-    @CurrentAccount() account: Account,
+    @AuthenticatedAccount() account: Account,
     @StoredFile() upload: Upload,
     @Res() res: Response,
   ): Promise<void> {
