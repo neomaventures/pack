@@ -11,7 +11,7 @@ import { AuthModule } from "../auth.module"
 import { type AuthOptions, type MailerOptions } from "../auth.options"
 import { Account } from "../entities/account.entity"
 import { OAuthToken } from "../entities/oauth-token.entity"
-import { fakeAccount } from "../testing"
+import { entities } from "../testing"
 
 import { SESSION_AUDIENCE } from "./magic-link.service"
 import { SessionService } from "./session.service"
@@ -63,7 +63,7 @@ registrations.forEach(([name, register]) => {
 
       beforeEach(async () => {
         service = await buildModule()
-        entity = fakeAccount()
+        entity = entities.account()
       })
 
       it("should issue a token with sub and session audience", () => {

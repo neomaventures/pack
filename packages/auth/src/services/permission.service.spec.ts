@@ -1,6 +1,6 @@
 import { type Account } from "../entities/account.entity"
 import { PermissionDeniedException } from "../exceptions/permission-denied.exception"
-import { fakeAccount } from "../testing"
+import { entities } from "../testing"
 
 import { PermissionService } from "./permission.service"
 
@@ -12,7 +12,7 @@ describe("PermissionService", () => {
   })
 
   const createAccount = (permissions: string[] = []): Account =>
-    fakeAccount({ permissions })
+    entities.account({ permissions })
 
   describe("hasPermission()", () => {
     describe("When called with an account that has no permissions", () => {
@@ -24,7 +24,7 @@ describe("PermissionService", () => {
 
     describe("When called with an account that has undefined permissions", () => {
       it("should return false for read:users", () => {
-        const account = fakeAccount()
+        const account = entities.account()
         account.permissions = undefined as unknown as string[]
         expect(service.hasPermission(account, "read:users")).toBe(false)
       })

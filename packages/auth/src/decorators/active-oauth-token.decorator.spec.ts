@@ -9,7 +9,7 @@ import { ClsService } from "nestjs-cls"
 
 import { setAccount } from "../account/account.slot"
 import { Account } from "../entities/account.entity"
-import { fakeAccount, fakeOAuthToken } from "../testing"
+import { entities } from "../testing"
 
 import { ActiveOAuthToken } from "./active-oauth-token.decorator"
 
@@ -58,10 +58,10 @@ describe("ActiveOAuthTokenDecorator", () => {
       const accessToken = google.accessToken()
       const expiresAt = new Date(Date.now() + 3600 * 1000)
       const scopes = ["openid", "email"]
-      const stored = fakeOAuthToken({ accessToken, expiresAt, scopes })
+      const stored = entities.oauthToken({ accessToken, expiresAt, scopes })
 
       cls.run(() => {
-        setAccount(fakeAccount({ oauthTokens: [stored] }))
+        setAccount(entities.account({ oauthTokens: [stored] }))
         expect(factory(providerArg, context)).toEqual({
           accessToken,
           expiresAt,

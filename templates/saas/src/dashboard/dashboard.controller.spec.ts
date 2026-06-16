@@ -4,7 +4,7 @@ import {
   type AuthOptions,
   OAuthToken,
 } from "@neomaventures/auth"
-import { fakeAccount } from "@neomaventures/auth/testing"
+import { entities } from "@neomaventures/auth/testing"
 import { ManagedDatabaseModule } from "@neomaventures/managed-database"
 import { Test, type TestingModule } from "@nestjs/testing"
 
@@ -26,7 +26,7 @@ const authOptions: AuthOptions = {
   },
 }
 
-const account = fakeAccount()
+const account = entities.account()
 
 describe("DashboardController", () => {
   let controller: DashboardController

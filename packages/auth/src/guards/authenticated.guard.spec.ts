@@ -20,7 +20,7 @@ import { setAccount } from "../account/account.slot"
 import { type AuthOptions, AUTH_OPTIONS } from "../auth.options"
 import { Authenticated } from "../decorators/authenticated.decorator"
 import { UnauthorizedRedirectException } from "../exceptions/unauthorized-redirect.exception"
-import { fakeAccount } from "../testing"
+import { entities } from "../testing"
 
 import { AuthenticatedGuard } from "./authenticated.guard"
 
@@ -81,7 +81,7 @@ describe("AuthenticatedGuard", () => {
       })
 
       cls.run(() => {
-        setAccount(fakeAccount())
+        setAccount(entities.account())
         expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
       })
     })
