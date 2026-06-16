@@ -1,10 +1,4 @@
 import {
-  Account,
-  EmailDto,
-  MagicLinkService,
-  SessionService,
-} from "@neomaventures/auth"
-import {
   Body,
   Controller,
   Get,
@@ -17,6 +11,13 @@ import {
   ValidationPipe,
 } from "@nestjs/common"
 import { type Response } from "express"
+
+import {
+  Account,
+  EmailDto,
+  MagicLinkService,
+  SessionService,
+} from "@neomaventures/auth"
 
 interface VerifyResponse {
   token: string

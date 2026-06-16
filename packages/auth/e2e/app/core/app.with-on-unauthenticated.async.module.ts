@@ -1,13 +1,14 @@
+import { LoggingModule } from "@neomaventures/logging"
+import { RequestContextModule } from "@neomaventures/request-context"
+import { Module } from "@nestjs/common"
+import { TypeOrmModule } from "@nestjs/typeorm"
+
 import {
   Account,
   AuthModule,
   AuthOptions,
   OAuthToken,
 } from "@neomaventures/auth"
-import { LoggingModule } from "@neomaventures/logging"
-import { RequestContextModule } from "@neomaventures/request-context"
-import { Module } from "@nestjs/common"
-import { TypeOrmModule } from "@nestjs/typeorm"
 
 import { MagicLinkController } from "./magic-link.controller"
 import { OnUnauthenticatedController } from "./on-unauthenticated.controller"

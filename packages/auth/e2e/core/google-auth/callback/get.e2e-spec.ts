@@ -1,5 +1,4 @@
 import { faker } from "@faker-js/faker"
-import { SESSION_AUDIENCE } from "@neomaventures/auth"
 import { google, GoogleOAuthClient } from "@neomaventures/google-fixtures"
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { mockserver } from "@neomaventures/mockserver/fixture"
@@ -8,6 +7,8 @@ import { authenticateViaEmail } from "fixtures/fakes/magic-link"
 import * as jwt from "jsonwebtoken"
 import request from "supertest"
 import { DataSource } from "typeorm"
+
+import { SESSION_AUDIENCE } from "@neomaventures/auth"
 
 const { OK, UNAUTHORIZED, FORBIDDEN, BAD_GATEWAY } = HttpStatus
 

@@ -1,5 +1,6 @@
-import { RequiresAnyPermission, RequiresPermission } from "@neomaventures/auth"
 import { Controller, Get } from "@nestjs/common"
+
+import { RequiresAnyPermission, RequiresPermission } from "@neomaventures/auth"
 
 /**
  * A test Controller for testing permission-based authorization

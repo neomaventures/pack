@@ -1,57 +1,42 @@
 import { faker } from "@faker-js/faker"
+import { google } from "@neomaventures/google-fixtures"
 
-import { Account } from "./account.entity"
-import { OAuthToken } from "./oauth-token.entity"
-
-const buildToken = (overrides: Partial<OAuthToken> = {}): OAuthToken => {
-  const token = new OAuthToken()
-  token.id = faker.string.uuid()
-  token.provider = "google"
-  token.accessToken = faker.string.alphanumeric(40)
-  token.refreshToken = faker.string.alphanumeric(40)
-  token.expiresAt = new Date(Date.now() + 3600 * 1000)
-  token.scopes = ["openid", "email", "profile"]
-  Object.assign(token, overrides)
-  return token
-}
-
-const buildAccount = (tokens?: OAuthToken[]): Account => {
-  const account = new Account()
-  account.id = faker.string.uuid()
-  account.email = faker.internet.email().toLowerCase()
-  account.permissions = []
-  account.oauthTokens = tokens
-  return account
-}
+import { fakeAccount, fakeOAuthToken } from "../testing"
 
 describe("Account", () => {
   describe("activeToken()", () => {
     describe("Given the account has no oauthTokens field", () => {
       it("should return null", () => {
-        expect(buildAccount(undefined).activeToken("google")).toBeNull()
+        expect(
+          fakeAccount({ oauthTokens: undefined }).activeToken("google"),
+        ).toBeNull()
       })
     })
 
     describe("Given the account has an empty oauthTokens array", () => {
       it("should return null", () => {
-        expect(buildAccount([]).activeToken("google")).toBeNull()
+        expect(
+          fakeAccount({ oauthTokens: [] }).activeToken("google"),
+        ).toBeNull()
       })
     })
 
     describe("Given the account has no token for the requested provider", () => {
       it("should return null", () => {
-        const account = buildAccount([buildToken({ provider: "github" })])
+        const account = fakeAccount({
+          oauthTokens: [fakeOAuthToken({ provider: "github" })],
+        })
         expect(account.activeToken("google")).toBeNull()
       })
     })
 
     describe("Given the account has an active token for the provider", () => {
       it("should return a snapshot with accessToken, expiresAt, and scopes", () => {
-        const accessToken = faker.string.alphanumeric(40)
+        const accessToken = google.accessToken()
         const expiresAt = new Date(Date.now() + 3600 * 1000)
         const scopes = ["openid", "email"]
-        const stored = buildToken({ accessToken, expiresAt, scopes })
-        const account = buildAccount([stored])
+        const stored = fakeOAuthToken({ accessToken, expiresAt, scopes })
+        const account = fakeAccount({ oauthTokens: [stored] })
 
         expect(account.activeToken("google")).toEqual({
           accessToken,
@@ -63,21 +48,25 @@ describe("Account", () => {
 
     describe("Given the account has an expired token for the provider", () => {
       it("should return null", () => {
-        const expired = buildToken({
+        const expired = fakeOAuthToken({
           expiresAt: new Date(Date.now() - 60 * 1000),
         })
-        expect(buildAccount([expired]).activeToken("google")).toBeNull()
+        expect(
+          fakeAccount({ oauthTokens: [expired] }).activeToken("google"),
+        ).toBeNull()
       })
     })
 
     describe("Given expiresAt arrives as an ISO string (defensive fixture)", () => {
       it("should treat it as a Date for the expiry check and the snapshot", () => {
-        const accessToken = faker.string.alphanumeric(40)
+        const accessToken = google.accessToken()
         const expiresAt = new Date(Date.now() + 3600 * 1000)
-        const stored = buildToken({ accessToken })
+        const stored = fakeOAuthToken({ accessToken })
         stored.expiresAt = expiresAt.toISOString() as unknown as Date
 
-        const snapshot = buildAccount([stored]).activeToken("google")
+        const snapshot = fakeAccount({ oauthTokens: [stored] }).activeToken(
+          "google",
+        )
         expect(snapshot).toEqual({
           accessToken,
           expiresAt,
@@ -88,13 +77,13 @@ describe("Account", () => {
 
     describe("Given the account has tokens for multiple providers", () => {
       it("should return the snapshot for the requested provider only", () => {
-        const googleAccess = faker.string.alphanumeric(40)
+        const googleAccess = google.accessToken()
         const githubAccess = faker.string.alphanumeric(40)
         const tokens = [
-          buildToken({ provider: "github", accessToken: githubAccess }),
-          buildToken({ provider: "google", accessToken: googleAccess }),
+          fakeOAuthToken({ provider: "github", accessToken: githubAccess }),
+          fakeOAuthToken({ provider: "google", accessToken: googleAccess }),
         ]
-        const account = buildAccount(tokens)
+        const account = fakeAccount({ oauthTokens: tokens })
 
         const snapshot = account.activeToken("google")
         expect(snapshot?.accessToken).toBe(googleAccess)

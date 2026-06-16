@@ -1,4 +1,3 @@
-import { faker } from "@faker-js/faker"
 import { executionContext } from "@neomaventures/fixtures"
 import { google } from "@neomaventures/google-fixtures"
 import { RequestContextModule } from "@neomaventures/request-context"
@@ -10,32 +9,11 @@ import { ClsService } from "nestjs-cls"
 
 import { setAccount } from "../account/account.slot"
 import { Account } from "../entities/account.entity"
-import { OAuthToken } from "../entities/oauth-token.entity"
+import { fakeAccount, fakeOAuthToken } from "../testing"
 
 import { ActiveOAuthToken } from "./active-oauth-token.decorator"
 
 type Args = Record<string, { factory: CustomParamFactory; data: unknown }>
-
-const buildToken = (overrides: Partial<OAuthToken> = {}): OAuthToken => {
-  const token = new OAuthToken()
-  token.id = faker.string.uuid()
-  token.provider = "google"
-  token.accessToken = google.accessToken()
-  token.refreshToken = faker.string.alphanumeric(40)
-  token.expiresAt = new Date(Date.now() + 3600 * 1000)
-  token.scopes = ["openid", "email", "profile"]
-  Object.assign(token, overrides)
-  return token
-}
-
-const buildAccount = (tokens?: OAuthToken[]): Account => {
-  const account = new Account()
-  account.id = faker.string.uuid()
-  account.email = faker.internet.email().toLowerCase()
-  account.permissions = []
-  account.oauthTokens = tokens
-  return account
-}
 
 describe("ActiveOAuthTokenDecorator", () => {
   let factory: CustomParamFactory
@@ -75,15 +53,15 @@ describe("ActiveOAuthTokenDecorator", () => {
     })
   })
 
-  describe("Given a account with an active token is in context", () => {
+  describe("Given an account with an active token is in context", () => {
     it("should return the snapshot for the requested provider", () => {
       const accessToken = google.accessToken()
       const expiresAt = new Date(Date.now() + 3600 * 1000)
       const scopes = ["openid", "email"]
-      const stored = buildToken({ accessToken, expiresAt, scopes })
+      const stored = fakeOAuthToken({ accessToken, expiresAt, scopes })
 
       cls.run(() => {
-        setAccount(buildAccount([stored]))
+        setAccount(fakeAccount({ oauthTokens: [stored] }))
         expect(factory(providerArg, context)).toEqual({
           accessToken,
           expiresAt,
@@ -93,7 +71,7 @@ describe("ActiveOAuthTokenDecorator", () => {
     })
   })
 
-  describe("Given a account without an activeToken method is in context", () => {
+  describe("Given an account without an activeToken method is in context", () => {
     it("should return null without throwing", () => {
       cls.run(() => {
         // Defensive: a fixture or stale account object might not be a

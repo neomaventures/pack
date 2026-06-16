@@ -1,7 +1,6 @@
-import { faker } from "@faker-js/faker"
-
-import { Account } from "../entities/account.entity"
+import { type Account } from "../entities/account.entity"
 import { PermissionDeniedException } from "../exceptions/permission-denied.exception"
+import { fakeAccount } from "../testing"
 
 import { PermissionService } from "./permission.service"
 
@@ -12,13 +11,8 @@ describe("PermissionService", () => {
     service = new PermissionService()
   })
 
-  const createAccount = (permissions: string[] = []): Account => {
-    const account = new Account()
-    account.id = faker.string.uuid()
-    account.email = faker.internet.email()
-    account.permissions = permissions
-    return account
-  }
+  const createAccount = (permissions: string[] = []): Account =>
+    fakeAccount({ permissions })
 
   describe("hasPermission()", () => {
     describe("When called with an account that has no permissions", () => {
@@ -30,9 +24,8 @@ describe("PermissionService", () => {
 
     describe("When called with an account that has undefined permissions", () => {
       it("should return false for read:users", () => {
-        const account = new Account()
-        account.id = faker.string.uuid()
-        account.email = faker.internet.email()
+        const account = fakeAccount()
+        account.permissions = undefined as unknown as string[]
         expect(service.hasPermission(account, "read:users")).toBe(false)
       })
     })

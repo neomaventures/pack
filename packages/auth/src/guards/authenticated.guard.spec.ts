@@ -16,11 +16,11 @@ import { Reflector } from "@nestjs/core"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { ClsService } from "nestjs-cls"
 
-import * as fakes from "../../fixtures/fakes/account"
 import { setAccount } from "../account/account.slot"
 import { type AuthOptions, AUTH_OPTIONS } from "../auth.options"
 import { Authenticated } from "../decorators/authenticated.decorator"
 import { UnauthorizedRedirectException } from "../exceptions/unauthorized-redirect.exception"
+import { fakeAccount } from "../testing"
 
 import { AuthenticatedGuard } from "./authenticated.guard"
 
@@ -81,7 +81,7 @@ describe("AuthenticatedGuard", () => {
       })
 
       cls.run(() => {
-        setAccount(fakes.account())
+        setAccount(fakeAccount())
         expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
       })
     })

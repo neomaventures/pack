@@ -1,5 +1,4 @@
 import { faker } from "@faker-js/faker"
-import { MAGIC_LINK_AUDIENCE, SESSION_AUDIENCE } from "@neomaventures/auth"
 import { MailpitClient } from "@neomaventures/mailpit"
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
@@ -7,6 +6,8 @@ import { authenticateViaEmail } from "fixtures/fakes/magic-link"
 import * as jwt from "jsonwebtoken"
 import request from "supertest"
 import { v4 } from "uuid"
+
+import { MAGIC_LINK_AUDIENCE, SESSION_AUDIENCE } from "@neomaventures/auth"
 
 const { OK, UNAUTHORIZED } = HttpStatus
 const mailpit = new MailpitClient(process.env.MAILPIT_API!)

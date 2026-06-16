@@ -6,8 +6,8 @@ import { Inject, Injectable } from "@nestjs/common"
 import { Test } from "@nestjs/testing"
 import { ClsService } from "nestjs-cls"
 
-import * as fakes from "../../fixtures/fakes/account"
 import { type Account } from "../entities/account.entity"
+import { fakeAccount } from "../testing"
 
 import {
   accountProvider,
@@ -30,7 +30,7 @@ describe("account.slot", () => {
   describe("getAccount()", () => {
     describe("Given a CLS context with an account set via setAccount()", () => {
       it("should return the account", () => {
-        const account = fakes.account()
+        const account = fakeAccount()
 
         const result = cls.run(() => {
           setAccount(account)
@@ -58,7 +58,7 @@ describe("account.slot", () => {
   describe("setAccount()", () => {
     describe("Given an active CLS context", () => {
       it("should store the account so getAccount() can retrieve it", () => {
-        const account = fakes.account()
+        const account = fakeAccount()
 
         const result = cls.run(() => {
           setAccount(account)
@@ -71,7 +71,7 @@ describe("account.slot", () => {
 
     describe("Given no active CLS context", () => {
       it("should throw NoContextError", () => {
-        expect(() => setAccount(fakes.account())).toThrow(NoContextError)
+        expect(() => setAccount(fakeAccount())).toThrow(NoContextError)
       })
     })
   })
@@ -107,7 +107,7 @@ describe("account.slot", () => {
 
     describe("Given an account has been stored in the CLS context", () => {
       it("should resolve the account's properties via the proxy", () => {
-        const account = fakes.account()
+        const account = fakeAccount()
 
         cls.run(() => {
           setAccount(account)

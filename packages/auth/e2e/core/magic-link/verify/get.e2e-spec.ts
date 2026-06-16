@@ -1,10 +1,11 @@
 import { faker } from "@faker-js/faker"
-import { MAGIC_LINK_AUDIENCE, SESSION_AUDIENCE } from "@neomaventures/auth"
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
 import * as jwt from "jsonwebtoken"
 import request from "supertest"
 import { DataSource } from "typeorm"
+
+import { MAGIC_LINK_AUDIENCE, SESSION_AUDIENCE } from "@neomaventures/auth"
 
 const { OK, UNAUTHORIZED } = HttpStatus
 

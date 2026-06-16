@@ -1,3 +1,6 @@
+import { Controller, Get, Res } from "@nestjs/common"
+import { type Response } from "express"
+
 import {
   Account,
   GetGoogleAuthResult,
@@ -5,8 +8,6 @@ import {
   GoogleCallback,
   SessionService,
 } from "@neomaventures/auth"
-import { Controller, Get, Res } from "@nestjs/common"
-import { type Response } from "express"
 
 interface GoogleCallbackResponse {
   token: string

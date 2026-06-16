@@ -9,12 +9,12 @@ import { Reflector } from "@nestjs/core"
 import { Test, TestingModule } from "@nestjs/testing"
 import { ClsService } from "nestjs-cls"
 
-import * as fakes from "../../fixtures/fakes/account"
 import { setAccount } from "../account/account.slot"
 import { RequiresAnyPermission } from "../decorators/requires-any-permission.decorator"
 import { RequiresPermission } from "../decorators/requires-permission.decorator"
 import { PermissionDeniedException } from "../exceptions/permission-denied.exception"
 import { PermissionService } from "../services/permission.service"
+import { fakeAccount } from "../testing"
 
 import { RequiresPermissionGuard } from "./requires-permission.guard"
 
@@ -94,7 +94,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setAccount(fakes.account({ permissions: [] }))
+          setAccount(fakeAccount({ permissions: [] }))
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })
@@ -109,7 +109,7 @@ describe("RequiresPermissionGuard", () => {
 
         cls.run(() => {
           setAccount(
-            fakes.account({
+            fakeAccount({
               permissions: ["read:users", "write:users", "delete:users"],
             }),
           )
@@ -124,7 +124,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setAccount(fakes.account({ permissions: ["read:users"] }))
+          setAccount(fakeAccount({ permissions: ["read:users"] }))
           expect(() =>
             guard.canActivate(<ExecutionContext>ctx),
           ).toThrowMatching(PermissionDeniedException, {
@@ -140,7 +140,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setAccount(fakes.account({ permissions: ["*"] }))
+          setAccount(fakeAccount({ permissions: ["*"] }))
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })
@@ -154,7 +154,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setAccount(fakes.account({ permissions: ["delete:users"] }))
+          setAccount(fakeAccount({ permissions: ["delete:users"] }))
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })
@@ -166,7 +166,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setAccount(fakes.account({ permissions: ["read:users"] }))
+          setAccount(fakeAccount({ permissions: ["read:users"] }))
           expect(() =>
             guard.canActivate(<ExecutionContext>ctx),
           ).toThrowMatching(PermissionDeniedException, {
@@ -185,7 +185,7 @@ describe("RequiresPermissionGuard", () => {
 
         cls.run(() => {
           setAccount(
-            fakes.account({ permissions: ["read:users", "write:users"] }),
+            fakeAccount({ permissions: ["read:users", "write:users"] }),
           )
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
@@ -198,7 +198,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setAccount(fakes.account({ permissions: ["read:users"] }))
+          setAccount(fakeAccount({ permissions: ["read:users"] }))
           expect(() =>
             guard.canActivate(<ExecutionContext>ctx),
           ).toThrowMatching(PermissionDeniedException, {
@@ -214,7 +214,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setAccount(fakes.account({ permissions: ["admin"] }))
+          setAccount(fakeAccount({ permissions: ["admin"] }))
           expect(() =>
             guard.canActivate(<ExecutionContext>ctx),
           ).toThrowMatching(PermissionDeniedException, {
@@ -233,7 +233,7 @@ describe("RequiresPermissionGuard", () => {
 
         cls.run(() => {
           setAccount(
-            fakes.account({ permissions: ["read:admin", "write:admin"] }),
+            fakeAccount({ permissions: ["read:admin", "write:admin"] }),
           )
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
@@ -246,7 +246,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setAccount(fakes.account({ permissions: ["read:admin"] }))
+          setAccount(fakeAccount({ permissions: ["read:admin"] }))
           expect(() =>
             guard.canActivate(<ExecutionContext>ctx),
           ).toThrowMatching(PermissionDeniedException, {
@@ -262,7 +262,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setAccount(fakes.account({ permissions: ["write:admin"] }))
+          setAccount(fakeAccount({ permissions: ["write:admin"] }))
           expect(() =>
             guard.canActivate(<ExecutionContext>ctx),
           ).toThrowMatching(PermissionDeniedException, {
@@ -280,7 +280,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setAccount(fakes.account({ permissions: ["read:admin"] }))
+          setAccount(fakeAccount({ permissions: ["read:admin"] }))
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })
@@ -294,7 +294,7 @@ describe("RequiresPermissionGuard", () => {
         })
 
         cls.run(() => {
-          setAccount(fakes.account({ permissions: ["read:admin"] }))
+          setAccount(fakeAccount({ permissions: ["read:admin"] }))
           expect(guard.canActivate(<ExecutionContext>ctx)).toBeTrue()
         })
       })

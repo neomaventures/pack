@@ -1,5 +1,6 @@
-import { Account, Authenticated, CurrentAccount } from "@neomaventures/auth"
 import { Controller, Get } from "@nestjs/common"
+
+import { Account, Authenticated, CurrentAccount } from "@neomaventures/auth"
 
 /**
  * A test Controller for accessing the authenticated account

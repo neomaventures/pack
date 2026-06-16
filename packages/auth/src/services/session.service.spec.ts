@@ -6,22 +6,15 @@ import { TypeOrmModule } from "@nestjs/typeorm"
 import * as cookie from "cookie"
 import { type Response } from "express"
 import * as jwt from "jsonwebtoken"
-import { v4 } from "uuid"
 
 import { AuthModule } from "../auth.module"
 import { type AuthOptions, type MailerOptions } from "../auth.options"
 import { Account } from "../entities/account.entity"
 import { OAuthToken } from "../entities/oauth-token.entity"
+import { fakeAccount } from "../testing"
 
 import { SESSION_AUDIENCE } from "./magic-link.service"
 import { SessionService } from "./session.service"
-
-const buildAccount = (): Account => {
-  const account = new Account()
-  account.id = v4()
-  account.email = faker.internet.email()
-  return account
-}
 
 const registrations: [string, (opts: AuthOptions) => DynamicModule][] = [
   ["forRoot", (opts): DynamicModule => AuthModule.forRoot(opts)],
@@ -70,7 +63,7 @@ registrations.forEach(([name, register]) => {
 
       beforeEach(async () => {
         service = await buildModule()
-        entity = buildAccount()
+        entity = fakeAccount()
       })
 
       it("should issue a token with sub and session audience", () => {

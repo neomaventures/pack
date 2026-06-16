@@ -1,10 +1,10 @@
-import { faker } from "@faker-js/faker"
 import {
   Account,
   AuthModule,
   type AuthOptions,
   OAuthToken,
 } from "@neomaventures/auth"
+import { fakeAccount } from "@neomaventures/auth/testing"
 import { ManagedDatabaseModule } from "@neomaventures/managed-database"
 import { Test, type TestingModule } from "@nestjs/testing"
 
@@ -26,14 +26,7 @@ const authOptions: AuthOptions = {
   },
 }
 
-const buildAccount = (): Account => {
-  const account = new Account()
-  account.id = faker.string.uuid()
-  account.email = faker.internet.email()
-  account.permissions = []
-  return account
-}
-const account = buildAccount()
+const account = fakeAccount()
 
 describe("DashboardController", () => {
   let controller: DashboardController
