@@ -1,9 +1,10 @@
 # @neomaventures/auth
 
-Passwordless authentication for NestJS applications. Auth ships concrete
-`Account` and `OAuthToken` entities and provides magic-link authentication,
-Google OAuth, JWT session management, cookie-based sessions, and route
-protection out of the box.
+Passwordless authentication for NestJS applications. Auth ships
+`Authenticatable` and `OAuthTokenable` interfaces along with reference
+`Account` and `OAuthToken` entities that implement them. Consumers either
+register the reference entities for a zero-config path, or implement the
+interfaces on their own entity classes to attach domain relations.
 
 ## Why Passwordless?
 
@@ -14,9 +15,11 @@ developers, fewer security footguns.
 
 ## Features
 
-- Concrete `Account` and `OAuthToken` entities — register them with
-  TypeORM and you're done. No interfaces to implement, no generics to
-  thread through.
+- Reference `Account` and `OAuthToken` entities exported at
+  `@neomaventures/auth/entities` — register with TypeORM and you're done.
+- Replaceable: implement `Authenticatable` / `OAuthTokenable` on your own
+  classes and pass them via `entity:` / `oauthTokenEntity:` to attach
+  consumer-owned relations (e.g. `OneToMany(() => Upload) avatars`).
 - Magic link authentication (send & verify)
 - Google OAuth auth code flow with account linking by verified email
 - JWT session tokens with HS256 algorithm enforcement and audience
@@ -27,7 +30,6 @@ developers, fewer security footguns.
 - Route protection with guards and decorators
 - Permission-based authorization with wildcard support
   (`@RequiresPermission`, `@RequiresAnyPermission`)
-- Webhook signature verification (Svix-standard HMAC-SHA256)
 - Email normalization (case-insensitive)
 - Event emission for registration and authentication
 
@@ -55,15 +57,32 @@ npm install @nestjs/common @nestjs/core @nestjs/platform-express \
   class-validator typeorm
 ```
 
-## Getting Started
+## Entity model — interfaces, reference entities, and your own
 
-### 1. Register the entities with TypeORM
+Auth defines two TypeScript contracts:
 
-Auth ships its own `Account` and `OAuthToken` classes. Register them in
-your application module alongside any other entities:
+- `Authenticatable` — the identity contract auth services compile against
+  (id, email, permissions, OAuth profile, OAuth tokens).
+- `OAuthTokenable` — the OAuth-token contract (provider, accessToken,
+  refreshToken, expiresAt, scopes, owning principal).
+
+Two concrete reference classes implementing those interfaces ship under
+the `./entities` subpath:
 
 ```typescript
-import { Account, OAuthToken } from "@neomaventures/auth"
+import { Account, OAuthToken } from "@neomaventures/auth/entities"
+```
+
+The consumer always owns `TypeOrmModule.forFeature` registration —
+auth never touches DataSource or migration files. Whether you register
+the reference classes or your own is a TypeORM-scope decision.
+
+## Getting Started — default path (zero config)
+
+### 1. Register the reference entities with TypeORM
+
+```typescript
+import { Account, OAuthToken } from "@neomaventures/auth/entities"
 import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
 
@@ -80,8 +99,8 @@ import { TypeOrmModule } from "@nestjs/typeorm"
 export class AppModule {}
 ```
 
-Generate migrations against `Account` and `OAuthToken` the same way you do
-for any TypeORM entity — auth does not ship migrations.
+Generate migrations against `Account` and `OAuthToken` the same way you
+do for any TypeORM entity — auth does not ship migrations.
 
 ### 2. Configure `AuthModule`
 
@@ -125,6 +144,9 @@ import { Module } from "@nestjs/common"
 export class AppModule {}
 ```
 
+Omit `entity:` and `oauthTokenEntity:` and the module wires services
+against the reference `Account` / `OAuthToken` classes.
+
 Use `forRootAsync` when you need to inject a config service:
 
 ```typescript
@@ -143,10 +165,6 @@ AuthModule.forRootAsync({
 })
 ```
 
-`AuthOptions` is not generic — `Account` is concrete, so no `<User>` type
-parameter is threaded through. The `entities` slot is gone — auth owns
-its schema.
-
 #### Google OAuth
 
 ```typescript
@@ -164,6 +182,85 @@ AuthModule.forRoot({
 })
 ```
 
+## Custom entity path — your own `Account`
+
+When your app needs relations *from* `Account` to consumer-owned entities
+(e.g. `account.avatars: Upload[]`, `account.profile: Profile`) the
+reference class can't help — it lives in the auth package and can't
+import your classes. Implement `Authenticatable` on your own entity
+instead, register *that* with TypeORM, and pass the class to
+`AuthModule.forRoot({ entity })`.
+
+```typescript
+import { type Authenticatable } from "@neomaventures/auth"
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from "typeorm"
+
+import { Upload } from "./upload.entity"
+import { AppOAuthToken } from "./oauth-token.entity"
+
+@Entity({ name: "account" })
+export class Account implements Authenticatable {
+  @PrimaryGeneratedColumn("uuid")
+  public id!: string
+
+  @Column({ unique: true })
+  public email!: string
+
+  @Column("simple-array", { default: "" })
+  public permissions!: string[]
+
+  @CreateDateColumn()
+  public createdAt!: Date
+
+  @UpdateDateColumn()
+  public updatedAt!: Date
+
+  @OneToMany(() => AppOAuthToken, (t) => t.account, { eager: true })
+  public oauthTokens?: AppOAuthToken[]
+
+  // Consumer-owned relations the reference Account cannot carry:
+  @OneToMany(() => Upload, (u) => u.account)
+  public avatars?: Upload[]
+}
+```
+
+Then register your class and tell `AuthModule` about it:
+
+```typescript
+import { Account } from "./account.entity"
+import { AppOAuthToken } from "./oauth-token.entity"
+
+@Module({
+  imports: [
+    TypeOrmModule.forRoot({
+      type: "postgres",
+      entities: [Account, AppOAuthToken, Upload],
+    }),
+    TypeOrmModule.forFeature([Account, AppOAuthToken]),
+    AuthModule.forRoot({
+      secret: process.env.JWT_SECRET,
+      expiresIn: "1h",
+      entity: Account,
+      oauthTokenEntity: AppOAuthToken,
+      magicLink: { mailer: { /* ... */ } },
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+`entity:` and `oauthTokenEntity:` are independently optional. Override
+either, both, or neither. The package never calls
+`TypeOrmModule.forFeature` for you — you decide what's in
+`entities: [...]` and your migrations are generated against that set.
+
 ### 3. Enable validation
 
 Auth exports `EmailDto` with `class-validator` decorators. For validation
@@ -177,11 +274,11 @@ Use the provided services to build your authentication endpoints:
 
 ```typescript
 import {
-  Account,
   EmailDto,
   MagicLinkService,
   SessionService,
 } from "@neomaventures/auth"
+import { Account } from "@neomaventures/auth/entities"
 import {
   Body,
   Controller,
@@ -223,13 +320,18 @@ export class AuthController {
 cookie on the response. The cookie's `Max-Age` is automatically aligned
 with the JWT's expiry.
 
+If you configured `entity: YourAccount`, swap `Account` for `YourAccount`
+in the return type and `@AuthenticatedAccount()` decorator signatures
+below — the runtime value is whatever class you passed to `entity:`.
+
 ### 5. Protect routes
 
-Use the `@Authenticated()` decorator and `@AuthenticatedAccount()` decorator to
-protect routes. `@AuthenticatedAccount()` returns a concrete `Account`.
+Use the `@Authenticated()` decorator and `@AuthenticatedAccount()` decorator
+to protect routes.
 
 ```typescript
-import { Account, Authenticated, AuthenticatedAccount } from "@neomaventures/auth"
+import { Authenticated, AuthenticatedAccount } from "@neomaventures/auth"
+import { Account } from "@neomaventures/auth/entities"
 import { Controller, Get } from "@nestjs/common"
 
 @Controller("me")
@@ -284,8 +386,6 @@ export class RoutesController {
   public dashboard(): unknown {}
 
   // 404 — right for asset endpoints behind a per-user session
-  // (401 leaks resource existence; 303 to a login page makes <img>
-  // render a broken icon)
   @Get("users/:id/avatar")
   @Authenticated({ onUnauthenticated: NotFoundException })
   public avatar(): unknown {}
@@ -303,64 +403,16 @@ AuthModule.forRoot({
 })
 ```
 
-## Customization via composition
+## Why two paths?
 
-`Account` is deliberately minimal. When your application needs more
-fields than auth ships — a display name, an avatar, a subscription tier,
-a Stripe customer id — attach them via a separate consumer-owned entity
-linked to `Account` by foreign key.
+The reference entities are the battery-included path: register, configure,
+ship. The interface path is the override hatch — packages can't import
+consumer classes, so any consumer-side entity that wants a reverse
+relation FROM `Account` (an `Upload`, a `Profile`, a `Subscription`)
+needs the consumer to own the class. That's the trade in #260 / #261.
 
-```typescript
-import { Account } from "@neomaventures/auth"
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  OneToOne,
-  PrimaryGeneratedColumn,
-} from "typeorm"
-
-import { Upload } from "./upload.entity"
-
-@Entity()
-export class Profile {
-  @PrimaryGeneratedColumn("uuid")
-  public id!: string
-
-  @OneToOne(() => Account)
-  @JoinColumn()
-  public account!: Account
-
-  @Column({ type: "varchar", nullable: true })
-  public displayName!: string | null
-
-  @OneToOne(() => Upload, { eager: true, nullable: true })
-  @JoinColumn()
-  public avatar?: Upload | null
-}
-```
-
-Look up the profile by `accountId` in your controller — the account
-slot gives you the account directly:
-
-```typescript
-@Get("profile")
-@Authenticated()
-public async profile(
-  @AuthenticatedAccount() account: Account,
-): Promise<Profile | null> {
-  return this.profiles.findOne({
-    where: { account: { id: account.id } },
-  })
-}
-```
-
-The SaaS template under `templates/saas/` carries a working `Profile`
-example.
-
-**Single-table inheritance / `@ChildEntity`** is explicitly unsupported.
-The FK relation between `OAuthToken.account` and `Account` is final;
-extending `Account` breaks the type contract on the FK side.
+Both paths use the same services, the same decorators, the same guards.
+Only the entity class identity differs.
 
 ## OAuth tokens
 
@@ -382,10 +434,13 @@ after the first consent), the existing refresh token is preserved.
 
 `Account.activeToken(provider)` returns a snapshot of the active token
 for the requested provider, or `null` when none exists or the stored
-token has expired:
+token has expired. The reference `Account` ships this method; custom
+entities implementing `Authenticatable` should implement it too — the
+interface requires it.
 
 ```typescript
-import { Account, OAuthTokenSnapshot } from "@neomaventures/auth"
+import { Authenticated, AuthenticatedAccount, OAuthTokenSnapshot } from "@neomaventures/auth"
+import { Account } from "@neomaventures/auth/entities"
 
 @Get("inbox/count")
 @Authenticated()
@@ -453,7 +508,7 @@ alias.
 4. The ID token is decoded to extract the user's email, name, and picture
 5. The email is used to find an existing account or create a new one
    (same find-or-create-by-email pattern as magic links)
-6. Google profile data is written to `Account.authProfile.google`
+6. Google profile data is written to `account.authProfile.google`
 7. Your controller receives the result via `@GetGoogleAuthResult()` and
    issues a session
 
@@ -469,12 +524,12 @@ and Google OAuth by checking the `email_verified` claim in the ID token.
 
 ```typescript
 import {
-  Account,
   GetGoogleAuthResult,
   GoogleAuthResult,
   GoogleCallback,
   SessionService,
 } from "@neomaventures/auth"
+import { Account } from "@neomaventures/auth/entities"
 import { Controller, Get, Res } from "@nestjs/common"
 import { Response } from "express"
 
@@ -496,17 +551,47 @@ export class GoogleAuthController {
 
 ## API Reference
 
-### Entities
+### Interfaces
+
+#### `Authenticatable`
+
+```ts
+interface Authenticatable {
+  id: string
+  email: string
+  permissions: string[]
+  authProfile?: OAuthProfile | null
+  oauthTokens?: OAuthTokenable[]
+  activeToken(provider: OAuthProvider): OAuthTokenSnapshot | null
+}
+```
+
+#### `OAuthTokenable`
+
+```ts
+interface OAuthTokenable {
+  id: string
+  provider: string
+  accessToken: string
+  refreshToken: string | null
+  expiresAt: Date
+  scopes: string[]
+}
+```
+
+### Reference Entities
+
+Available at `@neomaventures/auth/entities`.
 
 #### `Account`
 
 ```ts
 @Entity({ name: "account" })
-class Account {
+class Account implements Authenticatable {
   id: string                              // uuid PK
   email: string                           // unique, lowercased on write
   permissions: string[]                   // simple-array, default []
-  authProfile?: OAuthProfile    // simple-json, nullable
+  authProfile?: OAuthProfile | null       // simple-json, nullable
   createdAt: Date
   updatedAt: Date
   oauthTokens?: OAuthToken[]              // @OneToMany, eager
@@ -520,7 +605,7 @@ class Account {
 ```ts
 @Entity({ name: "oauth_token" })
 @Index(["account", "provider"], { unique: true })
-class OAuthToken {
+class OAuthToken implements OAuthTokenable {
   id: string
   account: Relation<Account>              // @ManyToOne, FK `accountId`
   provider: string
@@ -537,29 +622,30 @@ class OAuthToken {
 | ------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `secret`            | `string`                            | JWT signing secret                                                                                                                                                                                         |
 | `expiresIn`         | `string \| number`                  | Session token expiration (e.g., "1h", "7d")                                                                                                                                                                |
+| `entity`            | `new () => Authenticatable`         | Identity entity class. Defaults to the reference `Account`.                                                                                                                                                |
+| `oauthTokenEntity`  | `new () => OAuthTokenable`          | OAuth-token entity class. Defaults to the reference `OAuthToken`.                                                                                                                                          |
 | `magicLink`         | `MagicLinkOptions`                  | Magic link configuration (optional — at least one of `magicLink` or `googleAuth` is required)                                                                                                              |
 | `googleAuth`        | `GoogleAuthOptions`                 | Google OAuth configuration (optional — at least one of `magicLink` or `googleAuth` is required)                                                                                                            |
 | `cookie`            | `CookieOptions`                     | Session cookie configuration (optional)                                                                                                                                                                    |
-| `webhook`           | `WebhookOptions`                    | Webhook signature verification configuration (optional)                                                                                                                                                    |
 | `onUnauthenticated` | `string \| HttpException class`     | Default strategy used by `@Authenticated()` when no account is found. String → 303 redirect. Class → `throw new Class(...)`. Per-route values override this. Defaults to `UnauthorizedException` (401).  |
 
 ### Decorators
 
 | Decorator                       | Returns                       | Notes                                                                                                  |
 | ------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `@AuthenticatedAccount()`                  | `Account \| undefined`        | Concrete type. Use behind `@Authenticated()` to guarantee a value.                                     |
-| `@ActiveOAuthToken(provider)`   | `OAuthTokenSnapshot \| null`  | Calls `account.activeToken(provider)` under the hood. Renamed from `@OAuthToken` to avoid the entity name collision. |
+| `@AuthenticatedAccount()`       | `Authenticatable \| undefined`| Use behind `@Authenticated()` to guarantee a value. Narrow to your configured entity class as needed.  |
+| `@ActiveOAuthToken(provider)`   | `OAuthTokenSnapshot \| null`  | Calls `account.activeToken(provider)` under the hood.                                                  |
 | `@Authenticated(options?)`      | guard                         | unchanged                                                                                              |
 | `@RequiresPermission(perm)`     | guard                         | unchanged                                                                                              |
 | `@RequiresAnyPermission(perms)` | guard                         | unchanged                                                                                              |
 | `@GoogleCallback()`             | interceptor                   | unchanged                                                                                              |
-| `@GetGoogleAuthResult()`        | `GoogleAuthResult`            | concrete                                                                                               |
+| `@GetGoogleAuthResult()`        | `GoogleAuthResult`            | unchanged                                                                                              |
 
 ### Services
 
 - **`MagicLinkService`**
   - `send(email): Promise<void>` — sends a magic link email
-  - `verify(token): Promise<{ entity: Account; isNewUser: boolean }>`
+  - `verify(token): Promise<{ entity: Authenticatable; isNewUser: boolean }>`
 - **`GoogleAuthService`**
   - `authorizeUrl: URL | null` — Google OAuth consent URL
   - `authenticate(code): Promise<GoogleAuthResult>`
@@ -567,7 +653,7 @@ class OAuthToken {
   - `create(res, account): { token; payload }`
   - `clear(res): void`
 - **`AuthenticationService`**
-  - `authenticate(token): Promise<Account>`
+  - `authenticate(token): Promise<Authenticatable>`
 - **`TokenService`**
   - `issue(payload, options?): { token; payload }`
   - `verify(token): JwtPayload`
@@ -577,8 +663,8 @@ class OAuthToken {
 
 ### Events
 
-`RegisteredEvent` and `AuthenticatedEvent` both carry `entity: Account`
-and `provider: AuthProvider`. No generics.
+`RegisteredEvent` and `AuthenticatedEvent` both carry
+`entity: Authenticatable` and `provider: AuthProvider`.
 
 ```typescript
 @OnEvent(RegisteredEvent.EVENT_NAME)
