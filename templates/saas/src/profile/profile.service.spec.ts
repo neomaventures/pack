@@ -37,6 +37,51 @@ describe("ProfileService", () => {
     service = module.get<ProfileService>(ProfileService)
   })
 
+  describe("getAvatar()", () => {
+    describe("Given the account has no profile row", () => {
+      it("should return null", async () => {
+        const account = await accounts.save(
+          accounts.create({ email: faker.internet.email() }),
+        )
+
+        await expect(service.getAvatar(account)).resolves.toBeNull()
+      })
+    })
+
+    describe("Given the account has a profile with an avatar", () => {
+      it("should return the Upload", async () => {
+        const account = await accounts.save(
+          accounts.create({ email: faker.internet.email() }),
+        )
+        const upload = await uploads.save(
+          uploads.create({
+            originalName: "avatar.jpg",
+            mimeType: "image/jpeg",
+            size: faker.number.int({ min: 100, max: 1_000 }),
+            key: `accounts/${account.id}/avatar`,
+            bucket: "test-bucket",
+          }),
+        )
+        await profiles.save(profiles.create({ account, avatar: upload }))
+
+        const result = await service.getAvatar(account)
+
+        expect(result).toEqual(upload)
+      })
+    })
+
+    describe("Given the account has a profile but no avatar", () => {
+      it("should return null", async () => {
+        const account = await accounts.save(
+          accounts.create({ email: faker.internet.email() }),
+        )
+        await profiles.save(profiles.create({ account, avatar: null }))
+
+        await expect(service.getAvatar(account)).resolves.toBeNull()
+      })
+    })
+  })
+
   describe("setAvatar()", () => {
     describe("Given an account with no profile yet", () => {
       it("should create a Profile row with the avatar set", async () => {

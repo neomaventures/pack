@@ -9,10 +9,9 @@ import { Profile } from "~profile/profile.entity"
 /**
  * Application-layer service for the profile domain.
  *
- * Owns the write path for `Profile.avatar`. Reads happen directly against
- * the `Profile` repository in controllers — the eagerly-loaded `avatar`
- * relation means callers don't have to thread `relations: ['avatar']`
- * through every query.
+ * Owns the read and write paths for `Profile.avatar`. The eagerly-loaded
+ * `avatar` relation means callers don't have to thread
+ * `relations: ['avatar']` through every query.
  */
 @Injectable()
 export class ProfileService {
@@ -42,6 +41,29 @@ export class ProfileService {
    * res.redirect("/profile")
    * ```
    */
+  /**
+   * Returns the account's avatar, or null when none is set.
+   *
+   * Loads the Profile row for the account and returns the eagerly-joined
+   * Upload. The eager relation means the avatar comes back in the same
+   * query.
+   *
+   * @param account - The authenticated account whose avatar is being read.
+   * @returns The avatar `Upload`, or `null` when the account has no profile
+   *   row or has not set an avatar.
+   *
+   * @example
+   * ```typescript
+   * const avatar = await profileService.getAvatar(account)
+   * ```
+   */
+  public async getAvatar(account: Account): Promise<Upload | null> {
+    const profile = await this.profiles.findOne({
+      where: { account: { id: account.id } },
+    })
+    return profile?.avatar ?? null
+  }
+
   public async setAvatar(account: Account, upload: Upload): Promise<void> {
     const existing = await this.profiles.findOne({
       where: { account: { id: account.id } },

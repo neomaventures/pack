@@ -4,24 +4,21 @@ import {
   type OAuthToken as AuthOAuthToken,
 } from "@neomaventures/auth"
 import { express } from "@neomaventures/fixtures"
-import { type Repository } from "typeorm"
 
 import { ProfileController } from "~auth/profile.controller"
 import { type Upload } from "~auth/upload.entity"
-import { type Profile } from "~profile/profile.entity"
 import { type ProfileService } from "~profile/profile.service"
 
 describe("ProfileController", () => {
   let controller: ProfileController
-  let profileService: jest.Mocked<Pick<ProfileService, "setAvatar">>
-  let profiles: jest.Mocked<Pick<Repository<Profile>, "findOne">>
+  let profileService: jest.Mocked<
+    Pick<ProfileService, "setAvatar" | "getAvatar">
+  >
 
   beforeEach(() => {
-    profileService = { setAvatar: jest.fn() }
-    profiles = { findOne: jest.fn() }
+    profileService = { setAvatar: jest.fn(), getAvatar: jest.fn() }
     controller = new ProfileController(
       profileService as unknown as ProfileService,
-      profiles as unknown as Repository<Profile>,
     )
   })
 
@@ -91,48 +88,27 @@ describe("ProfileController", () => {
   })
 
   describe("avatar()", () => {
-    describe("Given the principal has a profile with an avatar", () => {
-      it("should return the avatar from the profile", async () => {
+    describe("Given profileService.getAvatar returns an Upload", () => {
+      it("should return that Upload", async () => {
         const upload = { id: faker.string.uuid() } as Upload
         const account = {
           id: faker.string.uuid(),
           email: faker.internet.email(),
         } as Account
-        profiles.findOne.mockResolvedValue({
-          id: faker.string.uuid(),
-          account,
-          displayName: null,
-          avatar: upload,
-        } as Profile)
+        profileService.getAvatar.mockResolvedValue(upload)
 
         await expect(controller.avatar(account)).resolves.toBe(upload)
+        expect(profileService.getAvatar).toHaveBeenCalledWith(account)
       })
     })
 
-    describe("Given the principal has no profile row", () => {
+    describe("Given profileService.getAvatar returns null", () => {
       it("should return null", async () => {
         const account = {
           id: faker.string.uuid(),
           email: faker.internet.email(),
         } as Account
-        profiles.findOne.mockResolvedValue(null)
-
-        await expect(controller.avatar(account)).resolves.toBeNull()
-      })
-    })
-
-    describe("Given the principal has a profile with no avatar", () => {
-      it("should return null", async () => {
-        const account = {
-          id: faker.string.uuid(),
-          email: faker.internet.email(),
-        } as Account
-        profiles.findOne.mockResolvedValue({
-          id: faker.string.uuid(),
-          account,
-          displayName: null,
-          avatar: null,
-        } as Profile)
+        profileService.getAvatar.mockResolvedValue(null)
 
         await expect(controller.avatar(account)).resolves.toBeNull()
       })

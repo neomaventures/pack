@@ -13,13 +13,10 @@ import {
   Render,
   Res,
 } from "@nestjs/common"
-import { InjectRepository } from "@nestjs/typeorm"
 import { type Response } from "express"
-import { Repository } from "typeorm"
 
 import { AccountAvatarKeyResolver } from "~auth/account-avatar-key.resolver"
 import { Upload } from "~auth/upload.entity"
-import { Profile } from "~profile/profile.entity"
 import { ProfileService } from "~profile/profile.service"
 
 /**
@@ -36,17 +33,13 @@ import { ProfileService } from "~profile/profile.service"
  * asset endpoints should not confirm the existence of a per-user resource
  * to an unauthenticated caller.
  *
- * Avatar bytes live on the consumer-owned {@link Profile} entity (one-to-
- * one with `Account`), not on `Account` itself — auth's `Account` is
+ * Avatar bytes live on the consumer-owned `Profile` entity (one-to-one
+ * with `Account`), not on `Account` itself — auth's `Account` is
  * deliberately minimal and customisation happens via FK composition.
  */
 @Controller()
 export class ProfileController {
-  public constructor(
-    private readonly profileService: ProfileService,
-    @InjectRepository(Profile)
-    private readonly profiles: Repository<Profile>,
-  ) {}
+  public constructor(private readonly profileService: ProfileService) {}
 
   /**
    * Renders the profile page for the authenticated user.
@@ -84,8 +77,9 @@ export class ProfileController {
   /**
    * Serves the authenticated user's avatar.
    *
-   * Loads the `Profile` row for the principal and returns the eagerly-
-   * joined `Upload`. When no profile or avatar is set, `null` causes the
+   * Delegates to {@link ProfileService.getAvatar}, which loads the
+   * `Profile` row for the principal and returns the eagerly-joined
+   * `Upload`. When no profile or avatar is set, `null` causes the
    * framework to redirect to the static silhouette under
    * `/img/default-avatar.svg`.
    *
@@ -107,10 +101,7 @@ export class ProfileController {
     cacheControl: "private, max-age=30",
   })
   public async avatar(@Principal() account: Account): Promise<Upload | null> {
-    const profile = await this.profiles.findOne({
-      where: { account: { id: account.id } },
-    })
-    return profile?.avatar ?? null
+    return this.profileService.getAvatar(account)
   }
 
   /**

@@ -246,6 +246,14 @@ Set the following environment variables to enable Google OAuth:
 
 When `GOOGLE_CLIENT_ID` is empty, the Google sign-in link is hidden and magic link login is the only option.
 
+## Profile & avatar
+
+Saas-template demonstrates the composition pattern recommended by `@neomaventures/auth`: identity stays on `Account` (managed by auth), presentation-layer fields like `avatar` and `displayName` live on a separate `Profile` entity with a 1:1 FK to `Account`.
+
+Loading the avatar requires an extra query (via `ProfileService.getAvatar`), not a property access on `Account`. That's intentional — `Account` is identity, `Profile` is presentation. Apps can add more identity-adjacent concerns (`Membership`, `Workspace`, `Preferences`, etc.) as separate FK-linked entities without ever touching `Account`.
+
+Avoid extending `Account` via TypeORM inheritance. The bidirectional relation between `Account` and `OAuthToken` is final; subclassing introduces TypeORM relation-graph fragility. Composition stays clean.
+
 ## Tests
 
 Three test layers, matching the spec ownership model used across Neoma projects:
