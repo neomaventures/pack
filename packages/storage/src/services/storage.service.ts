@@ -10,6 +10,7 @@ import {
   InvalidStorageKeyException,
   MAX_KEY_BYTES,
 } from "../exceptions/invalid-storage-key.exception"
+import { S3_CLIENT } from "../providers/s3-client.provider"
 import { type StorageOptions, STORAGE_OPTIONS } from "../storage.options"
 
 /**
@@ -26,24 +27,10 @@ import { type StorageOptions, STORAGE_OPTIONS } from "../storage.options"
  */
 @Injectable()
 export class StorageService {
-  private readonly client: S3Client
-
   public constructor(
     @Inject(STORAGE_OPTIONS) private readonly options: StorageOptions,
-  ) {
-    this.client = new S3Client({
-      endpoint: options.endpoint,
-      region: options.region,
-      credentials: {
-        accessKeyId: options.accessKeyId,
-        secretAccessKey: options.secretAccessKey,
-      },
-      forcePathStyle: options.forcePathStyle ?? true,
-      // Suppress default SDK v3 checksum computation which can fail on some S3-compatible backends
-      requestChecksumCalculation: "WHEN_REQUIRED",
-      responseChecksumValidation: "WHEN_REQUIRED",
-    })
-  }
+    @Inject(S3_CLIENT) private readonly client: S3Client,
+  ) {}
 
   /**
    * Stores a file in S3 at the given key.

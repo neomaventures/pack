@@ -1,8 +1,10 @@
+import * as S3 from "@aws-sdk/client-s3"
 import { faker } from "@faker-js/faker"
 import { Test } from "@nestjs/testing"
 import { MinioClient } from "fixtures/storage/minio"
 
 import { InvalidStorageKeyException } from "../exceptions/invalid-storage-key.exception"
+import { S3_CLIENT, S3ClientProvider } from "../providers/s3-client.provider"
 import { STORAGE_OPTIONS } from "../storage.options"
 
 import { StorageService } from "./storage.service"
@@ -25,6 +27,7 @@ describe("StorageService", () => {
       providers: [
         StorageService,
         { provide: STORAGE_OPTIONS, useValue: options },
+        S3ClientProvider,
       ],
     }).compile()
 
@@ -95,6 +98,67 @@ describe("StorageService", () => {
   describe("bucket", () => {
     it("should return the configured bucket name", () => {
       expect(service.bucket).toBe(options.bucket)
+    })
+  })
+
+  describe("S3 client injection", () => {
+    describe("Given a stubbed S3_CLIENT provider", () => {
+      it("should route store() calls through the injected client", async () => {
+        const stub = { send: jest.fn().mockResolvedValue(undefined) }
+
+        const module = await Test.createTestingModule({
+          providers: [
+            StorageService,
+            { provide: STORAGE_OPTIONS, useValue: options },
+            { provide: S3_CLIENT, useValue: stub },
+          ],
+        }).compile()
+
+        const stubbedService = module.get(StorageService)
+        const key = faker.string.alphanumeric(12)
+        const body = Buffer.from(faker.lorem.paragraph())
+
+        await stubbedService.store(key, body, "text/plain")
+
+        expect(stub.send).toHaveBeenCalledTimes(1)
+      })
+
+      it("should resolve the same client instance the service uses", () => {
+        const stub = { send: jest.fn() }
+
+        return Test.createTestingModule({
+          providers: [
+            StorageService,
+            { provide: STORAGE_OPTIONS, useValue: options },
+            { provide: S3_CLIENT, useValue: stub },
+          ],
+        })
+          .compile()
+          .then((module) => {
+            expect(module.get(S3_CLIENT)).toBe(stub)
+          })
+      })
+    })
+
+    describe("Given the service is instantiated", () => {
+      it("should not construct its own S3Client (relies on the injected one)", async () => {
+        const constructorSpy = jest.spyOn(S3, "S3Client")
+        const stub = { send: jest.fn() }
+
+        try {
+          await Test.createTestingModule({
+            providers: [
+              StorageService,
+              { provide: STORAGE_OPTIONS, useValue: options },
+              { provide: S3_CLIENT, useValue: stub },
+            ],
+          }).compile()
+
+          expect(constructorSpy).not.toHaveBeenCalled()
+        } finally {
+          constructorSpy.mockRestore()
+        }
+      })
     })
   })
 })

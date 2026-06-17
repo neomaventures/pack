@@ -11,6 +11,7 @@ import { MinioClient } from "fixtures/storage/minio"
 import { of, throwError } from "rxjs"
 
 import { TEMPORARY_LINK_METADATA_KEY } from "../decorators/temporary-link.decorator"
+import { S3ClientProvider } from "../providers/s3-client.provider"
 import { StorageService } from "../services/storage.service"
 import { UlidIdGenerator } from "../services/ulid-id-generator.service"
 import { type StorageOptions, STORAGE_OPTIONS } from "../storage.options"
@@ -35,6 +36,7 @@ const createModule = async (
       StorageService,
       UlidIdGenerator,
       { provide: STORAGE_OPTIONS, useValue: { ...options, ...overrides } },
+      S3ClientProvider,
     ],
   }).compile()
 
