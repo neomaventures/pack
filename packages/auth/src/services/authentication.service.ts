@@ -90,14 +90,16 @@ export class AuthenticationService<T extends Authenticatable = Account> {
       throw new IncorrectCredentialsException(sub)
     }
 
-    this.eventEmitter.emit(
-      AuthenticatedEvent.EVENT_NAME,
-      new AuthenticatedEvent(account as Account, "session"),
-    )
-
     // The repository is constructed from `resolved.entity` which is the
     // class the consumer configured (or the reference default). Trust the
     // config-is-correct line: cast to T at the service boundary.
-    return account as T
+    const entity = account as T
+
+    this.eventEmitter.emit(
+      AuthenticatedEvent.EVENT_NAME,
+      new AuthenticatedEvent<T>(entity, "session"),
+    )
+
+    return entity
   }
 }

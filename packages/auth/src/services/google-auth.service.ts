@@ -182,12 +182,12 @@ export class GoogleAuthService<
     if (isNewUser) {
       this.eventEmitter.emit(
         RegisteredEvent.EVENT_NAME,
-        new RegisteredEvent(entity as unknown as Account, "google"),
+        new RegisteredEvent<T>(entity, "google"),
       )
     } else {
       this.eventEmitter.emit(
         AuthenticatedEvent.EVENT_NAME,
-        new AuthenticatedEvent(entity as unknown as Account, "google"),
+        new AuthenticatedEvent<T>(entity, "google"),
       )
     }
 

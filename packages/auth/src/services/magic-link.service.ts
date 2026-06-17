@@ -156,23 +156,25 @@ export class MagicLinkService<T extends Authenticatable = Account> {
     const existing = await repo.findOne({ where: { email } })
 
     if (existing) {
-      this.eventEmitter.emit(
-        AuthenticatedEvent.EVENT_NAME,
-        new AuthenticatedEvent(existing as Account),
-      )
       // Repo is built from the configured entity class — cast at the
       // boundary to honour the class-level generic.
-      return { entity: existing as T, isNewUser: false }
+      const entity = existing as T
+      this.eventEmitter.emit(
+        AuthenticatedEvent.EVENT_NAME,
+        new AuthenticatedEvent<T>(entity),
+      )
+      return { entity, isNewUser: false }
     }
 
     const toSave = repo.create({ email })
     const saved = await repo.save(toSave)
+    const entity = saved as T
 
     this.eventEmitter.emit(
       RegisteredEvent.EVENT_NAME,
-      new RegisteredEvent(saved as Account),
+      new RegisteredEvent<T>(entity),
     )
 
-    return { entity: saved as T, isNewUser: true }
+    return { entity, isNewUser: true }
   }
 }

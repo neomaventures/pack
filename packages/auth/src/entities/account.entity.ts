@@ -7,6 +7,7 @@ import {
   UpdateDateColumn,
 } from "typeorm"
 
+import { getActiveToken } from "../account/get-active-token"
 import { type OAuthAuthenticatable } from "../interfaces/oauth-authenticatable.interface"
 import { type OAuthProfile } from "../types/oauth-profile.type"
 import { type OAuthProvider } from "../types/oauth-provider.type"
@@ -93,30 +94,6 @@ export class Account implements OAuthAuthenticatable {
    * ```
    */
   public activeToken(provider: OAuthProvider): OAuthTokenSnapshot | null {
-    const tokens = this.oauthTokens
-    if (!tokens || tokens.length === 0) {
-      return null
-    }
-
-    const match = tokens.find(
-      (token: OAuthToken): boolean => token.provider === provider,
-    )
-    if (!match) {
-      return null
-    }
-
-    const expiresAt =
-      match.expiresAt instanceof Date
-        ? match.expiresAt
-        : new Date(match.expiresAt)
-    if (expiresAt.getTime() <= Date.now()) {
-      return null
-    }
-
-    return {
-      accessToken: match.accessToken,
-      expiresAt,
-      scopes: match.scopes,
-    }
+    return getActiveToken(this, provider)
   }
 }

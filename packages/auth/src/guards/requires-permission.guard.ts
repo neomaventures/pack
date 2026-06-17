@@ -9,7 +9,6 @@ import { Reflector } from "@nestjs/core"
 import { getAccount } from "../account/account.slot"
 import { REQUIRED_ANY_PERMISSIONS_KEY } from "../decorators/requires-any-permission.decorator"
 import { REQUIRED_PERMISSIONS_KEY } from "../decorators/requires-permission.decorator"
-import { type Account } from "../entities/account.entity"
 import { PermissionService } from "../services/permission.service"
 
 import { buildUnauthenticatedMessage } from "./unauthenticated-message"
@@ -42,7 +41,7 @@ export class RequiresPermissionGuard implements CanActivate {
    * @throws {PermissionDeniedException} If permission check fails
    */
   public canActivate(context: ExecutionContext): boolean {
-    const account = getAccount<Account>()
+    const account = getAccount()
 
     // Check authentication first
     if (!account) {
