@@ -5,8 +5,9 @@
 Add optional `entity` / `oauthTokenEntity` slots to `AuthOptions` so
 consumers can replace the shipped `Account` / `OAuthToken` entities with
 their own classes (and hang TypeORM relations off them). Re-introduces the
-`Authenticatable`, `OAuthAuthenticatable`, and `OAuthTokenable` interfaces
-and ships them via the new `@neomaventures/auth/entities` subpath export.
+`Authenticatable` interface (with an optional `oauthTokens?: OAuthTokenable[]`
+field) and the `OAuthTokenable` interface, and ships them via the new
+`@neomaventures/auth/entities` subpath export.
 Class-level generics on `AuthenticationService<T>`, `MagicLinkService<T>`,
 and `GoogleAuthService<T, U>` propagate the chosen entity type through
 return values; `getAccount` / `setAccount` slot wrappers take a

@@ -1,17 +1,17 @@
-import { type OAuthAuthenticatable } from "../interfaces/oauth-authenticatable.interface"
+import { type Authenticatable } from "../interfaces/authenticatable.interface"
 import { type OAuthTokenable } from "../interfaces/oauth-tokenable.interface"
 import { type OAuthProvider } from "../types/oauth-provider.type"
 import { type OAuthTokenSnapshot } from "../types/oauth-token-snapshot.type"
 
 /**
  * Namespace-style service that groups OAuth token utilities for
- * `OAuthAuthenticatable` entities.
+ * `Authenticatable` entities.
  *
  * Not a NestJS provider. Never registered on a module, never injected,
  * never decorated with `@Injectable()`. Methods are static and called
  * directly — the class exists purely as a discoverable namespace that
  * matches the package's vocabulary (`@ActiveOAuthToken` decorator,
- * `OAuthAuthenticatable` interface) and surfaces through autocomplete.
+ * `Authenticatable` interface) and surfaces through autocomplete.
  *
  * Consumers with a custom `Authenticatable` entity call
  * `OAuthTokenService.getActiveToken(account, provider)` directly. The
@@ -57,7 +57,7 @@ export class OAuthTokenService {
    * ```
    */
   public static getActiveToken(
-    account: OAuthAuthenticatable,
+    account: Authenticatable,
     provider: OAuthProvider,
   ): OAuthTokenSnapshot | null {
     const tokens = account.oauthTokens

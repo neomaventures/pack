@@ -7,7 +7,7 @@ import {
   UpdateDateColumn,
 } from "typeorm"
 
-import { type OAuthAuthenticatable } from "../interfaces/oauth-authenticatable.interface"
+import { type Authenticatable } from "../interfaces/authenticatable.interface"
 import { OAuthTokenService } from "../services/oauth-token.service"
 import { type OAuthProfile } from "../types/oauth-profile.type"
 import { type OAuthProvider } from "../types/oauth-provider.type"
@@ -17,10 +17,9 @@ import { OAuthToken } from "./oauth-token.entity"
 
 /**
  * Concrete identity entity owned by `@neomaventures/auth`. The reference
- * implementation of the `Authenticatable` / `OAuthAuthenticatable`
- * interfaces — consumers register `Account` directly via
- * `TypeOrmModule.forFeature([Account])` rather than rolling their own
- * entity class.
+ * implementation of the `Authenticatable` interface — consumers register
+ * `Account` directly via `TypeOrmModule.forFeature([Account])` rather
+ * than rolling their own entity class.
  *
  * Custom fields belong on a separate consumer-owned entity with a FK to
  * `Account` (e.g. `Profile.@OneToOne(() => Account)`), not by extending
@@ -49,7 +48,7 @@ import { OAuthToken } from "./oauth-token.entity"
  * ```
  */
 @Entity({ name: "account" })
-export class Account implements OAuthAuthenticatable {
+export class Account implements Authenticatable {
   @PrimaryGeneratedColumn("uuid")
   public id!: string
 

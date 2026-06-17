@@ -1,7 +1,14 @@
 import { type OAuthProfile } from "../types/oauth-profile.type"
 
+import { type OAuthTokenable } from "./oauth-tokenable.interface"
+
 /**
  * Interface that must be implemented by any entity that can be authenticated.
+ *
+ * Covers both local credentials (email + magic link) and third-party sign-in
+ * (e.g. Google), with optional `oauthTokens` for entities that want OAuth
+ * tokens captured during third-party sign-in eagerly loaded as a navigation
+ * array.
  *
  * @example
  * ```typescript
@@ -43,4 +50,17 @@ export interface Authenticatable {
    * `null` rather than `undefined`.
    */
   authProfile?: OAuthProfile | null
+
+  /**
+   * Persisted OAuth tokens, one entry per provider, exposed via a
+   * `@OneToMany` relation. Tokens live in a separate `oauth_token` table
+   * (one row per `(account, provider)`) rather than an in-row JSON column
+   * so FK constraints, per-provider upserts, and per-column types
+   * (`timestamptz`, `text`) stay native database concerns. Optional so
+   * consumers who don't use OAuth — or who use it purely for sign-in with
+   * no API calls — don't need the relation. `undefined` when no
+   * third-party sign-in has happened yet and the relation has not been
+   * hydrated.
+   */
+  oauthTokens?: OAuthTokenable[]
 }
