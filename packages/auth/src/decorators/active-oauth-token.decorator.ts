@@ -1,13 +1,17 @@
 import { createParamDecorator } from "@nestjs/common"
 
 import { getAccount } from "../account/account.slot"
+import { type Authenticatable } from "../interfaces/authenticatable.interface"
+import { OAuthTokenService } from "../services/oauth-token.service"
 import { type OAuthProvider } from "../types/oauth-provider.type"
 import { type OAuthTokenSnapshot } from "../types/oauth-token-snapshot.type"
 
 /**
  * Parameter decorator that resolves the active OAuth token snapshot for
- * the current account. Delegates to `Account.activeToken(provider)`
- * under the hood.
+ * the current account. Delegates to {@link OAuthTokenService.getActiveToken}
+ * against the `Authenticatable` in the request slot, so it works
+ * uniformly for the reference `Account` entity and custom consumer
+ * entities alike.
  *
  * Returns `null` when the account is anonymous, has no stored tokens
  * for the provider, or the stored token has expired (refresh-on-expiry
@@ -32,7 +36,10 @@ import { type OAuthTokenSnapshot } from "../types/oauth-token-snapshot.type"
  */
 export const ActiveOAuthToken = createParamDecorator(
   (provider: OAuthProvider): OAuthTokenSnapshot | null => {
-    const account = getAccount()
-    return account?.activeToken?.(provider) ?? null
+    const account = getAccount<Authenticatable>()
+    if (!account) {
+      return null
+    }
+    return OAuthTokenService.getActiveToken(account, provider)
   },
 )

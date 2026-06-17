@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common"
 
-import { Account } from "../entities/account.entity"
 import { PermissionDeniedException } from "../exceptions/permission-denied.exception"
+import { type Authenticatable } from "../interfaces/authenticatable.interface"
 
 /**
  * Service for checking and enforcing permissions on accounts.
@@ -56,7 +56,7 @@ export class PermissionService {
    * @param permission - The permission to check for
    * @returns true if the account has the permission, false otherwise
    */
-  public hasPermission(account: Account, permission: string): boolean {
+  public hasPermission(account: Authenticatable, permission: string): boolean {
     const permissions = account.permissions ?? []
     return permissions.some((p) => this.matchesPermission(p, permission))
   }
@@ -68,7 +68,10 @@ export class PermissionService {
    * @param permissions - The permissions to check for (AND logic)
    * @returns true if the account has all permissions, false otherwise
    */
-  public hasAllPermissions(account: Account, permissions: string[]): boolean {
+  public hasAllPermissions(
+    account: Authenticatable,
+    permissions: string[],
+  ): boolean {
     return permissions.every((p) => this.hasPermission(account, p))
   }
 
@@ -79,7 +82,10 @@ export class PermissionService {
    * @param permissions - The permissions to check for (OR logic)
    * @returns true if the account has at least one permission, false otherwise
    */
-  public hasAnyPermission(account: Account, permissions: string[]): boolean {
+  public hasAnyPermission(
+    account: Authenticatable,
+    permissions: string[],
+  ): boolean {
     return permissions.some((p) => this.hasPermission(account, p))
   }
 
@@ -90,7 +96,7 @@ export class PermissionService {
    * @param permission - The permission required
    * @throws {PermissionDeniedException} If the account lacks the permission
    */
-  public requirePermission(account: Account, permission: string): void {
+  public requirePermission(account: Authenticatable, permission: string): void {
     if (!this.hasPermission(account, permission)) {
       throw new PermissionDeniedException(
         [permission],
@@ -108,7 +114,10 @@ export class PermissionService {
    * @param permissions - The permissions required (AND logic)
    * @throws {PermissionDeniedException} If the account lacks any permission
    */
-  public requireAllPermissions(account: Account, permissions: string[]): void {
+  public requireAllPermissions(
+    account: Authenticatable,
+    permissions: string[],
+  ): void {
     const missing = permissions.filter((p) => !this.hasPermission(account, p))
     if (missing.length > 0) {
       throw new PermissionDeniedException(
@@ -127,7 +136,10 @@ export class PermissionService {
    * @param permissions - The permissions to check (OR logic)
    * @throws {PermissionDeniedException} If the account has none of the permissions
    */
-  public requireAnyPermission(account: Account, permissions: string[]): void {
+  public requireAnyPermission(
+    account: Authenticatable,
+    permissions: string[],
+  ): void {
     if (permissions.length === 0) {
       throw new Error("requireAnyPermission() requires at least one permission")
     }

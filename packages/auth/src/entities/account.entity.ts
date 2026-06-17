@@ -7,6 +7,8 @@ import {
   UpdateDateColumn,
 } from "typeorm"
 
+import { type Authenticatable } from "../interfaces/authenticatable.interface"
+import { OAuthTokenService } from "../services/oauth-token.service"
 import { type OAuthProfile } from "../types/oauth-profile.type"
 import { type OAuthProvider } from "../types/oauth-provider.type"
 import { type OAuthTokenSnapshot } from "../types/oauth-token-snapshot.type"
@@ -14,10 +16,10 @@ import { type OAuthTokenSnapshot } from "../types/oauth-token-snapshot.type"
 import { OAuthToken } from "./oauth-token.entity"
 
 /**
- * Concrete identity entity owned by `@neomaventures/auth`. Replaces the
- * `Authenticatable` / `OAuthAuthenticatable` interfaces — consumers
- * register `Account` directly via `TypeOrmModule.forFeature([Account])`
- * rather than implementing an interface on their own entity class.
+ * Concrete identity entity owned by `@neomaventures/auth`. The reference
+ * implementation of the `Authenticatable` interface — consumers register
+ * `Account` directly via `TypeOrmModule.forFeature([Account])` rather
+ * than rolling their own entity class.
  *
  * Custom fields belong on a separate consumer-owned entity with a FK to
  * `Account` (e.g. `Profile.@OneToOne(() => Account)`), not by extending
@@ -46,7 +48,7 @@ import { OAuthToken } from "./oauth-token.entity"
  * ```
  */
 @Entity({ name: "account" })
-export class Account {
+export class Account implements Authenticatable {
   @PrimaryGeneratedColumn("uuid")
   public id!: string
 
@@ -91,30 +93,6 @@ export class Account {
    * ```
    */
   public activeToken(provider: OAuthProvider): OAuthTokenSnapshot | null {
-    const tokens = this.oauthTokens
-    if (!tokens || tokens.length === 0) {
-      return null
-    }
-
-    const match = tokens.find(
-      (token: OAuthToken): boolean => token.provider === provider,
-    )
-    if (!match) {
-      return null
-    }
-
-    const expiresAt =
-      match.expiresAt instanceof Date
-        ? match.expiresAt
-        : new Date(match.expiresAt)
-    if (expiresAt.getTime() <= Date.now()) {
-      return null
-    }
-
-    return {
-      accessToken: match.accessToken,
-      expiresAt,
-      scopes: match.scopes,
-    }
+    return OAuthTokenService.getActiveToken(this, provider)
   }
 }

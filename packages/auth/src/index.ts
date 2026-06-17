@@ -8,10 +8,15 @@ export * from "./auth.options"
 export * from "./entities/account.entity"
 export * from "./entities/oauth-token.entity"
 
+// Interfaces for replaceable entities (consumer custom implementations)
+export * from "./interfaces/authenticatable.interface"
+export * from "./interfaces/oauth-tokenable.interface"
+
 // Services injected via DI
 export * from "./services/authentication.service"
 export * from "./services/google-auth.service"
 export * from "./services/magic-link.service"
+export * from "./services/oauth-token.service"
 export * from "./services/permission.service"
 export * from "./services/session.service"
 export * from "./services/token.service"

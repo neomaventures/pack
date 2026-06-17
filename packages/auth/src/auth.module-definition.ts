@@ -2,7 +2,14 @@ import { ConfigurableModuleBuilder } from "@nestjs/common"
 import { EventEmitterModule } from "@nestjs/event-emitter"
 
 import { accountProvider, CurrentAccountToken } from "./account/account.slot"
-import { type AuthOptions, AUTH_OPTIONS } from "./auth.options"
+import {
+  type AuthOptions,
+  type ResolvedAuthOptions,
+  AUTH_OPTIONS,
+  RESOLVED_AUTH_OPTIONS,
+} from "./auth.options"
+import { Account } from "./entities/account.entity"
+import { OAuthToken } from "./entities/oauth-token.entity"
 import { GoogleCallbackInterceptor } from "./interceptors/google-callback.interceptor"
 import { AuthenticationService } from "./services/authentication.service"
 import { GoogleAuthService } from "./services/google-auth.service"
@@ -38,6 +45,15 @@ export const {
       ...(definition.providers ?? []),
       ...AUTH_PROVIDERS,
       accountProvider,
+      {
+        provide: RESOLVED_AUTH_OPTIONS,
+        useFactory: (options: AuthOptions): ResolvedAuthOptions => ({
+          ...options,
+          entity: options.entity ?? Account,
+          oauthTokenEntity: options.oauthTokenEntity ?? OAuthToken,
+        }),
+        inject: [AUTH_OPTIONS],
+      },
     ],
     // Services are exported so consumers can inject them directly
     // (e.g. AuthenticationService, SessionService).
