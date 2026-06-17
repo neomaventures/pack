@@ -1,6 +1,6 @@
 {
   "name": "@neomaventures/auth",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Authentication and authorization for NestJS. Magic links, Google OAuth, cookie/bearer sessions, and wildcard permissions.",
   "author": "Daniel Bruce",
   "repository": {
@@ -79,8 +79,12 @@
     "typeorm": ">=0.3"
   },
   "peerDependenciesMeta": {
-    "@faker-js/faker": { "optional": true },
-    "@neomaventures/google-fixtures": { "optional": true }
+    "@faker-js/faker": {
+      "optional": true
+    },
+    "@neomaventures/google-fixtures": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@faker-js/faker": "^9.6.0",
