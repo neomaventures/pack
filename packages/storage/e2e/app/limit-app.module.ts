@@ -86,10 +86,12 @@ export class LimitController {
     StorageModule.forRoot({
       endpoint: process.env.STORAGE_ENDPOINT!,
       region: process.env.STORAGE_REGION!,
-      bucket: process.env.STORAGE_BUCKET!,
       accessKeyId: process.env.STORAGE_ACCESS_KEY!,
       secretAccessKey: process.env.STORAGE_SECRET_KEY!,
       entity: Upload,
+    }),
+    StorageModule.forFeature({
+      bucket: process.env.STORAGE_BUCKET!,
     }),
   ],
   controllers: [LimitController],

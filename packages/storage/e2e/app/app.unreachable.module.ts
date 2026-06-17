@@ -20,10 +20,12 @@ import { Upload } from "./upload.entity"
     StorageModule.forRoot({
       endpoint: "http://localhost:1",
       region: "us-east-1",
-      bucket: "unreachable-bucket",
       accessKeyId: "fake-key",
       secretAccessKey: "fake-secret",
       entity: Upload,
+    }),
+    StorageModule.forFeature({
+      bucket: "unreachable-bucket",
     }),
   ],
   controllers: [UploadController],

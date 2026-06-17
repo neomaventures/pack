@@ -18,12 +18,18 @@ import { Upload } from "./upload.entity"
       useFactory: () => ({
         endpoint: process.env.STORAGE_ENDPOINT!,
         region: process.env.STORAGE_REGION!,
-        bucket: process.env.STORAGE_BUCKET!,
         accessKeyId: process.env.STORAGE_ACCESS_KEY!,
         secretAccessKey: process.env.STORAGE_SECRET_KEY!,
         entity: Upload,
-        maxFileSize: 500,
-        linkCacheControl: "private, max-age=60",
+        defaults: {
+          maxFileSize: 500,
+          linkCacheControl: "private, max-age=60",
+        },
+      }),
+    }),
+    StorageModule.forFeatureAsync({
+      useFactory: () => ({
+        bucket: process.env.STORAGE_BUCKET!,
       }),
     }),
   ],
