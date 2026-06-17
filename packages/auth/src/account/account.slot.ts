@@ -1,6 +1,6 @@
 import { createContextSlot } from "@neomaventures/request-context"
 
-import { type Account } from "../entities/account.entity"
+import { type Authenticatable } from "../interfaces/authenticatable.interface"
 
 /**
  * Context slot for the authenticated account, backed by `AsyncLocalStorage`
@@ -59,10 +59,48 @@ import { type Account } from "../entities/account.entity"
  * }
  * ```
  */
-const accountSlot = createContextSlot<Account>("@neomaventures/auth:account")
+const accountSlot = createContextSlot<Authenticatable>(
+  "@neomaventures/auth:account",
+)
 
-export const getAccount = accountSlot.get
-export const setAccount = accountSlot.set
+/**
+ * Reads the current account from the request-scoped context slot.
+ *
+ * The slot is package-typed on {@link Authenticatable}. Consumers with a
+ * custom entity can narrow at the call site by supplying a generic
+ * argument, or wrap once for app-wide DX.
+ *
+ * @example Narrow at call site
+ * ```typescript
+ * const account = getAccount<CustomAccount>()
+ * ```
+ *
+ * @example Wrap once for app-wide DX
+ * ```typescript
+ * export const getCurrentAccount = (): CustomAccount | undefined =>
+ *   getAccount<CustomAccount>()
+ * ```
+ */
+export const getAccount = <T extends Authenticatable = Authenticatable>():
+  | T
+  | undefined => accountSlot.get() as T | undefined
+
+/**
+ * Stores the given account in the request-scoped context slot.
+ *
+ * The slot is package-typed on {@link Authenticatable}. Any entity
+ * implementing the interface is accepted; consumers may pass a narrower
+ * generic when calling for documentation purposes.
+ *
+ * @example
+ * ```typescript
+ * setAccount(user)
+ * ```
+ */
+export const setAccount = <T extends Authenticatable = Authenticatable>(
+  account: T,
+): void => accountSlot.set(account)
+
 export const AuthenticatedAccount = accountSlot.param
 export const CurrentAccountToken = accountSlot.token
 export const accountProvider = accountSlot.provider

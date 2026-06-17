@@ -1,6 +1,7 @@
 import { createParamDecorator } from "@nestjs/common"
 
 import { getAccount } from "../account/account.slot"
+import { type Account } from "../entities/account.entity"
 import { type OAuthProvider } from "../types/oauth-provider.type"
 import { type OAuthTokenSnapshot } from "../types/oauth-token-snapshot.type"
 
@@ -32,7 +33,7 @@ import { type OAuthTokenSnapshot } from "../types/oauth-token-snapshot.type"
  */
 export const ActiveOAuthToken = createParamDecorator(
   (provider: OAuthProvider): OAuthTokenSnapshot | null => {
-    const account = getAccount()
+    const account = getAccount<Account>()
     return account?.activeToken?.(provider) ?? null
   },
 )
