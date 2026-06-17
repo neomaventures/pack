@@ -261,6 +261,44 @@ either, both, or neither. The package never calls
 `TypeOrmModule.forFeature` for you — you decide what's in
 `entities: [...]` and your migrations are generated against that set.
 
+### Type narrowing — how the custom class flows
+
+`AuthModule.forRoot({ entity: YourAccount })` accepts any class that
+satisfies `Authenticatable`, but the concrete `YourAccount` type does
+**not** flow through `forRoot` automatically. Narrowing happens at the
+consumption edges:
+
+| Surface | How `YourAccount` lands |
+| --- | --- |
+| `forRoot({ entity: YourAccount })` | Options accept any `Authenticatable`; no narrowing past this point |
+| `AuthenticationService<YourAccount>` (and `MagicLinkService<YourAccount>`, `GoogleAuthService<YourAccount, YourOAuthToken>`) | Class-level generic — annotate at constructor injection and method returns narrow |
+| `getAccount<YourAccount>()` | Method-level template with `Authenticatable` default |
+| `@AuthenticatedAccount() account: YourAccount` | Annotation-trusted |
+
+```typescript
+import { AuthenticationService, MagicLinkService, getAccount as _getAccount } from "@neomaventures/auth"
+import { Account as YourAccount } from "./account.entity"
+
+@Injectable()
+export class ProfileService {
+  public constructor(
+    private readonly authentication: AuthenticationService<YourAccount>,
+    private readonly magicLink: MagicLinkService<YourAccount>,
+  ) {}
+
+  public async whoAmI(token: string): Promise<YourAccount> {
+    return this.authentication.authenticate(token)
+  }
+}
+
+// One-line app-local wrapper if you call getAccount() outside DI:
+export const getAccount = (): YourAccount | undefined => _getAccount<YourAccount>()
+```
+
+Service generics default to the reference `Account` / `OAuthToken`, so
+consumers on the default path inject `AuthenticationService` without
+type parameters and everything narrows to `Account`.
+
 ### 3. Enable validation
 
 Auth exports `EmailDto` with `class-validator` decorators. For validation
