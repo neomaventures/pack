@@ -3,11 +3,18 @@ import { EventEmitter2 } from "@nestjs/event-emitter"
 import { createTransport, Transporter } from "nodemailer"
 import { DataSource } from "typeorm"
 
-import { AUTH_OPTIONS, AuthOptions, MailerOptions } from "../auth.options"
+import {
+  AUTH_OPTIONS,
+  AuthOptions,
+  MailerOptions,
+  RESOLVED_AUTH_OPTIONS,
+  ResolvedAuthOptions,
+} from "../auth.options"
 import { Account } from "../entities/account.entity"
 import { AuthenticatedEvent } from "../events/authenticated.event"
 import { RegisteredEvent } from "../events/registered.event"
 import { InvalidMagicLinkTokenException } from "../exceptions/invalid-magic-link-token.exception"
+import { type Authenticatable } from "../interfaces/authenticatable.interface"
 
 import { TokenService } from "./token.service"
 
@@ -16,12 +23,15 @@ export const SESSION_AUDIENCE = "session"
 
 /**
  * Result of verifying a magic link token.
+ *
+ * @typeParam T - The configured account entity type. Defaults to the
+ *   reference {@link Account}.
  */
-export interface MagicLinkVerifyResult {
+export interface MagicLinkVerifyResult<T extends Authenticatable = Account> {
   /**
-   * The authenticated or newly created `Account`.
+   * The authenticated or newly created account entity.
    */
-  entity: Account
+  entity: T
 
   /**
    * True if this was a new registration, false if existing user.
@@ -29,12 +39,18 @@ export interface MagicLinkVerifyResult {
   isNewUser: boolean
 }
 
+/**
+ * @typeParam T - The configured account entity type. Defaults to the
+ *   reference {@link Account}. Consumers narrow at the injection site.
+ */
 @Injectable()
-export class MagicLinkService {
+export class MagicLinkService<T extends Authenticatable = Account> {
   private transport?: Transporter
 
   public constructor(
     @Inject(AUTH_OPTIONS) private readonly options: AuthOptions,
+    @Inject(RESOLVED_AUTH_OPTIONS)
+    private readonly resolved: ResolvedAuthOptions,
     private readonly tokenService: TokenService,
     private readonly datasource: DataSource,
     private readonly eventEmitter: EventEmitter2,
@@ -83,7 +99,7 @@ export class MagicLinkService {
       { expiresIn: "15m" },
     )
 
-    const repo = this.datasource.getRepository(Account)
+    const repo = this.datasource.getRepository(this.resolved.entity)
     const exists = await repo.exists({
       where: { email: email.toLowerCase() },
     })
@@ -100,15 +116,15 @@ export class MagicLinkService {
   }
 
   /**
-   * Verifies a magic link token and returns/creates the Account.
+   * Verifies a magic link token and returns/creates the account entity.
    *
    * - Validates token signature and expiry
    * - Validates required claims (aud, email)
-   * - Creates new Account if email not found, or returns existing
+   * - Creates new account if email not found, or returns existing
    * - Emits `auth.registered` for new accounts, `auth.authenticated` for existing
    *
    * @param token - The magic link JWT token
-   * @returns Object containing the Account and whether it's a new user
+   * @returns Object containing the account and whether it's a new user
    * @throws {@link TokenFailedVerificationException} if token signature invalid or expired
    * @throws {@link InvalidMagicLinkTokenException} if missing required claims or wrong audience
    *
@@ -123,7 +139,7 @@ export class MagicLinkService {
    * @fires auth.registered - when a new account is created
    * @fires auth.authenticated - when an existing account is authenticated
    */
-  public async verify(token: string): Promise<MagicLinkVerifyResult> {
+  public async verify(token: string): Promise<MagicLinkVerifyResult<T>> {
     const payload = this.tokenService.verify(token)
 
     if (payload.aud !== MAGIC_LINK_AUDIENCE) {
@@ -135,16 +151,18 @@ export class MagicLinkService {
     }
 
     const email = (payload.email as string).toLowerCase()
-    const repo = this.datasource.getRepository(Account)
+    const repo = this.datasource.getRepository(this.resolved.entity)
 
     const existing = await repo.findOne({ where: { email } })
 
     if (existing) {
       this.eventEmitter.emit(
         AuthenticatedEvent.EVENT_NAME,
-        new AuthenticatedEvent(existing),
+        new AuthenticatedEvent(existing as Account),
       )
-      return { entity: existing, isNewUser: false }
+      // Repo is built from the configured entity class — cast at the
+      // boundary to honour the class-level generic.
+      return { entity: existing as T, isNewUser: false }
     }
 
     const toSave = repo.create({ email })
@@ -152,9 +170,9 @@ export class MagicLinkService {
 
     this.eventEmitter.emit(
       RegisteredEvent.EVENT_NAME,
-      new RegisteredEvent(saved),
+      new RegisteredEvent(saved as Account),
     )
 
-    return { entity: saved, isNewUser: true }
+    return { entity: saved as T, isNewUser: true }
   }
 }

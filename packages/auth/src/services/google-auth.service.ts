@@ -3,7 +3,13 @@ import { EventEmitter2 } from "@nestjs/event-emitter"
 import * as jwt from "jsonwebtoken"
 import { DataSource, EntityManager } from "typeorm"
 
-import { AUTH_OPTIONS, AuthOptions, GoogleAuthOptions } from "../auth.options"
+import {
+  AUTH_OPTIONS,
+  AuthOptions,
+  GoogleAuthOptions,
+  RESOLVED_AUTH_OPTIONS,
+  ResolvedAuthOptions,
+} from "../auth.options"
 import { Account } from "../entities/account.entity"
 import { OAuthToken } from "../entities/oauth-token.entity"
 import { AuthenticatedEvent } from "../events/authenticated.event"
@@ -13,6 +19,8 @@ import { GoogleCodeExchangeException } from "../exceptions/google-code-exchange.
 import { GoogleNetworkException } from "../exceptions/google-network.exception"
 import { GoogleServiceException } from "../exceptions/google-service.exception"
 import { GoogleTokenException } from "../exceptions/google-token.exception"
+import { type Authenticatable } from "../interfaces/authenticatable.interface"
+import { type OAuthTokenable } from "../interfaces/oauth-tokenable.interface"
 
 /**
  * Provider-specific profile data returned from Google OAuth.
@@ -28,10 +36,13 @@ export interface GoogleProfile {
 
 /**
  * Result of authenticating via Google OAuth code exchange.
+ *
+ * @typeParam T - The configured account entity type. Defaults to the
+ *   reference {@link Account}.
  */
-export interface GoogleAuthResult {
-  /** The authenticated or newly created Account */
-  entity: Account
+export interface GoogleAuthResult<T extends Authenticatable = Account> {
+  /** The authenticated or newly created account entity */
+  entity: T
   /** True if this was a new registration, false if existing user */
   isNewUser: boolean
   /** Google profile data extracted from the ID token */
@@ -54,7 +65,7 @@ interface GoogleTokenResponse {
 }
 
 /**
- * Exchanges a Google authorization code for an `Account`.
+ * Exchanges a Google authorization code for an account entity.
  *
  * The {@link authenticate} method is intentionally orchestration-only —
  * it delegates each step to a small private helper:
@@ -64,7 +75,7 @@ interface GoogleTokenResponse {
  *    `expires_in`, etc.).
  * 2. {@link decodeIdToken} — JWT-decodes the ID token and validates
  *    the `email`, `email_verified`, and `sub` claims.
- * 3. {@link findOrCreateAccount} — looks up the Account by email or
+ * 3. {@link findOrCreateAccount} — looks up the account by email or
  *    creates a new one, writing Google profile data into
  *    `account.authProfile.google`. Runs inside the transaction.
  * 4. {@link persistOAuthToken} — upserts the `(account, provider)`
@@ -72,9 +83,14 @@ interface GoogleTokenResponse {
  *    Runs inside the same transaction.
  *
  * Steps 3 and 4 run inside a single `DataSource.transaction()` so the
- * Account row and the OAuth-token row stay consistent — either both
+ * account row and the OAuth-token row stay consistent — either both
  * persist or both roll back. Registration / authentication events fire
  * only after the transaction commits.
+ *
+ * @typeParam T - The configured account entity type. Defaults to the
+ *   reference {@link Account}.
+ * @typeParam U - The configured OAuth-token entity type. Defaults to
+ *   the reference {@link OAuthToken}.
  *
  * @example
  * ```typescript
@@ -85,7 +101,10 @@ interface GoogleTokenResponse {
  * ```
  */
 @Injectable()
-export class GoogleAuthService {
+export class GoogleAuthService<
+  T extends Authenticatable = Account,
+  U extends OAuthTokenable = OAuthToken,
+> {
   private static readonly DEFAULT_TOKEN_ENDPOINT =
     "https://oauth2.googleapis.com/token"
 
@@ -93,6 +112,8 @@ export class GoogleAuthService {
 
   public constructor(
     @Inject(AUTH_OPTIONS) private readonly options: AuthOptions,
+    @Inject(RESOLVED_AUTH_OPTIONS)
+    private readonly resolved: ResolvedAuthOptions,
     private readonly datasource: DataSource,
     private readonly eventEmitter: EventEmitter2,
   ) {}
@@ -125,10 +146,10 @@ export class GoogleAuthService {
   }
 
   /**
-   * Exchanges a Google authorization code for an Account.
+   * Exchanges a Google authorization code for an account entity.
    *
    * @param code - The authorization code from Google's OAuth redirect
-   * @returns Object containing the Account, isNewUser flag, and Google profile
+   * @returns Object containing the account, isNewUser flag, and Google profile
    * @throws {GoogleCodeExchangeException} If Google's token endpoint returns a non-OK HTTP response
    * @throws {GoogleServiceException} If Google's token endpoint returns a 5xx server error
    * @throws {GoogleNetworkException} If the fetch call itself fails (network error, DNS, timeout)
@@ -144,7 +165,7 @@ export class GoogleAuthService {
    * @fires auth.registered - when a new account is created
    * @fires auth.authenticated - when an existing account is authenticated
    */
-  public async authenticate(code: string): Promise<GoogleAuthResult> {
+  public async authenticate(code: string): Promise<GoogleAuthResult<T>> {
     const googleAuth = this.getGoogleAuth()
 
     const tokenResponse = await this.exchangeCodeForTokens(code, googleAuth)
@@ -161,12 +182,12 @@ export class GoogleAuthService {
     if (isNewUser) {
       this.eventEmitter.emit(
         RegisteredEvent.EVENT_NAME,
-        new RegisteredEvent(entity, "google"),
+        new RegisteredEvent(entity as unknown as Account, "google"),
       )
     } else {
       this.eventEmitter.emit(
         AuthenticatedEvent.EVENT_NAME,
-        new AuthenticatedEvent(entity, "google"),
+        new AuthenticatedEvent(entity as unknown as Account, "google"),
       )
     }
 
@@ -299,7 +320,7 @@ export class GoogleAuthService {
   }
 
   /**
-   * Finds the Account by email (case-insensitive) or creates a new row,
+   * Finds the account by email (case-insensitive) or creates a new row,
    * merging the Google profile data into `account.authProfile.google`.
    * Runs inside the supplied transactional `EntityManager`.
    */
@@ -307,9 +328,9 @@ export class GoogleAuthService {
     manager: EntityManager,
     email: string,
     profile: GoogleProfile,
-  ): Promise<{ entity: Account; isNewUser: boolean }> {
+  ): Promise<{ entity: T; isNewUser: boolean }> {
     const normalizedEmail = email.toLowerCase()
-    const repo = manager.getRepository(Account)
+    const repo = manager.getRepository(this.resolved.entity)
 
     const existing = await repo.findOne({ where: { email: normalizedEmail } })
 
@@ -319,7 +340,8 @@ export class GoogleAuthService {
         google: profile,
       }
       await repo.save(existing)
-      return { entity: existing, isNewUser: false }
+      // Repo built from `resolved.entity` — narrow at the boundary.
+      return { entity: existing as T, isNewUser: false }
     }
 
     const created = repo.create({
@@ -327,11 +349,11 @@ export class GoogleAuthService {
       authProfile: { google: profile },
     })
     const saved = await repo.save(created)
-    return { entity: saved, isNewUser: true }
+    return { entity: saved as T, isNewUser: true }
   }
 
   /**
-   * Persists the OAuth token row for the given Account. Performs a
+   * Persists the OAuth token row for the given account. Performs a
    * read-then-save against the unique `(account, provider)` index — the
    * entity-level `@Index(["account", "provider"], { unique: true })`
    * constraint guarantees there is at most one row per pair, so
@@ -346,16 +368,18 @@ export class GoogleAuthService {
    */
   private async persistOAuthToken(
     manager: EntityManager,
-    account: Account,
+    account: T,
     tokenResponse: GoogleTokenResponse,
   ): Promise<void> {
-    const tokenRepo = manager.getRepository(OAuthToken)
-    const existing = await tokenRepo.findOne({
+    const tokenRepo = manager.getRepository(this.resolved.oauthTokenEntity)
+    // `U` defaults to the reference OAuthToken; consumers that pass a
+    // custom `oauthTokenEntity` narrow the existing-token shape here.
+    const existing = (await tokenRepo.findOne({
       where: {
         account: { id: account.id },
         provider: "google",
       },
-    })
+    })) as U | null
 
     const expiresAt = new Date(Date.now() + tokenResponse.expires_in * 1000)
     const scopes = tokenResponse.scope ? tokenResponse.scope.split(" ") : []
