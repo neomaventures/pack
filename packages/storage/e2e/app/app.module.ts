@@ -28,9 +28,7 @@ import { Upload } from "./upload.entity"
       }),
     }),
     StorageModule.forFeatureAsync({
-      useFactory: () => ({
-        bucket: process.env.STORAGE_BUCKET!,
-      }),
+      useFactory: () => ({ bucket: process.env.STORAGE_BUCKET! }),
     }),
   ],
   controllers: [UploadController],
