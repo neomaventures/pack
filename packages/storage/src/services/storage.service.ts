@@ -10,6 +10,7 @@ import {
   InvalidStorageKeyException,
   MAX_KEY_BYTES,
 } from "../exceptions/invalid-storage-key.exception"
+import { type Storable } from "../interfaces/storable.interface"
 import { S3_CLIENT } from "../providers/s3-client.provider"
 import {
   type ResolvedFeatureStorageOptions,
@@ -27,9 +28,19 @@ import {
  * await storageService.store("01HXYZ-photo.jpg", buffer, "image/jpeg")
  * const url = await storageService.getSignedUrl("01HXYZ-photo.jpg")
  * ```
+ *
+ * The class is parametrised on `T extends Storable` so consumers narrow at
+ * injection (`private readonly storage: StorageService<Upload>`); future
+ * entity-touching methods will flow `T` through their return signatures
+ * automatically. Today's methods operate on S3 bytes and don't carry `T`.
  */
 @Injectable()
-export class StorageService {
+// Forward-looking generic: today's methods operate on S3 bytes and don't
+// reference T, but the class-level parameter is the public contract so
+// consumers can narrow at injection (`StorageService<Upload>`) and any
+// entity-touching methods added later flow T through their signatures.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export class StorageService<T extends Storable = Storable> {
   public constructor(
     @Inject(RESOLVED_FEATURE_STORAGE_OPTIONS)
     private readonly options: ResolvedFeatureStorageOptions,
