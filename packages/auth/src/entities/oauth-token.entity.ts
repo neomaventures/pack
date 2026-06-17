@@ -7,6 +7,8 @@ import {
   type Relation,
 } from "typeorm"
 
+import { type OAuthTokenable } from "../interfaces/oauth-tokenable.interface"
+
 import { Account } from "./account.entity"
 
 /**
@@ -37,7 +39,7 @@ import { Account } from "./account.entity"
  */
 @Entity({ name: "oauth_token" })
 @Index(["account", "provider"], { unique: true })
-export class OAuthToken {
+export class OAuthToken implements OAuthTokenable {
   @PrimaryGeneratedColumn("uuid")
   public id!: string
 

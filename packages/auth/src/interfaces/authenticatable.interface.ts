@@ -1,0 +1,46 @@
+import { type OAuthProfile } from "../types/oauth-profile.type"
+
+/**
+ * Interface that must be implemented by any entity that can be authenticated.
+ *
+ * @example
+ * ```typescript
+ * import { Authenticatable } from '@neomaventures/auth'
+ *
+ * @Entity()
+ * class User implements Authenticatable {
+ *   @PrimaryGeneratedColumn('uuid')
+ *   public id: string
+ *
+ *   @Column({ unique: true })
+ *   public email: string
+ * }
+ * ```
+ */
+export interface Authenticatable {
+  /**
+   * Unique identifier for the entity.
+   */
+  id: any
+
+  /**
+   * Email address used for authentication.
+   * Should be stored as lowercase for case-insensitive lookups.
+   * Add a unique constraint on this column.
+   */
+  email: string
+
+  /**
+   * Optional array of permission strings for authorization.
+   * Format: `action:resource` (e.g., `read:users`, `write:articles`).
+   * Supports wildcards: `*` (all permissions), `*:resource`, `action:*`.
+   */
+  permissions?: string[]
+
+  /**
+   * Optional provider-specific profile data (e.g., Google OAuth claims).
+   * `null` is permitted because TypeORM hydrates a missing JSON column as
+   * `null` rather than `undefined`.
+   */
+  authProfile?: OAuthProfile | null
+}
