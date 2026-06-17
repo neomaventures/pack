@@ -129,12 +129,6 @@ interface AppConfig {
       }),
       inject: [ConfigService],
     }),
-    StorageModule.forFeatureAsync({
-      useFactory: (config: TypedConfig<AppConfig>) => ({
-        bucket: config.s3Bucket,
-      }),
-      inject: [ConfigService],
-    }),
     SaasAuthModule,
     DashboardModule,
   ],
