@@ -16,7 +16,10 @@ import {
   type TemporaryLinkOptions,
 } from "../decorators/temporary-link.decorator"
 import { StorageService } from "../services/storage.service"
-import { type StorageOptions, STORAGE_OPTIONS } from "../storage.options"
+import {
+  type ResolvedFeatureStorageOptions,
+  RESOLVED_FEATURE_STORAGE_OPTIONS,
+} from "../storage.options"
 
 /**
  * Interceptor that generates a presigned S3 download URL and responds
@@ -40,7 +43,8 @@ export class TemporaryLinkInterceptor implements NestInterceptor {
   public constructor(
     private readonly storageService: StorageService,
     private readonly reflector: Reflector,
-    @Inject(STORAGE_OPTIONS) private readonly options: StorageOptions,
+    @Inject(RESOLVED_FEATURE_STORAGE_OPTIONS)
+    private readonly options: ResolvedFeatureStorageOptions,
   ) {}
 
   /**

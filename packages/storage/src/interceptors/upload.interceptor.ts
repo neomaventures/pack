@@ -31,7 +31,12 @@ import { type Storable } from "../interfaces/storable.interface"
 import { DefaultKeyResolver } from "../resolvers/default-key.resolver"
 import { StorageService } from "../services/storage.service"
 import { UlidIdGenerator } from "../services/ulid-id-generator.service"
-import { type StorageOptions, STORAGE_OPTIONS } from "../storage.options"
+import {
+  type ResolvedFeatureStorageOptions,
+  type ResolvedStorageRootOptions,
+  RESOLVED_FEATURE_STORAGE_OPTIONS,
+  RESOLVED_STORAGE_OPTIONS,
+} from "../storage.options"
 
 /**
  * Interceptor that handles file uploads with pre-handler persistence.
@@ -67,7 +72,10 @@ export class UploadInterceptor<
   private readonly repository: Repository<T>
 
   public constructor(
-    @Inject(STORAGE_OPTIONS) private readonly options: StorageOptions<T>,
+    @Inject(RESOLVED_FEATURE_STORAGE_OPTIONS)
+    private readonly options: ResolvedFeatureStorageOptions,
+    @Inject(RESOLVED_STORAGE_OPTIONS)
+    private readonly rootOptions: ResolvedStorageRootOptions<T>,
     private readonly storageService: StorageService,
     private readonly reflector: Reflector,
     private readonly eventEmitter: EventEmitter2,
@@ -76,7 +84,7 @@ export class UploadInterceptor<
     private readonly idGenerator: UlidIdGenerator,
     private readonly moduleRef: ModuleRef,
   ) {
-    this.repository = dataSource.getRepository<T>(this.options.entity)
+    this.repository = dataSource.getRepository<T>(this.rootOptions.entity)
   }
 
   /**
@@ -140,7 +148,7 @@ export class UploadInterceptor<
       }
       const message = error instanceof Error ? error.message : String(error)
       throw new FileStoreUnreachableException(
-        this.options.endpoint,
+        this.rootOptions.endpoint,
         this.options.bucket,
         message,
       )

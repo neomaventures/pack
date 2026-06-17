@@ -5,7 +5,10 @@ import { MinioClient } from "fixtures/storage/minio"
 
 import { InvalidStorageKeyException } from "../exceptions/invalid-storage-key.exception"
 import { S3_CLIENT, S3ClientProvider } from "../providers/s3-client.provider"
-import { STORAGE_OPTIONS } from "../storage.options"
+import {
+  RESOLVED_FEATURE_STORAGE_OPTIONS,
+  STORAGE_OPTIONS,
+} from "../storage.options"
 
 import { StorageService } from "./storage.service"
 
@@ -13,20 +16,27 @@ describe("StorageService", () => {
   let service: StorageService
   let minio: MinioClient
 
-  const options = {
+  const rootOptions = {
     endpoint: process.env.STORAGE_ENDPOINT!,
     region: process.env.STORAGE_REGION!,
-    bucket: process.env.STORAGE_BUCKET!,
     accessKeyId: process.env.STORAGE_ACCESS_KEY!,
     secretAccessKey: process.env.STORAGE_SECRET_KEY!,
     entity: class {},
+  }
+  const options = {
+    bucket: process.env.STORAGE_BUCKET!,
+    maxFileSize: undefined,
+    allowedMimeTypes: undefined,
+    linkExpiresIn: 3600,
+    linkCacheControl: undefined,
   }
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
       providers: [
         StorageService,
-        { provide: STORAGE_OPTIONS, useValue: options },
+        { provide: RESOLVED_FEATURE_STORAGE_OPTIONS, useValue: options },
+        { provide: STORAGE_OPTIONS, useValue: rootOptions },
         S3ClientProvider,
       ],
     }).compile()
@@ -109,7 +119,7 @@ describe("StorageService", () => {
         const module = await Test.createTestingModule({
           providers: [
             StorageService,
-            { provide: STORAGE_OPTIONS, useValue: options },
+            { provide: RESOLVED_FEATURE_STORAGE_OPTIONS, useValue: options },
             { provide: S3_CLIENT, useValue: stub },
           ],
         }).compile()
@@ -129,7 +139,7 @@ describe("StorageService", () => {
         return Test.createTestingModule({
           providers: [
             StorageService,
-            { provide: STORAGE_OPTIONS, useValue: options },
+            { provide: RESOLVED_FEATURE_STORAGE_OPTIONS, useValue: options },
             { provide: S3_CLIENT, useValue: stub },
           ],
         })
@@ -149,7 +159,7 @@ describe("StorageService", () => {
           await Test.createTestingModule({
             providers: [
               StorageService,
-              { provide: STORAGE_OPTIONS, useValue: options },
+              { provide: RESOLVED_FEATURE_STORAGE_OPTIONS, useValue: options },
               { provide: S3_CLIENT, useValue: stub },
             ],
           }).compile()

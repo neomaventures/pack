@@ -11,7 +11,10 @@ import {
   MAX_KEY_BYTES,
 } from "../exceptions/invalid-storage-key.exception"
 import { S3_CLIENT } from "../providers/s3-client.provider"
-import { type StorageOptions, STORAGE_OPTIONS } from "../storage.options"
+import {
+  type ResolvedFeatureStorageOptions,
+  RESOLVED_FEATURE_STORAGE_OPTIONS,
+} from "../storage.options"
 
 /**
  * Thin wrapper around the AWS S3 client for storing objects and generating
@@ -28,7 +31,8 @@ import { type StorageOptions, STORAGE_OPTIONS } from "../storage.options"
 @Injectable()
 export class StorageService {
   public constructor(
-    @Inject(STORAGE_OPTIONS) private readonly options: StorageOptions,
+    @Inject(RESOLVED_FEATURE_STORAGE_OPTIONS)
+    private readonly options: ResolvedFeatureStorageOptions,
     @Inject(S3_CLIENT) private readonly client: S3Client,
   ) {}
 
@@ -80,7 +84,7 @@ export class StorageService {
       Key: key,
     })
     return getSignedUrl(this.client, command, {
-      expiresIn: expiresIn ?? this.options.linkExpiresIn ?? 3600,
+      expiresIn: expiresIn ?? this.options.linkExpiresIn,
     })
   }
 

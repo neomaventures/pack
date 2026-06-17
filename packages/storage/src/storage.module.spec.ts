@@ -28,21 +28,22 @@ class TestFile implements Storable {
 }
 
 describe("StorageModule", () => {
-  const options = {
+  const rootOptions = {
     endpoint: faker.internet.url(),
     region: faker.location.countryCode(),
-    bucket: faker.string.alphanumeric(10),
     accessKeyId: faker.string.alphanumeric(20),
     secretAccessKey: faker.string.alphanumeric(40),
     entity: TestFile,
   }
+  const featureOptions = { bucket: faker.string.alphanumeric(10) }
 
-  describe("forRoot", () => {
+  describe("forRoot + forFeature", () => {
     it("should compile the module", async () => {
       const module = await Test.createTestingModule({
         imports: [
           ManagedDatabaseModule.forRoot([TestFile]),
-          StorageModule.forRoot(options),
+          StorageModule.forRoot(rootOptions),
+          StorageModule.forFeature(featureOptions),
         ],
       }).compile()
 
@@ -50,13 +51,16 @@ describe("StorageModule", () => {
     })
   })
 
-  describe("forRootAsync", () => {
+  describe("forRootAsync + forFeatureAsync", () => {
     it("should compile the module", async () => {
       const module = await Test.createTestingModule({
         imports: [
           ManagedDatabaseModule.forRoot([TestFile]),
           StorageModule.forRootAsync({
-            useFactory: () => options,
+            useFactory: () => rootOptions,
+          }),
+          StorageModule.forFeatureAsync({
+            useFactory: () => featureOptions,
           }),
         ],
       }).compile()

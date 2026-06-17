@@ -14,28 +14,43 @@ import { TEMPORARY_LINK_METADATA_KEY } from "../decorators/temporary-link.decora
 import { S3ClientProvider } from "../providers/s3-client.provider"
 import { StorageService } from "../services/storage.service"
 import { UlidIdGenerator } from "../services/ulid-id-generator.service"
-import { type StorageOptions, STORAGE_OPTIONS } from "../storage.options"
+import {
+  type ResolvedFeatureStorageOptions,
+  type StorageRootOptions,
+  RESOLVED_FEATURE_STORAGE_OPTIONS,
+  STORAGE_OPTIONS,
+} from "../storage.options"
 
 import { TemporaryLinkInterceptor } from "./temporary-link.interceptor"
 
-const options: StorageOptions = {
+const rootOptions: StorageRootOptions = {
   endpoint: process.env.STORAGE_ENDPOINT!,
   region: process.env.STORAGE_REGION!,
-  bucket: process.env.STORAGE_BUCKET!,
   accessKeyId: process.env.STORAGE_ACCESS_KEY!,
   secretAccessKey: process.env.STORAGE_SECRET_KEY!,
   entity: class {} as any,
 }
+const featureOptions: ResolvedFeatureStorageOptions = {
+  bucket: process.env.STORAGE_BUCKET!,
+  maxFileSize: undefined,
+  allowedMimeTypes: undefined,
+  linkExpiresIn: 3600,
+  linkCacheControl: undefined,
+}
 
 const createModule = async (
-  overrides: Partial<StorageOptions> = {},
+  overrides: Partial<ResolvedFeatureStorageOptions> = {},
 ): Promise<TestingModule> =>
   Test.createTestingModule({
     providers: [
       TemporaryLinkInterceptor,
       StorageService,
       UlidIdGenerator,
-      { provide: STORAGE_OPTIONS, useValue: { ...options, ...overrides } },
+      { provide: STORAGE_OPTIONS, useValue: rootOptions },
+      {
+        provide: RESOLVED_FEATURE_STORAGE_OPTIONS,
+        useValue: { ...featureOptions, ...overrides },
+      },
       S3ClientProvider,
     ],
   }).compile()
