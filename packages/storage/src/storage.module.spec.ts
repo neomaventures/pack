@@ -23,7 +23,13 @@ const baseConnection = (): Omit<StorageRootOptions, "defaults"> => ({
 })
 
 describe("StorageModule", () => {
-  describe("forRoot + forFeature", () => {
+  // Sync smoke retained: ConfigurableModuleBuilder generates the sync
+  // forRoot / forFeature static methods from the same .build() call as
+  // their *Async siblings — they share the setExtras chain and the
+  // RESOLVED_* materialisation. Async coverage below transitively
+  // exercises that shared path; this single sync compile catches a
+  // regression in the generated wrapper static methods themselves.
+  describe("forRoot + forFeature (sync smoke)", () => {
     it("should compile the module", async () => {
       const module = await Test.createTestingModule({
         imports: [
@@ -37,38 +43,19 @@ describe("StorageModule", () => {
     })
   })
 
-  describe("forRootAsync + forFeatureAsync", () => {
-    it("should compile the module", async () => {
-      const rootOptions = baseConnection()
-      const featureOptions = { bucket: faker.string.alphanumeric(10) }
-
-      const module = await Test.createTestingModule({
-        imports: [
-          ManagedDatabaseModule.forRoot([TestStorable]),
-          StorageModule.forRootAsync({
-            useFactory: () => rootOptions,
-          }),
-          StorageModule.forFeatureAsync({
-            useFactory: () => featureOptions,
-          }),
-        ],
-      }).compile()
-
-      expect(module).toBeDefined()
-    })
-  })
-
   describe("RESOLVED_STORAGE_OPTIONS", () => {
-    describe("Given forRoot without defaults", () => {
+    describe("Given forRootAsync without defaults", () => {
       it("should materialise connection fields and default defaults to {}", async () => {
         const connection = baseConnection()
 
         const module = await Test.createTestingModule({
           imports: [
             ManagedDatabaseModule.forRoot([TestStorable]),
-            StorageModule.forRoot(connection),
-            StorageModule.forFeature({
-              bucket: faker.string.alphanumeric(10),
+            StorageModule.forRootAsync({
+              useFactory: () => connection,
+            }),
+            StorageModule.forFeatureAsync({
+              useFactory: () => ({ bucket: faker.string.alphanumeric(10) }),
             }),
           ],
         }).compile()
@@ -84,7 +71,7 @@ describe("StorageModule", () => {
       })
     })
 
-    describe("Given forRoot with defaults", () => {
+    describe("Given forRootAsync with defaults", () => {
       it("should preserve the nested defaults block", async () => {
         const maxFileSize = faker.number.int({ min: 1024, max: 10_000_000 })
         const linkCacheControl = `public, max-age=${faker.number.int({ min: 60, max: 3600 })}`
@@ -93,12 +80,14 @@ describe("StorageModule", () => {
         const module = await Test.createTestingModule({
           imports: [
             ManagedDatabaseModule.forRoot([TestStorable]),
-            StorageModule.forRoot({
-              ...connection,
-              defaults: { maxFileSize, linkCacheControl },
+            StorageModule.forRootAsync({
+              useFactory: () => ({
+                ...connection,
+                defaults: { maxFileSize, linkCacheControl },
+              }),
             }),
-            StorageModule.forFeature({
-              bucket: faker.string.alphanumeric(10),
+            StorageModule.forFeatureAsync({
+              useFactory: () => ({ bucket: faker.string.alphanumeric(10) }),
             }),
           ],
         }).compile()
@@ -113,15 +102,19 @@ describe("StorageModule", () => {
   })
 
   describe("RESOLVED_FEATURE_STORAGE_OPTIONS", () => {
-    describe("Given no root defaults and a minimal forFeature", () => {
+    describe("Given no root defaults and a minimal forFeatureAsync", () => {
       it("should apply package-level fallbacks for unspecified fields", async () => {
         const bucket = faker.string.alphanumeric(10)
 
         const module = await Test.createTestingModule({
           imports: [
             ManagedDatabaseModule.forRoot([TestStorable]),
-            StorageModule.forRoot(baseConnection()),
-            StorageModule.forFeature({ bucket }),
+            StorageModule.forRootAsync({
+              useFactory: () => baseConnection(),
+            }),
+            StorageModule.forFeatureAsync({
+              useFactory: () => ({ bucket }),
+            }),
           ],
         }).compile()
 
@@ -137,7 +130,7 @@ describe("StorageModule", () => {
       })
     })
 
-    describe("Given root defaults and a minimal forFeature", () => {
+    describe("Given root defaults and a minimal forFeatureAsync", () => {
       it("should flow root defaults into the feature when not overridden", async () => {
         const bucket = faker.string.alphanumeric(10)
         const maxFileSize = faker.number.int({ min: 1024, max: 10_000_000 })
@@ -146,11 +139,15 @@ describe("StorageModule", () => {
         const module = await Test.createTestingModule({
           imports: [
             ManagedDatabaseModule.forRoot([TestStorable]),
-            StorageModule.forRoot({
-              ...baseConnection(),
-              defaults: { maxFileSize, allowedMimeTypes },
+            StorageModule.forRootAsync({
+              useFactory: () => ({
+                ...baseConnection(),
+                defaults: { maxFileSize, allowedMimeTypes },
+              }),
             }),
-            StorageModule.forFeature({ bucket }),
+            StorageModule.forFeatureAsync({
+              useFactory: () => ({ bucket }),
+            }),
           ],
         }).compile()
 
@@ -164,7 +161,7 @@ describe("StorageModule", () => {
       })
     })
 
-    describe("Given root defaults and a forFeature override", () => {
+    describe("Given root defaults and a forFeatureAsync override", () => {
       it("should let the feature win over root defaults", async () => {
         const bucket = faker.string.alphanumeric(10)
         const rootMaxFileSize = faker.number.int({ min: 1024, max: 5000 })
@@ -173,13 +170,17 @@ describe("StorageModule", () => {
         const module = await Test.createTestingModule({
           imports: [
             ManagedDatabaseModule.forRoot([TestStorable]),
-            StorageModule.forRoot({
-              ...baseConnection(),
-              defaults: { maxFileSize: rootMaxFileSize },
+            StorageModule.forRootAsync({
+              useFactory: () => ({
+                ...baseConnection(),
+                defaults: { maxFileSize: rootMaxFileSize },
+              }),
             }),
-            StorageModule.forFeature({
-              bucket,
-              maxFileSize: featureMaxFileSize,
+            StorageModule.forFeatureAsync({
+              useFactory: () => ({
+                bucket,
+                maxFileSize: featureMaxFileSize,
+              }),
             }),
           ],
         }).compile()
