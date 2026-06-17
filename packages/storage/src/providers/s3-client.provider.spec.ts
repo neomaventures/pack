@@ -2,6 +2,7 @@ import { S3Client } from "@aws-sdk/client-s3"
 import { faker } from "@faker-js/faker"
 import { Test, type TestingModule } from "@nestjs/testing"
 
+import { TestStorable } from "../../fixtures/entities/test-storable.entity"
 import { type StorageRootOptions, STORAGE_OPTIONS } from "../storage.options"
 
 import { S3_CLIENT, S3ClientProvider } from "./s3-client.provider"
@@ -14,11 +15,10 @@ describe("S3ClientProvider", () => {
       "eu-west-1",
       "ap-southeast-2",
     ]),
-    bucket: faker.string.alphanumeric(10).toLowerCase(),
     accessKeyId: faker.string.alphanumeric(20),
     secretAccessKey: faker.string.alphanumeric(40),
     forcePathStyle: true,
-    entity: class {},
+    entity: TestStorable,
   }
 
   let module: TestingModule
