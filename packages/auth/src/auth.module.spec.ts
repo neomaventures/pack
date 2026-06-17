@@ -11,38 +11,26 @@ import { type OAuthTokenable } from "./interfaces/oauth-tokenable.interface"
 import { type OAuthProfile } from "./types/oauth-profile.type"
 
 describe("AuthModule", () => {
-  it("should compile the module", async () => {
-    // const module = await Test.createTestingModule({
-    //   imports: [AuthModule],
-    // }).compile()
-    //
-    // expect(module).toBeDefined()
-    // expect(module).toBeInstanceOf(Object)
+  it("should compile via the sync forRoot wrapper", async () => {
+    const module = await Test.createTestingModule({
+      imports: [
+        TypeOrmModule.forRoot({
+          type: "sqlite",
+          database: ":memory:",
+          entities: [Account, OAuthToken],
+          synchronize: true,
+        }),
+        TypeOrmModule.forFeature([Account, OAuthToken]),
+        AuthModule.forRoot(baseOptions()),
+      ],
+    }).compile()
+
+    expect(module.get(RESOLVED_AUTH_OPTIONS)).toBeDefined()
   })
 
-  describe("RESOLVED_AUTH_OPTIONS", () => {
-    const baseOptions = (): AuthOptions => ({
-      secret: faker.string.alphanumeric(32),
-      expiresIn: "1h",
-      magicLink: {
-        mailer: {
-          host: faker.internet.domainName(),
-          port: faker.internet.port(),
-          from: faker.internet.email(),
-          welcome: {
-            subject: faker.lorem.sentence(),
-            html: `<a href="{{token}}">${faker.lorem.words(2)}</a>`,
-          },
-          welcomeBack: {
-            subject: faker.lorem.sentence(),
-            html: `<a href="{{token}}">${faker.lorem.words(2)}</a>`,
-          },
-        },
-      },
-    })
-
+  describe("RESOLVED_AUTH_OPTIONS (forRootAsync)", () => {
     describe("Given no entity overrides", () => {
-      it("should default entity to Account", async () => {
+      it("should default entity to Account and oauthTokenEntity to OAuthToken", async () => {
         const module = await Test.createTestingModule({
           imports: [
             TypeOrmModule.forRoot({
@@ -52,29 +40,14 @@ describe("AuthModule", () => {
               synchronize: true,
             }),
             TypeOrmModule.forFeature([Account, OAuthToken]),
-            AuthModule.forRoot(baseOptions()),
+            AuthModule.forRootAsync({
+              useFactory: () => baseOptions(),
+            }),
           ],
         }).compile()
 
         const resolved = module.get(RESOLVED_AUTH_OPTIONS)
         expect(resolved.entity).toBe(Account)
-      })
-
-      it("should default oauthTokenEntity to OAuthToken", async () => {
-        const module = await Test.createTestingModule({
-          imports: [
-            TypeOrmModule.forRoot({
-              type: "sqlite",
-              database: ":memory:",
-              entities: [Account, OAuthToken],
-              synchronize: true,
-            }),
-            TypeOrmModule.forFeature([Account, OAuthToken]),
-            AuthModule.forRoot(baseOptions()),
-          ],
-        }).compile()
-
-        const resolved = module.get(RESOLVED_AUTH_OPTIONS)
         expect(resolved.oauthTokenEntity).toBe(OAuthToken)
       })
     })
@@ -97,7 +70,7 @@ describe("AuthModule", () => {
         public scopes!: string[]
       }
 
-      it("should use the provided entity", async () => {
+      it("should use the provided entity and oauthTokenEntity", async () => {
         const module = await Test.createTestingModule({
           imports: [
             TypeOrmModule.forRoot({
@@ -107,39 +80,40 @@ describe("AuthModule", () => {
               synchronize: true,
             }),
             TypeOrmModule.forFeature([Account, OAuthToken]),
-            AuthModule.forRoot({
-              ...baseOptions(),
-              entity: CustomAccount,
-              oauthTokenEntity: CustomOAuthToken,
+            AuthModule.forRootAsync({
+              useFactory: () => ({
+                ...baseOptions(),
+                entity: CustomAccount,
+                oauthTokenEntity: CustomOAuthToken,
+              }),
             }),
           ],
         }).compile()
 
         const resolved = module.get(RESOLVED_AUTH_OPTIONS)
         expect(resolved.entity).toBe(CustomAccount)
-      })
-
-      it("should use the provided oauthTokenEntity", async () => {
-        const module = await Test.createTestingModule({
-          imports: [
-            TypeOrmModule.forRoot({
-              type: "sqlite",
-              database: ":memory:",
-              entities: [Account, OAuthToken],
-              synchronize: true,
-            }),
-            TypeOrmModule.forFeature([Account, OAuthToken]),
-            AuthModule.forRoot({
-              ...baseOptions(),
-              entity: CustomAccount,
-              oauthTokenEntity: CustomOAuthToken,
-            }),
-          ],
-        }).compile()
-
-        const resolved = module.get(RESOLVED_AUTH_OPTIONS)
         expect(resolved.oauthTokenEntity).toBe(CustomOAuthToken)
       })
     })
   })
+})
+
+const baseOptions = (): AuthOptions => ({
+  secret: faker.string.alphanumeric(32),
+  expiresIn: "1h",
+  magicLink: {
+    mailer: {
+      host: faker.internet.domainName(),
+      port: faker.internet.port(),
+      from: faker.internet.email(),
+      welcome: {
+        subject: faker.lorem.sentence(),
+        html: `<a href="{{token}}">${faker.lorem.words(2)}</a>`,
+      },
+      welcomeBack: {
+        subject: faker.lorem.sentence(),
+        html: `<a href="{{token}}">${faker.lorem.words(2)}</a>`,
+      },
+    },
+  },
 })
