@@ -1,7 +1,21 @@
 import { type HttpException } from "@nestjs/common"
 import type * as jwt from "jsonwebtoken"
 
+import { type Authenticatable } from "./interfaces/authenticatable.interface"
+import { type OAuthTokenable } from "./interfaces/oauth-tokenable.interface"
+
 export const AUTH_OPTIONS = Symbol("AUTH_OPTIONS")
+
+/**
+ * Package-internal token carrying the fully-resolved auth options — `entity`
+ * and `oauthTokenEntity` are materialised to their concrete defaults
+ * (`Account` / `OAuthToken`) when consumers omit them.
+ *
+ * Not exported from the package's public barrel. Services inside the
+ * package inject this token instead of {@link AUTH_OPTIONS} when they need
+ * the entity classes.
+ */
+export const RESOLVED_AUTH_OPTIONS = Symbol("RESOLVED_AUTH_OPTIONS")
 
 /**
  * Strategy describing what should happen when an authenticated route is hit
@@ -112,9 +126,11 @@ export interface GoogleAuthOptions {
 /**
  * Base configuration options shared by all auth strategies.
  *
- * Auth ships its own `Account` and `OAuthToken` entity classes —
- * consumers register them via `TypeOrmModule.forFeature([Account, OAuthToken])`
- * and configure `AuthModule` without an `entities` slot.
+ * Auth ships reference `Account` and `OAuthToken` entity classes implementing
+ * {@link Authenticatable} and {@link OAuthTokenable}. Consumers register the
+ * entity classes they use via `TypeOrmModule.forFeature([...])` — either the
+ * reference classes or their own replacements supplied through {@link entity}
+ * and {@link oauthTokenEntity} below.
  */
 interface AuthBaseOptions {
   /** Secret key used to sign and verify JWTs */
@@ -130,6 +146,18 @@ interface AuthBaseOptions {
    * default. When omitted, the guard throws a plain `UnauthorizedException`.
    */
   onUnauthenticated?: OnUnauthenticated
+  /**
+   * Custom account entity class implementing {@link Authenticatable}. When
+   * omitted, the package's reference `Account` entity is used. Supplying a
+   * custom class lets consumers add columns, relations, or methods while
+   * keeping the package's service surface unchanged.
+   */
+  entity?: new (...args: any[]) => Authenticatable
+  /**
+   * Custom OAuth token entity class implementing {@link OAuthTokenable}. When
+   * omitted, the package's reference `OAuthToken` entity is used.
+   */
+  oauthTokenEntity?: new (...args: any[]) => OAuthTokenable
 }
 
 /**
@@ -169,3 +197,15 @@ export type AuthOptions = AuthBaseOptions &
         googleAuth: GoogleAuthOptions
       }
   )
+
+/**
+ * Fully-resolved auth options exposed via {@link RESOLVED_AUTH_OPTIONS}. Mirrors
+ * {@link AuthOptions} but with `entity` and `oauthTokenEntity` materialised to
+ * their concrete defaults so service code never sees `undefined`.
+ *
+ * Package-internal — not exported from the public barrel.
+ */
+export type ResolvedAuthOptions = AuthOptions & {
+  entity: new (...args: any[]) => Authenticatable
+  oauthTokenEntity: new (...args: any[]) => OAuthTokenable
+}
