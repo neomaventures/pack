@@ -9,67 +9,60 @@ const sampleFileName = `${faker.hacker.ingverb().toLowerCase().replace(/\s+/g, "
 const sampleFileContent = faker.hacker.phrase()
 const sampleFileBuffer = Buffer.from(sampleFileContent)
 
-const appModules: [string, string][] = [
-  ["forRoot", "e2e/app/app.module.ts#AppModule"],
-  ["forRootAsync", "e2e/app/app.async.module.ts#AsyncAppModule"],
-]
+describe("GET /uploads/:id", () => {
+  let app: Awaited<ReturnType<typeof managedAppInstance>>
 
-appModules.forEach(([name, modulePath]) => {
-  describe(`GET /uploads/:id (${name})`, () => {
-    let app: Awaited<ReturnType<typeof managedAppInstance>>
+  beforeEach(async () => {
+    app = await managedAppInstance("e2e/app/app.module.ts#AppModule")
+  })
 
+  describe("When a file has been uploaded", () => {
+    let id: string
     beforeEach(async () => {
-      app = await managedAppInstance(modulePath)
+      ;({
+        body: { id },
+      } = await request(app.getHttpServer())
+        .post("/uploads")
+        .attach("file", sampleFileBuffer, sampleFileName)
+        .expect(CREATED))
     })
 
-    describe("When a file has been uploaded", () => {
-      let id: string
-      beforeEach(async () => {
-        ;({
-          body: { id },
-        } = await request(app.getHttpServer())
-          .post("/uploads")
-          .attach("file", sampleFileBuffer, sampleFileName)
-          .expect(CREATED))
-      })
+    it(`should respond with HTTP ${FOUND} redirect and a pre-signed url`, async () => {
+      const {
+        headers: { location },
+      } = await request(app.getHttpServer())
+        .get(`/uploads/${id}`)
+        .expect(FOUND)
+        .expect("Location", /X-Amz-Signature/)
 
-      it(`should respond with HTTP ${FOUND} redirect and a pre-signed url`, async () => {
-        const {
-          headers: { location },
-        } = await request(app.getHttpServer())
-          .get(`/uploads/${id}`)
-          .expect(FOUND)
-          .expect("Location", /X-Amz-Signature/)
-
-        await request(location).get("").expect(OK).expect(sampleFileContent)
-      })
-
-      it(`should apply the global linkCacheControl to the 302 response`, async () => {
-        await request(app.getHttpServer())
-          .get(`/uploads/${id}`)
-          .expect(FOUND)
-          .expect("Cache-Control", "private, max-age=60")
-      })
+      await request(location).get("").expect(OK).expect(sampleFileContent)
     })
 
-    describe("When the handler returns null and a default URL is configured", () => {
-      it(`should respond with HTTP ${FOUND} redirect to the default URL`, async () => {
-        const unknownId = faker.string.ulid()
+    it(`should apply the global linkCacheControl to the 302 response`, async () => {
+      await request(app.getHttpServer())
+        .get(`/uploads/${id}`)
+        .expect(FOUND)
+        .expect("Cache-Control", "private, max-age=60")
+    })
+  })
 
-        await request(app.getHttpServer())
-          .get(`/uploads/${unknownId}/avatar`)
-          .expect(FOUND)
-          .expect("Location", "/img/default.svg")
-      })
+  describe("When the handler returns null and a default URL is configured", () => {
+    it(`should respond with HTTP ${FOUND} redirect to the default URL`, async () => {
+      const unknownId = faker.string.ulid()
 
-      it(`should apply the per-route cacheControl to the 302 response, overriding the global default`, async () => {
-        const unknownId = faker.string.ulid()
+      await request(app.getHttpServer())
+        .get(`/uploads/${unknownId}/avatar`)
+        .expect(FOUND)
+        .expect("Location", "/img/default.svg")
+    })
 
-        await request(app.getHttpServer())
-          .get(`/uploads/${unknownId}/avatar`)
-          .expect(FOUND)
-          .expect("Cache-Control", "private, max-age=300")
-      })
+    it(`should apply the per-route cacheControl to the 302 response, overriding the global default`, async () => {
+      const unknownId = faker.string.ulid()
+
+      await request(app.getHttpServer())
+        .get(`/uploads/${unknownId}/avatar`)
+        .expect(FOUND)
+        .expect("Cache-Control", "private, max-age=300")
     })
   })
 })

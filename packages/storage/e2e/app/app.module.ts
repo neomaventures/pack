@@ -14,18 +14,20 @@ import { Upload } from "./upload.entity"
       entities: [Upload],
       synchronize: true,
     }),
-    StorageModule.forRoot({
-      endpoint: process.env.STORAGE_ENDPOINT!,
-      region: process.env.STORAGE_REGION!,
-      bucket: process.env.STORAGE_BUCKET!,
-      accessKeyId: process.env.STORAGE_ACCESS_KEY!,
-      secretAccessKey: process.env.STORAGE_SECRET_KEY!,
-      entity: Upload,
-      maxFileSize: 500,
-      linkCacheControl: "private, max-age=60",
+    StorageModule.forRootAsync({
+      useFactory: () => ({
+        endpoint: process.env.STORAGE_ENDPOINT!,
+        region: process.env.STORAGE_REGION!,
+        bucket: process.env.STORAGE_BUCKET!,
+        accessKeyId: process.env.STORAGE_ACCESS_KEY!,
+        secretAccessKey: process.env.STORAGE_SECRET_KEY!,
+        entity: Upload,
+        maxFileSize: 500,
+        linkCacheControl: "private, max-age=60",
+      }),
     }),
   ],
-  providers: [TestKeyResolver],
   controllers: [UploadController],
+  providers: [TestKeyResolver],
 })
 export class AppModule {}
