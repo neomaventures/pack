@@ -1,5 +1,106 @@
 # Changelog
 
+## 0.7.0
+
+### Minor Changes
+
+- 6eda0de: Align auth surfaces on the `Authenticatable` interface so custom-entity
+  consumers get the same ergonomics as the reference `Account`:
+  - `OAuthTokenService.getActiveToken(account, provider)` is a static
+    namespace method exported from the package root. Consumers with a
+    custom entity call it directly without reimplementing the lookup
+    logic. `Account.activeToken` becomes a thin wrapper that delegates to
+    the same static method. `OAuthTokenService` is a namespace-style class
+    — never injected, never registered as a provider.
+  - `PermissionService` methods (`hasPermission`, `requirePermission`,
+    etc.) now accept `Authenticatable` instead of the concrete `Account`.
+    The `permissions?: string[]` field is already on the interface, so no
+    behavioural change.
+  - `AuthenticatedEvent` and `RegisteredEvent` become generic over
+    `T extends Authenticatable = Account`. Listeners can narrow the
+    `entity` field to a custom entity at the call site:
+    `@OnEvent(AuthenticatedEvent.EVENT_NAME)
+handle(event: AuthenticatedEvent<CustomAccount>): void`.
+
+  No behavioural change for default consumers; the reference `Account`
+  remains the zero-config experience.
+
+- 9f13aed: **BREAKING**: Ship concrete `Account` and `OAuthToken` entities; drop the
+  `Authenticatable` / `OAuthAuthenticatable` / `OAuthTokenable` interfaces
+  and the `AuthOptions.entities` config slot.
+
+  Auth now owns its identity schema end-to-end. Consumers register the
+  entities directly with TypeORM and configure `AuthModule` without an
+  `entities` option. Custom fields move off `Account` into FK-linked
+  consumer entities (e.g. a `Profile` with `@OneToOne(() => Account)`),
+  not via interface implementation.
+
+  Migration:
+  1. Delete your local `Account` / `OAuthToken` entities — import them
+     from `@neomaventures/auth` instead.
+  2. Register the imported classes: `TypeOrmModule.forFeature([Account, OAuthToken])`.
+  3. Drop the `entities` option from `AuthModule.forRoot(...)`.
+  4. Move custom fields off `Account` into a separate FK-linked entity.
+  5. Replace `OAuthTokenService.getActiveToken(provider)` with
+     `account.activeToken(provider)`.
+  6. Replace `@OAuthToken("google")` with `@ActiveOAuthToken("google")`.
+  7. The FK column on `oauth_token` is now `accountId` (was `principalId`)
+     — generate a rename migration.
+
+- 9f13aed: **BREAKING**: Rename `AuthenticatableProfile` → `OAuthProfile`. The type describes provider-supplied profile data from an OAuth callback (stored on `Account.authProfile`), so the new name reflects what it actually represents. File renamed `types/auth-profile.type.ts` → `types/oauth-profile.type.ts`.
+- 9f13aed: **BREAKING**: Rename `Principal` to `Account` throughout the public API. `getPrincipal()` is now `getAccount()`, `@Principal()` is now `@AuthenticatedAccount()` (pairs naturally with the `@Authenticated()` guard), `CurrentPrincipal` injection token is now `CurrentAccountToken`, and `Request.principal` is now `Request.account`. The "principal" abstraction was a holdover from when auth had a generic identity interface; now that `Account` is the concrete entity, all references use account naming.
+- 6eda0de: Add optional `entity` / `oauthTokenEntity` slots to `AuthOptions` so
+  consumers can replace the shipped `Account` / `OAuthToken` entities with
+  their own classes (and hang TypeORM relations off them). Re-introduces the
+  `Authenticatable` interface (with an optional `oauthTokens?: OAuthTokenable[]`
+  field) and the `OAuthTokenable` interface, and ships them via the new
+  `@neomaventures/auth/entities` subpath export.
+  Class-level generics on `AuthenticationService<T>`, `MagicLinkService<T>`,
+  and `GoogleAuthService<T, U>` propagate the chosen entity type through
+  return values; `getAccount` / `setAccount` slot wrappers take a
+  method-level template defaulted to `Authenticatable`.
+
+  Net-additive: existing `AuthModule.forRoot({...})` callsites work unchanged
+  because both options default to the reference `Account` / `OAuthToken`
+  entities. Root re-exports are preserved.
+
+  Custom-entity usage:
+
+  ```typescript
+  import { Authenticatable, AuthModule } from "@neomaventures/auth"
+
+  @Entity()
+  export class User implements Authenticatable {
+    @PrimaryGeneratedColumn("uuid") public id!: string
+    @Column({ unique: true }) public email!: string
+
+    @OneToMany(() => Avatar, (a) => a.user)
+    public avatars!: Avatar[]
+  }
+
+  AuthModule.forRoot({
+    secret: process.env.JWT_SECRET,
+    expiresIn: "1h",
+    entity: User,
+    magicLink: {
+      /* ... */
+    },
+  })
+  ```
+
+  Type narrowing is asymmetric across the surface:
+  - `forRoot({ entity: CustomAccount })` — options accept any
+    `Authenticatable`; no narrowing past this point.
+  - `AccountService<CustomAccount>` (injection) — consumer annotates; the
+    class-level generic enforces method return types.
+  - `getAccount<CustomAccount>()` / consumer wrapper — method-level template
+    with `Authenticatable` default.
+  - `@AuthenticatedAccount() account: CustomAccount` — annotation-trusted.
+
+  No migration needed.
+
+- 9f13aed: Ship `@neomaventures/auth/testing` subpath export with `fakeAccount()` and `fakeOAuthToken()` builders. Consumers can now seed real `Account` instances (with `activeToken()` etc.) and `OAuthToken` instances in tests without rolling their own factories. `@faker-js/faker` and `@neomaventures/google-fixtures` are optional peer dependencies — only required when importing from `/testing`.
+
 ## 0.6.1
 
 ## 0.6.0

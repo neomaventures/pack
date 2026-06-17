@@ -1,5 +1,17 @@
 # **PACKAGE_NAME**
 
+## 0.0.9
+
+### Patch Changes
+
+- Updated dependencies [6eda0de]
+- Updated dependencies [9f13aed]
+- Updated dependencies [9f13aed]
+- Updated dependencies [9f13aed]
+- Updated dependencies [6eda0de]
+- Updated dependencies [9f13aed]
+  - @neomaventures/auth@0.7.0
+
 ## 0.0.8
 
 ### Patch Changes
