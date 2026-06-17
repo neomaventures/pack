@@ -17,6 +17,7 @@ export * from "./interfaces/oauth-tokenable.interface"
 export * from "./services/authentication.service"
 export * from "./services/google-auth.service"
 export * from "./services/magic-link.service"
+export * from "./services/oauth-token.service"
 export * from "./services/permission.service"
 export * from "./services/session.service"
 export * from "./services/token.service"
@@ -26,7 +27,6 @@ export * from "./dtos/email.dto"
 
 // Account (context slot)
 export { getAccount, CurrentAccountToken } from "./account/account.slot"
-export { getActiveToken } from "./account/get-active-token"
 
 // Decorators used in consumer controllers
 export {

@@ -7,8 +7,8 @@ import {
   UpdateDateColumn,
 } from "typeorm"
 
-import { getActiveToken } from "../account/get-active-token"
 import { type OAuthAuthenticatable } from "../interfaces/oauth-authenticatable.interface"
+import { OAuthTokenService } from "../services/oauth-token.service"
 import { type OAuthProfile } from "../types/oauth-profile.type"
 import { type OAuthProvider } from "../types/oauth-provider.type"
 import { type OAuthTokenSnapshot } from "../types/oauth-token-snapshot.type"
@@ -94,6 +94,6 @@ export class Account implements OAuthAuthenticatable {
    * ```
    */
   public activeToken(provider: OAuthProvider): OAuthTokenSnapshot | null {
-    return getActiveToken(this, provider)
+    return OAuthTokenService.getActiveToken(this, provider)
   }
 }
