@@ -197,7 +197,7 @@ registrations.forEach(([name, register]) => {
           expect(users[0].email).toBe(email.toLowerCase())
         })
 
-        it("should return the new entity with isNewUser: true", async () => {
+        it("should return the new entity with isNewAccount: true", async () => {
           const { token } = tokenService.issue(
             { email, aud: MAGIC_LINK_AUDIENCE },
             { expiresIn: "15m" },
@@ -205,9 +205,9 @@ registrations.forEach(([name, register]) => {
 
           const result = await service.verify(token)
 
-          expect(result.entity).toBeInstanceOf(Account)
-          expect(result.entity.email).toBe(email.toLowerCase())
-          expect(result.isNewUser).toBe(true)
+          expect(result.account).toBeInstanceOf(Account)
+          expect(result.account.email).toBe(email.toLowerCase())
+          expect(result.isNewAccount).toBe(true)
         })
 
         it("should emit a RegisteredEvent", async () => {
@@ -221,7 +221,7 @@ registrations.forEach(([name, register]) => {
 
           expect(emitSpy).toHaveBeenCalledWith(
             RegisteredEvent.EVENT_NAME,
-            new RegisteredEvent(result.entity),
+            new RegisteredEvent(result.account),
           )
         })
 
@@ -254,7 +254,7 @@ registrations.forEach(([name, register]) => {
           existingUser = await repository.findOneByOrFail({ id: created.id })
         })
 
-        it("should return the existing entity with isNewUser: false", async () => {
+        it("should return the existing entity with isNewAccount: false", async () => {
           const { token } = tokenService.issue(
             { email: existingUser.email, aud: MAGIC_LINK_AUDIENCE },
             { expiresIn: "15m" },
@@ -262,9 +262,9 @@ registrations.forEach(([name, register]) => {
 
           const result = await service.verify(token)
 
-          expect(result.entity.id).toBe(existingUser.id)
-          expect(result.entity.email).toBe(existingUser.email)
-          expect(result.isNewUser).toBe(false)
+          expect(result.account.id).toBe(existingUser.id)
+          expect(result.account.email).toBe(existingUser.email)
+          expect(result.isNewAccount).toBe(false)
         })
 
         it("should not create a new user", async () => {
@@ -419,7 +419,7 @@ registrations.forEach(([name, register]) => {
 
           const result = await service.verify(token)
 
-          expect(result.entity.email).toBe(email.toLowerCase())
+          expect(result.account.email).toBe(email.toLowerCase())
         })
 
         it("should find existing user with case-insensitive email lookup", async () => {
@@ -434,8 +434,8 @@ registrations.forEach(([name, register]) => {
 
           const result = await service.verify(token)
 
-          expect(result.entity.id).toBe(existingUser.id)
-          expect(result.isNewUser).toBe(false)
+          expect(result.account.id).toBe(existingUser.id)
+          expect(result.isNewAccount).toBe(false)
         })
       })
     })

@@ -42,7 +42,7 @@ appModules.forEach(([name, modulePath]) => {
 
       emailCases.forEach(({ desc, email }) => {
         describe(`with ${desc} email: ${email}`, () => {
-          it("should respond with HTTP 200, normalized email, isNewUser: true, and a valid session token", async () => {
+          it("should respond with HTTP 200, normalized email, isNewAccount: true, and a valid session token", async () => {
             const code = google.code()
             const sub = google.sub()
             const googleName = faker.person.fullName()
@@ -61,12 +61,12 @@ appModules.forEach(([name, modulePath]) => {
               .expect(OK)
 
             expect(response.body).toMatchObject({
-              user: {
+              account: {
                 email: email.toLowerCase(),
               },
-              isNewUser: true,
+              isNewAccount: true,
             })
-            expect(response.body.user.id).toBeDefined()
+            expect(response.body.account.id).toBeDefined()
             expect(response.body.token).toBeDefined()
 
             // Verify the session token is valid and has correct audience
@@ -75,7 +75,7 @@ appModules.forEach(([name, modulePath]) => {
               process.env.AUTH_SECRET!,
             ) as jwt.JwtPayload
             expect(payload).toMatchObject({
-              sub: response.body.user.id,
+              sub: response.body.account.id,
               aud: SESSION_AUDIENCE,
             })
           })
@@ -84,7 +84,7 @@ appModules.forEach(([name, modulePath]) => {
     })
 
     describe("When called with a valid code for an existing email", () => {
-      it("should respond with HTTP 200 and return the existing user with isNewUser: false", async () => {
+      it("should respond with HTTP 200 and return the existing user with isNewAccount: false", async () => {
         const email = faker.internet.email().toLowerCase()
 
         // Create user first
@@ -107,11 +107,11 @@ appModules.forEach(([name, modulePath]) => {
           .expect(OK)
 
         expect(response.body).toMatchObject({
-          user: {
+          account: {
             id: (existingUser as any).id,
             email,
           },
-          isNewUser: false,
+          isNewAccount: false,
         })
       })
 
@@ -138,10 +138,10 @@ appModules.forEach(([name, modulePath]) => {
           .expect(OK)
 
         expect(response.body).toMatchObject({
-          user: {
+          account: {
             id: (existingUser as any).id,
           },
-          isNewUser: false,
+          isNewAccount: false,
         })
       })
     })
@@ -345,14 +345,14 @@ appModules.forEach(([name, modulePath]) => {
             .query({ code })
             .expect(OK)
 
-          const googleUserId = googleResponse.body.user.id
-          expect(googleResponse.body.isNewUser).toBe(true)
+          const googleUserId = googleResponse.body.account.id
+          expect(googleResponse.body.isNewAccount).toBe(true)
 
           // Step 2: Authenticate via magic link with the same email
           const magicLinkResult = await authenticateViaEmail(app, email)
 
           // Step 3: Verify it is the same user
-          expect(magicLinkResult.user.id).toBe(googleUserId)
+          expect(magicLinkResult.account.id).toBe(googleUserId)
 
           // Step 4: Verify Google profile data persists
           const meResponse = await request(app.getHttpServer())
@@ -385,7 +385,7 @@ appModules.forEach(([name, modulePath]) => {
 
           // Step 1: Authenticate via magic link first
           const magicLinkResult = await authenticateViaEmail(app, email)
-          const magicLinkUserId = magicLinkResult.user.id
+          const magicLinkUserId = magicLinkResult.account.id
 
           // Step 2: Authenticate via Google with the same email
           const code = google.code()
@@ -407,8 +407,8 @@ appModules.forEach(([name, modulePath]) => {
             .expect(OK)
 
           // Step 3: Verify it is the same user
-          expect(googleResponse.body.user.id).toBe(magicLinkUserId)
-          expect(googleResponse.body.isNewUser).toBe(false)
+          expect(googleResponse.body.account.id).toBe(magicLinkUserId)
+          expect(googleResponse.body.isNewAccount).toBe(false)
 
           // Step 4: Verify Google profile data was written via /me/detailed
           const detailedResponse = await request(app.getHttpServer())

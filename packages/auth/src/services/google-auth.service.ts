@@ -42,9 +42,9 @@ export interface GoogleProfile {
  */
 export interface GoogleAuthResult<T extends Authenticatable = Account> {
   /** The authenticated or newly created account entity */
-  entity: T
+  account: T
   /** True if this was a new registration, false if existing user */
-  isNewUser: boolean
+  isNewAccount: boolean
   /** Google profile data extracted from the ID token */
   profile: GoogleProfile
 }
@@ -95,8 +95,8 @@ interface GoogleTokenResponse {
  * @example
  * ```typescript
  * const result = await googleAuthService.authenticate(code)
- * if (result.isNewUser) {
- *   console.log('New account registered via Google:', result.entity.email)
+ * if (result.isNewAccount) {
+ *   console.log('New account registered via Google:', result.account.email)
  * }
  * ```
  */
@@ -149,7 +149,7 @@ export class GoogleAuthService<
    * Exchanges a Google authorization code for an account entity.
    *
    * @param code - The authorization code from Google's OAuth redirect
-   * @returns Object containing the account, isNewUser flag, and Google profile
+   * @returns Object containing the account, isNewAccount flag, and Google profile
    * @throws {GoogleCodeExchangeException} If Google's token endpoint returns a non-OK HTTP response
    * @throws {GoogleServiceException} If Google's token endpoint returns a 5xx server error
    * @throws {GoogleNetworkException} If the fetch call itself fails (network error, DNS, timeout)
@@ -159,7 +159,7 @@ export class GoogleAuthService<
    *
    * @example
    * ```typescript
-   * const { entity, isNewUser, profile } = await googleAuthService.authenticate(code)
+   * const { entity, isNewAccount, profile } = await googleAuthService.authenticate(code)
    * ```
    *
    * @fires auth.registered - when a new account is created
@@ -171,27 +171,27 @@ export class GoogleAuthService<
     const tokenResponse = await this.exchangeCodeForTokens(code, googleAuth)
     const { email, profile } = this.decodeIdToken(tokenResponse.id_token)
 
-    const { entity, isNewUser } = await this.datasource.transaction(
+    const { account, isNewAccount } = await this.datasource.transaction(
       async (manager: EntityManager) => {
         const found = await this.findOrCreateAccount(manager, email, profile)
-        await this.persistOAuthToken(manager, found.entity, tokenResponse)
+        await this.persistOAuthToken(manager, found.account, tokenResponse)
         return found
       },
     )
 
-    if (isNewUser) {
+    if (isNewAccount) {
       this.eventEmitter.emit(
         RegisteredEvent.EVENT_NAME,
-        new RegisteredEvent<T>(entity, "google"),
+        new RegisteredEvent<T>(account, "google"),
       )
     } else {
       this.eventEmitter.emit(
         AuthenticatedEvent.EVENT_NAME,
-        new AuthenticatedEvent<T>(entity, "google"),
+        new AuthenticatedEvent<T>(account, "google"),
       )
     }
 
-    return { entity, isNewUser, profile }
+    return { account, isNewAccount, profile }
   }
 
   /**
@@ -328,9 +328,9 @@ export class GoogleAuthService<
     manager: EntityManager,
     email: string,
     profile: GoogleProfile,
-  ): Promise<{ entity: T; isNewUser: boolean }> {
+  ): Promise<{ account: T; isNewAccount: boolean }> {
     const normalizedEmail = email.toLowerCase()
-    const repo = manager.getRepository(this.resolved.entity)
+    const repo = manager.getRepository(this.resolved.accountEntity)
 
     const existing = await repo.findOne({ where: { email: normalizedEmail } })
 
@@ -340,8 +340,8 @@ export class GoogleAuthService<
         google: profile,
       }
       await repo.save(existing)
-      // Repo built from `resolved.entity` — narrow at the boundary.
-      return { entity: existing as T, isNewUser: false }
+      // Repo built from `resolved.accountEntity` — narrow at the boundary.
+      return { account: existing as T, isNewAccount: false }
     }
 
     const created = repo.create({
@@ -349,7 +349,7 @@ export class GoogleAuthService<
       authProfile: { google: profile },
     })
     const saved = await repo.save(created)
-    return { entity: saved as T, isNewUser: true }
+    return { account: saved as T, isNewAccount: true }
   }
 
   /**

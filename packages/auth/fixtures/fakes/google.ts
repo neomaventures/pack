@@ -26,13 +26,13 @@ export const google = {
    * @example
    * ```typescript
    * const result = google.authResult()
-   * const customResult = google.authResult({ isNewUser: false })
+   * const customResult = google.authResult({ isNewAccount: false })
    * ```
    */
   authResult(overrides: Partial<GoogleAuthResult> = {}): GoogleAuthResult {
     return {
-      entity: entities.account(),
-      isNewUser: true,
+      account: entities.account(),
+      isNewAccount: true,
       profile: {
         sub: string.numeric(10),
         name: person.fullName(),

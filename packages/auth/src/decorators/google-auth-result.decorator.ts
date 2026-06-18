@@ -20,7 +20,7 @@ import { type GoogleAuthResult } from "../services/google-auth.service"
  * public handleCallback(
  *   @GetGoogleAuthResult() result: GoogleAuthResult<User>,
  * ): void {
- *   // result.entity, result.isNewUser, result.profile
+ *   // result.account, result.isNewAccount, result.profile
  * }
  * ```
  */

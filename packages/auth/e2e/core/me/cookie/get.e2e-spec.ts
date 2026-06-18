@@ -39,13 +39,13 @@ appModules.forEach(([name, modulePath]) => {
     describe("When a request is made with a valid session cookie", () => {
       it("should respond with HTTP OK and the authenticated user", async () => {
         const email = faker.internet.email()
-        const { cookie, user } = await authenticateViaEmail(app, email)
+        const { cookie, account } = await authenticateViaEmail(app, email)
 
         await request(app.getHttpServer())
           .get("/me")
           .set("Cookie", extractCookieValue(cookie))
           .expect(OK)
-          .expect({ id: user.id, email: user.email })
+          .expect({ id: account.id, email: account.email })
       })
 
       it("should return different users for different cookies", async () => {
@@ -56,13 +56,13 @@ appModules.forEach(([name, modulePath]) => {
           .get("/me")
           .set("Cookie", extractCookieValue(userA.cookie))
           .expect(OK)
-          .expect({ id: userA.user.id, email: userA.user.email })
+          .expect({ id: userA.account.id, email: userA.account.email })
 
         await request(app.getHttpServer())
           .get("/me")
           .set("Cookie", extractCookieValue(userB.cookie))
           .expect(OK)
-          .expect({ id: userB.user.id, email: userB.user.email })
+          .expect({ id: userB.account.id, email: userB.account.email })
       })
     })
 
@@ -205,7 +205,10 @@ appModules.forEach(([name, modulePath]) => {
           .set("Authorization", `Bearer ${bearerUser.token}`)
           .set("Cookie", extractCookieValue(cookieUser.cookie))
           .expect(OK)
-          .expect({ id: bearerUser.user.id, email: bearerUser.user.email })
+          .expect({
+            id: bearerUser.account.id,
+            email: bearerUser.account.email,
+          })
       })
     })
   })

@@ -129,7 +129,7 @@ export interface GoogleAuthOptions {
  * Auth ships reference `Account` and `OAuthToken` entity classes implementing
  * {@link Authenticatable} and {@link OAuthTokenable}. Consumers register the
  * entity classes they use via `TypeOrmModule.forFeature([...])` — either the
- * reference classes or their own replacements supplied through {@link entity}
+ * reference classes or their own replacements supplied through {@link accountEntity}
  * and {@link oauthTokenEntity} below.
  */
 interface AuthBaseOptions {
@@ -152,7 +152,7 @@ interface AuthBaseOptions {
    * custom class lets consumers add columns, relations, or methods while
    * keeping the package's service surface unchanged.
    */
-  entity?: new (...args: any[]) => Authenticatable
+  accountEntity?: new (...args: any[]) => Authenticatable
   /**
    * Custom OAuth token entity class implementing {@link OAuthTokenable}. When
    * omitted, the package's reference `OAuthToken` entity is used.
@@ -206,6 +206,6 @@ export type AuthOptions = AuthBaseOptions &
  * Package-internal — not exported from the public barrel.
  */
 export type ResolvedAuthOptions = AuthOptions & {
-  entity: new (...args: any[]) => Authenticatable
+  accountEntity: new (...args: any[]) => Authenticatable
   oauthTokenEntity: new (...args: any[]) => OAuthTokenable
 }

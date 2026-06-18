@@ -83,7 +83,7 @@ export class AuthenticationService<T extends Authenticatable = Account> {
       )
     }
 
-    const repo = this.datasource.getRepository(this.resolved.entity)
+    const repo = this.datasource.getRepository(this.resolved.accountEntity)
     const account = await repo.findOne({ where: { id: sub } })
 
     if (!account) {

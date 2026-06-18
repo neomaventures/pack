@@ -11,8 +11,8 @@ export interface AuthResult {
   token: string
   /** The raw Set-Cookie header value */
   cookie: string
-  /** The authenticated user */
-  user: { id: string; email: string }
+  /** The authenticated account */
+  account: { id: string; email: string }
 }
 
 /**
@@ -51,7 +51,7 @@ export const authenticateViaEmail = async (
   return {
     token: response.body.token,
     cookie: Array.isArray(setCookie) ? setCookie[0] : setCookie,
-    user: response.body.user,
+    account: response.body.account,
   }
 }
 

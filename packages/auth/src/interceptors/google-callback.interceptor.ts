@@ -24,7 +24,7 @@ import { GoogleAuthService } from "../services/google-auth.service"
  * @Get('callback')
  * @GoogleCallback()
  * public handleCallback(@GetGoogleAuthResult() result: GoogleAuthResult<User>): void {
- *   // result.entity, result.isNewUser, result.profile
+ *   // result.account, result.isNewAccount, result.profile
  * }
  * ```
  */

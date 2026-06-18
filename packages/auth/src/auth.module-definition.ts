@@ -49,7 +49,7 @@ export const {
         provide: RESOLVED_AUTH_OPTIONS,
         useFactory: (options: AuthOptions): ResolvedAuthOptions => ({
           ...options,
-          entity: options.entity ?? Account,
+          accountEntity: options.accountEntity ?? Account,
           oauthTokenEntity: options.oauthTokenEntity ?? OAuthToken,
         }),
         inject: [AUTH_OPTIONS],
