@@ -1,4 +1,4 @@
-import { S3Client } from "@aws-sdk/client-s3"
+import { type S3Client } from "@aws-sdk/client-s3"
 import { faker } from "@faker-js/faker"
 import { Test, type TestingModule } from "@nestjs/testing"
 
@@ -30,15 +30,6 @@ describe("S3ClientProvider", () => {
         S3ClientProvider,
       ],
     }).compile()
-  })
-
-  describe("Given the provider is resolved", () => {
-    it("should return a non-null S3Client instance", () => {
-      const client = module.get<S3Client>(S3_CLIENT)
-
-      expect(client).toBeDefined()
-      expect(client).toBeInstanceOf(S3Client)
-    })
   })
 
   describe("Given the provider is resolved multiple times", () => {

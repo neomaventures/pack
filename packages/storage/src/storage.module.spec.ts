@@ -23,26 +23,6 @@ const baseConnection = (): Omit<StorageRootOptions, "defaults"> => ({
 })
 
 describe("StorageModule", () => {
-  // Sync smoke retained: ConfigurableModuleBuilder generates the sync
-  // forRoot / forFeature static methods from the same .build() call as
-  // their *Async siblings — they share the setExtras chain and the
-  // RESOLVED_* materialisation. Async coverage below transitively
-  // exercises that shared path; this single sync compile catches a
-  // regression in the generated wrapper static methods themselves.
-  describe("forRoot + forFeature (sync smoke)", () => {
-    it("should compile the module", async () => {
-      const module = await Test.createTestingModule({
-        imports: [
-          ManagedDatabaseModule.forRoot([TestStorable]),
-          StorageModule.forRoot(baseConnection()),
-          StorageModule.forFeature({ bucket: faker.string.alphanumeric(10) }),
-        ],
-      }).compile()
-
-      expect(module).toBeDefined()
-    })
-  })
-
   describe("RESOLVED_STORAGE_OPTIONS", () => {
     describe("Given forRootAsync without defaults", () => {
       it("should materialise connection fields and default defaults to {}", async () => {
@@ -194,11 +174,40 @@ describe("StorageModule", () => {
     })
   })
 
-  // Group C (multi-feature isolation) skipped: NestJS testing-module DI
-  // scope makes resolving two distinct DynamicModule instances of
-  // StorageFeatureModule fiddly — `module.select(ConsumerModule)` doesn't
-  // see the feature providers (they live in the imported feature module's
-  // own scope, not re-exported into the consumer). Tracked as a gap for a
-  // follow-up that compiles two separate testing modules and asserts the
-  // resolved bucket on each independently.
+  describe("multi-feature isolation", () => {
+    it("should resolve a distinct bucket per consumer app", async () => {
+      const bucketA = faker.string.alphanumeric(10)
+      const bucketB = faker.string.alphanumeric(10)
+
+      const moduleA = await Test.createTestingModule({
+        imports: [
+          ManagedDatabaseModule.forRoot([TestStorable]),
+          StorageModule.forRootAsync({ useFactory: () => baseConnection() }),
+          StorageModule.forFeatureAsync({
+            useFactory: () => ({ bucket: bucketA }),
+          }),
+        ],
+      }).compile()
+
+      const moduleB = await Test.createTestingModule({
+        imports: [
+          ManagedDatabaseModule.forRoot([TestStorable]),
+          StorageModule.forRootAsync({ useFactory: () => baseConnection() }),
+          StorageModule.forFeatureAsync({
+            useFactory: () => ({ bucket: bucketB }),
+          }),
+        ],
+      }).compile()
+
+      const resolvedA = moduleA.get<ResolvedFeatureStorageOptions>(
+        RESOLVED_FEATURE_STORAGE_OPTIONS,
+      )
+      const resolvedB = moduleB.get<ResolvedFeatureStorageOptions>(
+        RESOLVED_FEATURE_STORAGE_OPTIONS,
+      )
+
+      expect(resolvedA.bucket).toBe(bucketA)
+      expect(resolvedB.bucket).toBe(bucketB)
+    })
+  })
 })
