@@ -32,10 +32,12 @@ appModules.forEach(([name, modulePath]) => {
       it(`should respond with HTTP ${ACCEPTED} and send a welcome email`, async () => {
         const email = faker.internet.email()
 
+        const issuedAtMin = Math.floor(Date.now() / 1000)
         await request(app.getHttpServer())
           .post("/magic-link")
           .send({ email })
           .expect(ACCEPTED)
+        const issuedAtMax = Math.floor(Date.now() / 1000)
 
         const { messages } = await mailpit.messages()
         const message = await mailpit.message(messages[0].ID as string)
@@ -78,8 +80,11 @@ appModules.forEach(([name, modulePath]) => {
         // Has correct audience.
         expect(details.aud).toBe("magic-link")
 
-        // Has correct iat and exp claims.
-        expect(details.iat).toEqual(Math.floor(Date.now() / 1000))
+        // Has correct iat and exp claims. Token is issued at some point
+        // between the request being made and the response returning, so
+        // iat may fall on either side of a second boundary.
+        expect(details.iat).toBeGreaterThanOrEqual(issuedAtMin)
+        expect(details.iat).toBeLessThanOrEqual(issuedAtMax)
         expect(details.exp).toEqual(details.iat + FIFTEEN_MINUTES)
       })
     })
@@ -94,10 +99,12 @@ appModules.forEach(([name, modulePath]) => {
         const user = repo.create({ email })
         await repo.save(user)
 
+        const issuedAtMin = Math.floor(Date.now() / 1000)
         await request(app.getHttpServer())
           .post("/magic-link")
           .send({ email })
           .expect(ACCEPTED)
+        const issuedAtMax = Math.floor(Date.now() / 1000)
 
         const { messages } = await mailpit.messages()
         const message = await mailpit.message(messages[0].ID as string)
@@ -144,8 +151,11 @@ appModules.forEach(([name, modulePath]) => {
         // Has correct audience.
         expect(details.aud).toBe("magic-link")
 
-        // Has correct iat and exp claims.
-        expect(details.iat).toEqual(Math.floor(Date.now() / 1000))
+        // Has correct iat and exp claims. Token is issued at some point
+        // between the request being made and the response returning, so
+        // iat may fall on either side of a second boundary.
+        expect(details.iat).toBeGreaterThanOrEqual(issuedAtMin)
+        expect(details.iat).toBeLessThanOrEqual(issuedAtMax)
         expect(details.exp).toEqual(details.iat + FIFTEEN_MINUTES)
       })
     })
