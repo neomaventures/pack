@@ -135,23 +135,17 @@ The default Render Blueprint provisions a self-hosted **MinIO** instance alongsi
 
 - A second `web` service named `<your-app>-minio` running MinIO on Render's `starter` plan.
 - A 1 GB persistent disk mounted at `/data` for object bytes.
-- A pre-created `avatars` bucket with an anonymous **`GetObject`-only** policy on startup (no `ListBucket`).
-- App-side `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` wired automatically via `fromService` — no dashboard fiddling.
+- A pre-created `avatars` bucket that is **fully private** — no anonymous policy. Avatars are served by the app via presigned 302 redirects (`@TemporaryLink`).
+- App-side `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, and `AVATAR_BUCKET` wired automatically via `fromService` — no dashboard fiddling.
 
 **Cost: ~$7.25/mo** (starter web ~$7 + 1 GB disk ~$0.25). Total saas-template Render bill is roughly **$14/mo**.
 
-### Important: the `avatars` bucket is public-read
-
-Only store **non-sensitive** uploads there. The bucket policy allows anonymous `GetObject`, which means anyone who knows or guesses an object key can fetch it. That's fine for profile pictures. It is not fine for invoices, exports, private attachments, or anything else you wouldn't paste into a public URL.
-
-When you add a non-public `Storable`, switch to the "app-proxied private" shape below.
-
 ### Three storage shapes
 
-As your app grows beyond avatars, you'll move along this ladder:
+Saas-template ships shape 1 today. As your app grows beyond avatars, you'll move along this ladder:
 
-1. **Public direct (current default).** Public-read bucket; the app issues short-lived presigned URLs and the browser fetches the object directly from MinIO. Cheap and simple — fine for avatars and any other public, non-sensitive asset.
-2. **App-proxied private.** Bucket goes fully private; the app exposes a `GET /uploads/:id` route that authorises the request and streams bytes through `StorageService`. Use this the moment you add a `Storable` that isn't safe to expose by URL — attachments, exports, generated reports.
+1. **Private + presigned (current default).** Bucket is fully private; the controller decorates its avatar route with `@TemporaryLink` and the package issues a short-lived presigned 302 redirect. The browser fetches the object directly from MinIO using the signed URL. Fine for avatars and any other asset you don't mind exposing via a time-bounded signed URL. A first-class `@PublicLink` decorator (for genuinely public-read assets like CDN-style static files) is tracked in [#268](https://github.com/neomaventures/pack/issues/268).
+2. **App-proxied private.** The app exposes a `GET /uploads/:id` route that authorises the request and streams bytes through `StorageService`. Use this the moment you add a `Storable` that needs request-time authorisation, large-file streaming, range requests, or anything else that should not leave the app boundary. A unified-host pattern (so storage lives under the same hostname as the app) is tracked in [#269](https://github.com/neomaventures/pack/issues/269).
 3. **Managed S3-compatible.** Swap MinIO for Render Object Storage (beta), Cloudflare R2, or AWS S3 by deleting the `render/minio/` directory plus the MinIO service block in `render.yaml`, and updating the five `S3_*` / `AVATAR_BUCKET` env vars in the Render dashboard. App code does not change.
 
 ### Backups
