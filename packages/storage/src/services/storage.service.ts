@@ -10,7 +10,12 @@ import {
   InvalidStorageKeyException,
   MAX_KEY_BYTES,
 } from "../exceptions/invalid-storage-key.exception"
-import { type StorageOptions, STORAGE_OPTIONS } from "../storage.options"
+import { type Storable } from "../interfaces/storable.interface"
+import { S3_CLIENT } from "../providers/s3-client.provider"
+import {
+  type ResolvedFeatureStorageOptions,
+  RESOLVED_FEATURE_STORAGE_OPTIONS,
+} from "../storage.options"
 
 /**
  * Thin wrapper around the AWS S3 client for storing objects and generating
@@ -23,27 +28,24 @@ import { type StorageOptions, STORAGE_OPTIONS } from "../storage.options"
  * await storageService.store("01HXYZ-photo.jpg", buffer, "image/jpeg")
  * const url = await storageService.getSignedUrl("01HXYZ-photo.jpg")
  * ```
+ *
+ * The class is parametrised on `T extends Storable` so consumers narrow at
+ * injection (`private readonly storage: StorageService<Upload>`); future
+ * entity-touching methods will flow `T` through their return signatures
+ * automatically. Today's methods operate on S3 bytes and don't carry `T`.
  */
 @Injectable()
-export class StorageService {
-  private readonly client: S3Client
-
+// Forward-looking generic: today's methods operate on S3 bytes and don't
+// reference T, but the class-level parameter is the public contract so
+// consumers can narrow at injection (`StorageService<Upload>`) and any
+// entity-touching methods added later flow T through their signatures.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export class StorageService<T extends Storable = Storable> {
   public constructor(
-    @Inject(STORAGE_OPTIONS) private readonly options: StorageOptions,
-  ) {
-    this.client = new S3Client({
-      endpoint: options.endpoint,
-      region: options.region,
-      credentials: {
-        accessKeyId: options.accessKeyId,
-        secretAccessKey: options.secretAccessKey,
-      },
-      forcePathStyle: options.forcePathStyle ?? true,
-      // Suppress default SDK v3 checksum computation which can fail on some S3-compatible backends
-      requestChecksumCalculation: "WHEN_REQUIRED",
-      responseChecksumValidation: "WHEN_REQUIRED",
-    })
-  }
+    @Inject(RESOLVED_FEATURE_STORAGE_OPTIONS)
+    private readonly options: ResolvedFeatureStorageOptions,
+    @Inject(S3_CLIENT) private readonly client: S3Client,
+  ) {}
 
   /**
    * Stores a file in S3 at the given key.
@@ -93,7 +95,7 @@ export class StorageService {
       Key: key,
     })
     return getSignedUrl(this.client, command, {
-      expiresIn: expiresIn ?? this.options.linkExpiresIn ?? 3600,
+      expiresIn: expiresIn ?? this.options.linkExpiresIn,
     })
   }
 

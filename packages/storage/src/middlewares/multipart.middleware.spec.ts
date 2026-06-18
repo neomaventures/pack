@@ -5,7 +5,10 @@ import { Test, type TestingModule } from "@nestjs/testing"
 import { type NextFunction, type Request, type Response } from "express"
 
 import { FileTooLargeException } from "../exceptions/file-too-large.exception"
-import { STORAGE_OPTIONS, type StorageOptions } from "../storage.options"
+import {
+  type ResolvedStorageRootOptions,
+  RESOLVED_STORAGE_OPTIONS,
+} from "../storage.options"
 
 import { MultipartMiddleware } from "./multipart.middleware"
 
@@ -44,22 +47,21 @@ const buildMultipartRequest = (body: Buffer): Request => {
 }
 
 const createModule = async (
-  overrides: Partial<StorageOptions> = {},
+  defaults: NonNullable<ResolvedStorageRootOptions["defaults"]> = {},
 ): Promise<TestingModule> => {
-  const options: StorageOptions = {
+  const options: ResolvedStorageRootOptions = {
     endpoint: faker.internet.url(),
     region: faker.location.countryCode(),
-    bucket: faker.string.alphanumeric(10),
     accessKeyId: faker.string.alphanumeric(20),
     secretAccessKey: faker.string.alphanumeric(40),
     entity: class {} as any,
-    ...overrides,
+    defaults,
   }
 
   return Test.createTestingModule({
     providers: [
       MultipartMiddleware,
-      { provide: STORAGE_OPTIONS, useValue: options },
+      { provide: RESOLVED_STORAGE_OPTIONS, useValue: options },
     ],
   }).compile()
 }

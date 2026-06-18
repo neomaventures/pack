@@ -5,7 +5,10 @@ import { type NextFunction, type Request, type Response } from "express"
 import multer, { type Multer, type MulterError } from "multer"
 
 import { FileTooLargeException } from "../exceptions/file-too-large.exception"
-import { type StorageOptions, STORAGE_OPTIONS } from "../storage.options"
+import {
+  type ResolvedStorageRootOptions,
+  RESOLVED_STORAGE_OPTIONS,
+} from "../storage.options"
 
 /**
  * Middleware that parses multipart/form-data requests using multer
@@ -14,22 +17,29 @@ import { type StorageOptions, STORAGE_OPTIONS } from "../storage.options"
  * Registered globally by {@link StorageModule} for all routes.
  * Non-multipart requests pass through untouched.
  *
- * When `maxFileSize` is configured in {@link StorageOptions}, multer rejects
- * oversized files before buffering them into memory.
+ * The middleware is root-scoped — it parses the multipart body before
+ * routing, so it cannot know which feature module owns the route. It
+ * therefore reads the root-level cap (`defaults.maxFileSize`) as an
+ * upstream ceiling. Per-feature size limits are then re-enforced by
+ * {@link UploadInterceptor} against `RESOLVED_FEATURE_STORAGE_OPTIONS`.
+ * Feature limits are expected to be ≤ the root cap.
  */
 @Injectable()
 export class MultipartMiddleware implements NestMiddleware {
   private readonly upload: Multer
+  private readonly maxFileSize: number | undefined
 
   public constructor(
-    @Inject(STORAGE_OPTIONS) private readonly options: StorageOptions,
+    @Inject(RESOLVED_STORAGE_OPTIONS)
+    options: ResolvedStorageRootOptions,
   ) {
+    this.maxFileSize = options.defaults.maxFileSize
     this.upload = multer({
       storage: multer.memoryStorage(),
       limits: {
         files: 1,
-        ...(options.maxFileSize !== undefined
-          ? { fileSize: options.maxFileSize }
+        ...(this.maxFileSize !== undefined
+          ? { fileSize: this.maxFileSize }
           : {}),
       },
     })
@@ -53,9 +63,9 @@ export class MultipartMiddleware implements NestMiddleware {
         if (err) {
           if (
             (err as MulterError).code === "LIMIT_FILE_SIZE" &&
-            this.options.maxFileSize !== undefined
+            this.maxFileSize !== undefined
           ) {
-            next(new FileTooLargeException(null, this.options.maxFileSize))
+            next(new FileTooLargeException(null, this.maxFileSize))
             return
           }
 

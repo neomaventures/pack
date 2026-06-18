@@ -30,7 +30,10 @@ import { NoFileProvidedException } from "../exceptions/no-file-provided.exceptio
 import { UnsupportedFileTypeException } from "../exceptions/unsupported-file-type.exception"
 import { type Storable } from "../interfaces/storable.interface"
 import { UlidIdGenerator } from "../services/ulid-id-generator.service"
-import { StorageOptions } from "../storage.options"
+import {
+  type StorageFeatureOptions,
+  type StorageRootOptions,
+} from "../storage.options"
 
 import { UploadInterceptor } from "./upload.interceptor"
 
@@ -58,14 +61,18 @@ class TestUpload implements Storable {
   public bucket!: string
 }
 
-const options: StorageOptions = {
+const rootOptions: StorageRootOptions = {
   endpoint: process.env.STORAGE_ENDPOINT!,
   region: process.env.STORAGE_REGION!,
-  bucket: process.env.STORAGE_BUCKET!,
   accessKeyId: process.env.STORAGE_ACCESS_KEY!,
   secretAccessKey: process.env.STORAGE_SECRET_KEY!,
   entity: TestUpload,
 }
+const featureOptions: StorageFeatureOptions = {
+  bucket: process.env.STORAGE_BUCKET!,
+}
+// `options.bucket` reference is kept for assertion ergonomics.
+const options = { ...rootOptions, ...featureOptions }
 const allowedMimeTypes = ["text/plain", "text/csv", "image/png", "image/jpeg"]
 
 class UploadHandlerClass {
@@ -108,12 +115,14 @@ describe("UploadInterceptor", () => {
     module = await Test.createTestingModule({
       imports: [
         ManagedDatabaseModule.forRoot([TestUpload]),
-        EventEmitterModule.forRoot(),
         StorageModule.forRoot({
-          ...options,
-          allowedMimeTypes,
-          maxFileSize: GLOBAL_MAX_FILE_SIZE,
+          ...rootOptions,
+          defaults: {
+            allowedMimeTypes,
+            maxFileSize: GLOBAL_MAX_FILE_SIZE,
+          },
         }),
+        StorageModule.forFeature(featureOptions),
       ],
       providers: [TestKeyResolver],
     })
@@ -523,11 +532,11 @@ describe("UploadInterceptor", () => {
             ManagedDatabaseModule.forRoot([TestUpload]),
             EventEmitterModule.forRoot(),
             StorageModule.forRoot({
-              ...options,
+              ...rootOptions,
               endpoint: "http://localhost:1",
-              bucket: "unreachable-bucket",
-              allowedMimeTypes,
+              defaults: { allowedMimeTypes },
             }),
+            StorageModule.forFeature({ bucket: "unreachable-bucket" }),
           ],
         }).compile()
         interceptor = module.get(UploadInterceptor)

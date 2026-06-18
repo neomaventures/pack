@@ -2,11 +2,18 @@
 
 NestJS-idiomatic file storage for S3-compatible backends.
 
-Storage (the three-headed dog guarding the gates of the Underworld) handles the file upload lifecycle: store to S3, persist metadata to your entity, and generate presigned download URLs -- all through interceptors and decorators that compose naturally with NestJS controllers.
+Storage handles the file upload lifecycle: store to S3, persist metadata to your entity, and generate presigned download URLs — all through interceptors and decorators that compose naturally with NestJS controllers.
+
+The module splits into two pieces:
+
+- `StorageModule.forRoot({...})` — global; configures the S3 connection and binds the consumer's `Storable` entity for persistence.
+- `StorageModule.forFeature({ bucket })` — local; configures a bucket and provides a `StorageService` / `UploadInterceptor` instance scoped to the importing module.
+
+Single-bucket apps register one `forFeature` in the root module. Multi-bucket apps register a `forFeature` per feature module (avatars, attachments, exports) and each gets its own service instance bound to its own bucket.
 
 ## Installation
 
-`@neomaventures/*` packages publish privately to GitHub Packages. Configure `.npmrc` to resolve the `@neoma` scope first:
+`@neomaventures/*` packages publish privately to GitHub Packages. Configure `.npmrc` to resolve the `@neomaventures` scope first:
 
 ```
 @neomaventures:registry=https://npm.pkg.github.com
@@ -22,14 +29,13 @@ npm install @neomaventures/storage
 ### Peer dependencies
 
 ```bash
-npm install @nestjs/common @nestjs/core @nestjs/platform-express @nestjs/typeorm @nestjs/event-emitter typeorm reflect-metadata rxjs
+npm install @nestjs/common @nestjs/core @nestjs/platform-express \
+  @nestjs/typeorm @nestjs/event-emitter typeorm reflect-metadata rxjs
 ```
 
-## Quick Start
+## Entity model — interface and your own entity
 
-### 1. Define your entity
-
-Your entity implements the `Storable` interface:
+Storage defines one TypeScript contract — `Storable` — and the consumer always owns the entity class. No reference entity ships from the package; the entity carries consumer-owned relations (`Account.avatars`, `Message.attachments`), so it lives in the consumer codebase.
 
 ```typescript
 import { type Storable } from "@neomaventures/storage"
@@ -55,50 +61,63 @@ export class Upload implements Storable {
   @Column()
   public bucket!: string
 
-  // Add your own columns
+  // Add your own columns — consumer relations live here
   @Column({ nullable: true })
   public source?: string
 }
 ```
 
-### 2. Register the module
+The consumer always owns `TypeOrmModule.forFeature([Upload])` registration — storage never touches DataSource or migration files.
+
+## Getting started — single-bucket app
+
+Most apps start with one bucket. Configure the connection and the entity at `forRoot`, then register `forFeature` once in the root module.
+
+### 1. Register the entity with TypeORM
+
+```typescript
+import { Module } from "@nestjs/common"
+import { TypeOrmModule } from "@nestjs/typeorm"
+
+import { Upload } from "./upload.entity"
+
+@Module({
+  imports: [
+    TypeOrmModule.forRoot({
+      type: "postgres",
+      // ...your database config
+      entities: [Upload /* , YourOtherEntities */],
+    }),
+    TypeOrmModule.forFeature([Upload]),
+  ],
+})
+export class AppModule {}
+```
+
+### 2. Configure `StorageModule`
 
 ```typescript
 import { StorageModule } from "@neomaventures/storage"
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({ ... }),
     StorageModule.forRoot({
       endpoint: "http://localhost:9000",
       region: "us-east-1",
-      bucket: "uploads",
-      accessKeyId: process.env.S3_ACCESS_KEY_ID,
-      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+      accessKeyId: process.env.S3_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
       entity: Upload,
-      maxFileSize: 10_000_000, // 10MB global limit
+      defaults: {
+        maxFileSize: 10_000_000, // 10MB default for every feature
+      },
     }),
+    StorageModule.forFeature({ bucket: "uploads" }),
   ],
 })
 export class AppModule {}
 ```
 
-Or with async configuration:
-
-```typescript
-StorageModule.forRootAsync({
-  imports: [ConfigModule],
-  useFactory: (config: ConfigService) => ({
-    endpoint: config.get("S3_ENDPOINT"),
-    region: config.get("S3_REGION"),
-    bucket: config.get("S3_BUCKET"),
-    accessKeyId: config.get("S3_ACCESS_KEY_ID"),
-    secretAccessKey: config.get("S3_SECRET_ACCESS_KEY"),
-    entity: Upload,
-  }),
-  inject: [ConfigService],
-})
-```
+The `defaults` block on `forRoot` provides fallback values for every `forFeature` import. Each feature overrides what it needs and inherits the rest.
 
 ### 3. Use in your controller
 
@@ -114,11 +133,9 @@ import { Repository } from "typeorm"
 @Controller("uploads")
 export class UploadController {
   public constructor(
-    private readonly dataSource: DataSource,
     @InjectRepository(Upload) private readonly uploads: Repository<Upload>,
   ) {}
 
-  // Simple case: the file arrives already persisted (has an id) — return as-is.
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @UploadDecorator()
@@ -126,40 +143,139 @@ export class UploadController {
     return file
   }
 
-  // Mutating fields after the interceptor save? Persist explicitly.
-  @Post("csv")
-  @HttpCode(HttpStatus.CREATED)
-  @UploadDecorator({ types: ["text/csv"], maxSize: 1_000_000 })
-  public async importCsv(@StoredFile() file: Upload): Promise<Upload> {
-    file.source = "csv-import"
-    return this.uploads.save(file)
-  }
-
   @Get(":id")
   @TemporaryLink()
   public async download(@Param("id") id: string): Promise<Upload> {
-    return this.dataSource.getRepository(Upload).findOneByOrFail({ id })
+    return this.uploads.findOneByOrFail({ id })
   }
 }
 ```
 
-### How it works
+The `@Upload()` / `@TemporaryLink()` decorators take no bucket argument. NestJS resolves the `UploadInterceptor` from the module the controller belongs to, so the controller picks up whichever `forFeature` was imported in that module's scope.
+
+## Multi-bucket — `forFeature` per feature module
+
+For apps with distinct buckets per concern (avatars vs message attachments vs CSV exports), register one `forFeature` per feature module. Each gets its own `StorageService` instance bound to its own bucket and inheriting its own feature-scoped defaults.
+
+```typescript
+// app.module.ts
+@Module({
+  imports: [
+    StorageModule.forRoot({
+      endpoint: config.s3Endpoint,
+      region: config.s3Region,
+      accessKeyId: config.s3AccessKeyId,
+      secretAccessKey: config.s3SecretAccessKey,
+      entity: Upload,
+      defaults: { maxFileSize: 5_000_000 },
+    }),
+    AvatarsModule,
+    AttachmentsModule,
+  ],
+})
+export class AppModule {}
+```
+
+```typescript
+// avatars/avatars.module.ts
+@Module({
+  imports: [
+    StorageModule.forFeature({
+      bucket: "avatars",
+      maxFileSize: 2_000_000, // tighter than the default
+      allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
+      linkCacheControl: "private, max-age=300",
+    }),
+  ],
+  controllers: [AvatarsController],
+})
+export class AvatarsModule {}
+```
+
+```typescript
+// attachments/attachments.module.ts
+@Module({
+  imports: [
+    StorageModule.forFeature({
+      bucket: "attachments",
+      // inherits maxFileSize: 5_000_000 from root defaults
+    }),
+  ],
+  controllers: [AttachmentsController],
+})
+export class AttachmentsModule {}
+```
+
+Controllers in `AvatarsModule` resolve `StorageService` bound to the `avatars` bucket; controllers in `AttachmentsModule` get the `attachments` instance. There is no token to inject, no bucket name to pass — the module DI scope does the wiring.
+
+## Async configuration
+
+Both `forRoot` and `forFeature` ship async variants for config-driven values.
+
+```typescript
+StorageModule.forRootAsync({
+  imports: [ConfigModule],
+  useFactory: (config: ConfigService) => ({
+    endpoint: config.get("S3_ENDPOINT"),
+    region: config.get("S3_REGION"),
+    accessKeyId: config.get("S3_ACCESS_KEY_ID"),
+    secretAccessKey: config.get("S3_SECRET_ACCESS_KEY"),
+    entity: Upload,
+  }),
+  inject: [ConfigService],
+}),
+
+StorageModule.forFeatureAsync({
+  imports: [ConfigModule],
+  useFactory: (config: ConfigService) => ({
+    bucket: config.get("S3_AVATARS_BUCKET"),
+  }),
+  inject: [ConfigService],
+}),
+```
+
+## Type narrowing — how your `Upload` class flows
+
+`StorageModule.forRoot({ entity: Upload })` accepts any class that satisfies `Storable`, but the concrete `Upload` type does not flow through `forRoot` automatically. Narrowing happens at the consumption edges:
+
+| Surface | How `Upload` lands |
+| --- | --- |
+| `forRoot({ entity: Upload })` | Options accept any `Storable`; no narrowing past this point |
+| `forFeature({ bucket })` | Bucket is `string`; no type-level magic |
+| `StorageService<Upload>` (injection) | Class-level generic — annotate at constructor injection and methods narrow |
+| `@StoredFile() file: Upload` | Annotation-trusted |
+| `@TemporaryLink()` handler return | Handler return-type annotation; trusted |
+
+```typescript
+import { StorageService } from "@neomaventures/storage"
+
+@Injectable()
+export class AvatarsService {
+  public constructor(
+    private readonly storage: StorageService<Upload>,
+  ) {}
+}
+```
+
+Consumers on the default path inject `StorageService` without type parameters and methods narrow to `Storable`.
+
+## How it works
 
 **Upload (`@Upload()`):**
 
-1. **Middleware:** Multer parses the multipart request (memory storage, single file)
-2. **Pre-handler:** Interceptor validates the file (size, type), uploads to S3, creates the entity, **persists it to the database** (so it has an `id`), attaches it to the request, and emits `FileCreatedEvent`
-3. **Your handler:** Receives the persisted entity via `@StoredFile()` — already has an `id`, so you can wire FKs synchronously. If you mutate fields on the entity you must call `repository.save(file)` yourself; the interceptor does not re-save after your handler runs.
+1. **Middleware:** Multer parses the multipart request (memory storage, single file).
+2. **Pre-handler:** The feature-scoped `UploadInterceptor` validates the file (size, type), uploads to the feature's S3 bucket, creates the entity, persists it to the database (so it has an `id`), attaches it to the request, and emits `FileCreatedEvent`.
+3. **Your handler:** Receives the persisted entity via `@StoredFile()` — already has an `id`, so you can wire FKs synchronously. If you mutate fields, call `repository.save(file)` yourself; the interceptor does not re-save after your handler runs.
 4. **Post-handler:** None. The HTTP response from your handler passes through untouched.
 
 **Download (`@TemporaryLink()`):**
 
-1. **Your handler:** Returns a `Storable` entity (e.g. from database lookup)
-2. **Post-handler:** Interceptor generates a presigned S3 URL and responds with HTTP 302 redirect
+1. **Your handler:** Returns a `Storable` entity (e.g. from a database lookup).
+2. **Post-handler:** The feature-scoped `TemporaryLinkInterceptor` generates a presigned S3 URL against the feature's bucket and responds with an HTTP 302 redirect.
 
 ## Events
 
-After the S3 object is stored and the entity is persisted — but **before** the consumer handler runs — a `FileCreatedEvent` is emitted:
+After the S3 object is stored and the entity is persisted — but before the consumer handler runs — a `FileCreatedEvent` is emitted:
 
 ```typescript
 import { FileCreatedEvent } from "@neomaventures/storage"
@@ -169,14 +285,14 @@ import { OnEvent } from "@nestjs/event-emitter"
 export class UploadProcessor {
   @OnEvent(FileCreatedEvent.EVENT_NAME)
   public handleFileCreated(event: FileCreatedEvent<Upload>): void {
-    console.log("File created:", event.entity.key)
+    console.log("File created:", event.entity.key, "in bucket", event.entity.bucket)
   }
 }
 ```
 
-Events are fire-and-forget -- listener errors do not affect the upload response.
+Events are fire-and-forget — listener errors do not affect the upload response.
 
-**Listeners must not assume FK wiring has happened.** The event is an honest signal that the file exists in S3 and a row exists in the database — it fires before any controller logic that might wire foreign keys (e.g. `Account.avatar = file`). If your listener needs that context, listen for a domain event your controller emits after wiring instead.
+**Listeners must not assume FK wiring has happened.** The event fires before any controller logic that might wire foreign keys (e.g. `Account.avatar = file`). If your listener needs that context, emit a domain event from your controller after wiring.
 
 ## Exceptions
 
@@ -194,21 +310,35 @@ All exceptions extend `HttpException` and include metadata for diagnostics:
 
 ## API Reference
 
-### `StorageOptions`
+### `StorageRootOptions`
+
+Configured via `StorageModule.forRoot(...)` once per application.
 
 | Option | Type | Required | Default | Description |
 |--------|------|----------|---------|-------------|
 | `endpoint` | `string` | Yes | | S3-compatible endpoint URL |
 | `region` | `string` | Yes | | AWS region |
-| `bucket` | `string` | Yes | | S3 bucket name |
 | `accessKeyId` | `string` | Yes | | AWS access key ID |
 | `secretAccessKey` | `string` | Yes | | AWS secret access key |
 | `entity` | `new () => T` | Yes | | TypeORM entity class implementing `Storable` |
-| `maxFileSize` | `number` | No | | Global maximum file size in bytes |
-| `allowedMimeTypes` | `string[]` | No | | Global allowed MIME types |
-| `linkExpiresIn` | `number` | No | `3600` | Default presigned URL expiry in seconds |
-| `linkCacheControl` | `string` | No | | Default `Cache-Control` header for temporary-link 302 responses |
 | `forcePathStyle` | `boolean` | No | `true` | Use path-style S3 URLs (required for MinIO) |
+| `defaults` | `object` | No | `{}` | Defaults for `forFeature` options below |
+| `defaults.maxFileSize` | `number` | No | | Default maximum file size in bytes |
+| `defaults.allowedMimeTypes` | `string[]` | No | | Default allowed MIME types |
+| `defaults.linkExpiresIn` | `number` | No | `3600` | Default presigned URL expiry in seconds |
+| `defaults.linkCacheControl` | `string` | No | | Default `Cache-Control` header for 302 responses |
+
+### `StorageFeatureOptions`
+
+Configured via `StorageModule.forFeature(...)` per importing module.
+
+| Option | Type | Required | Default | Description |
+|--------|------|----------|---------|-------------|
+| `bucket` | `string` | Yes | | S3 bucket name for this feature |
+| `maxFileSize` | `number` | No | root `defaults.maxFileSize` | Maximum file size in bytes |
+| `allowedMimeTypes` | `string[]` | No | root `defaults.allowedMimeTypes` | Allowed MIME types |
+| `linkExpiresIn` | `number` | No | root `defaults.linkExpiresIn` ?? `3600` | Presigned URL expiry in seconds |
+| `linkCacheControl` | `string` | No | root `defaults.linkCacheControl` | `Cache-Control` header for 302 responses |
 
 ### `Storable` interface
 
@@ -227,7 +357,7 @@ interface Storable {
 
 ### `@Upload(options?)`
 
-Method decorator for upload routes. Global limits are the ceiling; per-route narrows within it.
+Method decorator for upload routes. Feature-scoped defaults are the ceiling; per-route narrows within them.
 
 ```typescript
 @Upload()                                      // no per-route limits
@@ -238,9 +368,9 @@ Method decorator for upload routes. Global limits are the ceiling; per-route nar
 
 #### Custom key resolution
 
-Pass a `key` option to override how S3 object keys are generated. The resolver receives `file.defaultKey` -- the key the framework would have produced -- so you can decorate it with context or ignore it entirely.
+Pass a `key` option to override how S3 object keys are generated. The resolver receives `file.defaultKey` — the key the framework would have produced — so you can decorate it with context or ignore it entirely.
 
-**Function form** -- for stateless naming policies with no DI needs:
+**Function form** — for stateless naming policies with no DI needs:
 
 ```typescript
 @Upload({
@@ -249,7 +379,7 @@ Pass a `key` option to override how S3 object keys are generated. The resolver r
 })
 ```
 
-**Class form** -- when the resolver needs injected dependencies:
+**Class form** — when the resolver needs injected dependencies:
 
 ```typescript
 @Injectable()
@@ -261,10 +391,8 @@ export class TenantKeyResolver implements StorageKeyResolver {
   }
 }
 
-// Register the resolver as a provider in your module
 @Module({ providers: [TenantKeyResolver] })
 
-// Then reference the class in the decorator
 @Upload({ key: TenantKeyResolver })
 ```
 
@@ -274,14 +402,16 @@ Parameter decorator that extracts the stored file entity from the request.
 
 ### `@TemporaryLink(options?)`
 
-Method decorator for download routes. Handler must return a `Storable` entity, or `null`/`undefined` when paired with `default`.
+Method decorator for download routes. Handler must return a `Storable` entity, or `null` / `undefined` when paired with `default`.
 
 ```typescript
-@TemporaryLink()                              // default expiry from StorageOptions.linkExpiresIn
+@TemporaryLink()                              // default expiry from feature options
 @TemporaryLink({ expiresIn: 600 })            // 10 minute expiry
 @TemporaryLink({ default: "/img/avatar.svg" }) // redirect here when handler returns null
 @TemporaryLink({ cacheControl: "private, max-age=300" }) // cache the 302 for 5 minutes
 ```
+
+See [Default for missing assets](#default-for-missing-assets) and [Caching the redirect](#caching-the-redirect) below.
 
 #### Default for missing assets
 
@@ -290,48 +420,38 @@ Pass a `default` URL to redirect to when the handler returns `null` or `undefine
 ```typescript
 @Get("avatar")
 @TemporaryLink({ default: "/img/default-avatar.svg" })
-public async avatar(@CurrentUser() user: User): Promise<Upload | null> {
-  return this.profile.getAvatar(user.id) // returns null when no avatar is set
+public async avatar(@CurrentAccount() account: Account): Promise<Upload | null> {
+  return this.profile.getAvatar(account.id) // returns null when no avatar is set
 }
 ```
 
-The `default` value is used verbatim as the 302 `Location` — relative path, absolute URL, or another route. The package does not validate it.
+The `default` value is used verbatim as the 302 `Location`. The package does not validate it.
 
-Without `default`, a `null` return is a programmer error and throws — the existing strict contract is preserved for callers who haven't opted in.
-
-`default` only covers the "handler returned null" path. Exceptions thrown inside the handler (DB down, S3 unreachable, `findOneByOrFail` miss) bubble to the global exception filter as before — `default` is **not** an error-swallowing fallback.
+Without `default`, a `null` return is a programmer error and throws. Exceptions thrown inside the handler bubble to the global exception filter — `default` is **not** an error-swallowing fallback.
 
 #### Caching the redirect
 
-Pass `cacheControl` to set a `Cache-Control` header on the 302. Useful when the same temporary link is rendered repeatedly (e.g. an avatar in the nav bar across page navigations) — the browser skips the redirect hop until the cache window expires.
+Pass `cacheControl` to set a `Cache-Control` header on the 302. The value is passed verbatim to `res.setHeader("Cache-Control", ...)`.
 
-```typescript
-@Get("avatar")
-@TemporaryLink({ expiresIn: 3600, cacheControl: "private, max-age=300" })
-public async avatar(@CurrentUser() user: User): Promise<Upload | null> {
-  return this.profile.getAvatar(user.id)
-}
-```
+Set a feature-wide default via `StorageModule.forFeature({ linkCacheControl })`; the per-route `cacheControl` overrides it. When neither is set, no header is sent.
 
-The value is passed verbatim to `res.setHeader("Cache-Control", ...)`. The package does not parse or validate it.
+**Use `private` for user-scoped assets.** Avatars, attachments, and anything keyed to the current user should be `private, max-age=N` so shared caches don't serve one user's redirect to another.
 
-Set a global default via `StorageOptions.linkCacheControl`; the per-route `cacheControl` overrides it. When neither is set, no header is sent (existing behaviour).
-
-**Use `private` for user-scoped assets.** Avatars, attachments, and anything keyed to the current user should be `private, max-age=N` so shared caches (proxies, CDNs) don't serve one user's redirect to another.
-
-**Keep `max-age` shorter than `expiresIn`.** The 302 points at a presigned S3 URL that expires after `expiresIn` seconds. If the browser caches the redirect for longer, it will replay an expired URL and the download will fail. A `max-age` well under `expiresIn` (e.g. 300s cache on a 3600s link) leaves headroom for clock skew and in-flight requests.
+**Keep `max-age` shorter than `expiresIn`.** The 302 points at a presigned S3 URL that expires after `expiresIn` seconds. If the browser caches the redirect for longer, it will replay an expired URL.
 
 ### `FileCreatedEvent`
 
 Emitted after successful upload + persistence. `EVENT_NAME = "storage.file.created"`.
 
-### `StorageService`
+### `StorageService<T extends Storable = Storable>`
 
-Injected via DI. Wraps `@aws-sdk/client-s3`.
+Injected via DI; bound to the importing module's feature configuration.
 
-- `store(key, buffer, contentType): Promise<void>` -- Upload a file to S3 under the given key
-- `getSignedUrl(key, expiresIn?): Promise<string>` -- Generate a presigned download URL
-- `bucket: string` -- The configured S3 bucket name; use when constructing `Storable` entities outside the `@Upload()` interceptor
+- `store(key, buffer, contentType): Promise<void>` — Upload a file to S3 under the given key, in this feature's bucket.
+- `getSignedUrl(key, expiresIn?): Promise<string>` — Generate a presigned download URL against this feature's bucket.
+- `bucket: string` — The configured S3 bucket for this feature; use when constructing `Storable` entities outside the `@Upload()` interceptor.
+
+Each `forFeature` import gets its own instance. A service that needs to write to two buckets injects two `StorageService` instances by importing both feature modules and exposing both via different sub-modules — typical NestJS module composition.
 
 ## Storage Key Format
 
@@ -341,11 +461,11 @@ To customise key generation, pass a `key` option to `@Upload()`. See [Custom key
 
 ## Customizing the ID generator
 
-The package ships `UlidIdGenerator` as the default — ULIDs are time-sortable, compact (26 chars vs 36 for UUID), and globally unique, which makes them a strong default for S3 object keys.
+The package ships `UlidIdGenerator` as the default — ULIDs are time-sortable, compact, and globally unique, which makes them a strong default for S3 object keys.
 
 If you want a different identifier (UUID v4, a custom sequential ID, deterministic test IDs, etc.), implement a class with the same shape and override the default via Nest's standard provider replacement.
 
-```ts
+```typescript
 // my-app/src/uuid-id-generator.ts
 import { Injectable } from "@nestjs/common"
 import { v4 as uuid } from "uuid"
@@ -358,19 +478,18 @@ export class UuidIdGenerator {
 }
 ```
 
-```ts
+```typescript
 // my-app/src/app.module.ts
-import { Module } from "@nestjs/common"
 import { StorageModule } from "@neomaventures/storage"
-// `UlidIdGenerator` is the default-implementation class, kept out of the
-// public barrel deliberately — reach for it via this deep path only when
-// you're replacing it.
 import { UlidIdGenerator } from "@neomaventures/storage/services/ulid-id-generator.service"
 
 import { UuidIdGenerator } from "./uuid-id-generator"
 
 @Module({
-  imports: [StorageModule.forRoot({ /* ... */ })],
+  imports: [
+    StorageModule.forRoot({ /* ... */ }),
+    StorageModule.forFeature({ bucket: "uploads" }),
+  ],
   providers: [
     { provide: UlidIdGenerator, useClass: UuidIdGenerator },
   ],
@@ -378,61 +497,45 @@ import { UuidIdGenerator } from "./uuid-id-generator"
 export class AppModule {}
 ```
 
-Any class with a `generate(): string` method satisfies the contract — the upload pipeline calls `idGenerator.generate()` to mint each key prefix. Inject it the same way for tests (e.g. a `TestIdGenerator` that returns predictable strings) so your specs don't have to mock around ULID's randomness.
+Any class with a `generate(): string` method satisfies the contract.
 
-## Migrating from 0.x: pre-handler persistence
+## Migrating from 0.x — `forFeature` and the bucket move
 
-**Breaking change in 0.5.0.** The `UploadInterceptor` lifecycle changed: the entity is now saved to the database **before** the consumer handler runs, not after. This unblocks consumers who want to wire foreign keys (e.g. `Account.avatar = file`) without a double-save workaround.
+**Breaking change in this minor.** `bucket` and the per-feature defaults (`maxFileSize`, `allowedMimeTypes`, `linkExpiresIn`, `linkCacheControl`) moved off `StorageRootOptions`. Single-bucket apps add one `StorageModule.forFeature({ bucket })` line in the same module that calls `forRoot`. Multi-bucket apps register `forFeature` per feature module.
 
-### What changed
-
-- **Before (0.4.x and earlier):** Interceptor called `repository.create()` pre-handler. Your handler received an unpersisted entity (no `id`). The interceptor called `repository.save()` post-handler, then emitted `FileCreatedEvent`.
-- **After (0.5.0+):** Interceptor calls `repository.save()` pre-handler. Your handler receives a persisted entity (has `id`). `FileCreatedEvent` fires before the handler. No post-handler save.
-
-### Before / after consumer snippets
-
-**Before** — handler mutates and returns; interceptor auto-saves:
+### Before
 
 ```typescript
-@Post()
-@UploadDecorator()
-public create(@StoredFile() file: Upload): Upload {
-  file.source = "form"
-  return file // interceptor saves this post-handler
-}
+StorageModule.forRoot({
+  endpoint: "http://localhost:9000",
+  region: "us-east-1",
+  bucket: "uploads",
+  accessKeyId: "...",
+  secretAccessKey: "...",
+  entity: Upload,
+  maxFileSize: 10_000_000,
+  linkCacheControl: "private, max-age=300",
+})
 ```
 
-**After** — file is already saved; mutate-and-save is explicit:
+### After
 
 ```typescript
-@Post()
-@UploadDecorator()
-public async create(@StoredFile() file: Upload): Promise<Upload> {
-  file.source = "form"
-  return this.uploads.save(file) // explicit
-}
+StorageModule.forRoot({
+  endpoint: "http://localhost:9000",
+  region: "us-east-1",
+  accessKeyId: "...",
+  secretAccessKey: "...",
+  entity: Upload,
+  defaults: {
+    maxFileSize: 10_000_000,
+    linkCacheControl: "private, max-age=300",
+  },
+}),
+StorageModule.forFeature({ bucket: "uploads" }),
 ```
 
-If your handler did not mutate fields, just return the file as-is — no migration needed.
-
-### Wiring FKs is now a one-liner
-
-The original motivation. Before, you had to inject the uploads repository and double-save to set a foreign key. Now:
-
-```typescript
-@Post("avatar")
-@UploadDecorator()
-public async uploadAvatar(
-  @CurrentUser() user: User,
-  @StoredFile() file: Upload,
-): Promise<void> {
-  await this.accounts.update(user.id, { avatar: file }) // file.id exists
-}
-```
-
-### Trade-off: orphan rows on handler failure
-
-Because persistence happens before the handler runs, a handler that throws leaves the row (and S3 object) in place. This is intentional: the file genuinely exists in S3, so an orphan row is an *honest* row. If you need transactional cleanup, listen for `FileCreatedEvent` and reconcile out-of-band, or wrap the handler in a try/catch that deletes the row explicitly.
+No deprecation shim — pre-1.0 minor bump, clean break. If you keep all options at the root via `defaults`, the only edit per feature is adding the `forFeature({ bucket })` line.
 
 ## License
 

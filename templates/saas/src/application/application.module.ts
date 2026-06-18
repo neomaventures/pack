@@ -123,7 +123,6 @@ interface AppConfig {
       useFactory: (config: TypedConfig<AppConfig>) => ({
         endpoint: config.s3Endpoint,
         region: config.s3Region,
-        bucket: config.s3Bucket,
         accessKeyId: config.s3AccessKeyId,
         secretAccessKey: config.s3SecretAccessKey,
         entity: Upload,
