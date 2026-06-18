@@ -1,5 +1,14 @@
 # **PACKAGE_NAME**
 
+## 0.0.10
+
+### Patch Changes
+
+- Updated dependencies [b3e3823]
+- Updated dependencies [76771b4]
+  - @neomaventures/auth@0.8.0
+  - @neomaventures/storage@0.6.0
+
 ## 0.0.9
 
 ### Patch Changes
