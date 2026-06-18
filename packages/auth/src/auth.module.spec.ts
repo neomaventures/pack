@@ -10,95 +10,7 @@ import { type Authenticatable } from "./interfaces/authenticatable.interface"
 import { type OAuthTokenable } from "./interfaces/oauth-tokenable.interface"
 import { type OAuthProfile } from "./types/oauth-profile.type"
 
-describe("AuthModule", () => {
-  it("should compile via the sync forRoot wrapper", async () => {
-    const module = await Test.createTestingModule({
-      imports: [
-        TypeOrmModule.forRoot({
-          type: "sqlite",
-          database: ":memory:",
-          entities: [Account, OAuthToken],
-          synchronize: true,
-        }),
-        TypeOrmModule.forFeature([Account, OAuthToken]),
-        AuthModule.forRoot(baseOptions()),
-      ],
-    }).compile()
-
-    expect(module.get(RESOLVED_AUTH_OPTIONS)).toBeDefined()
-  })
-
-  describe("RESOLVED_AUTH_OPTIONS (forRootAsync)", () => {
-    describe("Given no entity overrides", () => {
-      it("should default entity to Account and oauthTokenEntity to OAuthToken", async () => {
-        const module = await Test.createTestingModule({
-          imports: [
-            TypeOrmModule.forRoot({
-              type: "sqlite",
-              database: ":memory:",
-              entities: [Account, OAuthToken],
-              synchronize: true,
-            }),
-            TypeOrmModule.forFeature([Account, OAuthToken]),
-            AuthModule.forRootAsync({
-              useFactory: () => baseOptions(),
-            }),
-          ],
-        }).compile()
-
-        const resolved = module.get(RESOLVED_AUTH_OPTIONS)
-        expect(resolved.entity).toBe(Account)
-        expect(resolved.oauthTokenEntity).toBe(OAuthToken)
-      })
-    })
-
-    describe("Given custom entity overrides", () => {
-      class CustomAccount implements Authenticatable {
-        public id!: string
-        public email!: string
-        public permissions?: string[]
-        public authProfile?: OAuthProfile | null
-      }
-
-      class CustomOAuthToken implements OAuthTokenable {
-        public id!: string
-        public account!: Authenticatable
-        public provider!: string
-        public accessToken!: string
-        public refreshToken!: string | null
-        public expiresAt!: Date
-        public scopes!: string[]
-      }
-
-      it("should use the provided entity and oauthTokenEntity", async () => {
-        const module = await Test.createTestingModule({
-          imports: [
-            TypeOrmModule.forRoot({
-              type: "sqlite",
-              database: ":memory:",
-              entities: [Account, OAuthToken],
-              synchronize: true,
-            }),
-            TypeOrmModule.forFeature([Account, OAuthToken]),
-            AuthModule.forRootAsync({
-              useFactory: () => ({
-                ...baseOptions(),
-                entity: CustomAccount,
-                oauthTokenEntity: CustomOAuthToken,
-              }),
-            }),
-          ],
-        }).compile()
-
-        const resolved = module.get(RESOLVED_AUTH_OPTIONS)
-        expect(resolved.entity).toBe(CustomAccount)
-        expect(resolved.oauthTokenEntity).toBe(CustomOAuthToken)
-      })
-    })
-  })
-})
-
-const baseOptions = (): AuthOptions => ({
+const options: AuthOptions = {
   secret: faker.string.alphanumeric(32),
   expiresIn: "1h",
   magicLink: {
@@ -116,4 +28,78 @@ const baseOptions = (): AuthOptions => ({
       },
     },
   },
+}
+
+describe("AuthModule", () => {
+  describe("Given no entity overrides", () => {
+    it("should default entity to Account and oauthTokenEntity to OAuthToken", async () => {
+      const module = await Test.createTestingModule({
+        imports: [
+          TypeOrmModule.forRoot({
+            type: "sqlite",
+            database: ":memory:",
+            entities: [Account, OAuthToken],
+            synchronize: true,
+          }),
+          TypeOrmModule.forFeature([Account, OAuthToken]),
+          AuthModule.forRootAsync({
+            useFactory: () => options,
+          }),
+        ],
+      }).compile()
+
+      const resolved = module.get(RESOLVED_AUTH_OPTIONS)
+      expect(resolved).toMatchObject({
+        ...options,
+        accountEntity: Account,
+        oauthTokenEntity: OAuthToken,
+      })
+    })
+  })
+
+  describe("Given custom entity overrides", () => {
+    class CustomAccount implements Authenticatable {
+      public id!: string
+      public email!: string
+      public permissions?: string[]
+      public authProfile?: OAuthProfile | null
+    }
+
+    class CustomOAuthToken implements OAuthTokenable {
+      public id!: string
+      public account!: Authenticatable
+      public provider!: string
+      public accessToken!: string
+      public refreshToken!: string | null
+      public expiresAt!: Date
+      public scopes!: string[]
+    }
+
+    it("should use the provided entity and oauthTokenEntity", async () => {
+      const module = await Test.createTestingModule({
+        imports: [
+          TypeOrmModule.forRoot({
+            type: "sqlite",
+            database: ":memory:",
+            entities: [Account, OAuthToken],
+            synchronize: true,
+          }),
+          TypeOrmModule.forFeature([Account, OAuthToken]),
+          AuthModule.forRootAsync({
+            useFactory: () => ({
+              ...options,
+              accountEntity: CustomAccount,
+              oauthTokenEntity: CustomOAuthToken,
+            }),
+          }),
+        ],
+      }).compile()
+
+      const resolved = module.get(RESOLVED_AUTH_OPTIONS)
+      expect(resolved).toMatchObject({
+        accountEntity: CustomAccount,
+        oauthTokenEntity: CustomOAuthToken,
+      })
+    })
+  })
 })

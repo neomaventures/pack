@@ -21,8 +21,8 @@ import {
 
 interface VerifyResponse {
   token: string
-  user: Account
-  isNewUser: boolean
+  account: Account
+  isNewAccount: boolean
 }
 
 @Controller("magic-link")
@@ -44,14 +44,14 @@ export class MagicLinkController {
     @Query("token") token: string,
     @Res({ passthrough: true }) res: Response,
   ): Promise<VerifyResponse> {
-    const { entity, isNewUser } = await this.magicLinkService.verify(token)
+    const { account, isNewAccount } = await this.magicLinkService.verify(token)
 
-    const { token: sessionToken } = this.sessionService.create(res, entity)
+    const { token: sessionToken } = this.sessionService.create(res, account)
 
     return {
       token: sessionToken,
-      user: entity,
-      isNewUser,
+      account,
+      isNewAccount,
     }
   }
 }

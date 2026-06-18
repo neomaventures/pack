@@ -14,7 +14,7 @@ import { AuthController } from "./auth.controller"
 
 const email = faker.internet.email()
 const token = faker.string.alphanumeric(32)
-const entity = { id: faker.string.uuid(), email, permissions: [] }
+const account = { id: faker.string.uuid(), email, permissions: [] }
 
 describe("AuthController", () => {
   let controller: AuthController
@@ -33,20 +33,18 @@ describe("AuthController", () => {
       }),
       verify: jest.fn().mockImplementation((submitted: string) => {
         if (submitted === token) {
-          return Promise.resolve({ entity, isNewUser: true })
+          return Promise.resolve({ account, isNewAccount: true })
         }
         throw new Error(`Unexpected token: ${submitted}`)
       }),
     }
     sessionService = {
-      create: jest
-        .fn()
-        .mockImplementation((_res: Response, account: unknown) => {
-          if (account === entity) {
-            return { token: faker.string.alphanumeric(32) }
-          }
-          throw new Error("Unexpected account")
-        }),
+      create: jest.fn().mockImplementation((_res: Response, arg: unknown) => {
+        if (arg === account) {
+          return { token: faker.string.alphanumeric(32) }
+        }
+        throw new Error("Unexpected account")
+      }),
       clear: jest.fn(),
     }
     const module: TestingModule = await Test.createTestingModule({
@@ -109,15 +107,15 @@ describe("AuthController", () => {
       it("should create a session and return redirect to /dashboard", () => {
         const res = express.response() as unknown as Response
         const googleAuthResult = {
-          entity,
-          isNewUser: true,
+          account,
+          isNewAccount: true,
           profile: { sub: faker.string.numeric(10) },
         }
 
         const result = controller.googleCallback(googleAuthResult, res)
 
         expect(result).toMatchObject({ url: "/dashboard" })
-        expect(sessionService.create).toHaveBeenCalledWith(res, entity)
+        expect(sessionService.create).toHaveBeenCalledWith(res, account)
       })
     })
   })

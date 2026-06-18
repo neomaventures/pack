@@ -31,12 +31,12 @@ export interface MagicLinkVerifyResult<T extends Authenticatable = Account> {
   /**
    * The authenticated or newly created account entity.
    */
-  entity: T
+  account: T
 
   /**
    * True if this was a new registration, false if existing user.
    */
-  isNewUser: boolean
+  isNewAccount: boolean
 }
 
 /**
@@ -99,7 +99,7 @@ export class MagicLinkService<T extends Authenticatable = Account> {
       { expiresIn: "15m" },
     )
 
-    const repo = this.datasource.getRepository(this.resolved.entity)
+    const repo = this.datasource.getRepository(this.resolved.accountEntity)
     const exists = await repo.exists({
       where: { email: email.toLowerCase() },
     })
@@ -130,9 +130,9 @@ export class MagicLinkService<T extends Authenticatable = Account> {
    *
    * @example
    * ```typescript
-   * const { entity, isNewUser } = await magicLinkService.verify(token)
-   * if (isNewUser) {
-   *   await emailService.sendWelcome(entity.email)
+   * const { account, isNewAccount } = await magicLinkService.verify(token)
+   * if (isNewAccount) {
+   *   await emailService.sendWelcome(account.email)
    * }
    * ```
    *
@@ -151,30 +151,30 @@ export class MagicLinkService<T extends Authenticatable = Account> {
     }
 
     const email = (payload.email as string).toLowerCase()
-    const repo = this.datasource.getRepository(this.resolved.entity)
+    const repo = this.datasource.getRepository(this.resolved.accountEntity)
 
     const existing = await repo.findOne({ where: { email } })
 
     if (existing) {
       // Repo is built from the configured entity class — cast at the
       // boundary to honour the class-level generic.
-      const entity = existing as T
+      const account = existing as T
       this.eventEmitter.emit(
         AuthenticatedEvent.EVENT_NAME,
-        new AuthenticatedEvent<T>(entity),
+        new AuthenticatedEvent<T>(account),
       )
-      return { entity, isNewUser: false }
+      return { account, isNewAccount: false }
     }
 
     const toSave = repo.create({ email })
     const saved = await repo.save(toSave)
-    const entity = saved as T
+    const account = saved as T
 
     this.eventEmitter.emit(
       RegisteredEvent.EVENT_NAME,
-      new RegisteredEvent<T>(entity),
+      new RegisteredEvent<T>(account),
     )
 
-    return { entity, isNewUser: true }
+    return { account, isNewAccount: true }
   }
 }

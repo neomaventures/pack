@@ -36,13 +36,13 @@ appModules.forEach(([name, modulePath]) => {
     describe("When a request is made with a valid Bearer token", () => {
       it("should respond with HTTP OK and the authenticated user", async () => {
         const email = faker.internet.email()
-        const { token, user } = await authenticateViaEmail(app, email)
+        const { token, account } = await authenticateViaEmail(app, email)
 
         await request(app.getHttpServer())
           .get("/me")
           .set("Authorization", `Bearer ${token}`)
           .expect(OK)
-          .expect({ id: user.id, email: user.email })
+          .expect({ id: account.id, email: account.email })
       })
 
       it("should return different users for different tokens", async () => {
@@ -53,13 +53,13 @@ appModules.forEach(([name, modulePath]) => {
           .get("/me")
           .set("Authorization", `Bearer ${userA.token}`)
           .expect(OK)
-          .expect({ id: userA.user.id, email: userA.user.email })
+          .expect({ id: userA.account.id, email: userA.account.email })
 
         await request(app.getHttpServer())
           .get("/me")
           .set("Authorization", `Bearer ${userB.token}`)
           .expect(OK)
-          .expect({ id: userB.user.id, email: userB.user.email })
+          .expect({ id: userB.account.id, email: userB.account.email })
       })
     })
 

@@ -18,7 +18,7 @@ developers, fewer security footguns.
 - Reference `Account` and `OAuthToken` entities exported at
   `@neomaventures/auth/entities` — register with TypeORM and you're done.
 - Replaceable: implement `Authenticatable` / `OAuthTokenable` on your own
-  classes and pass them via `entity:` / `oauthTokenEntity:` to attach
+  classes and pass them via `accountEntity:` / `oauthTokenEntity:` to attach
   consumer-owned relations (e.g. `OneToMany(() => Upload) avatars`).
 - Magic link authentication (send & verify)
 - Google OAuth auth code flow with account linking by verified email
@@ -144,7 +144,7 @@ import { Module } from "@nestjs/common"
 export class AppModule {}
 ```
 
-Omit `entity:` and `oauthTokenEntity:` and the module wires services
+Omit `accountEntity:` and `oauthTokenEntity:` and the module wires services
 against the reference `Account` / `OAuthToken` classes.
 
 Use `forRootAsync` when you need to inject a config service:
@@ -189,7 +189,7 @@ When your app needs relations *from* `Account` to consumer-owned entities
 reference class can't help — it lives in the auth package and can't
 import your classes. Implement `Authenticatable` on your own entity
 instead, register *that* with TypeORM, and pass the class to
-`AuthModule.forRoot({ entity })`.
+`AuthModule.forRoot({ accountEntity })`.
 
 ```typescript
 import { type Authenticatable } from "@neomaventures/auth"
@@ -247,7 +247,7 @@ import { AppOAuthToken } from "./oauth-token.entity"
     AuthModule.forRoot({
       secret: process.env.JWT_SECRET,
       expiresIn: "1h",
-      entity: Account,
+      accountEntity: Account,
       oauthTokenEntity: AppOAuthToken,
       magicLink: { mailer: { /* ... */ } },
     }),
@@ -256,21 +256,21 @@ import { AppOAuthToken } from "./oauth-token.entity"
 export class AppModule {}
 ```
 
-`entity:` and `oauthTokenEntity:` are independently optional. Override
+`accountEntity:` and `oauthTokenEntity:` are independently optional. Override
 either, both, or neither. The package never calls
 `TypeOrmModule.forFeature` for you — you decide what's in
 `entities: [...]` and your migrations are generated against that set.
 
 ### Type narrowing — how the custom class flows
 
-`AuthModule.forRoot({ entity: YourAccount })` accepts any class that
+`AuthModule.forRoot({ accountEntity: YourAccount })` accepts any class that
 satisfies `Authenticatable`, but the concrete `YourAccount` type does
 **not** flow through `forRoot` automatically. Narrowing happens at the
 consumption edges:
 
 | Surface | How `YourAccount` lands |
 | --- | --- |
-| `forRoot({ entity: YourAccount })` | Options accept any `Authenticatable`; no narrowing past this point |
+| `forRoot({ accountEntity: YourAccount })` | Options accept any `Authenticatable`; no narrowing past this point |
 | `AuthenticationService<YourAccount>` (and `MagicLinkService<YourAccount>`, `GoogleAuthService<YourAccount, YourOAuthToken>`) | Class-level generic — annotate at constructor injection and method returns narrow |
 | `getAccount<YourAccount>()` | Method-level template with `Authenticatable` default |
 | `@AuthenticatedAccount() account: YourAccount` | Annotation-trusted |
@@ -346,10 +346,10 @@ export class AuthController {
   public async verify(
     @Query("token") token: string,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<{ token: string; account: Account; isNewUser: boolean }> {
-    const { entity, isNewUser } = await this.magicLinkService.verify(token)
+  ): Promise<{ token: string; account: Account; isNewAccount: boolean }> {
+    const { entity, isNewAccount } = await this.magicLinkService.verify(token)
     const { token: sessionToken } = this.sessionService.create(res, entity)
-    return { token: sessionToken, account: entity, isNewUser }
+    return { token: sessionToken, account: entity, isNewAccount }
   }
 }
 ```
@@ -358,9 +358,9 @@ export class AuthController {
 cookie on the response. The cookie's `Max-Age` is automatically aligned
 with the JWT's expiry.
 
-If you configured `entity: YourAccount`, swap `Account` for `YourAccount`
+If you configured `accountEntity: YourAccount`, swap `Account` for `YourAccount`
 in the return type and `@AuthenticatedAccount()` decorator signatures
-below — the runtime value is whatever class you passed to `entity:`.
+below — the runtime value is whatever class you passed to `accountEntity:`.
 
 ### 5. Protect routes
 
@@ -580,9 +580,9 @@ export class GoogleAuthController {
   public handleCallback(
     @GetGoogleAuthResult() result: GoogleAuthResult,
     @Res({ passthrough: true }) res: Response,
-  ): { token: string; account: Account; isNewUser: boolean } {
-    const { token } = this.sessionService.create(res, result.entity)
-    return { token, account: result.entity, isNewUser: result.isNewUser }
+  ): { token: string; account: Account; isNewAccount: boolean } {
+    const { token } = this.sessionService.create(res, result.account)
+    return { token, account: result.account, isNewAccount: result.isNewAccount }
   }
 }
 ```
@@ -660,7 +660,7 @@ class OAuthToken implements OAuthTokenable {
 | ------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `secret`            | `string`                            | JWT signing secret                                                                                                                                                                                         |
 | `expiresIn`         | `string \| number`                  | Session token expiration (e.g., "1h", "7d")                                                                                                                                                                |
-| `entity`            | `new () => Authenticatable`         | Identity entity class. Defaults to the reference `Account`.                                                                                                                                                |
+| `accountEntity`     | `new () => Authenticatable`         | Account entity class. Defaults to the reference `Account`.                                                                                                                                                 |
 | `oauthTokenEntity`  | `new () => OAuthTokenable`          | OAuth-token entity class. Defaults to the reference `OAuthToken`.                                                                                                                                          |
 | `magicLink`         | `MagicLinkOptions`                  | Magic link configuration (optional — at least one of `magicLink` or `googleAuth` is required)                                                                                                              |
 | `googleAuth`        | `GoogleAuthOptions`                 | Google OAuth configuration (optional — at least one of `magicLink` or `googleAuth` is required)                                                                                                            |
@@ -683,7 +683,7 @@ class OAuthToken implements OAuthTokenable {
 
 - **`MagicLinkService`**
   - `send(email): Promise<void>` — sends a magic link email
-  - `verify(token): Promise<{ entity: Authenticatable; isNewUser: boolean }>`
+  - `verify(token): Promise<{ account: Authenticatable; isNewAccount: boolean }>`
 - **`GoogleAuthService`**
   - `authorizeUrl: URL | null` — Google OAuth consent URL
   - `authenticate(code): Promise<GoogleAuthResult>`
@@ -702,12 +702,12 @@ class OAuthToken implements OAuthTokenable {
 ### Events
 
 `RegisteredEvent` and `AuthenticatedEvent` both carry
-`entity: Authenticatable` and `provider: AuthProvider`.
+`account: Authenticatable` and `provider: AuthProvider`.
 
 ```typescript
 @OnEvent(RegisteredEvent.EVENT_NAME)
 public async onRegistered(event: RegisteredEvent): Promise<void> {
-  await this.emailService.sendWelcome(event.entity.email)
+  await this.emailService.sendWelcome(event.account.email)
 }
 ```
 

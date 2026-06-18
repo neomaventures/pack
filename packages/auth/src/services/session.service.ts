@@ -41,20 +41,20 @@ export class SessionService {
   }
 
   /**
-   * Creates a session for the given entity.
+   * Creates a session for the given account.
    *
    * Issues a session JWT and sets it as an httpOnly cookie on the response.
    *
    * @param res - Express response object
-   * @param entity - The authenticated entity
+   * @param account - The authenticated account
    * @returns The issued token and decoded payload
    */
   public create(
     res: Response,
-    entity: Account,
+    account: Account,
   ): { token: string; payload: jwt.JwtPayload } {
     const result = this.tokenService.issue({
-      sub: entity.id,
+      sub: account.id,
       aud: SESSION_AUDIENCE,
     })
 

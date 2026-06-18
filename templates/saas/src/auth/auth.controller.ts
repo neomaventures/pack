@@ -116,8 +116,8 @@ export class AuthController {
     @Query("token") token: string,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ url: string }> {
-    const { entity } = await this.magicLinkService.verify(token)
-    this.sessionService.create(res, entity)
+    const { account } = await this.magicLinkService.verify(token)
+    this.sessionService.create(res, account)
     return { url: "/dashboard" }
   }
 
@@ -138,10 +138,10 @@ export class AuthController {
   @ErrorTemplate({ default: "/auth/register" })
   @Redirect("", FOUND)
   public googleCallback(
-    @GetGoogleAuthResult() { entity }: GoogleAuthResult,
+    @GetGoogleAuthResult() { account }: GoogleAuthResult,
     @Res({ passthrough: true }) res: Response,
   ): { url: string } {
-    this.sessionService.create(res, entity)
+    this.sessionService.create(res, account)
     return { url: "/dashboard" }
   }
 

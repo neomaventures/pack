@@ -33,7 +33,7 @@ appModules.forEach(([name, modulePath]) => {
 
       emailCases.forEach(({ desc, email }) => {
         describe(`with ${desc} email: ${email}`, () => {
-          it("should respond with HTTP 200, normalized email, and isNewUser: true", async () => {
+          it("should respond with HTTP 200, normalized email, and isNewAccount: true", async () => {
             const token = jwt.sign(
               { email, aud: MAGIC_LINK_AUDIENCE },
               process.env.AUTH_SECRET!,
@@ -46,12 +46,12 @@ appModules.forEach(([name, modulePath]) => {
               .expect(OK)
 
             expect(response.body).toMatchObject({
-              user: {
+              account: {
                 email: email.toLowerCase(),
               },
-              isNewUser: true,
+              isNewAccount: true,
             })
-            expect(response.body.user.id).toBeDefined()
+            expect(response.body.account.id).toBeDefined()
             expect(response.body.token).toBeDefined()
 
             // Verify the session token is valid and has correct audience
@@ -60,7 +60,7 @@ appModules.forEach(([name, modulePath]) => {
               process.env.AUTH_SECRET!,
             ) as jwt.JwtPayload
             expect(payload).toMatchObject({
-              sub: response.body.user.id,
+              sub: response.body.account.id,
               aud: SESSION_AUDIENCE,
             })
           })
@@ -89,11 +89,11 @@ appModules.forEach(([name, modulePath]) => {
           .expect(OK)
 
         expect(response.body).toMatchObject({
-          user: {
+          account: {
             id: (existingUser as any).id,
             email,
           },
-          isNewUser: false,
+          isNewAccount: false,
         })
       })
 
@@ -117,10 +117,10 @@ appModules.forEach(([name, modulePath]) => {
           .expect(OK)
 
         expect(response.body).toMatchObject({
-          user: {
+          account: {
             id: (existingUser as any).id,
           },
-          isNewUser: false,
+          isNewAccount: false,
         })
       })
     })

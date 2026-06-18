@@ -15,7 +15,7 @@ import { GoogleCallbackInterceptor } from "../interceptors/google-callback.inter
  * @Get('callback')
  * @GoogleCallback()
  * public handleCallback(@GetGoogleAuthResult() result: GoogleAuthResult<User>): void {
- *   // result.entity, result.isNewUser, result.profile
+ *   // result.account, result.isNewAccount, result.profile
  * }
  * ```
  */

@@ -14,7 +14,7 @@ import { type AuthProvider } from "../types/auth-provider"
  * ```typescript
  * @OnEvent('auth.registered')
  * async handleRegistered(event: RegisteredEvent) {
- *   await this.emailService.sendWelcome(event.entity.email)
+ *   await this.emailService.sendWelcome(event.account.email)
  *   console.log(`Registered via ${event.provider}`)
  * }
  * ```
@@ -26,11 +26,11 @@ export class RegisteredEvent<T extends Authenticatable = Account> {
   public static readonly EVENT_NAME = "auth.registered"
 
   /**
-   * @param entity - The newly registered entity
+   * @param account - The newly registered account
    * @param provider - The authentication provider that triggered registration (defaults to "magic-link")
    */
   public constructor(
-    public readonly entity: T,
+    public readonly account: T,
     public readonly provider: AuthProvider = "magic-link",
   ) {}
 }

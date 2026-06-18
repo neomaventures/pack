@@ -11,8 +11,8 @@ import {
 
 interface GoogleCallbackResponse {
   token: string
-  user: Account
-  isNewUser: boolean
+  account: Account
+  isNewAccount: boolean
 }
 
 /**
@@ -29,7 +29,7 @@ export class GoogleAuthController {
    *
    * @param result - The Google authentication result from the interceptor
    * @param res - The Express response for setting session cookies
-   * @returns The session token, account, and isNewUser flag
+   * @returns The session token, account, and isNewAccount flag
    */
   @Get("callback")
   @GoogleCallback()
@@ -37,11 +37,11 @@ export class GoogleAuthController {
     @GetGoogleAuthResult() result: GoogleAuthResult,
     @Res({ passthrough: true }) res: Response,
   ): Promise<GoogleCallbackResponse> {
-    const { token } = this.sessionService.create(res, result.entity)
+    const { token } = this.sessionService.create(res, result.account)
     return {
       token,
-      user: result.entity,
-      isNewUser: result.isNewUser,
+      account: result.account,
+      isNewAccount: result.isNewAccount,
     }
   }
 }

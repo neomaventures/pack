@@ -213,7 +213,7 @@ registrations.forEach(([name, register]) => {
           expect(accounts[0].email).toBe(email.toLowerCase())
         })
 
-        it("should return the new entity with isNewUser: true", async () => {
+        it("should return the new entity with isNewAccount: true", async () => {
           const code = faker.string.alphanumeric(20)
           const email = faker.internet.email()
           const idToken = googleFakes.idToken({ email })
@@ -221,9 +221,9 @@ registrations.forEach(([name, register]) => {
 
           const result = await service.authenticate(code)
 
-          expect(result.entity).toBeInstanceOf(Account)
-          expect(result.entity.email).toBe(email.toLowerCase())
-          expect(result.isNewUser).toBe(true)
+          expect(result.account).toBeInstanceOf(Account)
+          expect(result.account.email).toBe(email.toLowerCase())
+          expect(result.isNewAccount).toBe(true)
         })
 
         it("should emit a RegisteredEvent with provider 'google'", async () => {
@@ -237,7 +237,7 @@ registrations.forEach(([name, register]) => {
 
           expect(emitSpy).toHaveBeenCalledWith(
             RegisteredEvent.EVENT_NAME,
-            new RegisteredEvent(result.entity, "google"),
+            new RegisteredEvent(result.account, "google"),
           )
         })
 
@@ -291,7 +291,7 @@ registrations.forEach(([name, register]) => {
           const result = await service.authenticate(code)
 
           await expect(
-            repository.findOneByOrFail({ id: result.entity.id }),
+            repository.findOneByOrFail({ id: result.account.id }),
           ).resolves.toMatchObject({
             authProfile: { google: { sub, name: googleName, picture } },
           })
@@ -322,16 +322,16 @@ registrations.forEach(([name, register]) => {
           existingAccount = await repository.findOneByOrFail({ id: created.id })
         })
 
-        it("should return the existing entity with isNewUser: false", async () => {
+        it("should return the existing entity with isNewAccount: false", async () => {
           const code = faker.string.alphanumeric(20)
           const idToken = googleFakes.idToken({ email: existingAccount.email })
           await mockSuccess(code, { id_token: idToken })
 
           const result = await service.authenticate(code)
 
-          expect(result.entity.id).toBe(existingAccount.id)
-          expect(result.entity.email).toBe(existingAccount.email)
-          expect(result.isNewUser).toBe(false)
+          expect(result.account.id).toBe(existingAccount.id)
+          expect(result.account.email).toBe(existingAccount.email)
+          expect(result.isNewAccount).toBe(false)
         })
 
         it("should not create a new account", async () => {
@@ -356,7 +356,7 @@ registrations.forEach(([name, register]) => {
           expect(emitSpy).toHaveBeenCalledWith(
             AuthenticatedEvent.EVENT_NAME,
             expect.objectContaining({
-              entity: expect.objectContaining({ id: existingAccount.id }),
+              account: expect.objectContaining({ id: existingAccount.id }),
               provider: "google",
             }),
           )
@@ -397,7 +397,7 @@ registrations.forEach(([name, register]) => {
 
           const result = await service.authenticate(code)
 
-          expect(result.entity.email).toBe(email.toLowerCase())
+          expect(result.account.email).toBe(email.toLowerCase())
         })
 
         it("should find existing account with case-insensitive email lookup", async () => {
@@ -413,8 +413,8 @@ registrations.forEach(([name, register]) => {
 
           const result = await service.authenticate(code)
 
-          expect(result.entity.id).toBe(existingAccount.id)
-          expect(result.isNewUser).toBe(false)
+          expect(result.account.id).toBe(existingAccount.id)
+          expect(result.isNewAccount).toBe(false)
         })
       })
 
@@ -722,7 +722,7 @@ registrations.forEach(([name, register]) => {
             const after = Date.now()
 
             const tokens = await tokenRepo.find({
-              where: { account: { id: result.entity.id } },
+              where: { account: { id: result.account.id } },
             })
             expect(tokens).toHaveLength(1)
             const stored = tokens[0]
@@ -753,7 +753,7 @@ registrations.forEach(([name, register]) => {
 
             const result = await service.authenticate(code)
             const loaded = await accountRepo.findOneByOrFail({
-              id: result.entity.id,
+              id: result.account.id,
             })
 
             expect(loaded.oauthTokens).toHaveLength(1)
@@ -789,7 +789,7 @@ registrations.forEach(([name, register]) => {
             const result = await service.authenticate(secondCode)
 
             const tokens = await tokenRepo.find({
-              where: { account: { id: result.entity.id } },
+              where: { account: { id: result.account.id } },
             })
             expect(tokens).toHaveLength(1)
             expect(tokens[0].accessToken).toBe(secondResponse.access_token)
@@ -825,7 +825,7 @@ registrations.forEach(([name, register]) => {
 
             const result = await service.authenticate(secondCode)
             const tokens = await tokenRepo.find({
-              where: { account: { id: result.entity.id } },
+              where: { account: { id: result.account.id } },
             })
 
             expect(tokens[0].refreshToken).toBe(newRefreshToken)
@@ -859,7 +859,7 @@ registrations.forEach(([name, register]) => {
 
             const result = await service.authenticate(code)
             const tokens = await tokenRepo.find({
-              where: { account: { id: result.entity.id } },
+              where: { account: { id: result.account.id } },
             })
 
             expect(tokens).toHaveLength(2)

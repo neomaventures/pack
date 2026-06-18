@@ -37,15 +37,15 @@ appModules.forEach(([name, modulePath]) => {
     const createUserWithPermissions = async (
       permissions: string[],
     ): Promise<{ id: string; email: string; token: string }> => {
-      const { token, user } = await authenticateViaEmail(
+      const { token, account } = await authenticateViaEmail(
         app,
         faker.internet.email(),
       )
 
       const repo = datasource.getRepository("Account")
-      await repo.update(user.id, { permissions })
+      await repo.update(account.id, { permissions })
 
-      return { id: user.id, email: user.email, token }
+      return { id: account.id, email: account.email, token }
     }
 
     describe("Given a route /protected/articles requiring read:articles", () => {
