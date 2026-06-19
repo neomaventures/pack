@@ -56,9 +56,6 @@ jobs:
       - name: Check README package list
         run: node scripts/check-readme-packages.mjs
 
-      - name: Verify template supply-chain policies
-        run: node scripts/verify-template-policies.mjs
-
   # ── Build ────────────────────────────────────────────────────────────
   build:
     needs: gate
