@@ -13,6 +13,7 @@
  */
 
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "fs"
+import { homedir } from "os"
 import { basename, extname, join, resolve } from "path"
 import { fileURLToPath } from "url"
 
@@ -160,6 +161,15 @@ for (const depGroup of ["dependencies", "devDependencies"]) {
   }
 }
 writeFileSync(join(targetDir, "package.json"), JSON.stringify(targetPkg, null, 2) + "\n", "utf-8")
+
+const hasHomeNpmrc = existsSync(join(homedir(), ".npmrc"))
+const hasEnvToken = !!process.env.NPM_TOKEN
+if (!hasHomeNpmrc && !hasEnvToken) {
+  console.warn("Warning: neither ~/.npmrc nor NPM_TOKEN env var was detected.")
+  console.warn("  pnpm install will fail without a GitHub Packages token.")
+  console.warn("  See the Prerequisites section of the new project's README for setup.")
+  console.warn("")
+}
 
 console.log("Done! Next steps:")
 console.log("")
