@@ -5,11 +5,17 @@
 import { readFileSync } from "fs"
 import { parse } from "yaml"
 
-const POLICIES_TO_MIRROR = ["autoInstallPeers", "minimumReleaseAge", "allowBuilds"]
+const POLICIES_TO_MIRROR = [
+  "autoInstallPeers",
+  "minimumReleaseAge",
+  "allowBuilds",
+  "overrides",
+  "minimumReleaseAgeExclude",
+]
 
 function normalisedJson(value) {
   if (value === null || typeof value !== "object") return JSON.stringify(value)
-  if (Array.isArray(value)) return JSON.stringify(value.map(normalisedJson))
+  if (Array.isArray(value)) return JSON.stringify(value.map(normalisedJson).sort())
   const sortedKeys = Object.keys(value).sort()
   return JSON.stringify(Object.fromEntries(sortedKeys.map((k) => [k, value[k]])))
 }
