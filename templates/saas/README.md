@@ -8,15 +8,15 @@ The template renders server-side HTML via EJS with [Tailwind CSS v4](https://tai
 
 ## Prerequisites
 
-You need a **GitHub account** and a **personal access token** to install `@neomaventures/*` packages from GitHub Packages. Any GitHub PAT works — public packages are auth-gated but readable by any authenticated GitHub user, so no specific scopes beyond the default are required. [Generate one here](https://github.com/settings/tokens) if you don't have one.
+You need a **GitHub personal access token** to install `@neomaventures/*` packages from GitHub Packages. Any GitHub PAT works — public packages are auth-gated but readable by any authenticated GitHub user, so no specific scopes beyond the default are required. [Generate one here](https://github.com/settings/tokens) if you don't have one.
 
-Add the token to `~/.npmrc` once — it works across every project on your machine:
+Export it in your shell rc (`~/.zshrc` or `~/.bashrc`):
 
+```bash
+export NPM_TOKEN=ghp_your_token_here
 ```
-//npm.pkg.github.com/:_authToken=ghp_your_token_here
-```
 
-For Render deploys you'll set `NPM_TOKEN` as a service env var (see Phase 3) — the build command writes it into `.npmrc` at build time.
+The same `NPM_TOKEN` is set as a Render service env var for production deploys (see Phase 3) and as a GitHub Actions secret for CI — one mechanism across every environment.
 
 ---
 
