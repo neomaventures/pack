@@ -47,6 +47,33 @@ services:
       - key: S3_SECRET_ACCESS_KEY
         sync: false
 
+  - type: web
+    name: __PACKAGE_NAME__-minio
+    runtime: docker
+    dockerfilePath: render/minio/Dockerfile
+    dockerContext: render/minio
+    region: frankfurt
+    plan: starter
+    autoDeploy: false
+    healthCheckPath: /minio/health/live
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: HOST
+        value: "0.0.0.0"
+      - key: PORT
+        value: "9000"
+      - key: CONSOLE_PORT
+        value: "9090"
+      - key: AVATAR_BUCKET
+        value: avatars
+      - key: MINIO_ROOT_USER
+        generateValue: true
+      - key: MINIO_ROOT_PASSWORD
+        generateValue: true
+
 databases:
   - name: __PACKAGE_NAME__-db
     plan: free
