@@ -5,7 +5,14 @@
 import { readFileSync } from "fs"
 import { parse } from "yaml"
 
-const POLICIES_TO_MIRROR = ["autoInstallPeers", "minimumReleaseAge"]
+const POLICIES_TO_MIRROR = ["autoInstallPeers", "minimumReleaseAge", "allowBuilds"]
+
+function normalisedJson(value) {
+  if (value === null || typeof value !== "object") return JSON.stringify(value)
+  if (Array.isArray(value)) return JSON.stringify(value.map(normalisedJson))
+  const sortedKeys = Object.keys(value).sort()
+  return JSON.stringify(Object.fromEntries(sortedKeys.map((k) => [k, value[k]])))
+}
 
 const workspace = parse(readFileSync("pnpm-workspace.yaml", "utf-8"))
 const templatePkg = JSON.parse(readFileSync("templates/saas/package.json", "utf-8"))
@@ -13,7 +20,7 @@ const templatePolicies = templatePkg.pnpm ?? {}
 
 const drifts = []
 for (const key of POLICIES_TO_MIRROR) {
-  if (workspace[key] !== templatePolicies[key]) {
+  if (normalisedJson(workspace[key]) !== normalisedJson(templatePolicies[key])) {
     drifts.push({
       key,
       workspace: workspace[key],
