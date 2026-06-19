@@ -55,8 +55,8 @@ interface AppConfig {
   s3Endpoint: string
   /** AWS region passed to the S3 SDK. MinIO ignores it but the SDK still requires a value. */
   s3Region: string
-  /** Bucket name uploads are written to. */
-  s3Bucket: string
+  /** Bucket name avatar uploads are written to. */
+  avatarBucket: string
   /** S3 access key id. */
   s3AccessKeyId: string
   /** S3 secret access key. */

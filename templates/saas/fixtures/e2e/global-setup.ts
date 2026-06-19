@@ -6,6 +6,6 @@ export default async (): Promise<void> => {
   await Promise.all([
     startMailpit(),
     startMockServer(),
-    startMinio({ bucket: process.env.S3_BUCKET }),
+    startMinio({ bucket: process.env.AVATAR_BUCKET }),
   ])
 }
