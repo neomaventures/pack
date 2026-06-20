@@ -1,11 +1,17 @@
+# Deploy workflow — triggers a Render deploy on every v* tag push.
+# Renders deploy hook URL is stored as a repo secret; obtain yours from
+# the Render dashboard under your service's Settings → Deploy Hook.
+
 name: Deploy
+
 on:
   push:
     tags: ["v*"]
 
 jobs:
   deploy:
+    name: Trigger Render deploy
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Render deploy
+      - name: Hit Render deploy hook
         run: curl -sf "${{ secrets.RENDER_DEPLOY_HOOK }}"

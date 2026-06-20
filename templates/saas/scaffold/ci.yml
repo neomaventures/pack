@@ -1,4 +1,8 @@
+# CI workflow — runs on every push and pull request to main.
+# Verifies the saas-template builds, tests pass, types check, and lint is clean.
+
 name: CI
+
 on:
   push:
     branches: [main]
@@ -6,26 +10,40 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  verify:
+    name: Build, test, and lint
     runs-on: ubuntu-latest
+
+    # NPM_TOKEN feeds the substitution in .npmrc that authenticates to
+    # GitHub Packages for @neomaventures/* dependencies. GITHUB_TOKEN
+    # is auto-provided by GitHub Actions — no manual secret setup required.
     env:
       NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout
+        uses: actions/checkout@v5
 
-      - uses: pnpm/action-setup@v5
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v5
 
-      - uses: actions/setup-node@v5
+      - name: Set up Node
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: pnpm
 
-      - run: pnpm install --frozen-lockfile
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      - run: pnpm build
+      - name: Build
+        run: pnpm build
 
-      - run: pnpm test
+      - name: Test
+        run: pnpm test
 
-      - run: pnpm typecheck
+      - name: Type check
+        run: pnpm typecheck
 
-      - run: pnpm lint
+      - name: Lint
+        run: pnpm lint
