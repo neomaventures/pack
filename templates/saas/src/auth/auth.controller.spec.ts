@@ -4,6 +4,7 @@ import {
   MagicLinkService,
   SessionService,
 } from "@neomaventures/auth"
+import { entities } from "@neomaventures/auth/testing"
 import { express } from "@neomaventures/fixtures"
 import { ApplicationLogger } from "@neomaventures/logging"
 import { MockLogger } from "@neomaventures/logging/testing"
@@ -14,7 +15,7 @@ import { AuthController } from "./auth.controller"
 
 const email = faker.internet.email()
 const token = faker.string.alphanumeric(32)
-const account = { id: faker.string.uuid(), email, permissions: [] }
+const account = entities.account({ email })
 
 describe("AuthController", () => {
   let controller: AuthController

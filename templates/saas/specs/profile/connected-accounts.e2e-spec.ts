@@ -13,9 +13,9 @@ import { configureViewEngine } from "~fixtures/configure-view-engine"
 const { FOUND, OK } = HttpStatus
 
 describe("GET /profile - connected accounts section", () => {
-  const { APP_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } =
-    process.env as Record<string, string>
-  const redirectUri = `${APP_URL}/auth/google/callback`
+  const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!
+  const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!
+  const redirectUri = `${process.env.APP_URL!}/auth/google/callback`
   const googleOAuth = new GoogleOAuthClient(mockserver)
   let app: Awaited<ReturnType<typeof managedAppInstance>>
 

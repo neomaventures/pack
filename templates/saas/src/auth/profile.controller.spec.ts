@@ -82,7 +82,7 @@ describe("ProfileController", () => {
         const result = controller.index(account)
 
         expect(result.connectedAccounts).toHaveLength(1)
-        expect(result.connectedAccounts[0].active).toBe(false)
+        expect(result.connectedAccounts[0]!.active).toBe(false)
       })
     })
   })
