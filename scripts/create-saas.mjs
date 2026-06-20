@@ -125,6 +125,18 @@ if (existsSync(targetDir)) {
   process.exit(1)
 }
 
+if (!process.env.NPM_TOKEN) {
+  console.error("✗ NPM_TOKEN environment variable is not set.")
+  console.error("")
+  console.error("  Export your GitHub personal access token first:")
+  console.error("    export NPM_TOKEN=ghp_yourTokenHere")
+  console.error("")
+  console.error("  Then re-run create:saas.")
+  console.error("")
+  console.error("  See the saas-template README's Prerequisites section for setup details.")
+  process.exit(1)
+}
+
 console.log(`Creating "${projectName}" at ${targetDir}...`)
 console.log("")
 
@@ -189,13 +201,20 @@ if (existsSync(packWorkspacePath)) {
   console.warn("")
 }
 
-const hasEnvToken = !!process.env.NPM_TOKEN
-if (!hasEnvToken) {
-  console.warn("Warning: NPM_TOKEN env var is not set.")
-  console.warn("  pnpm install will fail without a GitHub Packages token.")
-  console.warn("  See the Prerequisites section of the new project's README for setup.")
-  console.warn("")
+// Install dependencies before the initial commit so the lockfile and any
+// pnpm-workspace.yaml updates from the supply-chain prompt are captured.
+// Inherit stdio so the user sees progress and can answer the prompt.
+console.log("Installing dependencies...")
+console.log("")
+const install = spawnSync("pnpm", ["install"], { cwd: targetDir, stdio: "inherit" })
+if (install.status !== 0) {
+  console.error("")
+  console.error("✗ pnpm install failed.")
+  console.error(`  The scaffold at ${targetDir} is left in place for inspection.`)
+  console.error("  Fix the install issue, remove the directory, and re-run create:saas.")
+  process.exit(install.status ?? 1)
 }
+console.log("")
 
 // Initialize a git repo with a baseline commit. Best-effort: if git isn't
 // installed or any step fails, warn and continue — the scaffold still succeeded.
@@ -225,10 +244,11 @@ try {
 
 const displayDir = targetArg ?? targetDir
 
-console.log("Done! Next steps:")
+console.log(`✓ Scaffolded to ${displayDir}`)
+console.log("✓ Initial commit created")
 console.log("")
+console.log("Next steps:")
 console.log(`  cd ${displayDir}`)
-console.log("  pnpm install")
 console.log(`  gh repo create <your-org>/${projectName} --private --source . --push`)
 console.log("")
 console.log("  (swap --private for --public if you'd prefer a public repo)")
