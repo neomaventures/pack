@@ -39,6 +39,8 @@
     "@nestjs/event-emitter": "^3.0.1",
     "@nestjs/platform-express": "^11.1.18",
     "@nestjs/typeorm": "^11.0.0",
+    "@swc-node/register": "^1.11.1",
+    "@swc/core": "^1.12.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "cookie": "^1.1.1",
@@ -63,7 +65,6 @@
     "@nestjs/testing": "^11.1.18",
     "@playwright/test": "^1.58.2",
     "@swc/cli": "^0.7.10",
-    "@swc/core": "^1.12.1",
     "@swc/jest": "^0.2.39",
     "@tailwindcss/cli": "^4.1.11",
     "@types/ejs": "^3.1.5",
@@ -85,7 +86,6 @@
     "prettier": "^3.4.2",
     "prettier-plugin-tailwindcss": "^0.8.0",
     "supertest": "^7.2.2",
-    "@swc-node/register": "^1.11.1",
     "typescript": "^6.0.2",
     "typescript-eslint": "^8.58.0"
   }

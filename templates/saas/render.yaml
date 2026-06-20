@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: starter
     region: frankfurt
-    buildCommand: NODE_ENV=development pnpm install --frozen-lockfile && NODE_ENV=production pnpm build
+    buildCommand: pnpm install --frozen-lockfile && pnpm build && pnpm prune --prod
     preDeployCommand: pnpm migration:run
     startCommand: pnpm start
     # Wait for GitHub commit checks (CI) to pass before deploying.
