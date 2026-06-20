@@ -12,6 +12,7 @@
  * ```
  */
 
+import { spawnSync } from "child_process"
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "fs"
 import { basename, extname, join, resolve } from "path"
 import { fileURLToPath } from "url"
@@ -196,9 +197,39 @@ if (!hasEnvToken) {
   console.warn("")
 }
 
+// Initialize a git repo with a baseline commit. Best-effort: if git isn't
+// installed or any step fails, warn and continue — the scaffold still succeeded.
+try {
+  const gitOpts = { cwd: targetDir, stdio: "ignore" }
+  const init = spawnSync("git", ["init", "--quiet"], gitOpts)
+  if (init.status !== 0) {
+    throw new Error("git init failed")
+  }
+  const add = spawnSync("git", ["add", "."], gitOpts)
+  if (add.status !== 0) {
+    throw new Error("git add failed")
+  }
+  const commit = spawnSync(
+    "git",
+    ["commit", "--quiet", "-m", "chore: scaffold from neoma-pack saas-template"],
+    gitOpts,
+  )
+  if (commit.status !== 0) {
+    throw new Error("git commit failed")
+  }
+} catch (err) {
+  console.warn(`Warning: could not initialize git repo (${err.message}).`)
+  console.warn("  The scaffold succeeded; you can run `git init` manually.")
+  console.warn("")
+}
+
+const displayDir = targetArg ?? targetDir
+
 console.log("Done! Next steps:")
 console.log("")
-console.log(`  cd ${targetDir}`)
+console.log(`  cd ${displayDir}`)
 console.log("  pnpm install")
-console.log("  pnpm dev")
+console.log("  gh repo create --source=. --private --push")
+console.log("")
+console.log("  (swap --private for --public if you'd prefer a public repo)")
 console.log("")
