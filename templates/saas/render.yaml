@@ -2,10 +2,11 @@ services:
   - type: web
     name: __PACKAGE_NAME__
     runtime: node
-    plan: starter
+    plan: standard
     region: frankfurt
     buildCommand: NODE_ENV=development pnpm install --frozen-lockfile && NODE_ENV=production pnpm build
-    startCommand: pnpm migration:run && pnpm start
+    preDeployCommand: pnpm migration:run
+    startCommand: pnpm start
     # Wait for GitHub commit checks (CI) to pass before deploying.
     # Push to main + green CI = automatic deploy.
     autoDeployTrigger: checksPass
