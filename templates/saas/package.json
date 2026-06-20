@@ -17,7 +17,7 @@
     "postdev": "docker rm -f saas-mailpit && node scripts/dev/stop-minio.cjs",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "prepare": "husky || true",
+    "prepare": "[ \"$NODE_ENV\" = production ] || husky",
     "start": "node dist/src/main",
     "test": "node --env-file=.env.spec --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.json",
     "test:e2e": "node --env-file=.env.e2e-spec --experimental-vm-modules node_modules/jest/bin/jest.js --config ./specs/jest-e2e.json --runInBand",
