@@ -1,3 +1,4 @@
+import { Account, OAuthToken } from "@neomaventures/auth"
 import { DataSource } from "typeorm"
 
 // DATABASE_URI is the app's convention (via @neomaventures/config).
@@ -14,6 +15,10 @@ export const datasource = new DataSource({
   type: "postgres",
   url: uri,
   ssl,
-  entities: ["src/**/*.entity.ts"],
+  // Mix of explicit @neomaventures/auth entities (Account, OAuthToken)
+  // and consumer-owned entities under src/. TypeORM needs every entity
+  // referenced by a relation to be registered, even if the consumer
+  // doesn't directly import it.
+  entities: [Account, OAuthToken, "src/**/*.entity.ts"],
   migrations: ["typeorm/migrations/*.ts"],
 })

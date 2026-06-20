@@ -15,7 +15,7 @@ import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
  *   mimeType: "image/png",
  *   size: 1024,
  *   key: "01J0...-avatar.png",
- *   bucket: "uploads",
+ *   bucket: "avatars",
  * })
  * await repository.save(upload)
  * ```

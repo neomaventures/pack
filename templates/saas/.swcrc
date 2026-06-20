@@ -1,5 +1,5 @@
 {
-  "$schema": "https://json.schemastore.org/swcrc",
+  "$schema": "https://swc.rs/schema.json",
   "sourceMaps": true,
   "jsc": {
     "parser": {
@@ -11,7 +11,12 @@
       "legacyDecorator": true,
       "decoratorMetadata": true
     },
+    "target": "es2022",
+    "keepClassNames": true,
     "baseUrl": "./"
+  },
+  "module": {
+    "type": "commonjs"
   },
   "minify": false
 }

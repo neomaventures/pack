@@ -4,9 +4,12 @@ services:
     runtime: node
     plan: starter
     region: frankfurt
-    buildCommand: NODE_ENV=development pnpm install --frozen-lockfile && NODE_ENV=production pnpm build
-    startCommand: pnpm migration:run && pnpm start
-    autoDeploy: false
+    buildCommand: pnpm install --frozen-lockfile && pnpm build && pnpm prune --prod
+    preDeployCommand: pnpm migration:run
+    startCommand: pnpm start
+    # Wait for GitHub commit checks (CI) to pass before deploying.
+    # Push to main + green CI = automatic deploy.
+    autoDeployTrigger: checksPass
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
@@ -32,20 +35,52 @@ services:
         value: resend
       - key: SMTP_PASSWORD
         sync: false
-      # S3-compatible storage used by `@neomaventures/storage`. Render does not
-      # provide managed object storage — point these at an external provider
-      # (AWS S3, Cloudflare R2, Backblaze B2, etc.) and supply credentials via
-      # the dashboard. Leaving them unset will fail at boot.
       - key: S3_ENDPOINT
-        sync: false
+        value: https://__PACKAGE_NAME__-minio.onrender.com
       - key: S3_REGION
-        sync: false
-      - key: S3_BUCKET
-        sync: false
+        value: us-east-1
+      - key: AVATAR_BUCKET
+        fromService:
+          type: web
+          name: __PACKAGE_NAME__-minio
+          envVarKey: AVATAR_BUCKET
       - key: S3_ACCESS_KEY_ID
-        sync: false
+        fromService:
+          type: web
+          name: __PACKAGE_NAME__-minio
+          envVarKey: MINIO_ROOT_USER
       - key: S3_SECRET_ACCESS_KEY
-        sync: false
+        fromService:
+          type: web
+          name: __PACKAGE_NAME__-minio
+          envVarKey: MINIO_ROOT_PASSWORD
+
+  - type: web
+    name: __PACKAGE_NAME__-minio
+    runtime: docker
+    dockerfilePath: render/minio/Dockerfile
+    dockerContext: render/minio
+    region: frankfurt
+    plan: starter
+    autoDeploy: false
+    healthCheckPath: /minio/health/live
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: HOST
+        value: "0.0.0.0"
+      - key: PORT
+        value: "9000"
+      - key: CONSOLE_PORT
+        value: "9090"
+      - key: AVATAR_BUCKET
+        value: avatars
+      - key: MINIO_ROOT_USER
+        generateValue: true
+      - key: MINIO_ROOT_PASSWORD
+        generateValue: true
 
 databases:
   - name: __PACKAGE_NAME__-db

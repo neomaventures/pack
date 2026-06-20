@@ -1,6 +1,6 @@
 {
   "name": "__PACKAGE_NAME__",
-  "version": "0.0.10",
+  "version": "0.0.0",
   "description": "SaaS starter template and integration test bed for @neomaventures/* packages",
   "private": true,
   "license": "MIT",
@@ -15,12 +15,13 @@
     "predev": "lsof -ti:3000 | xargs kill -9 2>/dev/null; docker rm -f saas-mailpit 2>/dev/null; docker run -d --name saas-mailpit -p 1025:1025 -p 8025:8025 axllent/mailpit && node scripts/dev/start-minio.cjs",
     "dev": "concurrently -n nest,css -c blue,magenta \"node --env-file=.env.development node_modules/@nestjs/cli/bin/nest.js start --watch\" \"tailwindcss -i src/styles/input.css -o public/stylesheets/main.css --watch\"",
     "postdev": "docker rm -f saas-mailpit && node scripts/dev/stop-minio.cjs",
-    "lint": "eslint src/",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "prepare": "[ \"$NODE_ENV\" = production ] || [ -n \"$CI\" ] || husky",
     "start": "node dist/src/main",
     "test": "node --env-file=.env.spec --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.json",
     "test:e2e": "node --env-file=.env.e2e-spec --experimental-vm-modules node_modules/jest/bin/jest.js --config ./specs/jest-e2e.json --runInBand",
-    "typeorm": "TS_NODE_PROJECT=typeorm/tsconfig.json node -r ts-node/register/transpile-only -r tsconfig-paths/register node_modules/typeorm/cli.js",
+    "typeorm": "node -r @swc-node/register node_modules/typeorm/cli.js",
     "migration:generate": "bash scripts/migration-generate.sh",
     "migration:run": "pnpm typeorm migration:run -d typeorm/datasource.ts",
     "test:ui": "pnpm build:css && node --env-file=.env.ui-spec node_modules/@playwright/test/cli.js test"
@@ -38,6 +39,8 @@
     "@nestjs/event-emitter": "^3.0.1",
     "@nestjs/platform-express": "^11.1.18",
     "@nestjs/typeorm": "^11.0.0",
+    "@swc-node/register": "^1.11.1",
+    "@swc/core": "^1.12.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "cookie": "^1.1.1",
@@ -49,6 +52,7 @@
     "typeorm": "^0.3.20"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@faker-js/faker": "^9.9.0",
     "@neomaventures/fixtures": "workspace:*",
     "@neomaventures/google-fixtures": "workspace:*",
@@ -61,7 +65,6 @@
     "@nestjs/testing": "^11.1.18",
     "@playwright/test": "^1.58.2",
     "@swc/cli": "^0.7.10",
-    "@swc/core": "^1.12.1",
     "@swc/jest": "^0.2.39",
     "@tailwindcss/cli": "^4.1.11",
     "@types/ejs": "^3.1.5",
@@ -71,11 +74,19 @@
     "@types/node": "^25.5.2",
     "@types/supertest": "^7.2.0",
     "concurrently": "^9.1.2",
+    "eslint": "^10.2.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-import-x": "^4.16.2",
+    "eslint-plugin-prettier": "^5.5.5",
+    "eslint-plugin-yml": "^3.3.2",
+    "globals": "^17.4.0",
+    "husky": "^9.1.7",
     "jest": "^30.3.0",
     "jsonwebtoken": "^9.0.2",
+    "prettier": "^3.4.2",
+    "prettier-plugin-tailwindcss": "^0.8.0",
     "supertest": "^7.2.2",
-    "ts-node": "^10.9.2",
-    "tsconfig-paths": "^4.2.0",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.2",
+    "typescript-eslint": "^8.58.0"
   }
 }

@@ -8,15 +8,15 @@ The template renders server-side HTML via EJS with [Tailwind CSS v4](https://tai
 
 ## Prerequisites
 
-You need a **GitHub account** and a **personal access token** (classic) with `read:packages` scope. [Generate one here](https://github.com/settings/tokens) if you don't have one.
+You need a **GitHub personal access token** to install `@neomaventures/*` packages from GitHub Packages. Any GitHub PAT works — public packages are auth-gated but readable by any authenticated GitHub user, so no specific scopes beyond the default are required. [Generate one here](https://github.com/settings/tokens) if you don't have one.
 
-Set it as `NPM_TOKEN` in your shell profile:
+Export it in your shell rc (`~/.zshrc` or `~/.bashrc`):
 
 ```bash
 export NPM_TOKEN=ghp_your_token_here
 ```
 
-This is used locally for `pnpm install` and on Render for building the app.
+The same `NPM_TOKEN` is set as a Render service env var for production deploys (see Phase 3) and as a GitHub Actions secret for CI — one mechanism across every environment.
 
 ---
 
@@ -80,24 +80,17 @@ Sign up at [render.com](https://render.com) if you don't have an account. Connec
 
 Render creates the web service and database, pulls your repo, builds, and deploys. Your app is live at `https://my-app.onrender.com`.
 
-### 6. Set up tag-based deploys
+### 6. How deploys work
 
-Auto-deploy is disabled in `render.yaml`. To deploy on version tags:
-
-1. In the Render dashboard, go to your service's **Settings** and copy the **Deploy Hook** URL
-2. In your GitHub repo, go to **Settings > Secrets and variables > Actions > Secrets** and add:
-
-| Secret | Value |
-|---|---|
-| `RENDER_DEPLOY_HOOK` | _(the deploy hook URL you copied)_ |
-
-Now deploys are triggered by tagging:
+`render.yaml` sets `autoDeploy: true` with `autoDeployTrigger: checksPass`. Pushing to `main` triggers a deploy only after GitHub commit checks (CI) go green. No `RENDER_DEPLOY_HOOK` secret, no manual tagging:
 
 ```bash
-npm version patch
-git push
-git push --tags
+git push origin main
 ```
+
+CI runs, Render waits, deploys on success.
+
+A `pre-push` git hook (`.husky/pre-push`) runs `pnpm typecheck && pnpm lint` locally before each push, so most type and lint errors are caught before they reach CI.
 
 ---
 
@@ -124,6 +117,34 @@ Go to your service's **Environment** tab in the Render dashboard and set:
 Update `MAIL_FROM` to your own domain once you've verified it with Resend.
 
 ---
+
+---
+
+## Going to production: storage
+
+The default Render Blueprint provisions a self-hosted **MinIO** instance alongside your app. MinIO is S3-compatible, so the same `S3_*` connection variables work locally, on Render, against AWS S3, Cloudflare R2, or Backblaze B2 — you change `render.yaml`, not your code.
+
+### What the Blueprint sets up
+
+- A second `web` service named `<your-app>-minio` running MinIO on Render's `starter` plan.
+- A 1 GB persistent disk mounted at `/data` for object bytes.
+- A pre-created `avatars` bucket that is **fully private** — no anonymous policy. Avatars are served by the app via presigned 302 redirects (`@TemporaryLink`).
+- App-side `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, and `AVATAR_BUCKET` wired automatically via `fromService` — no dashboard fiddling.
+
+**Cost: ~$7.25/mo** (starter web ~$7 + 1 GB disk ~$0.25). The app runs on Render's Starter plan (~$7/mo), the minimum tier supporting `preDeployCommand` for migrations. Migrations run once per deploy in an isolated context — a failing migration aborts the deploy without restarting the live instance. Total saas-template Render bill is roughly **$14.25/mo** (app ~$7 + MinIO ~$7.25 + free Postgres).
+
+### Three storage shapes
+
+Saas-template ships shape 1 today. As your app grows beyond avatars, you'll move along this ladder:
+
+1. **Private + presigned (current default).** Bucket is fully private; the controller decorates its avatar route with `@TemporaryLink` and the package issues a short-lived presigned 302 redirect. The browser fetches the object directly from MinIO using the signed URL. Fine for avatars and any other asset you don't mind exposing via a time-bounded signed URL. A first-class `@PublicLink` decorator (for genuinely public-read assets like CDN-style static files) is tracked in [#268](https://github.com/neomaventures/pack/issues/268).
+2. **App-proxied private.** The app exposes a `GET /uploads/:id` route that authorises the request and streams bytes through `StorageService`. Use this the moment you add a `Storable` that needs request-time authorisation, large-file streaming, range requests, or anything else that should not leave the app boundary. A unified-host pattern (so storage lives under the same hostname as the app) is tracked in [#269](https://github.com/neomaventures/pack/issues/269).
+3. **Managed S3-compatible.** Swap MinIO for Render Object Storage (beta), Cloudflare R2, or AWS S3 by deleting the `render/minio/` directory plus the MinIO service block in `render.yaml`, and updating the five `S3_*` / `AVATAR_BUCKET` env vars in the Render dashboard. App code does not change.
+
+### Backups
+
+Render disks are not backed up automatically. For production, snapshot the MinIO disk on a schedule from the Render dashboard, or mirror to an off-Render bucket via a scheduled job. The default Blueprint does not set either up.
+
 
 ## Optional: Configure DNS
 
@@ -292,9 +313,6 @@ Both modes require the request to accept `text/html` (content negotiation). JSON
 ```
 my-app/
 ├── render.yaml                               # Render Blueprint (infrastructure as code)
-├── .github/
-│   └── workflows/
-│       └── deploy.yml                        # Tag-triggered deploy via Render webhook
 ├── src/
 │   ├── main.ts                              # Bootstrap
 │   ├── application/

@@ -1,10 +1,13 @@
 import { faker } from "@faker-js/faker"
-import { HttpStatus } from "@nestjs/common"
 import { managedAppInstance } from "@neomaventures/managed-app"
+import { HttpStatus } from "@nestjs/common"
 import request from "supertest"
 
 import { configureViewEngine } from "~fixtures/configure-view-engine"
-import { extractCallbackUrl, SESSION_COOKIE_REGEX } from "~fixtures/email/content"
+import {
+  extractCallbackUrl,
+  SESSION_COOKIE_REGEX,
+} from "~fixtures/email/content"
 import { mailpit } from "~fixtures/email/mailpit"
 
 const { FOUND, SEE_OTHER } = HttpStatus
@@ -22,9 +25,7 @@ describe("POST /auth/logout", () => {
     it(`should respond with an HTTP ${SEE_OTHER} redirect to / and clear the session cookie`, async () => {
       const email = faker.internet.email()
 
-      await request(app.getHttpServer())
-        .post("/auth/register")
-        .send({ email })
+      await request(app.getHttpServer()).post("/auth/register").send({ email })
 
       const message = await mailpit.findByRecipient(email)
       const token = extractCallbackUrl(message).searchParams.get("token")

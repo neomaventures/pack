@@ -5,7 +5,7 @@
 //
 // Container name: "saas-minio" (prefix "saas" + suffix "-minio").
 // API at http://localhost:9000, console at http://localhost:9001.
-// Bucket "uploads" is created after the container is healthy.
+// Bucket "avatars" is created after the container is healthy.
 //
 // Matches the values in .env.development. Update both if you change them.
 const { startContainer } = require("@neomaventures/minio")
@@ -14,7 +14,7 @@ startContainer({
   prefix: "saas",
   apiPort: 9000,
   consolePort: 9001,
-  bucket: "uploads",
+  bucket: "avatars",
 }).then((config) => {
   console.log(
     `MinIO running: ${config.container} (api :${config.apiPort}, console :${config.consolePort}, bucket "${config.bucket}")`,

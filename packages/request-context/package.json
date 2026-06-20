@@ -57,6 +57,7 @@
   "devDependencies": {
     "@neomaventures/fixtures": "workspace:*",
     "@neomaventures/managed-app": "workspace:*",
+    "@nestjs/common": "^11.1.18",
     "@nestjs/core": "^11.1.18",
     "@nestjs/platform-express": "^11.1.18",
     "@nestjs/testing": "^11.1.18",
@@ -67,6 +68,7 @@
     "jest": "^30.3.0",
     "jest-extended": "^7.0.0",
     "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
     "supertest": "^7.0.0"
   }
 }

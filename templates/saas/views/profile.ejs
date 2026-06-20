@@ -54,9 +54,10 @@
         </form>
       </section>
 
-      <section class="mt-12 w-full max-w-md text-left">
+      <section class="mt-12 w-full max-w-md">
         <h2 class="text-lg font-semibold text-slate-800">Connected accounts</h2>
-        <% if (typeof connectedAccounts === "undefined" || connectedAccounts.length === 0) { %>
+        <% if (typeof connectedAccounts === "undefined" ||
+        connectedAccounts.length === 0) { %>
         <p class="mt-2 text-sm text-slate-500">
           No third-party accounts connected.
         </p>
@@ -68,7 +69,9 @@
             data-provider="<%= account.provider %>"
           >
             <div class="flex items-center justify-between">
-              <span class="font-medium capitalize"><%= account.provider %></span>
+              <span class="font-medium capitalize"
+                ><%= account.provider %></span
+              >
               <% if (account.active) { %>
               <span
                 class="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700"

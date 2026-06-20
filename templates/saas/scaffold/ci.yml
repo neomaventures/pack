@@ -1,4 +1,9 @@
+# CI workflow — runs on every push and pull request to main.
+# Verifies the saas-template builds, tests pass, types check, and lint is clean.
+# Steps ordered light-to-heavy so cheap checks fail fast.
+
 name: CI
+
 on:
   push:
     branches: [main]
@@ -6,22 +11,50 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  verify:
+    name: Build, test, and lint
     runs-on: ubuntu-latest
+
+    # NPM_TOKEN feeds the substitution in .npmrc that authenticates to
+    # GitHub Packages for @neomaventures/* dependencies. GITHUB_TOKEN
+    # is auto-provided by GitHub Actions — no manual secret setup required.
+    env:
+      NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout
+        uses: actions/checkout@v5
 
-      - uses: pnpm/action-setup@v5
+      - name: Set up pnpm
+        # Pinned to v5 commit SHA for supply-chain safety. Update when you bump.
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5
 
-      - uses: actions/setup-node@v5
+      - name: Set up Node
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: pnpm
 
-      - run: pnpm install --frozen-lockfile
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      - run: pnpm test
+      - name: Lint
+        run: pnpm lint
 
-      - run: pnpm typecheck
+      - name: Type check
+        run: pnpm typecheck
 
-      - run: pnpm lint
+      - name: Build
+        run: pnpm build
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: E2E tests
+        run: pnpm test:e2e
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: UI tests
+        run: pnpm test:ui

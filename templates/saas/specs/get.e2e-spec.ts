@@ -1,8 +1,8 @@
 import { readFileSync } from "fs"
 import { join } from "path"
 
-import { HttpStatus } from "@nestjs/common"
 import { managedAppInstance } from "@neomaventures/managed-app"
+import { HttpStatus } from "@nestjs/common"
 import ejs from "ejs"
 import request from "supertest"
 

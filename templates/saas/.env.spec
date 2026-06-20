@@ -13,6 +13,6 @@ GOOGLE_CLIENT_SECRET=
 # so StorageModule.forRootAsync can resolve and the app boots.
 S3_ENDPOINT=http://localhost:9000
 S3_REGION=us-east-1
-S3_BUCKET=test-bucket
+AVATAR_BUCKET=test-bucket
 S3_ACCESS_KEY_ID=minioadmin
 S3_SECRET_ACCESS_KEY=minioadmin

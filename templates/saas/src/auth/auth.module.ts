@@ -15,8 +15,8 @@ import { ProfileModule } from "~profile/profile.module"
  * `StorageModule.forFeatureAsync` factory below.
  */
 interface AuthStorageConfig {
-  /** Bucket name uploads are written to. */
-  s3Bucket: string
+  /** Bucket name avatar uploads are written to. */
+  avatarBucket: string
 }
 
 /**
@@ -46,7 +46,7 @@ interface AuthStorageConfig {
     TypeOrmModule.forFeature([Account, OAuthToken, Upload]),
     StorageModule.forFeatureAsync({
       useFactory: (config: TypedConfig<AuthStorageConfig>) => ({
-        bucket: config.s3Bucket,
+        bucket: config.avatarBucket,
       }),
       inject: [ConfigService],
     }),
