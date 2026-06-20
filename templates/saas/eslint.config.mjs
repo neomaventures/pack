@@ -19,6 +19,9 @@ export default tseslint.config(
       "**/*.d.ts",
       // Generated lockfile — pnpm-managed, not ours to lint/format.
       "**/pnpm-lock.yaml",
+      // Workspace yaml — pnpm-managed (writes single-quoted entries when
+      // accepting the supply-chain prompt), not ours to lint/format.
+      "**/pnpm-workspace.yaml",
       // TypeORM files — managed by a separate tsconfig (`typeorm/tsconfig.json`)
       // and excluded from the root TS project (see tsconfig.json `exclude`).
       "**/typeorm/**",
