@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Catch type errors and lint issues before they hit CI.
+# This runs once per push — slower checks are fine here.
+
+pnpm typecheck
+pnpm lint

@@ -6,7 +6,10 @@ services:
     region: frankfurt
     buildCommand: NODE_ENV=development pnpm install --frozen-lockfile && NODE_ENV=production pnpm build
     startCommand: pnpm migration:run && pnpm start
-    autoDeploy: false
+    autoDeploy: true
+    # Wait for GitHub commit checks (CI) to pass before deploying.
+    # Push to main + green CI = automatic deploy.
+    autoDeployTrigger: checksPass
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV

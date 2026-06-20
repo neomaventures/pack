@@ -80,24 +80,17 @@ Sign up at [render.com](https://render.com) if you don't have an account. Connec
 
 Render creates the web service and database, pulls your repo, builds, and deploys. Your app is live at `https://my-app.onrender.com`.
 
-### 6. Set up tag-based deploys
+### 6. How deploys work
 
-Auto-deploy is disabled in `render.yaml`. To deploy on version tags:
-
-1. In the Render dashboard, go to your service's **Settings** and copy the **Deploy Hook** URL
-2. In your GitHub repo, go to **Settings > Secrets and variables > Actions > Secrets** and add:
-
-| Secret | Value |
-|---|---|
-| `RENDER_DEPLOY_HOOK` | _(the deploy hook URL you copied)_ |
-
-Now deploys are triggered by tagging:
+`render.yaml` sets `autoDeploy: true` with `autoDeployTrigger: checksPass`. Pushing to `main` triggers a deploy only after GitHub commit checks (CI) go green. No `RENDER_DEPLOY_HOOK` secret, no manual tagging:
 
 ```bash
-npm version patch
-git push
-git push --tags
+git push origin main
 ```
+
+CI runs, Render waits, deploys on success.
+
+A `pre-push` git hook (`.husky/pre-push`) runs `pnpm typecheck && pnpm lint` locally before each push, so most type and lint errors are caught before they reach CI.
 
 ---
 
@@ -320,9 +313,6 @@ Both modes require the request to accept `text/html` (content negotiation). JSON
 ```
 my-app/
 ├── render.yaml                               # Render Blueprint (infrastructure as code)
-├── .github/
-│   └── workflows/
-│       └── deploy.yml                        # Tag-triggered deploy via Render webhook
 ├── src/
 │   ├── main.ts                              # Bootstrap
 │   ├── application/

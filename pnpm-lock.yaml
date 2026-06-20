@@ -1096,6 +1096,9 @@ importers:
       concurrently:
         specifier: ^9.1.2
         version: 9.2.1
+      husky:
+        specifier: ^9.1.7
+        version: 9.1.7
       jest:
         specifier: ^30.3.0
         version: 30.4.2(@types/node@25.9.1)
