@@ -12,6 +12,8 @@ services:
     autoDeployTrigger: checksPass
     healthCheckPath: /api/health
     envVars:
+      - key: CI
+        value: "true"
       - key: NODE_ENV
         value: production
       - key: NPM_TOKEN
