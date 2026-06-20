@@ -6,5 +6,5 @@
       "@neomaventures/mailbox/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "fixtures/**/*"]
 }
