@@ -1,5 +1,6 @@
 # CI workflow — runs on every push and pull request to main.
 # Verifies the saas-template builds, tests pass, types check, and lint is clean.
+# Steps ordered light-to-heavy so cheap checks fail fast.
 
 name: CI
 
@@ -36,14 +37,23 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: pnpm build
-
-      - name: Test
-        run: pnpm test
+      - name: Lint
+        run: pnpm lint
 
       - name: Type check
         run: pnpm typecheck
 
-      - name: Lint
-        run: pnpm lint
+      - name: Build
+        run: pnpm build
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: E2E tests
+        run: pnpm test:e2e
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: UI tests
+        run: pnpm test:ui
