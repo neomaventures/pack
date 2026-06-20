@@ -1,0 +1,59 @@
+{
+  "name": "@neomaventures/mailbox",
+  "version": "0.0.0",
+  "description": "Provider-agnostic mailbox primitive for NestJS. Gmail-first.",
+  "author": "Daniel Bruce",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neomaventures/pack",
+    "directory": "packages/mailbox"
+  },
+  "bugs": {
+    "url": "https://github.com/neomaventures/pack/issues"
+  },
+  "homepage": "https://github.com/neomaventures/pack/tree/main/packages/mailbox#readme",
+  "keywords": [
+    "nestjs",
+    "neoma",
+    "mailbox",
+    "gmail",
+    "email"
+  ],
+  "private": true,
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js"
+    },
+    "./entities": {
+      "types": "./dist/entities/index.d.ts",
+      "require": "./dist/entities/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "!**/*.json",
+    "!**/*.tsbuildinfo"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc -p ./tsconfig.lib.json",
+    "test": "jest --runInBand --passWithNoTests",
+    "lint": "eslint ."
+  },
+  "peerDependencies": {
+    "@nestjs/common": "11.x",
+    "@nestjs/core": "11.x",
+    "@nestjs/typeorm": "11.x",
+    "reflect-metadata": ">=0.2",
+    "rxjs": ">=7",
+    "typeorm": ">=0.3"
+  }
+}

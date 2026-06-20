@@ -1,0 +1,230 @@
+# @neomaventures/mailbox
+
+Provider-agnostic mailbox primitive for NestJS applications. Gmail-first.
+
+Mailbox owns the boundary between your app and a hosted mailbox provider.
+It does **not** classify mail — consuming apps (CRMs, document modules,
+support tools) apply their own domain logic on top. The package ships an
+auth-agnostic token boundary (`TokenAccessor`), a reference `MailAccount`
+entity that records which Gmail address an account has connected, and a
+service that hits the live provider for stats.
+
+> **Status: v0.1.0 — proof of life.** This release exists to prove the
+> wiring end-to-end: a host app implements `TokenAccessor`, registers
+> `MailAccount` with TypeORM, and reads inbox stats live from Gmail. Raw
+> `.eml` sync, sync cursors, `MessageStoredEvent` emission, and the
+> `@OnMessage` decorator land in future slices. See `gh issue view 168`
+> for the full epic and roadmap.
+
+## Why a token accessor, not an auth dependency?
+
+Mailbox needs an OAuth access token to call Gmail. It does **not** depend
+on `@neomaventures/auth`. Instead, the host app implements a tiny
+`TokenAccessor` interface and registers it via DI. The host is free to
+back the accessor with `@neomaventures/auth`, a custom token store, or a
+test double — mailbox doesn't care.
+
+This mirrors the `Storable` boundary in `@neomaventures/storage`:
+packages depend on interfaces they define, not on sibling packages.
+Token refresh, scope handling, and persistence stay the host's concern.
+
+## Installation
+
+`@neomaventures/*` packages publish privately to GitHub Packages.
+Configure `.npmrc` to resolve the `@neomaventures` scope first:
+
+```
+@neomaventures:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```
+
+Then install:
+
+```bash
+npm install @neomaventures/mailbox
+```
+
+### Peer dependencies
+
+```bash
+npm install @nestjs/common @nestjs/core @nestjs/typeorm \
+  typeorm reflect-metadata rxjs
+```
+
+## Entity model — interface, reference entity, and your own
+
+Mailbox defines one TypeScript contract — `Mailboxable` — and ships a
+concrete `MailAccount` reference class implementing it. Consumers
+register the reference entity for the zero-config path, or replace it
+with their own class via `entity:` to attach domain relations (e.g.
+`Account.mailAccounts: MailAccount[]`).
+
+The reference entity is intentionally slim for v0.1.0:
+
+| Column         | Type   | Purpose                                            |
+| -------------- | ------ | -------------------------------------------------- |
+| `id`           | uuid   | Primary key                                        |
+| `accountId`    | string | FK to the consumer's `Authenticatable` (loose ref) |
+| `gmailAddress` | string | The Gmail address this connection represents      |
+
+No cached stats columns, no sync cursors — those land in future slices
+when there is a writer for them.
+
+```typescript
+import { MailAccount } from "@neomaventures/mailbox/entities"
+```
+
+The consumer always owns `TypeOrmModule.forFeature` registration.
+
+## Getting started — default path
+
+### 1. Implement `TokenAccessor`
+
+```typescript
+import { type Authenticatable, OAuthTokenService } from "@neomaventures/auth"
+import { type TokenAccessor } from "@neomaventures/mailbox"
+import { Injectable } from "@nestjs/common"
+
+@Injectable()
+export class AuthTokenAccessor implements TokenAccessor {
+  public async getToken(
+    account: Authenticatable,
+    scope: string,
+  ): Promise<string> {
+    const token = OAuthTokenService.getActiveToken(account, "google")
+    if (!token || !token.scopes.includes(scope)) {
+      throw new Error(`No Google token with scope ${scope}`)
+    }
+    return token.accessToken
+  }
+}
+```
+
+### 2. Register `MailAccount` with TypeORM
+
+```typescript
+import { MailAccount } from "@neomaventures/mailbox/entities"
+import { Module } from "@nestjs/common"
+import { TypeOrmModule } from "@nestjs/typeorm"
+
+@Module({
+  imports: [
+    TypeOrmModule.forRoot({
+      type: "postgres",
+      // ...your database config
+      entities: [MailAccount /* , YourOtherEntities */],
+    }),
+    TypeOrmModule.forFeature([MailAccount]),
+  ],
+})
+export class AppModule {}
+```
+
+### 3. Configure `MailboxModule`
+
+```typescript
+import { MailboxModule } from "@neomaventures/mailbox"
+import { Module } from "@nestjs/common"
+
+import { AuthTokenAccessor } from "./auth-token.accessor"
+
+@Module({
+  imports: [
+    MailboxModule.forRoot({
+      tokenAccessor: AuthTokenAccessor,
+    }),
+  ],
+  providers: [AuthTokenAccessor],
+})
+export class AppModule {}
+```
+
+Use `forRootAsync` when you need to inject a config service.
+
+### 4. Read stats in a controller
+
+```typescript
+import {
+  type Authenticatable,
+  Authenticated,
+  AuthenticatedAccount,
+} from "@neomaventures/auth"
+import { MailboxService } from "@neomaventures/mailbox"
+import { Controller, Get } from "@nestjs/common"
+
+@Controller("mailbox")
+export class MailboxController {
+  public constructor(private readonly mailbox: MailboxService) {}
+
+  @Get("stats")
+  @Authenticated()
+  public async stats(
+    @AuthenticatedAccount() account: Authenticatable,
+  ): Promise<{ messageCount: number; unreadCount: number }> {
+    return this.mailbox.getStats(account)
+  }
+}
+```
+
+`getStats` calls the Gmail Labels API
+(`GET /gmail/v1/users/me/labels/INBOX`) on every request — no caching in
+v0.1.0. The `TokenAccessor` is invoked before the call so the freshest
+available token is used.
+
+## Custom entity — attach relations from the consumer side
+
+The reference `MailAccount` ships without consumer relations because it
+cannot import consumer entities. To attach
+`Account.mailAccounts: MailAccount[]`, implement `Mailboxable` on your
+own class and pass it via `entity:`:
+
+```typescript
+import { type Mailboxable } from "@neomaventures/mailbox"
+import { Account } from "@neomaventures/auth/entities"
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm"
+
+@Entity({ name: "mail_account" })
+export class CustomMailAccount implements Mailboxable {
+  @PrimaryGeneratedColumn("uuid")
+  public id!: string
+
+  @Column()
+  public gmailAddress!: string
+
+  @ManyToOne(() => Account, (a) => a.mailAccounts)
+  public account!: Account
+
+  @Column()
+  public accountId!: string
+}
+
+MailboxModule.forRoot({
+  tokenAccessor: AuthTokenAccessor,
+  entity: CustomMailAccount,
+})
+```
+
+`MailboxService<T extends Mailboxable>` parametrises on your entity, so
+the consumer narrows at injection without a cast:
+
+```typescript
+public constructor(
+  private readonly mailbox: MailboxService<CustomMailAccount>,
+) {}
+```
+
+## What this slice does **not** ship
+
+- Raw `.eml` sync into `@neomaventures/storage`
+- Sync cursors (backfill `pageToken`, incremental `historyId`)
+- `MessageStoredEvent` emission
+- `@OnMessage` / `@MailboxInfo` decorators
+- Token refresh, heartbeat, or stale-job recovery
+- Provider abstraction beyond Gmail
+- A bundled `MailboxController` — the consumer ships the route
+
+See the epic (#168) for the full roadmap.
+
+## License
+
+MIT.
