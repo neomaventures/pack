@@ -82,23 +82,38 @@ The consumer always owns `TypeOrmModule.forFeature` registration.
 
 ```typescript
 import { type Authenticatable, OAuthTokenService } from "@neomaventures/auth"
-import { type TokenAccessor } from "@neomaventures/mailbox"
+import {
+  GMAIL_READONLY_SCOPE,
+  type TokenAccessor,
+} from "@neomaventures/mailbox"
 import { Injectable } from "@nestjs/common"
 
 @Injectable()
 export class AuthTokenAccessor implements TokenAccessor {
-  public async getToken(
-    account: Authenticatable,
-    scope: string,
+  public async getToken<T extends { id: unknown }>(
+    account: T,
+    scopes: string[],
   ): Promise<string> {
-    const token = OAuthTokenService.getActiveToken(account, "google")
-    if (!token || !token.scopes.includes(scope)) {
-      throw new Error(`No Google token with scope ${scope}`)
+    if (scopes.includes(GMAIL_READONLY_SCOPE)) {
+      const token = OAuthTokenService.getActiveToken(
+        account as Authenticatable,
+        "google",
+      )
+      if (!token || !scopes.every((s) => token.scopes.includes(s))) {
+        throw new Error(`No Google token covering scopes ${scopes.join(", ")}`)
+      }
+      return token.accessToken
     }
-    return token.accessToken
+    throw new Error(`Unsupported scopes: ${scopes.join(", ")}`)
   }
 }
 ```
+
+`TokenAccessor.getToken` takes a structural generic — any principal with
+an `id` field satisfies it — and a `scopes: string[]` so multi-scope
+tokens (e.g. `gmail.readonly` + `gmail.send`) work without an API
+change later. Pattern-match by importing the exported
+`GMAIL_READONLY_SCOPE` constant rather than hard-coding the URL.
 
 ### 2. Register `MailAccount` with TypeORM
 
@@ -168,8 +183,8 @@ export class MailboxController {
 
 `getStats` calls the Gmail Labels API
 (`GET /gmail/v1/users/me/labels/INBOX`) on every request — no caching in
-v0.1.0. The `TokenAccessor` is invoked before the call so the freshest
-available token is used.
+v0.1.0. The `TokenAccessor` is invoked with `[GMAIL_READONLY_SCOPE]`
+before the call so the freshest available token is used.
 
 ## Custom entity — attach relations from the consumer side
 
