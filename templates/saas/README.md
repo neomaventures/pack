@@ -131,6 +131,10 @@ The default Render Blueprint provisions a self-hosted **MinIO** instance alongsi
 - A pre-created `avatars` bucket that is **fully private** — no anonymous policy. Avatars are served by the app via presigned 302 redirects (`@TemporaryLink`).
 - App-side `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, and `AVATAR_BUCKET` wired automatically via `fromService` — no dashboard fiddling.
 
+### Internal vs public hostname
+
+The app communicates with MinIO over Render's internal network (`http://<service>-minio:9000`) for uploads — fast and bypasses Cloudflare. Browsers fetch avatars via presigned URLs that point at the public hostname (`https://<service>-minio.onrender.com`), which is what `MINIO_SERVER_URL` configures. Same MinIO instance, two URLs serving two purposes.
+
 **Cost: ~$7.25/mo** (starter web ~$7 + 1 GB disk ~$0.25). The app runs on Render's Starter plan (~$7/mo), the minimum tier supporting `preDeployCommand` for migrations. Migrations run once per deploy in an isolated context — a failing migration aborts the deploy without restarting the live instance. Total saas-template Render bill is roughly **$14.25/mo** (app ~$7 + MinIO ~$7.25 + free Postgres).
 
 ### Three storage shapes
