@@ -104,6 +104,9 @@ importers:
       '@neomaventures/managed-app':
         specifier: workspace:*
         version: link:../managed-app
+      '@nestjs/common':
+        specifier: ^11.1.18
+        version: 11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core':
         specifier: ^11.1.18
         version: 11.1.24(@nestjs/common@11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.24)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -180,6 +183,9 @@ importers:
       '@neomaventures/request-context':
         specifier: workspace:*
         version: link:../request-context
+      '@nestjs/common':
+        specifier: ^11.1.18
+        version: 11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core':
         specifier: ^11.1.18
         version: 11.1.24(@nestjs/common@11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.24)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -231,6 +237,9 @@ importers:
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
+      rxjs:
+        specifier: ^7.8.1
+        version: 7.8.2
       sqlite3:
         specifier: ^5.1.7
         version: 5.1.7
@@ -253,6 +262,9 @@ importers:
       '@faker-js/faker':
         specifier: ^9.6.0
         version: 9.9.0
+      '@nestjs/common':
+        specifier: ^11.1.18
+        version: 11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core':
         specifier: ^11.1.18
         version: 11.1.24(@nestjs/common@11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.24)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -307,6 +319,9 @@ importers:
       '@neomaventures/request-context':
         specifier: workspace:*
         version: link:../request-context
+      '@nestjs/common':
+        specifier: ^11.1.18
+        version: 11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core':
         specifier: ^11.1.18
         version: 11.1.24(@nestjs/common@11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.24)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -361,6 +376,9 @@ importers:
       '@neomaventures/managed-app':
         specifier: workspace:*
         version: link:../managed-app
+      '@nestjs/common':
+        specifier: ^11.1.18
+        version: 11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core':
         specifier: ^11.1.18
         version: 11.1.24(@nestjs/common@11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.24)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -376,6 +394,9 @@ importers:
       '@types/supertest':
         specifier: ^6.0.2
         version: 6.0.3
+      express:
+        specifier: ^5.0.0
+        version: 5.2.1
       jest:
         specifier: ^30.3.0
         version: 30.4.2(@types/node@25.9.1)
@@ -385,6 +406,9 @@ importers:
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
+      rxjs:
+        specifier: ^7.8.1
+        version: 7.8.2
       sqlite3:
         specifier: ^5.1.7
         version: 5.1.7
@@ -401,6 +425,9 @@ importers:
         specifier: ^9.0.0
         version: 9.9.0
     devDependencies:
+      '@nestjs/common':
+        specifier: ^11.1.18
+        version: 11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@types/express':
         specifier: ^5.0.6
         version: 5.0.6
@@ -520,6 +547,9 @@ importers:
       '@neomaventures/request-context':
         specifier: workspace:*
         version: link:../request-context
+      '@nestjs/common':
+        specifier: ^11.1.18
+        version: 11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core':
         specifier: ^11.1.18
         version: 11.1.24(@nestjs/common@11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.24)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -538,6 +568,9 @@ importers:
       '@types/supertest':
         specifier: ^6.0.2
         version: 6.0.3
+      express:
+        specifier: ^5.0.0
+        version: 5.2.1
       jest:
         specifier: ^30.3.0
         version: 30.4.2(@types/node@25.9.1)
@@ -584,6 +617,12 @@ importers:
 
   packages/managed-app:
     devDependencies:
+      '@nestjs/common':
+        specifier: ^11.1.18
+        version: 11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core':
+        specifier: ^11.1.18
+        version: 11.1.24(@nestjs/common@11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.24)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/platform-express':
         specifier: ^11.1.18
         version: 11.1.24(@nestjs/common@11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.24)
@@ -686,6 +725,9 @@ importers:
       '@neomaventures/managed-app':
         specifier: workspace:*
         version: link:../managed-app
+      '@nestjs/common':
+        specifier: ^11.1.18
+        version: 11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core':
         specifier: ^11.1.18
         version: 11.1.24(@nestjs/common@11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.24)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -716,6 +758,9 @@ importers:
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
+      rxjs:
+        specifier: ^7.8.1
+        version: 7.8.2
       supertest:
         specifier: ^7.0.0
         version: 7.2.2
@@ -731,6 +776,9 @@ importers:
       '@neomaventures/managed-database':
         specifier: workspace:*
         version: link:../managed-database
+      '@nestjs/common':
+        specifier: ^11.1.18
+        version: 11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core':
         specifier: ^11.1.18
         version: 11.1.24(@nestjs/common@11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.24)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -798,6 +846,9 @@ importers:
       '@neomaventures/minio':
         specifier: workspace:*
         version: link:../minio
+      '@nestjs/common':
+        specifier: ^11.1.18
+        version: 11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core':
         specifier: ^11.1.18
         version: 11.1.24(@nestjs/common@11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.24)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -837,6 +888,9 @@ importers:
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
+      rxjs:
+        specifier: ^7.8.1
+        version: 7.8.2
       sqlite3:
         specifier: ^5.1.7
         version: 5.1.7
@@ -858,6 +912,9 @@ importers:
       '@neomaventures/managed-app':
         specifier: workspace:*
         version: link:../managed-app
+      '@nestjs/common':
+        specifier: ^11.1.18
+        version: 11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core':
         specifier: ^11.1.18
         version: 11.1.24(@nestjs/common@11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.24)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -888,6 +945,9 @@ importers:
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
+      rxjs:
+        specifier: ^7.8.1
+        version: 7.8.2
       sqlite3:
         specifier: ^5.1.7
         version: 5.1.7
