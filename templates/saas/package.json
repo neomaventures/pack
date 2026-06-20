@@ -20,7 +20,7 @@
     "start": "node dist/src/main",
     "test": "node --env-file=.env.spec --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.config.json",
     "test:e2e": "node --env-file=.env.e2e-spec --experimental-vm-modules node_modules/jest/bin/jest.js --config ./specs/jest-e2e.json --runInBand",
-    "typeorm": "TS_NODE_PROJECT=typeorm/tsconfig.json node -r ts-node/register/transpile-only -r tsconfig-paths/register node_modules/typeorm/cli.js",
+    "typeorm": "tsx node_modules/typeorm/cli.js",
     "migration:generate": "bash scripts/migration-generate.sh",
     "migration:run": "pnpm typeorm migration:run -d typeorm/datasource.ts",
     "test:ui": "pnpm build:css && node --env-file=.env.ui-spec node_modules/@playwright/test/cli.js test"
@@ -74,8 +74,7 @@
     "jest": "^30.3.0",
     "jsonwebtoken": "^9.0.2",
     "supertest": "^7.2.2",
-    "ts-node": "^10.9.2",
-    "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.20.0",
     "typescript": "^6.0.2"
   }
 }
