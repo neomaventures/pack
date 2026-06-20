@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "paths": {
+      "@neomaventures/mailbox": ["./src"],
+      "@neomaventures/mailbox/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*"]
+}
