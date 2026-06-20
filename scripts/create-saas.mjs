@@ -201,7 +201,21 @@ if (existsSync(packWorkspacePath)) {
   console.warn("")
 }
 
-// Install dependencies before the initial commit so the lockfile and any
+// Initialize the git repo BEFORE installing dependencies. Husky's `prepare`
+// script (which runs during `pnpm install`) needs a `.git` directory to
+// configure `core.hooksPath`. Without it, hook setup silently fails and the
+// pre-push hook never fires.
+const initResult = spawnSync("git", ["init", "--quiet"], { cwd: targetDir, stdio: "inherit" })
+if (initResult.status !== 0) {
+  console.error("")
+  console.error("✗ git init failed.")
+  console.error(`  The scaffold at ${targetDir} is left in place for inspection.`)
+  console.error("  Ensure git is installed and on your PATH, then re-run create:saas.")
+  process.exit(initResult.status ?? 1)
+}
+
+// Install dependencies after `git init` so husky wires `core.hooksPath`, and
+// before the initial commit so the lockfile, .husky/_/ helpers, and any
 // pnpm-workspace.yaml updates from the supply-chain prompt are captured.
 // Inherit stdio so the user sees progress and can answer the prompt.
 console.log("Installing dependencies...")
@@ -216,14 +230,11 @@ if (install.status !== 0) {
 }
 console.log("")
 
-// Initialize a git repo with a baseline commit. Best-effort: if git isn't
-// installed or any step fails, warn and continue — the scaffold still succeeded.
+// Stage everything (lockfile, .husky/_/, supply-chain prompt updates) into the
+// initial commit. Best-effort: if add/commit fails, warn and continue — the
+// scaffold and install both succeeded.
 try {
   const gitOpts = { cwd: targetDir, stdio: "ignore" }
-  const init = spawnSync("git", ["init", "--quiet"], gitOpts)
-  if (init.status !== 0) {
-    throw new Error("git init failed")
-  }
   const add = spawnSync("git", ["add", "."], gitOpts)
   if (add.status !== 0) {
     throw new Error("git add failed")
@@ -237,8 +248,8 @@ try {
     throw new Error("git commit failed")
   }
 } catch (err) {
-  console.warn(`Warning: could not initialize git repo (${err.message}).`)
-  console.warn("  The scaffold succeeded; you can run `git init` manually.")
+  console.warn(`Warning: could not create initial commit (${err.message}).`)
+  console.warn("  The scaffold succeeded; you can run `git add . && git commit` manually.")
   console.warn("")
 }
 
