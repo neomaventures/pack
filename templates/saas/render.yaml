@@ -2,7 +2,7 @@ services:
   - type: web
     name: __PACKAGE_NAME__
     runtime: node
-    plan: standard
+    plan: starter
     region: frankfurt
     buildCommand: NODE_ENV=development pnpm install --frozen-lockfile && NODE_ENV=production pnpm build
     preDeployCommand: pnpm migration:run
