@@ -5,7 +5,10 @@ import * as jwt from "jsonwebtoken"
 import request from "supertest"
 
 import { configureViewEngine } from "~fixtures/configure-view-engine"
-import { extractCallbackUrl, SESSION_COOKIE_REGEX } from "~fixtures/email/content"
+import {
+  extractCallbackUrl,
+  SESSION_COOKIE_REGEX,
+} from "~fixtures/email/content"
 import { mailpit } from "~fixtures/email/mailpit"
 
 const { FOUND, SEE_OTHER } = HttpStatus

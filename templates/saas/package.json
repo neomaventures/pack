@@ -15,7 +15,7 @@
     "predev": "lsof -ti:3000 | xargs kill -9 2>/dev/null; docker rm -f saas-mailpit 2>/dev/null; docker run -d --name saas-mailpit -p 1025:1025 -p 8025:8025 axllent/mailpit && node scripts/dev/start-minio.cjs",
     "dev": "concurrently -n nest,css -c blue,magenta \"node --env-file=.env.development node_modules/@nestjs/cli/bin/nest.js start --watch\" \"tailwindcss -i src/styles/input.css -o public/stylesheets/main.css --watch\"",
     "postdev": "docker rm -f saas-mailpit && node scripts/dev/stop-minio.cjs",
-    "lint": "eslint src/",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "prepare": "husky",
     "start": "node dist/src/main",
@@ -50,6 +50,7 @@
     "typeorm": "^0.3.20"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@faker-js/faker": "^9.9.0",
     "@neomaventures/fixtures": "workspace:*",
     "@neomaventures/google-fixtures": "workspace:*",
@@ -72,11 +73,20 @@
     "@types/node": "^25.5.2",
     "@types/supertest": "^7.2.0",
     "concurrently": "^9.1.2",
+    "eslint": "^10.2.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-import-x": "^4.16.2",
+    "eslint-plugin-prettier": "^5.5.5",
+    "eslint-plugin-yml": "^3.3.2",
+    "globals": "^17.4.0",
     "husky": "^9.1.7",
     "jest": "^30.3.0",
     "jsonwebtoken": "^9.0.2",
+    "prettier": "^3.4.2",
+    "prettier-plugin-tailwindcss": "^0.8.0",
     "supertest": "^7.2.2",
     "@swc-node/register": "^1.11.1",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.2",
+    "typescript-eslint": "^8.58.0"
   }
 }
