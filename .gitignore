@@ -18,3 +18,6 @@ test-results/
 !/.npmrc
 !templates/**/.npmrc
 .turbo
+
+# Claude Code agent worktrees and session artifacts
+.claude/
