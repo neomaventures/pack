@@ -28,7 +28,6 @@ describe("MailboxModule", () => {
         }).compile()
 
         expect(module.get(RESOLVED_MAILBOX_OPTIONS)).toEqual({
-          tokenAccessor: StubTokenAccessor,
           entity: MailAccount,
           gmailApiBaseUrl: GMAIL_API_BASE_URL_DEFAULT,
         })
@@ -93,7 +92,6 @@ describe("MailboxModule", () => {
         }).compile()
 
         expect(module.get(RESOLVED_MAILBOX_OPTIONS)).toEqual({
-          tokenAccessor: StubTokenAccessor,
           entity: MailAccount,
           gmailApiBaseUrl: GMAIL_API_BASE_URL_DEFAULT,
         })

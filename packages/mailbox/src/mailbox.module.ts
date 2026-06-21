@@ -1,23 +1,21 @@
-import {
-  type DynamicModule,
-  type ModuleMetadata,
-  type Provider,
-  type Type,
-  Module,
-} from "@nestjs/common"
+import { type DynamicModule, type Type, Module } from "@nestjs/common"
 
-import { GMAIL_API_BASE_URL, GMAIL_API_BASE_URL_DEFAULT } from "./constants"
-import { MailAccount } from "./entities/mail-account.entity"
 import { type TokenAccessor } from "./interfaces/token-accessor.interface"
 import {
-  type MailboxOptions,
-  type ResolvedMailboxOptions,
-  MAILBOX_OPTIONS,
-  RESOLVED_MAILBOX_OPTIONS,
-  TOKEN_ACCESSOR,
-} from "./mailbox.options"
-import { GmailService } from "./services/gmail.service"
-import { MailboxService } from "./services/mailbox.service"
+  type ASYNC_OPTIONS_TYPE,
+  type OPTIONS_TYPE,
+  ConfigurableModuleClass,
+} from "./mailbox.module-definition"
+import { TOKEN_ACCESSOR } from "./mailbox.options"
+
+/**
+ * Synchronous options for {@link MailboxModule.forRoot}. Extends the
+ * `ConfigurableModuleBuilder`-generated plain-data shape with the consumer's
+ * `tokenAccessor` class, which is registered via `useClass:` by the override.
+ */
+export type MailboxModuleOptions = typeof OPTIONS_TYPE & {
+  tokenAccessor: Type<TokenAccessor>
+}
 
 /**
  * Async-configuration shape for {@link MailboxModule.forRootAsync}.
@@ -28,59 +26,9 @@ import { MailboxService } from "./services/mailbox.service"
  * dependencies. Everything else (entity, `gmailApiBaseUrl`) flows through
  * the async factory like a normal `forRootAsync`.
  */
-export interface MailboxModuleAsyncOptions extends Pick<
-  ModuleMetadata,
-  "imports"
-> {
-  /**
-   * Class providing a {@link TokenAccessor} implementation. Registered as a
-   * provider by {@link MailboxModule} via `useClass:` so its own
-   * dependencies are resolved by NestJS DI.
-   */
+export type MailboxModuleAsyncOptions = typeof ASYNC_OPTIONS_TYPE & {
   tokenAccessor: Type<TokenAccessor>
-
-  /**
-   * Factory producing the rest of the mailbox options. Runs after
-   * `imports` resolve, so it may inject `ConfigService` or other
-   * host-side providers.
-   */
-  useFactory: (
-    ...args: any[]
-  ) =>
-    | Omit<MailboxOptions, "tokenAccessor">
-    | Promise<Omit<MailboxOptions, "tokenAccessor">>
-
-  /** Providers to inject into `useFactory`. */
-  inject?: any[]
 }
-
-const resolveOptions = (options: MailboxOptions): ResolvedMailboxOptions => ({
-  ...options,
-  entity: options.entity ?? MailAccount,
-  gmailApiBaseUrl: options.gmailApiBaseUrl ?? GMAIL_API_BASE_URL_DEFAULT,
-})
-
-const buildSharedProviders = (
-  tokenAccessor: Type<TokenAccessor>,
-): Provider[] => [
-  {
-    provide: RESOLVED_MAILBOX_OPTIONS,
-    useFactory: (options: MailboxOptions): ResolvedMailboxOptions =>
-      resolveOptions(options),
-    inject: [MAILBOX_OPTIONS],
-  },
-  {
-    provide: GMAIL_API_BASE_URL,
-    useFactory: (resolved: ResolvedMailboxOptions): string =>
-      resolved.gmailApiBaseUrl,
-    inject: [RESOLVED_MAILBOX_OPTIONS],
-  },
-  { provide: TOKEN_ACCESSOR, useClass: tokenAccessor },
-  GmailService,
-  MailboxService,
-]
-
-const MODULE_EXPORTS = [MailboxService, MAILBOX_OPTIONS] as const
 
 /**
  * Provider-agnostic mailbox primitive for NestJS — Gmail-first in v0.1.0.
@@ -89,10 +37,11 @@ const MODULE_EXPORTS = [MailboxService, MAILBOX_OPTIONS] as const
  * token via the consumer-supplied {@link TokenAccessor} class and fetches
  * Gmail label stats live (no caching).
  *
- * `MailboxModule` hand-rolls `forRoot` / `forRootAsync` rather than using
- * `ConfigurableModuleBuilder` because the consumer's `TokenAccessor` is a
- * class — registered via `useClass:` so its own constructor dependencies
- * resolve through native Nest DI without any `ModuleRef.create()` dance.
+ * Built on `ConfigurableModuleBuilder` for the plain-data plumbing
+ * (`entity`, `gmailApiBaseUrl`), with thin `forRoot` / `forRootAsync`
+ * overrides that extract the consumer's `tokenAccessor` class and append it
+ * as a `useClass:` provider so its own constructor dependencies resolve
+ * through native Nest DI — no `ModuleRef.create()` dance.
  *
  * @requires TypeOrmModule must be configured by the consumer if they need
  *   the reference `MailAccount` entity persisted — mailbox itself does not
@@ -117,25 +66,30 @@ const MODULE_EXPORTS = [MailboxService, MAILBOX_OPTIONS] as const
  * })
  * ```
  */
+// `ConfigurableModuleClass`'s generated `forRoot` / `forRootAsync` accept the
+// plain-data `MailboxOptionsBase`. Our overrides narrow the input type to
+// require `tokenAccessor` as well, which TypeScript flags as an unsafe
+// static-side override (TS2417). The runtime behaviour is sound — overrides
+// destructure `tokenAccessor` out and pass the plain-data rest to
+// `super.forRoot` / `super.forRootAsync` — so we suppress the structural check
+// on the class declaration.
 @Module({})
-export class MailboxModule {
+// @ts-expect-error TS2417: intentional input-narrowing override
+export class MailboxModule extends ConfigurableModuleClass {
   /**
-   * Synchronous configuration. Mirrors the route-model-binding pattern:
-   * the consumer's `TokenAccessor` class is registered under `TOKEN_ACCESSOR`
-   * via `useClass:` so NestJS resolves its constructor deps natively.
-   *
-   * @param options - Mailbox configuration. `tokenAccessor` is required;
-   *   `entity` and `gmailApiBaseUrl` default to {@link MailAccount} and the
-   *   production Gmail endpoint respectively.
+   * Synchronous configuration. The consumer's `TokenAccessor` class is
+   * registered under `TOKEN_ACCESSOR` via `useClass:` so NestJS resolves its
+   * constructor deps natively.
    */
-  public static forRoot(options: MailboxOptions): DynamicModule {
+  public static override forRoot(options: MailboxModuleOptions): DynamicModule {
+    const { tokenAccessor, ...rest } = options
+    const base = super.forRoot(rest)
     return {
-      module: MailboxModule,
+      ...base,
       providers: [
-        { provide: MAILBOX_OPTIONS, useValue: options },
-        ...buildSharedProviders(options.tokenAccessor),
+        ...(base.providers ?? []),
+        { provide: TOKEN_ACCESSOR, useClass: tokenAccessor },
       ],
-      exports: [...MODULE_EXPORTS],
     }
   }
 
@@ -144,27 +98,18 @@ export class MailboxModule {
    * (alongside `useFactory`) because `useClass:` needs the class reference
    * at module-construction time. Everything else flows through the async
    * factory.
-   *
-   * @param options - Async options shape — see {@link MailboxModuleAsyncOptions}.
    */
-  public static forRootAsync(
+  public static override forRootAsync(
     options: MailboxModuleAsyncOptions,
   ): DynamicModule {
+    const { tokenAccessor, ...rest } = options
+    const base = super.forRootAsync(rest)
     return {
-      module: MailboxModule,
-      imports: options.imports ?? [],
+      ...base,
       providers: [
-        {
-          provide: MAILBOX_OPTIONS,
-          useFactory: async (...args: unknown[]): Promise<MailboxOptions> => ({
-            ...(await options.useFactory(...args)),
-            tokenAccessor: options.tokenAccessor,
-          }),
-          inject: options.inject ?? [],
-        },
-        ...buildSharedProviders(options.tokenAccessor),
+        ...(base.providers ?? []),
+        { provide: TOKEN_ACCESSOR, useClass: tokenAccessor },
       ],
-      exports: [...MODULE_EXPORTS],
     }
   }
 }

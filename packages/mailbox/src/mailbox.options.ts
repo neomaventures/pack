@@ -82,6 +82,16 @@ export interface MailboxOptions<T extends Mailboxable = Mailboxable> {
 }
 
 /**
+ * Fields of {@link MailboxOptions} that are routed through the underlying
+ * `ConfigurableModuleBuilder` — everything except `tokenAccessor`, which is
+ * resolved separately as a class-based provider by the module overrides.
+ */
+export type MailboxOptionsBase<T extends Mailboxable = Mailboxable> = Omit<
+  MailboxOptions<T>,
+  "tokenAccessor"
+>
+
+/**
  * Fully-resolved mailbox options exposed via {@link RESOLVED_MAILBOX_OPTIONS}.
  * Mirrors {@link MailboxOptions} but with `entity` and `gmailApiBaseUrl`
  * materialised to their concrete defaults so service code never sees
@@ -90,7 +100,7 @@ export interface MailboxOptions<T extends Mailboxable = Mailboxable> {
  * Package-internal — not exported from the public barrel.
  */
 export type ResolvedMailboxOptions<T extends Mailboxable = Mailboxable> =
-  MailboxOptions<T> & {
+  MailboxOptionsBase<T> & {
     entity: new (...args: any[]) => T
     gmailApiBaseUrl: string
   }
