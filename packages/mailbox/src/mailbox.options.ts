@@ -20,6 +20,18 @@ export const MAILBOX_OPTIONS = Symbol("MAILBOX_OPTIONS")
 export const RESOLVED_MAILBOX_OPTIONS = Symbol("RESOLVED_MAILBOX_OPTIONS")
 
 /**
+ * Package-internal DI token resolving the consumer's {@link TokenAccessor}
+ * class. `MailboxModule` registers the consumer-supplied class under this
+ * token via `useClass:` so NestJS's native DI resolves the accessor's own
+ * constructor dependencies — no `ModuleRef.create()`, no `onModuleInit`.
+ *
+ * Not exported from the public barrel. `MailboxService` injects this token
+ * rather than the consumer's concrete class so the consumer's type never
+ * leaks into the service signature.
+ */
+export const TOKEN_ACCESSOR = Symbol("TOKEN_ACCESSOR")
+
+/**
  * Configuration options for {@link MailboxModule}.
  *
  * @example Minimal — defaults `entity` to `MailAccount` and `gmailApiBaseUrl`

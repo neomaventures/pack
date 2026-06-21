@@ -1,11 +1,7 @@
 import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
 
-import {
-  MailAccount,
-  MailboxModule,
-  type MailboxOptions,
-} from "@neomaventures/mailbox"
+import { MailAccount, MailboxModule } from "@neomaventures/mailbox"
 
 import { MailboxController } from "./mailbox.controller"
 import { TestTokenAccessor } from "./token-accessor"
@@ -19,11 +15,9 @@ import { TestTokenAccessor } from "./token-accessor"
       synchronize: true,
     }),
     TypeOrmModule.forFeature([MailAccount]),
-    MailboxModule.forRootAsync({
+    MailboxModule.forRoot({
       tokenAccessor: TestTokenAccessor,
-      useFactory: (): Omit<MailboxOptions, "tokenAccessor"> => ({
-        gmailApiBaseUrl: process.env.GMAIL_API_BASE_URL!,
-      }),
+      gmailApiBaseUrl: process.env.GMAIL_API_BASE_URL!,
     }),
   ],
   controllers: [MailboxController],

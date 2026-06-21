@@ -9,7 +9,7 @@ export { type Mailboxable } from "./interfaces/mailboxable.interface"
 export { type TokenAccessor } from "./interfaces/token-accessor.interface"
 
 // Module
-export { MailboxModule } from "./mailbox.module"
+export { MailboxModule, type MailboxModuleAsyncOptions } from "./mailbox.module"
 export { type MailboxOptions, MAILBOX_OPTIONS } from "./mailbox.options"
 
 // Services

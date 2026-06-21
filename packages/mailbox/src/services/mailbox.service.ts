@@ -1,13 +1,9 @@
-import { Inject, Injectable, type OnModuleInit } from "@nestjs/common"
-import { ModuleRef } from "@nestjs/core"
+import { Inject, Injectable } from "@nestjs/common"
 
 import { GMAIL_READONLY_SCOPE, GmailSystemLabel } from "../constants"
 import { type Mailboxable } from "../interfaces/mailboxable.interface"
 import { type TokenAccessor } from "../interfaces/token-accessor.interface"
-import {
-  type ResolvedMailboxOptions,
-  RESOLVED_MAILBOX_OPTIONS,
-} from "../mailbox.options"
+import { TOKEN_ACCESSOR } from "../mailbox.options"
 
 import { type GmailLabelStats, GmailService } from "./gmail.service"
 
@@ -37,30 +33,12 @@ import { type GmailLabelStats, GmailService } from "./gmail.service"
  * ```
  */
 @Injectable()
-export class MailboxService<
-  T extends Mailboxable = Mailboxable,
-> implements OnModuleInit {
-  private tokenAccessor!: TokenAccessor
-
+export class MailboxService<T extends Mailboxable = Mailboxable> {
   public constructor(
-    @Inject(RESOLVED_MAILBOX_OPTIONS)
-    private readonly options: ResolvedMailboxOptions<T>,
+    @Inject(TOKEN_ACCESSOR)
+    private readonly tokenAccessor: TokenAccessor,
     private readonly gmailService: GmailService,
-    private readonly moduleRef: ModuleRef,
   ) {}
-
-  /**
-   * Instantiates the consumer-supplied `TokenAccessor` class once the
-   * mailbox module's DI container is fully initialised. Uses
-   * `ModuleRef.create()` so the accessor's own dependencies (e.g. a
-   * host-side `OAuthTokenService`) are resolved by NestJS — no manual
-   * `new` and no `providers: [...]` registration required.
-   */
-  public async onModuleInit(): Promise<void> {
-    this.tokenAccessor = await this.moduleRef.create<TokenAccessor>(
-      this.options.tokenAccessor,
-    )
-  }
 
   /**
    * Fetches Gmail stats for the given account's mailbox.
