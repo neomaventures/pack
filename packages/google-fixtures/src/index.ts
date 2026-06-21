@@ -3,6 +3,7 @@ export { gmail } from "./gmail"
 export { google } from "./google"
 
 // MockServer helpers
+export { GmailClient } from "./gmail-client"
 export { GoogleOAuthClient } from "./google-oauth-client"
 
 // Types
