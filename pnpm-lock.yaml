@@ -598,6 +598,9 @@ importers:
       '@neomaventures/google-fixtures':
         specifier: workspace:*
         version: link:../google-fixtures
+      '@neomaventures/managed-app':
+        specifier: workspace:*
+        version: link:../managed-app
       '@neomaventures/managed-database':
         specifier: workspace:*
         version: link:../managed-database
@@ -619,6 +622,9 @@ importers:
       '@types/jest':
         specifier: ^30.0.0
         version: 30.0.0
+      '@types/supertest':
+        specifier: ^6.0.2
+        version: 6.0.3
       jest:
         specifier: ^30.3.0
         version: 30.4.2(@types/node@25.9.1)
@@ -631,6 +637,12 @@ importers:
       rxjs:
         specifier: ^7.8.1
         version: 7.8.2
+      sqlite3:
+        specifier: ^5.1.7
+        version: 5.1.7
+      supertest:
+        specifier: ^7.0.0
+        version: 7.2.2
       typeorm:
         specifier: ^0.3.20
         version: 0.3.30(pg@8.21.0)(sqlite3@5.1.7)

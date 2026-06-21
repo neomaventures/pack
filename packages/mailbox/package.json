@@ -19,7 +19,6 @@
     "gmail",
     "email"
   ],
-  "private": true,
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
@@ -46,6 +45,8 @@
   "scripts": {
     "build": "tsc -p ./tsconfig.lib.json",
     "test": "node --env-file=.env.test ./node_modules/jest/bin/jest.js --runInBand --passWithNoTests",
+    "pretest:e2e": "pnpm build",
+    "test:e2e": "node --env-file=.env.e2e --experimental-vm-modules ./node_modules/jest/bin/jest.js --config ./e2e/jest-e2e.json --runInBand",
     "lint": "eslint ."
   },
   "peerDependencies": {
@@ -60,6 +61,7 @@
     "@faker-js/faker": "^9.6.0",
     "@neomaventures/fixtures": "workspace:*",
     "@neomaventures/google-fixtures": "workspace:*",
+    "@neomaventures/managed-app": "workspace:*",
     "@neomaventures/managed-database": "workspace:*",
     "@neomaventures/mockserver": "workspace:*",
     "@nestjs/common": "^11.1.18",
@@ -67,10 +69,13 @@
     "@nestjs/testing": "^11.1.18",
     "@nestjs/typeorm": "^11.0.0",
     "@types/jest": "^30.0.0",
+    "@types/supertest": "^6.0.2",
     "jest": "^30.3.0",
     "jest-extended": "^7.0.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "sqlite3": "^5.1.7",
+    "supertest": "^7.0.0",
     "typeorm": "^0.3.20"
   }
 }

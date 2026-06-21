@@ -1,0 +1,36 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "setupFiles": ["reflect-metadata", "<rootDir>/build.setup.ts"],
+  "setupFilesAfterEnv": [
+    "jest-extended/all",
+    "@neomaventures/fixtures/matchers"
+  ],
+  "globalSetup": "<rootDir>/../fixtures/e2e/global-setup.ts",
+  "globalTeardown": "<rootDir>/../fixtures/e2e/global-teardown.ts",
+  "transform": {
+    "^.+\\.tsx?$": [
+      "@swc/jest",
+      {
+        "jsc": {
+          "parser": {
+            "syntax": "typescript",
+            "decorators": true,
+            "dynamicImport": true
+          },
+          "transform": {
+            "legacyDecorator": true,
+            "decoratorMetadata": true
+          }
+        }
+      }
+    ]
+  },
+  "moduleNameMapper": {
+    "^fixtures/(.*)$": "<rootDir>/../fixtures/$1",
+    "^@neomaventures/mailbox$": "<rootDir>/../dist/index.js",
+    "^@neomaventures/mailbox/(.*)$": "<rootDir>/../dist/$1"
+  }
+}
