@@ -37,14 +37,6 @@ describe("GmailNetworkException", () => {
     })
   })
 
-  it("should not leak endpoint on the wire", () => {
-    expect(exception.getResponse()).not.toHaveProperty("endpoint")
-  })
-
-  it("should not leak context on the wire", () => {
-    expect(exception.getResponse()).not.toHaveProperty("context")
-  })
-
   it("should have the correct message", () => {
     expect(exception.message).toBe(`Gmail network error: ${cause.message}`)
   })

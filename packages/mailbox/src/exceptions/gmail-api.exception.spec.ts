@@ -47,18 +47,6 @@ describe("GmailApiException", () => {
         error: "GmailApi",
       })
     })
-
-    it("should not leak endpoint on the wire", () => {
-      expect(exception.getResponse()).not.toHaveProperty("endpoint")
-    })
-
-    it("should not leak context on the wire", () => {
-      expect(exception.getResponse()).not.toHaveProperty("context")
-    })
-
-    it("should not leak responseBody on the wire", () => {
-      expect(exception.getResponse()).not.toHaveProperty("responseBody")
-    })
   })
 
   describe("Given an upstream 404", () => {

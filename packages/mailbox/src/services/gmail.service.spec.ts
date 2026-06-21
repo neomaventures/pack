@@ -131,11 +131,11 @@ describe("GmailService", () => {
           .catch((e: unknown) => e)
 
         expect(error).toBeInstanceOf(GmailNetworkException)
-        expect((error as GmailNetworkException).context).toEqual({ labelId })
-        expect((error as GmailNetworkException).endpoint).toBe(
-          "/gmail/v1/users/me/labels/{labelId}",
-        )
-        expect((error as GmailNetworkException).cause).toBeDefined()
+        expect(error).toMatchObject({
+          context: { labelId },
+          endpoint: "/gmail/v1/users/me/labels/{labelId}",
+          cause: expect.anything(),
+        })
       })
     })
   })

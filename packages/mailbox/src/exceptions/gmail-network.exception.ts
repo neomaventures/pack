@@ -35,8 +35,6 @@ type KnownCode = (typeof KNOWN_CODES)[number] | "UNKNOWN"
  * ```
  */
 export class GmailNetworkException extends HttpException {
-  public readonly endpoint: string
-  public readonly context: Record<string, unknown>
   public readonly code: string
 
   /**
@@ -48,8 +46,8 @@ export class GmailNetworkException extends HttpException {
    *   {@link Error}'s `cause` so native stack chains work.
    */
   public constructor(
-    endpoint: string,
-    context: Record<string, unknown>,
+    public readonly endpoint: string,
+    public readonly context: Record<string, unknown>,
     cause: Error,
   ) {
     const message = `Gmail network error: ${cause.message}`
@@ -62,8 +60,6 @@ export class GmailNetworkException extends HttpException {
       HttpStatus.BAD_GATEWAY,
       { cause },
     )
-    this.endpoint = endpoint
-    this.context = context
     this.code = GmailNetworkException.extractCode(cause)
   }
 

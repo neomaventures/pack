@@ -32,9 +32,6 @@ import { HttpException, HttpStatus } from "@nestjs/common"
  */
 export class GmailApiException extends HttpException {
   public readonly statusCode: number
-  public readonly endpoint: string
-  public readonly context: Record<string, unknown>
-  public readonly responseBody: unknown
 
   /**
    * @param statusCode - The upstream Gmail HTTP status
@@ -50,10 +47,10 @@ export class GmailApiException extends HttpException {
    */
   public constructor(
     statusCode: number,
-    endpoint: string,
+    public readonly endpoint: string,
     message: string,
-    context: Record<string, unknown>,
-    responseBody: unknown,
+    public readonly context: Record<string, unknown>,
+    public readonly responseBody: unknown,
     cause?: Error,
   ) {
     const mappedStatus = GmailApiException.mapStatus(statusCode)
@@ -67,9 +64,6 @@ export class GmailApiException extends HttpException {
       { cause },
     )
     this.statusCode = mappedStatus
-    this.endpoint = endpoint
-    this.context = context
-    this.responseBody = responseBody
   }
 
   private static mapStatus(upstreamStatus: number): number {
