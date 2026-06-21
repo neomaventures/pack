@@ -111,11 +111,10 @@ describe("GmailService", () => {
           .getStats(token, labelId)
           .catch((e: unknown) => e)
 
-        expect(error).toBeInstanceOf(GmailApiException)
-        expect((error as GmailApiException).context).toEqual({ labelId })
-        expect((error as GmailApiException).endpoint).toBe(
-          "/gmail/v1/users/me/labels/{labelId}",
-        )
+        expect(error).toMatchError(GmailApiException, {
+          context: { labelId },
+          endpoint: "/gmail/v1/users/me/labels/{labelId}",
+        })
       })
     })
 
@@ -130,12 +129,11 @@ describe("GmailService", () => {
           .getStats(token, labelId)
           .catch((e: unknown) => e)
 
-        expect(error).toBeInstanceOf(GmailNetworkException)
-        expect(error).toMatchObject({
+        expect(error).toMatchError(GmailNetworkException, {
           context: { labelId },
           endpoint: "/gmail/v1/users/me/labels/{labelId}",
-          cause: expect.anything(),
         })
+        expect((error as GmailNetworkException).cause).toBeDefined()
       })
     })
   })

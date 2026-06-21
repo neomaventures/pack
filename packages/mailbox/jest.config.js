@@ -7,4 +7,5 @@ module.exports = {
   // verifies its HTTP behaviour against the wire, not a fetch mock.
   globalSetup: "<rootDir>/fixtures/specs/global-setup.ts",
   globalTeardown: "<rootDir>/fixtures/specs/global-teardown.ts",
+  setupFilesAfterEnv: [...base.setupFilesAfterEnv, "@neomaventures/fixtures/matchers"],
 }

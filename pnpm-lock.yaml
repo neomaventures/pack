@@ -592,6 +592,9 @@ importers:
       '@faker-js/faker':
         specifier: ^9.6.0
         version: 9.9.0
+      '@neomaventures/fixtures':
+        specifier: workspace:*
+        version: link:../fixtures
       '@neomaventures/google-fixtures':
         specifier: workspace:*
         version: link:../google-fixtures
