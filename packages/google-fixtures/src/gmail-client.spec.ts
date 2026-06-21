@@ -99,6 +99,37 @@ describe("GmailClient", () => {
     })
   })
 
+  describe("expectNetworkFailure()", () => {
+    it("should cause fetch() to reject for the matching request", async () => {
+      const labelId = faker.string.alphanumeric(10)
+      const token = faker.string.alphanumeric(40)
+
+      await gmailClient.expectNetworkFailure({ labelId, token })
+
+      await expect(
+        fetch(`${baseUrl}/gmail/v1/users/me/labels/${labelId}`, {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ).rejects.toThrow()
+    })
+
+    it("should only drop the connection for the configured token", async () => {
+      const labelId = faker.string.alphanumeric(10)
+      const token = faker.string.alphanumeric(40)
+      const wrongToken = faker.string.alphanumeric(40)
+
+      await gmailClient.expectNetworkFailure({ labelId, token })
+
+      const result = await fetch(
+        `${baseUrl}/gmail/v1/users/me/labels/${labelId}`,
+        { method: "GET", headers: { Authorization: `Bearer ${wrongToken}` } },
+      )
+
+      expect(result.status).toBe(404)
+    })
+  })
+
   describe("expectLabelError()", () => {
     it.each([
       [401, "Invalid Credentials"],

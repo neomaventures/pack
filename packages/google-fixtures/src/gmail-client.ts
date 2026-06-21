@@ -127,6 +127,41 @@ export class GmailClient {
       times: params.times ?? { remainingTimes: 1 },
     })
   }
+
+  /**
+   * Registers a MockServer expectation that simulates a network failure
+   * (dropped connection) for the Gmail labels endpoint. The matching
+   * request is closed without a response, causing `fetch()` to reject.
+   *
+   * Mirrors {@link GoogleOAuthClient.mockCodeExchangeNetworkError} —
+   * useful for exercising the `GmailNetworkException` path in
+   * `GmailService`.
+   *
+   * @param params - The request parameters
+   * @param params.labelId - The Gmail label ID to match in the path
+   * @param params.token - The OAuth access token to match in the
+   *   `Authorization` header
+   * @param params.times - How many times to match (defaults to `{ remainingTimes: 1 }`)
+   */
+  public async expectNetworkFailure(params: {
+    labelId: string
+    token: string
+    times?: MockserverSpecificTimes | MockserverUnlimitedTimes
+  }): Promise<void> {
+    await this.client.createExpectation({
+      httpRequest: {
+        path: `/gmail/v1/users/me/labels/${encodeURIComponent(params.labelId)}`,
+        method: "GET",
+        headers: {
+          Authorization: [`Bearer ${params.token}`],
+        },
+      },
+      httpError: {
+        dropConnection: true,
+      },
+      times: params.times ?? { remainingTimes: 1 },
+    })
+  }
 }
 
 // Re-export for callers that want the label fake alongside the client.
