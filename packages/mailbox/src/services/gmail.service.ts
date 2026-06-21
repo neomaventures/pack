@@ -1,6 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common"
 
-import { GMAIL_API_BASE_URL } from "../constants"
+import { GMAIL_API_BASE_URL, GmailSystemLabel } from "../constants"
 import { GmailApiException } from "../exceptions/gmail-api.exception"
 import { GmailNetworkException } from "../exceptions/gmail-network.exception"
 
@@ -45,8 +45,8 @@ export class GmailService {
    * vocabulary (`messageCount` / `unreadCount`).
    *
    * @param token - A Gmail OAuth access token covering `gmail.readonly`
-   * @param labelId - The Gmail label ID (e.g. `INBOX`, `SENT`, or
-   *   a user-defined `Label_123`). Defaults to `"INBOX"`.
+   * @param labelId - A {@link GmailSystemLabel} or a user-defined label
+   *   ID (e.g. `Label_123`). Defaults to {@link GmailSystemLabel.Inbox}.
    * @returns The label's message + unread counts
    * @throws {GmailApiException} When Gmail responds with a non-2xx status.
    *   Upstream `401` and `404` are surfaced verbatim; everything else
@@ -62,7 +62,7 @@ export class GmailService {
    */
   public async getStats(
     token: string,
-    labelId: string = "INBOX",
+    labelId: GmailSystemLabel | string = GmailSystemLabel.Inbox,
   ): Promise<GmailLabelStats> {
     const url = `${this.baseUrl}/gmail/v1/users/me/labels/${encodeURIComponent(labelId)}`
     let response: Response
