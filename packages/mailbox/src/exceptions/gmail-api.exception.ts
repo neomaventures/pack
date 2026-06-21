@@ -61,9 +61,6 @@ export class GmailApiException extends HttpException {
       {
         statusCode: mappedStatus,
         message,
-        endpoint,
-        context,
-        responseBody,
         error: "GmailApi",
       },
       mappedStatus,

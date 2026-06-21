@@ -24,15 +24,15 @@ describe("GmailApiException", () => {
       )
     })
 
-    it("should expose the endpoint property", () => {
+    it("should expose the endpoint property on the instance", () => {
       expect(exception.endpoint).toBe(endpoint)
     })
 
-    it("should expose the context property carrying labelId", () => {
+    it("should expose the context property on the instance", () => {
       expect(exception.context).toEqual({ labelId })
     })
 
-    it("should expose the responseBody property", () => {
+    it("should expose the responseBody property on the instance", () => {
       expect(exception.responseBody).toEqual(responseBody)
     })
 
@@ -40,15 +40,24 @@ describe("GmailApiException", () => {
       expect(exception.getStatus()).toBe(HttpStatus.UNAUTHORIZED)
     })
 
-    it("should produce the stable response shape", () => {
+    it("should produce the minimal wire response shape", () => {
       expect(exception.getResponse()).toEqual({
         statusCode: HttpStatus.UNAUTHORIZED,
         message,
-        endpoint,
-        context: { labelId },
-        responseBody,
         error: "GmailApi",
       })
+    })
+
+    it("should not leak endpoint on the wire", () => {
+      expect(exception.getResponse()).not.toHaveProperty("endpoint")
+    })
+
+    it("should not leak context on the wire", () => {
+      expect(exception.getResponse()).not.toHaveProperty("context")
+    })
+
+    it("should not leak responseBody on the wire", () => {
+      expect(exception.getResponse()).not.toHaveProperty("responseBody")
     })
   })
 
@@ -72,13 +81,10 @@ describe("GmailApiException", () => {
       expect(exception.getStatus()).toBe(HttpStatus.NOT_FOUND)
     })
 
-    it("should produce the stable response shape", () => {
+    it("should produce the minimal wire response shape", () => {
       expect(exception.getResponse()).toEqual({
         statusCode: HttpStatus.NOT_FOUND,
         message,
-        endpoint,
-        context: { labelId },
-        responseBody,
         error: "GmailApi",
       })
     })
