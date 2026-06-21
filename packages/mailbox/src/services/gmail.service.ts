@@ -1,9 +1,10 @@
 import { Inject, Injectable } from "@nestjs/common"
 
 import { GMAIL_API_BASE_URL } from "../constants"
+import { GmailApiException } from "../exceptions/gmail-api.exception"
 
 /**
- * Stats for a single Gmail label, as returned by `GmailService.getLabelStats`.
+ * Stats for a single Gmail label, as returned by `GmailService.getStats`.
  *
  * Vocabulary is intentionally renamed from Gmail's `messagesTotal` /
  * `messagesUnread` to `messageCount` / `unreadCount` — mailbox uses the
@@ -42,20 +43,21 @@ export class GmailService {
    *
    * @param token - A Gmail OAuth access token covering `gmail.readonly`
    * @param labelId - The Gmail label ID (e.g. `INBOX`, `SENT`, or
-   *   a user-defined `Label_123`)
+   *   a user-defined `Label_123`). Defaults to `"INBOX"`.
    * @returns The label's message + unread counts
-   * @throws Error when Gmail responds with a non-200 status. The error
-   *   message includes the HTTP status and label ID for easy diagnosis.
+   * @throws {GmailApiException} When Gmail responds with a non-2xx status.
+   *   Upstream `401` and `404` are surfaced verbatim; everything else
+   *   collapses to `502 Bad Gateway`.
    *
    * @example
    * ```typescript
-   * const stats = await gmail.getLabelStats(token, "INBOX")
+   * const stats = await gmail.getStats(token)
    * // => { messageCount: 1234, unreadCount: 5 }
    * ```
    */
-  public async getLabelStats(
+  public async getStats(
     token: string,
-    labelId: string,
+    labelId: string = "INBOX",
   ): Promise<GmailLabelStats> {
     const url = `${this.baseUrl}/gmail/v1/users/me/labels/${encodeURIComponent(labelId)}`
     const response = await fetch(url, {
@@ -66,9 +68,7 @@ export class GmailService {
     })
 
     if (!response.ok) {
-      throw new Error(
-        `Gmail API error fetching label "${labelId}": HTTP ${response.status} ${response.statusText}`,
-      )
+      throw new GmailApiException(response.status, labelId, response.statusText)
     }
 
     const body = (await response.json()) as {
