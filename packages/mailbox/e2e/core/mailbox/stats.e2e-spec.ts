@@ -5,23 +5,28 @@ import { mockserver } from "@neomaventures/mockserver/fixture"
 import { HttpStatus } from "@nestjs/common"
 import request from "supertest"
 
-const { OK, BAD_REQUEST, BAD_GATEWAY } = HttpStatus
+import { TestTokenAccessor } from "../../app/token-accessor"
+
+const { OK, BAD_GATEWAY } = HttpStatus
 
 describe("GET /mailbox/stats (forRootAsync)", () => {
   let app: Awaited<ReturnType<typeof managedAppInstance>>
   let gmailClient: GmailClient
 
   beforeEach(async () => {
+    TestTokenAccessor.reset()
     gmailClient = new GmailClient(mockserver)
     app = await managedAppInstance()
   })
 
-  describe("When called with a valid bearer token", () => {
-    it("should respond with HTTP 200 and the Gmail inbox stats", async () => {
+  describe("When Gmail returns label stats for the account", () => {
+    it("should respond with HTTP 200 and the renamed shape", async () => {
+      const accountId = faker.string.uuid()
       const token = faker.string.alphanumeric(40)
       const messagesTotal = faker.number.int({ min: 1, max: 10000 })
       const messagesUnread = faker.number.int({ min: 0, max: 500 })
 
+      TestTokenAccessor.register(accountId, token)
       await gmailClient.expectLabel({
         labelId: "INBOX",
         token,
@@ -34,7 +39,7 @@ describe("GET /mailbox/stats (forRootAsync)", () => {
 
       const { body } = await request(app.getHttpServer())
         .get("/mailbox/stats")
-        .set("Authorization", `Bearer ${token}`)
+        .set("x-account-id", accountId)
         .expect(OK)
 
       expect(body).toEqual({
@@ -44,18 +49,12 @@ describe("GET /mailbox/stats (forRootAsync)", () => {
     })
   })
 
-  describe("When called without a bearer token", () => {
-    it("should respond with HTTP 400", async () => {
-      await request(app.getHttpServer())
-        .get("/mailbox/stats")
-        .expect(BAD_REQUEST)
-    })
-  })
-
   describe("When Gmail responds with an error", () => {
     it("should surface a 502 Bad Gateway", async () => {
+      const accountId = faker.string.uuid()
       const token = faker.string.alphanumeric(40)
 
+      TestTokenAccessor.register(accountId, token)
       await gmailClient.expectLabelError({
         labelId: "INBOX",
         token,
@@ -65,7 +64,7 @@ describe("GET /mailbox/stats (forRootAsync)", () => {
 
       await request(app.getHttpServer())
         .get("/mailbox/stats")
-        .set("Authorization", `Bearer ${token}`)
+        .set("x-account-id", accountId)
         .expect(BAD_GATEWAY)
     })
   })
