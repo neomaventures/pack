@@ -5,6 +5,7 @@ import { Test, type TestingModule } from "@nestjs/testing"
 
 import { GMAIL_API_BASE_URL } from "../constants"
 import { GmailApiException } from "../exceptions/gmail-api.exception"
+import { GmailNetworkException } from "../exceptions/gmail-network.exception"
 
 import { GmailService } from "./gmail.service"
 
@@ -95,7 +96,7 @@ describe("GmailService", () => {
       [404, "Label_DoesNotExist"],
       [500, "INBOX"],
     ])("Given Gmail returns %i for %s", (statusCode, labelId) => {
-      it("should throw a GmailApiException carrying the labelId", async () => {
+      it("should throw a GmailApiException carrying the labelId in context", async () => {
         const service = await buildService()
         const token = faker.string.alphanumeric(40)
         const message = faker.lorem.sentence()
@@ -111,7 +112,30 @@ describe("GmailService", () => {
           .catch((e: unknown) => e)
 
         expect(error).toBeInstanceOf(GmailApiException)
-        expect((error as GmailApiException).labelId).toBe(labelId)
+        expect((error as GmailApiException).context).toEqual({ labelId })
+        expect((error as GmailApiException).endpoint).toBe(
+          "/gmail/v1/users/me/labels/{labelId}",
+        )
+      })
+    })
+
+    describe("Given the Gmail fetch fails at the network level", () => {
+      it("should throw a GmailNetworkException carrying the labelId in context", async () => {
+        const service = await buildService()
+        const token = faker.string.alphanumeric(40)
+        const labelId = "INBOX"
+        await gmailClient.expectNetworkFailure({ labelId, token })
+
+        const error = await service
+          .getStats(token, labelId)
+          .catch((e: unknown) => e)
+
+        expect(error).toBeInstanceOf(GmailNetworkException)
+        expect((error as GmailNetworkException).context).toEqual({ labelId })
+        expect((error as GmailNetworkException).endpoint).toBe(
+          "/gmail/v1/users/me/labels/{labelId}",
+        )
+        expect((error as GmailNetworkException).cause).toBeDefined()
       })
     })
   })
