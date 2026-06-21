@@ -598,6 +598,9 @@ importers:
       '@neomaventures/google-fixtures':
         specifier: workspace:*
         version: link:../google-fixtures
+      '@neomaventures/managed-database':
+        specifier: workspace:*
+        version: link:../managed-database
       '@neomaventures/mockserver':
         specifier: workspace:*
         version: link:../mockserver
