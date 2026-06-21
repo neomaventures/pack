@@ -52,7 +52,7 @@ export class GmailService {
    *   Upstream `401` and `404` are surfaced verbatim; everything else
    *   collapses to `502 Bad Gateway`.
    * @throws {GmailNetworkException} When the `fetch()` call rejects
-   *   (dropped connection, DNS failure, etc.) — returns `503`.
+   *   (dropped connection, DNS failure, etc.) — returns `502 Bad Gateway`.
    *
    * @example
    * ```typescript
