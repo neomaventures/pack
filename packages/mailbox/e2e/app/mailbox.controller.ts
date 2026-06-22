@@ -1,4 +1,4 @@
-import { Controller, Get, Headers } from "@nestjs/common"
+import { Controller, Get } from "@nestjs/common"
 
 import { type GmailLabelStats, MailboxService } from "@neomaventures/mailbox"
 
@@ -7,9 +7,7 @@ export class MailboxController {
   public constructor(private readonly mailbox: MailboxService) {}
 
   @Get("stats")
-  public async stats(
-    @Headers("x-account-id") accountId: string,
-  ): Promise<GmailLabelStats> {
-    return this.mailbox.getStats({ id: accountId })
+  public async stats(): Promise<GmailLabelStats> {
+    return this.mailbox.getStats()
   }
 }

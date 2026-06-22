@@ -1,28 +1,33 @@
 /**
  * The host's bridge between mailbox and whatever auth/token storage system
- * the consumer app uses. Mailbox calls `getToken(account, scopes)` before
- * every Gmail API page; the host resolves a valid access token for the
- * given account and scope set.
+ * the consumer app uses. Mailbox calls `getToken(scope)` before every Gmail
+ * API page; the host resolves a valid access token for the given scope.
  *
- * Generic over the account shape with a structural constraint — mailbox
- * only needs to know the account has an `id`. The host's real principal
- * type (e.g. `@neomaventures/auth`'s `Account`) satisfies this naturally;
- * no separate interface implementation required.
+ * Mailbox does **not** pass an account, principal, or any other "for whom"
+ * identifier. Application concerns (which user the current request belongs
+ * to) belong at the application level — the adapter resolves that itself
+ * via ambient request context. The canonical mechanism in the pack is
+ * `@neomaventures/request-context`, which exposes an `AsyncLocalStorage`-
+ * backed request slot accessible from anywhere below the controller
+ * boundary. Mailbox does not depend on it; consumers wire it in.
  *
  * @example
  * ```typescript
+ * import { getRequest } from "@neomaventures/request-context"
+ *
  * @Injectable()
  * export class AuthTokenAccessor implements TokenAccessor {
  *   public constructor(
  *     private readonly oauthTokens: OAuthTokenService,
  *   ) {}
  *
- *   public async getToken<T extends { id: unknown }>(
- *     account: T,
- *     scopes: string[],
- *   ): Promise<string> {
- *     if (!scopes.includes(GMAIL_READONLY_SCOPE)) {
- *       throw new Error("Unsupported scopes")
+ *   public async getToken(scope: string): Promise<string> {
+ *     if (scope !== GMAIL_READONLY_SCOPE) {
+ *       throw new Error(`Unsupported scope: ${scope}`)
+ *     }
+ *     const account = getRequest()?.account
+ *     if (!account) {
+ *       throw new Error("No authenticated account on the current request")
  *     }
  *     const token = await this.oauthTokens.getActiveToken(account.id, "google")
  *     return token.accessToken
@@ -32,16 +37,11 @@
  */
 export interface TokenAccessor {
   /**
-   * Resolve an access token for the given account and scope set.
+   * Resolve an access token covering the given scope.
    *
-   * @param account - The host's principal; must have an `id` field. Mailbox
-   *   uses this to identify which account's token to return.
-   * @param scopes - The scope strings the token must cover. For v0.1.0
-   *   mailbox only requests `GMAIL_READONLY_SCOPE`.
+   * @param scope - The OAuth scope string the token must cover. For v0.1.0
+   *   mailbox only requests {@link GMAIL_READONLY_SCOPE}.
    * @returns A valid access token string.
    */
-  getToken<T extends { id: unknown }>(
-    account: T,
-    scopes: string[],
-  ): Promise<string>
+  getToken(scope: string): Promise<string>
 }

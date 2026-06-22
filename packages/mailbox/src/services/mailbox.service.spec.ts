@@ -12,12 +12,6 @@ const token = faker.string.alphanumeric(40)
 const messageCount = faker.number.int({ min: 1, max: 10000 })
 const unreadCount = faker.number.int({ min: 0, max: 500 })
 
-const account = {
-  id: faker.string.uuid(),
-  accountId: faker.string.uuid(),
-  gmailAddress: faker.internet.email().toLowerCase(),
-}
-
 describe("MailboxService", () => {
   let service: MailboxService
   let gmailService: { getStats: jest.Mock }
@@ -46,15 +40,13 @@ describe("MailboxService", () => {
   describe("getStats()", () => {
     describe("Given a token accessor and gmail service", () => {
       it("should request a token with the gmail.readonly scope", async () => {
-        await service.getStats(account)
+        await service.getStats()
 
-        expect(getTokenSpy).toHaveBeenCalledWith(account, [
-          GMAIL_READONLY_SCOPE,
-        ])
+        expect(getTokenSpy).toHaveBeenCalledWith(GMAIL_READONLY_SCOPE)
       })
 
       it("should delegate to GmailService.getStats with the resolved token and INBOX label", async () => {
-        await service.getStats(account)
+        await service.getStats()
 
         expect(gmailService.getStats).toHaveBeenCalledWith(
           token,
@@ -63,7 +55,7 @@ describe("MailboxService", () => {
       })
 
       it("should return the stats from GmailService unchanged", async () => {
-        await expect(service.getStats(account)).resolves.toEqual({
+        await expect(service.getStats()).resolves.toEqual({
           messageCount,
           unreadCount,
         })

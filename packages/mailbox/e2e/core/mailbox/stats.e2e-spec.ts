@@ -19,14 +19,13 @@ describe("GET /mailbox/stats (forRootAsync)", () => {
     app = await managedAppInstance()
   })
 
-  describe("When Gmail returns label stats for the account", () => {
+  describe("When Gmail returns label stats", () => {
     it("should respond with HTTP 200 and the renamed shape", async () => {
-      const accountId = faker.string.uuid()
       const token = faker.string.alphanumeric(40)
       const messagesTotal = faker.number.int({ min: 1, max: 10000 })
       const messagesUnread = faker.number.int({ min: 0, max: 500 })
 
-      TestTokenAccessor.register(accountId, token)
+      TestTokenAccessor.register(token)
       await gmailClient.expectLabel({
         labelId: "INBOX",
         token,
@@ -39,7 +38,6 @@ describe("GET /mailbox/stats (forRootAsync)", () => {
 
       const { body } = await request(app.getHttpServer())
         .get("/mailbox/stats")
-        .set("x-account-id", accountId)
         .expect(OK)
 
       expect(body).toEqual({
@@ -51,10 +49,9 @@ describe("GET /mailbox/stats (forRootAsync)", () => {
 
   describe("When Gmail responds with an error", () => {
     it("should surface a 502 Bad Gateway", async () => {
-      const accountId = faker.string.uuid()
       const token = faker.string.alphanumeric(40)
 
-      TestTokenAccessor.register(accountId, token)
+      TestTokenAccessor.register(token)
       await gmailClient.expectLabelError({
         labelId: "INBOX",
         token,
@@ -64,7 +61,6 @@ describe("GET /mailbox/stats (forRootAsync)", () => {
 
       await request(app.getHttpServer())
         .get("/mailbox/stats")
-        .set("x-account-id", accountId)
         .expect(BAD_GATEWAY)
     })
   })

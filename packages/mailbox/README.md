@@ -80,40 +80,46 @@ The consumer always owns `TypeOrmModule.forFeature` registration.
 
 ### 1. Implement `TokenAccessor`
 
+`TokenAccessor.getToken` takes a single `scope` string and returns an access
+token. Mailbox does **not** pass a principal — application concerns ("which
+user owns this request?") belong on the application side. The adapter
+resolves "for whom" itself via ambient request context. The canonical
+mechanism in the pack is [`@neomaventures/request-context`][rc], which
+exposes an `AsyncLocalStorage`-backed request slot you can read from
+anywhere below the controller boundary. Mailbox doesn't depend on it; you
+wire it in.
+
+[rc]: ../request-context
+
 ```typescript
-import { type Authenticatable, OAuthTokenService } from "@neomaventures/auth"
+import { OAuthTokenService } from "@neomaventures/auth"
 import {
   GMAIL_READONLY_SCOPE,
   type TokenAccessor,
 } from "@neomaventures/mailbox"
+import { getRequest } from "@neomaventures/request-context"
 import { Injectable } from "@nestjs/common"
 
 @Injectable()
 export class AuthTokenAccessor implements TokenAccessor {
-  public async getToken<T extends { id: unknown }>(
-    account: T,
-    scopes: string[],
-  ): Promise<string> {
-    if (scopes.includes(GMAIL_READONLY_SCOPE)) {
-      const token = OAuthTokenService.getActiveToken(
-        account as Authenticatable,
-        "google",
-      )
-      if (!token || !scopes.every((s) => token.scopes.includes(s))) {
-        throw new Error(`No Google token covering scopes ${scopes.join(", ")}`)
-      }
-      return token.accessToken
+  public constructor(private readonly oauthTokens: OAuthTokenService) {}
+
+  public async getToken(scope: string): Promise<string> {
+    if (scope !== GMAIL_READONLY_SCOPE) {
+      throw new Error(`Unsupported scope: ${scope}`)
     }
-    throw new Error(`Unsupported scopes: ${scopes.join(", ")}`)
+    const account = getRequest()?.account
+    if (!account) {
+      throw new Error("No authenticated account on the current request")
+    }
+    const token = await this.oauthTokens.getActiveToken(account.id, "google")
+    return token.accessToken
   }
 }
 ```
 
-`TokenAccessor.getToken` takes a structural generic — any principal with
-an `id` field satisfies it — and a `scopes: string[]` so multi-scope
-tokens (e.g. `gmail.readonly` + `gmail.send`) work without an API
-change later. Pattern-match by importing the exported
-`GMAIL_READONLY_SCOPE` constant rather than hard-coding the URL.
+Pattern-match by importing the exported `GMAIL_READONLY_SCOPE` constant
+rather than hard-coding the URL.
 
 ### 2. Register `MailAccount` with TypeORM
 
@@ -159,11 +165,7 @@ Use `forRootAsync` when you need to inject a config service.
 ### 4. Read stats in a controller
 
 ```typescript
-import {
-  type Authenticatable,
-  Authenticated,
-  AuthenticatedAccount,
-} from "@neomaventures/auth"
+import { Authenticated } from "@neomaventures/auth"
 import { MailboxService } from "@neomaventures/mailbox"
 import { Controller, Get } from "@nestjs/common"
 
@@ -173,18 +175,19 @@ export class MailboxController {
 
   @Get("stats")
   @Authenticated()
-  public async stats(
-    @AuthenticatedAccount() account: Authenticatable,
-  ): Promise<{ messageCount: number; unreadCount: number }> {
-    return this.mailbox.getStats(account)
+  public async stats(): Promise<{
+    messageCount: number
+    unreadCount: number
+  }> {
+    return this.mailbox.getStats()
   }
 }
 ```
 
 `getStats` calls the Gmail Labels API
 (`GET /gmail/v1/users/me/labels/INBOX`) on every request — no caching in
-v0.1.0. The `TokenAccessor` is invoked with `[GMAIL_READONLY_SCOPE]`
-before the call so the freshest available token is used.
+v0.1.0. The `TokenAccessor` is invoked with `GMAIL_READONLY_SCOPE` before
+the call so the freshest available token is used.
 
 ## Custom entity — attach relations from the consumer side
 

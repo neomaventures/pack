@@ -14,8 +14,13 @@ import { type GmailLabelStats, GmailService } from "./gmail.service"
  * {@link TokenAccessor} class, then delegates to {@link GmailService} for
  * the live Gmail label fetch. No caching — every call hits the Gmail API.
  *
- * Generic over the consumer's `Mailboxable` entity so method signatures
- * narrow at the injection site. Defaults to the reference `MailAccount`.
+ * Mailbox is account-agnostic: `getStats()` takes no principal. The
+ * consumer's `TokenAccessor` resolves "for whom" internally via ambient
+ * request context (the canonical mechanism is
+ * `@neomaventures/request-context`).
+ *
+ * Generic over the consumer's `Mailboxable` entity so the type narrows at
+ * the injection site. Defaults to the reference `MailAccount`.
  *
  * @example
  * ```typescript
@@ -26,13 +31,14 @@ import { type GmailLabelStats, GmailService } from "./gmail.service"
  *   ) {}
  *
  *   @Get()
- *   public async stats(@CurrentAccount() account: Account) {
- *     return this.mailbox.getStats(account)
+ *   public async stats() {
+ *     return this.mailbox.getStats()
  *   }
  * }
  * ```
  */
 @Injectable()
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export class MailboxService<T extends Mailboxable = Mailboxable> {
   public constructor(
     @Inject(TOKEN_ACCESSOR)
@@ -41,17 +47,13 @@ export class MailboxService<T extends Mailboxable = Mailboxable> {
   ) {}
 
   /**
-   * Fetches Gmail stats for the given account's mailbox.
+   * Fetches Gmail stats for the mailbox connected to the current request.
    *
    * Requests a token via {@link TokenAccessor.getToken} with the
-   * `gmail.readonly` scope, then calls
-   * {@link GmailService.getStats} for the configured label (defaults to
-   * {@link GmailSystemLabel.Inbox}).
+   * `gmail.readonly` scope, then calls {@link GmailService.getStats} for
+   * the configured label (defaults to {@link GmailSystemLabel.Inbox}).
    *
-   * @param account - The host's principal; passed verbatim to the
-   *   consumer's `TokenAccessor`, which decides how to look up the right
-   *   token for that account.
-   * @returns Message + unread counts for the account's inbox.
+   * @returns Message + unread counts for the inbox.
    *
    * @throws {GmailApiException} Surfaced from `GmailService` when Gmail
    *   responds with a non-2xx status.
@@ -60,14 +62,12 @@ export class MailboxService<T extends Mailboxable = Mailboxable> {
    *
    * @example
    * ```typescript
-   * const stats = await mailbox.getStats(account)
+   * const stats = await mailbox.getStats()
    * // => { messageCount: 1234, unreadCount: 5 }
    * ```
    */
-  public async getStats(account: T): Promise<GmailLabelStats> {
-    const token = await this.tokenAccessor.getToken(account, [
-      GMAIL_READONLY_SCOPE,
-    ])
+  public async getStats(): Promise<GmailLabelStats> {
+    const token = await this.tokenAccessor.getToken(GMAIL_READONLY_SCOPE)
     return this.gmailService.getStats(token, GmailSystemLabel.Inbox)
   }
 }
