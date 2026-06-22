@@ -164,6 +164,48 @@ Use `forRootAsync` when you need to inject a config service.
 
 ### 4. Read stats in a controller
 
+Two paths — pick the one that fits.
+
+#### Path A — `@MailboxStats()` param decorator (recommended)
+
+Mount `MailboxStatsMiddleware` on the routes that need stats, then read
+the resolved value with the `@MailboxStats()` decorator. The middleware
+is a silent resolver (never throws); the decorator enforces presence and
+throws `MailboxStatsUnavailableException` (HTTP 502) when stats couldn't
+be resolved. No controller-level try/catch.
+
+```typescript
+import {
+  GmailLabelStats,
+  MailboxStats,
+  MailboxStatsMiddleware,
+} from "@neomaventures/mailbox"
+import {
+  Controller,
+  Get,
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+} from "@nestjs/common"
+
+@Controller("profile")
+export class ProfileController {
+  @Get("inbox")
+  public inbox(@MailboxStats() stats: GmailLabelStats): GmailLabelStats {
+    return stats
+  }
+}
+
+@Module({ controllers: [ProfileController] })
+export class ProfileModule implements NestModule {
+  public configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(MailboxStatsMiddleware).forRoutes("profile/inbox")
+  }
+}
+```
+
+#### Path B — call `MailboxService.getStats()` directly
+
 ```typescript
 import { Authenticated } from "@neomaventures/auth"
 import { MailboxService } from "@neomaventures/mailbox"
@@ -184,7 +226,7 @@ export class MailboxController {
 }
 ```
 
-`getStats` calls the Gmail Labels API
+Either way, `getStats` calls the Gmail Labels API
 (`GET /gmail/v1/users/me/labels/INBOX`) on every request — no caching in
 v0.1.0. The `TokenAccessor` is invoked with `GMAIL_READONLY_SCOPE` before
 the call so the freshest available token is used.

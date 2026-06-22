@@ -1,10 +1,15 @@
-import { Module } from "@nestjs/common"
+import {
+  type MiddlewareConsumer,
+  Module,
+  type NestModule,
+} from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
 
 import {
   MailAccount,
   MailboxModule,
   type MailboxOptions,
+  MailboxStatsMiddleware,
 } from "@neomaventures/mailbox"
 
 import { MailboxController } from "./mailbox.controller"
@@ -28,4 +33,8 @@ import { TestTokenAccessor } from "./token-accessor"
   ],
   controllers: [MailboxController],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  public configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(MailboxStatsMiddleware).forRoutes("mailbox/stats")
+  }
+}

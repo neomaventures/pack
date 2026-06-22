@@ -64,4 +64,18 @@ describe("GET /mailbox/stats (forRootAsync)", () => {
         .expect(BAD_GATEWAY)
     })
   })
+
+  describe("When no token is registered (middleware swallows, decorator enforces)", () => {
+    it("should respond with HTTP 502 and the MailboxStatsUnavailable wire shape", async () => {
+      const { body } = await request(app.getHttpServer())
+        .get("/mailbox/stats")
+        .expect(BAD_GATEWAY)
+
+      expect(body).toEqual({
+        statusCode: BAD_GATEWAY,
+        message: "Mailbox stats are not available for the current request.",
+        error: "MailboxStatsUnavailable",
+      })
+    })
+  })
 })
