@@ -264,15 +264,6 @@ MailboxModule.forRoot({
 })
 ```
 
-`MailboxService<T extends Mailboxable>` parametrises on your entity, so
-the consumer narrows at injection without a cast:
-
-```typescript
-public constructor(
-  private readonly mailbox: MailboxService<CustomMailAccount>,
-) {}
-```
-
 ## What this slice does **not** ship
 
 - Raw `.eml` sync into `@neomaventures/storage`

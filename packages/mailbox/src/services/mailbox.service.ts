@@ -1,7 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common"
 
 import { GMAIL_READONLY_SCOPE, GmailSystemLabel } from "../constants"
-import { type Mailboxable } from "../interfaces/mailboxable.interface"
 import { type TokenAccessor } from "../interfaces/token-accessor.interface"
 import { TOKEN_ACCESSOR } from "../mailbox.options"
 
@@ -19,9 +18,6 @@ import { type GmailLabelStats, GmailService } from "./gmail.service"
  * request context (the canonical mechanism is
  * `@neomaventures/request-context`).
  *
- * Generic over the consumer's `Mailboxable` entity so the type narrows at
- * the injection site. Defaults to the reference `MailAccount`.
- *
  * @example
  * ```typescript
  * @Controller("profile")
@@ -38,8 +34,7 @@ import { type GmailLabelStats, GmailService } from "./gmail.service"
  * ```
  */
 @Injectable()
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export class MailboxService<T extends Mailboxable = Mailboxable> {
+export class MailboxService {
   public constructor(
     @Inject(TOKEN_ACCESSOR)
     private readonly tokenAccessor: TokenAccessor,

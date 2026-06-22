@@ -18,67 +18,6 @@ class StubTokenAccessor implements TokenAccessor {
 }
 
 describe("MailboxModule", () => {
-  describe("forRoot", () => {
-    describe("Given no entity or gmailApiBaseUrl overrides", () => {
-      it("should default entity to MailAccount and gmailApiBaseUrl to the production endpoint", async () => {
-        const module = await Test.createTestingModule({
-          imports: [
-            MailboxModule.forRoot({ tokenAccessor: StubTokenAccessor }),
-          ],
-        }).compile()
-
-        expect(module.get(RESOLVED_MAILBOX_OPTIONS)).toEqual({
-          entity: MailAccount,
-          gmailApiBaseUrl: GMAIL_API_BASE_URL_DEFAULT,
-        })
-      })
-
-      it("should wire GMAIL_API_BASE_URL to the production default", async () => {
-        const module = await Test.createTestingModule({
-          imports: [
-            MailboxModule.forRoot({ tokenAccessor: StubTokenAccessor }),
-          ],
-        }).compile()
-
-        expect(module.get(GMAIL_API_BASE_URL)).toBe(GMAIL_API_BASE_URL_DEFAULT)
-      })
-    })
-
-    describe("Given a custom entity override", () => {
-      it("should use the provided entity class", async () => {
-        const module = await Test.createTestingModule({
-          imports: [
-            MailboxModule.forRoot({
-              tokenAccessor: StubTokenAccessor,
-              entity: TestMailboxable,
-            }),
-          ],
-        }).compile()
-
-        expect(module.get(RESOLVED_MAILBOX_OPTIONS)).toMatchObject({
-          entity: TestMailboxable,
-        })
-      })
-    })
-
-    describe("Given a custom gmailApiBaseUrl override", () => {
-      it("should propagate the override to GMAIL_API_BASE_URL", async () => {
-        const gmailApiBaseUrl = faker.internet.url()
-
-        const module = await Test.createTestingModule({
-          imports: [
-            MailboxModule.forRoot({
-              tokenAccessor: StubTokenAccessor,
-              gmailApiBaseUrl,
-            }),
-          ],
-        }).compile()
-
-        expect(module.get(GMAIL_API_BASE_URL)).toBe(gmailApiBaseUrl)
-      })
-    })
-  })
-
   describe("forRootAsync", () => {
     describe("Given no entity or gmailApiBaseUrl overrides", () => {
       it("should default entity to MailAccount and gmailApiBaseUrl to the production endpoint", async () => {

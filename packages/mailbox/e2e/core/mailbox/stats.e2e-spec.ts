@@ -9,7 +9,7 @@ import { TestTokenAccessor } from "../../app/token-accessor"
 
 const { OK, BAD_GATEWAY } = HttpStatus
 
-describe("GET /mailbox/stats (forRootAsync)", () => {
+describe("GET /mailbox/stats", () => {
   let app: Awaited<ReturnType<typeof managedAppInstance>>
   let gmailClient: GmailClient
 
