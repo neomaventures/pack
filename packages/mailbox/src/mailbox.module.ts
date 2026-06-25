@@ -23,8 +23,8 @@ export type MailboxModuleOptions = typeof OPTIONS_TYPE & {
  * `tokenAccessor` is required statically (not behind the factory) because
  * mailbox registers the class via `useClass:` at module-construction time
  * so NestJS's native DI resolves the accessor's own constructor
- * dependencies. Everything else (entity, `gmailApiBaseUrl`) flows through
- * the async factory like a normal `forRootAsync`.
+ * dependencies. Everything else (`gmailApiBaseUrl`) flows through the
+ * async factory like a normal `forRootAsync`.
  */
 export type MailboxModuleAsyncOptions = typeof ASYNC_OPTIONS_TYPE & {
   tokenAccessor: Type<TokenAccessor>
@@ -39,14 +39,10 @@ export type MailboxModuleAsyncOptions = typeof ASYNC_OPTIONS_TYPE & {
  * resolves "for whom" internally via ambient request context.
  *
  * Built on `ConfigurableModuleBuilder` for the plain-data plumbing
- * (`entity`, `gmailApiBaseUrl`), with thin `forRoot` / `forRootAsync`
- * overrides that extract the consumer's `tokenAccessor` class and append it
- * as a `useClass:` provider so its own constructor dependencies resolve
- * through native Nest DI — no `ModuleRef.create()` dance.
- *
- * @requires TypeOrmModule must be configured by the consumer if they need
- *   the reference `MailAccount` entity persisted — mailbox itself does not
- *   own the entity registration. See `@neomaventures/mailbox/entities`.
+ * (`gmailApiBaseUrl`), with thin `forRoot` / `forRootAsync` overrides that
+ * extract the consumer's `tokenAccessor` class and append it as a
+ * `useClass:` provider so its own constructor dependencies resolve through
+ * native Nest DI — no `ModuleRef.create()` dance.
  *
  * @example Static configuration
  * ```typescript

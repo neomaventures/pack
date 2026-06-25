@@ -4,9 +4,11 @@
 
 First release of `@neomaventures/mailbox` — a provider-agnostic mailbox sync primitive for NestJS apps. v0.1.0 is the proof-of-life surface: live Gmail inbox stats. Storage, sync cursors, events, and dedup land in subsequent minors.
 
+The v0.1.0 surface **intentionally omits entity wiring**. There are no sync writers in this slice — nothing inside the package reads or writes a per-mailbox row — so persisting "which Gmail address an account has connected" is treated as the host application's concern. A `Mailboxable` interface and a reference `MailAccount` entity will land in v0.2.0 alongside the first sync writer that needs them. Consumers shipping their own entity adapter today should treat it as application code, not a contract the package promises to honour.
+
 ## Module + service
 
-- `MailboxModule.forRoot(options)` and `MailboxModule.forRootAsync(options)` — extends `ConfigurableModuleClass`. Consumers pass a `tokenAccessor` class (a `TokenAccessor` implementation), optional `entity` (defaults to the reference `MailAccount`), and optional `gmailApiBaseUrl` (defaults to the production endpoint).
+- `MailboxModule.forRoot(options)` and `MailboxModule.forRootAsync(options)` — extends `ConfigurableModuleClass`. Consumers pass a `tokenAccessor` class (a `TokenAccessor` implementation) and optional `gmailApiBaseUrl` (defaults to the production endpoint).
 - `MailboxService.getStats()` — resolves an access token via the configured `TokenAccessor`, calls Gmail's labels API for `INBOX`, returns `{ messageCount, unreadCount }`. Live query, no caching. Account-agnostic: the host's `TokenAccessor` resolves "for whom" internally via ambient request context.
 
 ## Ergonomic request-scoped surface
@@ -14,14 +16,9 @@ First release of `@neomaventures/mailbox` — a provider-agnostic mailbox sync p
 - `MailboxStatsMiddleware` — silent resolver that fetches stats and stashes them on `req.mailboxStats`. Never throws; mount on the routes that need it.
 - `@MailboxStats()` param decorator — reads the resolved stats from the request and throws `MailboxStatsUnavailableException` when the slot is empty. Integrators write only the e2e; no controller-level try/catch.
 
-## Contracts shipped for consumers to implement / extend
+## Contracts shipped for consumers to implement
 
 - `TokenAccessor` interface — single `getToken(scope)` method. Mailbox is account-agnostic; the host resolves the current principal via ambient context (canonically `@neomaventures/request-context`) and returns the access token for that scope.
-- `Mailboxable` interface — minimum shape for a mailbox-owning entity (`id`, `accountId`, `gmailAddress`). Consumers implement on their own entity class via the `MailboxOptions.entity` override.
-
-## Reference entity (subpath `./entities`)
-
-- `MailAccount` — slim reference implementation of `Mailboxable` (`id` uuid, `accountId`, `gmailAddress`). Consumers register directly via `TypeOrmModule.forFeature([MailAccount])` or implement `Mailboxable` on their own entity. Exported from both `@neomaventures/mailbox` and `@neomaventures/mailbox/entities`.
 
 ## Exceptions (canonical downstream-client shape)
 

@@ -1,6 +1,5 @@
 import { type Type } from "@nestjs/common"
 
-import { type Mailboxable } from "./interfaces/mailboxable.interface"
 import { type TokenAccessor } from "./interfaces/token-accessor.interface"
 
 /**
@@ -12,8 +11,8 @@ export const MAILBOX_OPTIONS = Symbol("MAILBOX_OPTIONS")
 
 /**
  * Package-internal token carrying the fully-resolved mailbox options —
- * `entity` and `gmailApiBaseUrl` are materialised to their concrete defaults
- * (`MailAccount` / `https://gmail.googleapis.com`) when consumers omit them.
+ * `gmailApiBaseUrl` is materialised to its concrete default
+ * (`https://gmail.googleapis.com`) when the consumer omits it.
  *
  * Not exported from the package's public barrel. Services inside the package
  * inject this token instead of {@link MAILBOX_OPTIONS} when they need the
@@ -36,24 +35,23 @@ export const TOKEN_ACCESSOR = Symbol("TOKEN_ACCESSOR")
 /**
  * Configuration options for {@link MailboxModule}.
  *
- * @example Minimal — defaults `entity` to `MailAccount` and `gmailApiBaseUrl`
- *   to the production Gmail endpoint
+ * @example Minimal — defaults `gmailApiBaseUrl` to the production Gmail
+ *   endpoint
  * ```typescript
  * MailboxModule.forRoot({
  *   tokenAccessor: AuthTokenAccessor,
  * })
  * ```
  *
- * @example Custom entity + test base URL
+ * @example Custom test base URL
  * ```typescript
  * MailboxModule.forRoot({
  *   tokenAccessor: AuthTokenAccessor,
- *   entity: CustomMailAccount,
  *   gmailApiBaseUrl: "http://localhost:1080",
  * })
  * ```
  */
-export interface MailboxOptions<T extends Mailboxable = Mailboxable> {
+export interface MailboxOptions {
   /**
    * Class providing a {@link TokenAccessor} implementation. Registered as a
    * provider by {@link MailboxModule} and injected into `MailboxService`.
@@ -63,16 +61,6 @@ export interface MailboxOptions<T extends Mailboxable = Mailboxable> {
    * standard NestJS DI.
    */
   tokenAccessor: Type<TokenAccessor>
-
-  /**
-   * Custom entity class implementing {@link Mailboxable}. Defaults to the
-   * reference `MailAccount` entity shipped from
-   * `@neomaventures/mailbox/entities`.
-   *
-   * Supplying a custom class lets consumers add columns, relations, or
-   * methods while keeping the package's service surface unchanged.
-   */
-  entity?: new (...args: any[]) => T
 
   /**
    * Gmail API base URL. Defaults to `https://gmail.googleapis.com`.
@@ -88,21 +76,15 @@ export interface MailboxOptions<T extends Mailboxable = Mailboxable> {
  * `ConfigurableModuleBuilder` — everything except `tokenAccessor`, which is
  * resolved separately as a class-based provider by the module overrides.
  */
-export type MailboxOptionsBase<T extends Mailboxable = Mailboxable> = Omit<
-  MailboxOptions<T>,
-  "tokenAccessor"
->
+export type MailboxOptionsBase = Omit<MailboxOptions, "tokenAccessor">
 
 /**
  * Fully-resolved mailbox options exposed via {@link RESOLVED_MAILBOX_OPTIONS}.
- * Mirrors {@link MailboxOptions} but with `entity` and `gmailApiBaseUrl`
- * materialised to their concrete defaults so service code never sees
- * `undefined`.
+ * Mirrors {@link MailboxOptions} but with `gmailApiBaseUrl` materialised to
+ * its concrete default so service code never sees `undefined`.
  *
  * Package-internal — not exported from the public barrel.
  */
-export type ResolvedMailboxOptions<T extends Mailboxable = Mailboxable> =
-  MailboxOptionsBase<T> & {
-    entity: new (...args: any[]) => T
-    gmailApiBaseUrl: string
-  }
+export type ResolvedMailboxOptions = MailboxOptionsBase & {
+  gmailApiBaseUrl: string
+}

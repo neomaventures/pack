@@ -16,11 +16,7 @@ export { MailboxStats } from "./decorators/mailbox-stats.decorator"
 export { MailboxStatsUnavailableException } from "./exceptions/mailbox-stats-unavailable.exception"
 
 // Interfaces
-export { type Mailboxable } from "./interfaces/mailboxable.interface"
 export { type TokenAccessor } from "./interfaces/token-accessor.interface"
-
-// Entities
-export { MailAccount } from "./entities/mail-account.entity"
 
 // Constants
 export { GMAIL_READONLY_SCOPE, GmailSystemLabel } from "./constants"

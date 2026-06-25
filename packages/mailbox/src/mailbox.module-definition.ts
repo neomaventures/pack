@@ -1,7 +1,6 @@
 import { ConfigurableModuleBuilder } from "@nestjs/common"
 
 import { GMAIL_API_BASE_URL, GMAIL_API_BASE_URL_DEFAULT } from "./constants"
-import { MailAccount } from "./entities/mail-account.entity"
 import {
   type MailboxOptionsBase,
   type ResolvedMailboxOptions,
@@ -33,7 +32,6 @@ export const {
         provide: RESOLVED_MAILBOX_OPTIONS,
         useFactory: (options: MailboxOptionsBase): ResolvedMailboxOptions => ({
           ...options,
-          entity: options.entity ?? MailAccount,
           gmailApiBaseUrl:
             options.gmailApiBaseUrl ?? GMAIL_API_BASE_URL_DEFAULT,
         }),

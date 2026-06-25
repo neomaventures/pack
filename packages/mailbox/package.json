@@ -28,10 +28,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "require": "./dist/index.js"
-    },
-    "./entities": {
-      "types": "./dist/entities/index.d.ts",
-      "require": "./dist/entities/index.js"
     }
   },
   "files": [

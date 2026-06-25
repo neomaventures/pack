@@ -3,10 +3,8 @@ import {
   Module,
   type NestModule,
 } from "@nestjs/common"
-import { TypeOrmModule } from "@nestjs/typeorm"
 
 import {
-  MailAccount,
   MailboxModule,
   type MailboxOptions,
   MailboxStatsMiddleware,
@@ -17,13 +15,6 @@ import { TestTokenAccessor } from "./token-accessor"
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: "sqlite",
-      database: ":memory:",
-      entities: [MailAccount],
-      synchronize: true,
-    }),
-    TypeOrmModule.forFeature([MailAccount]),
     MailboxModule.forRootAsync({
       tokenAccessor: TestTokenAccessor,
       useFactory: (): Omit<MailboxOptions, "tokenAccessor"> => ({

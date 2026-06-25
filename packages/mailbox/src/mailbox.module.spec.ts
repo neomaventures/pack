@@ -1,18 +1,16 @@
 import { faker } from "@faker-js/faker"
 import { Test } from "@nestjs/testing"
 
-import { TestMailboxable } from "../fixtures/entities/test-mailboxable.entity"
 import { StubTokenAccessor } from "../fixtures/token-accessors/stub.token-accessor"
 
 import { GMAIL_API_BASE_URL, GMAIL_API_BASE_URL_DEFAULT } from "./constants"
-import { MailAccount } from "./entities/mail-account.entity"
 import { MailboxModule } from "./mailbox.module"
 import { RESOLVED_MAILBOX_OPTIONS } from "./mailbox.options"
 
 describe("MailboxModule", () => {
   describe("forRootAsync", () => {
-    describe("Given no entity or gmailApiBaseUrl overrides", () => {
-      it("should default entity to MailAccount and gmailApiBaseUrl to the production endpoint", async () => {
+    describe("Given no gmailApiBaseUrl override", () => {
+      it("should default gmailApiBaseUrl to the production endpoint", async () => {
         const module = await Test.createTestingModule({
           imports: [
             MailboxModule.forRootAsync({
@@ -23,7 +21,6 @@ describe("MailboxModule", () => {
         }).compile()
 
         expect(module.get(RESOLVED_MAILBOX_OPTIONS)).toEqual({
-          entity: MailAccount,
           gmailApiBaseUrl: GMAIL_API_BASE_URL_DEFAULT,
         })
       })
@@ -39,24 +36,6 @@ describe("MailboxModule", () => {
         }).compile()
 
         expect(module.get(GMAIL_API_BASE_URL)).toBe(GMAIL_API_BASE_URL_DEFAULT)
-      })
-    })
-
-    describe("Given a custom entity override", () => {
-      it("should use the provided entity class", async () => {
-        const module = await Test.createTestingModule({
-          imports: [
-            MailboxModule.forRootAsync({
-              tokenAccessor: StubTokenAccessor,
-              useFactory: () => ({ entity: TestMailboxable }),
-            }),
-          ],
-        }).compile()
-
-        expect(module.get(RESOLVED_MAILBOX_OPTIONS)).toEqual({
-          entity: TestMailboxable,
-          gmailApiBaseUrl: GMAIL_API_BASE_URL_DEFAULT,
-        })
       })
     })
 
