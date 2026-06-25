@@ -95,6 +95,20 @@ describe("GmailApiException", () => {
     })
   })
 
+  describe("name", () => {
+    it('should set this.name to "GmailApiException"', () => {
+      const exception = new GmailApiException(
+        500,
+        endpoint,
+        faker.lorem.sentence(),
+        { labelId: faker.string.alphanumeric(10) },
+        null,
+      )
+
+      expect(exception.name).toBe("GmailApiException")
+    })
+  })
+
   describe.each([500, 502, 503, 429, 418])(
     "Given an upstream %i",
     (upstreamStatus) => {

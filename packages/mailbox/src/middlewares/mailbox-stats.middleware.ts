@@ -5,13 +5,11 @@ import { type GmailLabelStats } from "../services/gmail.service"
 import { MailboxService } from "../services/mailbox.service"
 
 /**
- * Silent resolver — fetches Gmail stats for the current request and
- * stashes them on `req.mailboxStats`. Never throws: any error from
- * {@link MailboxService.getStats} (missing token, Gmail unreachable,
- * upstream non-2xx) is swallowed and `req.mailboxStats` is left
- * `undefined`. Enforcement is the {@link MailboxStats} param decorator's
- * job — it throws {@link MailboxStatsUnavailableException} when the slot
- * is empty.
+ * Resolves Gmail stats for the current request and stashes them on
+ * `req.mailboxStats`. Throws upstream Gmail exceptions on failure
+ * ({@link GmailApiException}, {@link GmailNetworkException}) — pair with
+ * `@neomaventures/exceptions`' `ExceptionHandlerModule.forRoot({ errorTemplates })`
+ * to render a friendly error UI on those exceptions.
  *
  * Mounting is the consumer's responsibility — apply it to the routes
  * where you want stats available via the param decorator:
@@ -34,11 +32,7 @@ export class MailboxStatsMiddleware implements NestMiddleware {
     _res: Response,
     next: NextFunction,
   ): Promise<void> {
-    try {
-      req.mailboxStats = await this.mailbox.getStats()
-    } catch {
-      req.mailboxStats = undefined
-    }
+    req.mailboxStats = await this.mailbox.getStats()
     next()
   }
 }

@@ -1,22 +1,16 @@
 import { createParamDecorator, type ExecutionContext } from "@nestjs/common"
 
-import { MailboxStatsUnavailableException } from "../exceptions/mailbox-stats-unavailable.exception"
 import { type GmailLabelStats } from "../services/gmail.service"
 
 /**
  * Parameter decorator that returns the Gmail stats resolved on the current
  * request by {@link MailboxStatsMiddleware}.
  *
- * Pair with {@link MailboxStatsMiddleware} — the middleware is the silent
- * resolver (populates `req.mailboxStats`, never throws), and this
- * decorator is the enforcer (throws
- * {@link MailboxStatsUnavailableException} when the slot is empty).
+ * Returns stats resolved by {@link MailboxStatsMiddleware} for the current
+ * request. The middleware throws upstream Gmail exceptions on failure, so
+ * by the time the decorator runs, `req.mailboxStats` is always populated.
  *
  * Must be called with parentheses: `@MailboxStats()`.
- *
- * @throws {MailboxStatsUnavailableException} When no stats are available
- *   on the request — either the middleware failed or it was not mounted
- *   on the route.
  *
  * @example
  * ```typescript
@@ -29,11 +23,8 @@ import { type GmailLabelStats } from "../services/gmail.service"
 export const MailboxStats = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext): GmailLabelStats => {
     const req = ctx.switchToHttp().getRequest<{
-      mailboxStats?: GmailLabelStats
+      mailboxStats: GmailLabelStats
     }>()
-    if (!req.mailboxStats) {
-      throw new MailboxStatsUnavailableException()
-    }
     return req.mailboxStats
   },
 )

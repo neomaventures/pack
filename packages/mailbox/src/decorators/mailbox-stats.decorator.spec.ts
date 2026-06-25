@@ -3,7 +3,6 @@ import { type ExecutionContext } from "@nestjs/common"
 import { ROUTE_ARGS_METADATA } from "@nestjs/common/constants"
 import { type CustomParamFactory } from "@nestjs/common/interfaces"
 
-import { MailboxStatsUnavailableException } from "../exceptions/mailbox-stats-unavailable.exception"
 import { type GmailLabelStats } from "../services/gmail.service"
 
 import { MailboxStats } from "./mailbox-stats.decorator"
@@ -44,14 +43,6 @@ describe("MailboxStatsDecorator", () => {
   describe("Given the middleware has populated req.mailboxStats", () => {
     it("should return the stats from the request", () => {
       expect(factory(null, buildContext({ mailboxStats: stats }))).toBe(stats)
-    })
-  })
-
-  describe("Given req.mailboxStats is missing", () => {
-    it("should throw MailboxStatsUnavailableException", () => {
-      expect(() => factory(null, buildContext({}))).toThrow(
-        MailboxStatsUnavailableException,
-      )
     })
   })
 })

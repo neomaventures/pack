@@ -54,20 +54,26 @@ describe("MailboxStatsMiddleware", () => {
   })
 
   describe("Given MailboxService.getStats rejects", () => {
+    const error = new Error(faker.lorem.sentence())
+
     beforeEach(() => {
-      mailbox.getStats.mockRejectedValue(new Error(faker.lorem.sentence()))
+      mailbox.getStats.mockRejectedValue(error)
+    })
+
+    it("should re-throw the underlying exception", async () => {
+      await expect(middleware.use(req, res, next)).rejects.toBe(error)
+    })
+
+    it("should not call next()", async () => {
+      await expect(middleware.use(req, res, next)).rejects.toBe(error)
+
+      expect(next).not.toHaveBeenCalled()
     })
 
     it("should leave req.mailboxStats undefined", async () => {
-      await middleware.use(req, res, next)
+      await expect(middleware.use(req, res, next)).rejects.toBe(error)
 
       expect(req.mailboxStats).toBeUndefined()
-    })
-
-    it("should still call next() — the middleware never throws", async () => {
-      await middleware.use(req, res, next)
-
-      expect(next).toHaveBeenCalledTimes(1)
     })
   })
 })

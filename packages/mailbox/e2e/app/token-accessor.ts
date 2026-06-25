@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common"
+import { Injectable, UnauthorizedException } from "@nestjs/common"
 
 import { type TokenAccessor } from "@neomaventures/mailbox"
 
@@ -27,7 +27,7 @@ export class TestTokenAccessor implements TokenAccessor {
 
   public async getToken(): Promise<string> {
     if (!TestTokenAccessor.currentToken) {
-      throw new Error("No token registered")
+      throw new UnauthorizedException("No token registered")
     }
     return TestTokenAccessor.currentToken
   }

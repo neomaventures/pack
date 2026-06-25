@@ -12,9 +12,6 @@ export { MailboxStatsMiddleware } from "./middlewares/mailbox-stats.middleware"
 // Decorators
 export { MailboxStats } from "./decorators/mailbox-stats.decorator"
 
-// Exceptions
-export { MailboxStatsUnavailableException } from "./exceptions/mailbox-stats-unavailable.exception"
-
 // Interfaces
 export { type TokenAccessor } from "./interfaces/token-accessor.interface"
 

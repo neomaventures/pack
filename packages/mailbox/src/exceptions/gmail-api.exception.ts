@@ -63,6 +63,7 @@ export class GmailApiException extends HttpException {
       mappedStatus,
       { cause },
     )
+    this.name = "GmailApiException"
     this.statusCode = mappedStatus
   }
 
