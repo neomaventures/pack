@@ -1,6 +1,6 @@
 import { express, type MockRequest } from "@neomaventures/fixtures"
 import { managedDatasourceInstance } from "@neomaventures/managed-database"
-import { type Provider } from "@nestjs/common"
+import { NotFoundException, type Provider } from "@nestjs/common"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { getDataSourceToken } from "@nestjs/typeorm"
 import { type Request, type Response } from "express"
@@ -114,33 +114,18 @@ describe("RouteModelBindingMiddleware", () => {
     })
 
     describe(`And req.params.user has the value ${nonExistentId} of a user that doesn't exist`, () => {
-      let request: MockRequest
-      const next = jest.fn()
-
-      beforeEach(async () => {
-        request = express.request({
-          params: { user: nonExistentId, post: post.id },
-        })
-
-        await middleware.use(
-          request as unknown as Request,
+      const invoke = (): Promise<void> =>
+        middleware.use(
+          express.request({
+            params: { user: nonExistentId, post: post.id },
+          }) as unknown as Request,
           express.response() as unknown as Response,
-          next,
+          jest.fn(),
         )
-      })
 
-      it("should call next()", () => {
-        expect(next).toHaveBeenCalled()
-      })
-
-      it("should assign null to req.routeModels.user", () => {
-        expect(request).toHaveProperty("routeModels.user", null)
-      })
-
-      it("should still populate routeModelMeta for the user", () => {
-        expect(request).toHaveProperty("routeModelMeta.user", {
-          id: nonExistentId,
-          entityName: "User",
+      it("should reject with NotFoundException naming the entity and id", async () => {
+        await expect(invoke()).rejects.toMatchError(NotFoundException, {
+          message: `Could not find User with id ${nonExistentId}`,
         })
       })
     })
@@ -172,37 +157,18 @@ describe("RouteModelBindingMiddleware", () => {
     })
 
     describe(`And req.params.user has the value ${user.id} and req.params.post has the value ${nonExistentId} of a post that doesn't exist`, () => {
-      let request: MockRequest
-      const next = jest.fn()
-
-      beforeEach(async () => {
-        request = express.request({
-          params: { user: user.id, post: nonExistentId },
-        })
-
-        await middleware.use(
-          request as unknown as Request,
+      const invoke = (): Promise<void> =>
+        middleware.use(
+          express.request({
+            params: { user: user.id, post: nonExistentId },
+          }) as unknown as Request,
           express.response() as unknown as Response,
-          next,
+          jest.fn(),
         )
-      })
 
-      it("should call next()", () => {
-        expect(next).toHaveBeenCalled()
-      })
-
-      it("should assign null to req.routeModels.post", () => {
-        expect(request).toHaveProperty("routeModels.post", null)
-      })
-
-      it("should still resolve the existing user", () => {
-        expect(request).toHaveProperty("routeModels.user", user)
-      })
-
-      it("should still populate routeModelMeta for the post", () => {
-        expect(request).toHaveProperty("routeModelMeta.post", {
-          id: nonExistentId,
-          entityName: "Post",
+      it("should reject with NotFoundException naming the entity and id", async () => {
+        await expect(invoke()).rejects.toMatchError(NotFoundException, {
+          message: `Could not find Post with id ${nonExistentId}`,
         })
       })
     })
@@ -237,65 +203,35 @@ describe("RouteModelBindingMiddleware", () => {
 
     sqlInjectionAttempts.forEach((attempt) => {
       describe(`And req.params.user has the value ${attempt} and req.params.post has the value ${post.id}`, () => {
-        let request: MockRequest
-        const next = jest.fn()
-
-        beforeEach(async () => {
-          request = express.request({
-            params: { user: attempt, post: post.id },
-          })
-
-          await middleware.use(
-            request as unknown as Request,
+        const invoke = (): Promise<void> =>
+          middleware.use(
+            express.request({
+              params: { user: attempt, post: post.id },
+            }) as unknown as Request,
             express.response() as unknown as Response,
-            next,
+            jest.fn(),
           )
-        })
 
-        it("should call next()", () => {
-          expect(next).toHaveBeenCalled()
-        })
-
-        it("should assign null to req.routeModels.user", () => {
-          expect(request).toHaveProperty("routeModels.user", null)
-        })
-
-        it("should populate routeModelMeta for the user", () => {
-          expect(request).toHaveProperty("routeModelMeta.user", {
-            id: attempt,
-            entityName: "User",
+        it("should reject with NotFoundException naming the entity and id", async () => {
+          await expect(invoke()).rejects.toMatchError(NotFoundException, {
+            message: `Could not find User with id ${attempt}`,
           })
         })
       })
 
       describe(`And req.params.user has the value ${user.id} and req.params.post has the value ${attempt}`, () => {
-        let request: MockRequest
-        const next = jest.fn()
-
-        beforeEach(async () => {
-          request = express.request({
-            params: { user: user.id, post: attempt },
-          })
-
-          await middleware.use(
-            request as unknown as Request,
+        const invoke = (): Promise<void> =>
+          middleware.use(
+            express.request({
+              params: { user: user.id, post: attempt },
+            }) as unknown as Request,
             express.response() as unknown as Response,
-            next,
+            jest.fn(),
           )
-        })
 
-        it("should call next()", () => {
-          expect(next).toHaveBeenCalled()
-        })
-
-        it("should assign null to req.routeModels.post", () => {
-          expect(request).toHaveProperty("routeModels.post", null)
-        })
-
-        it("should populate routeModelMeta for the post", () => {
-          expect(request).toHaveProperty("routeModelMeta.post", {
-            id: attempt,
-            entityName: "Post",
+        it("should reject with NotFoundException naming the entity and id", async () => {
+          await expect(invoke()).rejects.toMatchError(NotFoundException, {
+            message: `Could not find Post with id ${attempt}`,
           })
         })
       })

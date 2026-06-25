@@ -1,4 +1,4 @@
-import { Inject, type NestMiddleware } from "@nestjs/common"
+import { Inject, type NestMiddleware, NotFoundException } from "@nestjs/common"
 import { InjectDataSource } from "@nestjs/typeorm"
 import { NextFunction, Request, Response } from "express"
 import { DataSource } from "typeorm"
@@ -18,11 +18,18 @@ const STORAGE_KEY = "routeModels"
  * Middleware that binds route parameters to model instances by taking
  * the value of the parameter and looking up the corresponding model
  * in the database. If found, the model instance is assigned to
- * req.routeModels under the same key as the route parameter.
+ * `req.routeModels` under the same key as the route parameter.
  *
- * Metadata for each resolved entity (id and entity name) is stored on
- * `req.routeModelMeta` so that downstream guards can produce meaningful
- * error messages without re-querying the datasource.
+ * If an entity cannot be resolved, the middleware throws
+ * {@link NotFoundException} directly — the request never reaches the
+ * controller. The HTTP response is NestJS's standard 404 shape
+ * (`{ statusCode: 404, message, error: "Not Found" }`); pair with
+ * `ExceptionHandlerModule.forRoot({ errorTemplates: { NotFoundException: "..." } })`
+ * from `@neomaventures/exceptions` to render a custom 404 view.
+ *
+ * Metadata for each successfully resolved entity (id and entity name)
+ * is stored on `req.routeModelMeta` so that downstream guards can
+ * produce meaningful error messages without re-querying the datasource.
  */
 export class RouteModelBindingMiddleware implements NestMiddleware {
   /**
@@ -42,17 +49,17 @@ export class RouteModelBindingMiddleware implements NestMiddleware {
   /**
    * Middleware function to bind route parameters to model instances.
    *
-   * Loops over all req.params and attempts to find a corresponding model instance
-   * in the database. If found, it assigns the instance to `req.routeModels`
-   * under the same key as the route parameter. If the entity is not found, it
-   * assigns `null` to `req.routeModels[name]` — the downstream `@RouteModel()`
-   * decorator is responsible for throwing `NotFoundException` when it encounters
-   * a `null` value.
+   * Loops over all `req.params` and attempts to find a corresponding model
+   * instance in the database. On success, the instance is assigned to
+   * `req.routeModels[name]` and metadata (`id`, `entityName`) is populated on
+   * `req.routeModelMeta[name]`, then `next()` is called.
    *
-   * Metadata (`id` and `entityName`) is always populated on
-   * `req.routeModelMeta[name]` regardless of whether the entity was found, so
-   * that downstream consumers can produce meaningful error messages.
+   * If the entity cannot be resolved, this method throws
+   * {@link NotFoundException} directly: `next()` is not invoked, and
+   * `req.routeModels[name]` / `req.routeModelMeta[name]` are not populated
+   * for that parameter.
    *
+   * @throws {@link NotFoundException} when a route parameter resolves no entity.
    * @throws Error if a route parameter id is not valid.
    * @throws Error if the repository for a route parameter cannot be found.
    *
@@ -95,7 +102,13 @@ export class RouteModelBindingMiddleware implements NestMiddleware {
         }),
       })
 
-      models[name] = entity ?? null
+      if (!entity) {
+        throw new NotFoundException(
+          `Could not find ${repo.metadata.name} with id ${id}`,
+        )
+      }
+
+      models[name] = entity
       meta[name] = { id, entityName: repo.metadata.name }
     }
 
