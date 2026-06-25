@@ -33,9 +33,10 @@ export type MailboxModuleAsyncOptions = typeof ASYNC_OPTIONS_TYPE & {
 /**
  * Provider-agnostic mailbox primitive for NestJS — Gmail-first in v0.1.0.
  *
- * Exposes `MailboxService.getStats(account)`, which resolves an OAuth access
- * token via the consumer-supplied {@link TokenAccessor} class and fetches
- * Gmail label stats live (no caching).
+ * Exposes `MailboxService.getStats()`, which resolves an OAuth access token
+ * via the consumer-supplied {@link TokenAccessor} class and fetches Gmail
+ * label stats live (no caching). Mailbox is account-agnostic — the accessor
+ * resolves "for whom" internally via ambient request context.
  *
  * Built on `ConfigurableModuleBuilder` for the plain-data plumbing
  * (`entity`, `gmailApiBaseUrl`), with thin `forRoot` / `forRootAsync`

@@ -47,23 +47,26 @@ describe("GET /mailbox/stats", () => {
     })
   })
 
-  describe("When Gmail responds with an error", () => {
-    it("should surface a 502 Bad Gateway", async () => {
-      const token = faker.string.alphanumeric(40)
+  describe.each([401, 404, 500])(
+    "When Gmail responds with %i",
+    (upstreamStatus) => {
+      it("should surface HTTP 502 — the silent middleware collapses every upstream failure into MailboxStatsUnavailableException", async () => {
+        const token = faker.string.alphanumeric(40)
 
-      TestTokenAccessor.register(token)
-      await gmailClient.expectLabelError({
-        labelId: "INBOX",
-        token,
-        statusCode: 500,
-        message: faker.lorem.sentence(),
+        TestTokenAccessor.register(token)
+        await gmailClient.expectLabelError({
+          labelId: "INBOX",
+          token,
+          statusCode: upstreamStatus,
+          message: faker.lorem.sentence(),
+        })
+
+        await request(app.getHttpServer())
+          .get("/mailbox/stats")
+          .expect(BAD_GATEWAY)
       })
-
-      await request(app.getHttpServer())
-        .get("/mailbox/stats")
-        .expect(BAD_GATEWAY)
-    })
-  })
+    },
+  )
 
   describe("When no token is registered (middleware swallows, decorator enforces)", () => {
     it("should respond with HTTP 502 and the MailboxStatsUnavailable wire shape", async () => {

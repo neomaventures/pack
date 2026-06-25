@@ -1,21 +1,13 @@
 import { faker } from "@faker-js/faker"
-import { Injectable } from "@nestjs/common"
 import { Test } from "@nestjs/testing"
 
 import { TestMailboxable } from "../fixtures/entities/test-mailboxable.entity"
+import { StubTokenAccessor } from "../fixtures/token-accessors/stub.token-accessor"
 
 import { GMAIL_API_BASE_URL, GMAIL_API_BASE_URL_DEFAULT } from "./constants"
 import { MailAccount } from "./entities/mail-account.entity"
-import { type TokenAccessor } from "./interfaces/token-accessor.interface"
 import { MailboxModule } from "./mailbox.module"
 import { RESOLVED_MAILBOX_OPTIONS } from "./mailbox.options"
-
-@Injectable()
-class StubTokenAccessor implements TokenAccessor {
-  public async getToken(): Promise<string> {
-    return faker.string.alphanumeric(40)
-  }
-}
 
 describe("MailboxModule", () => {
   describe("forRootAsync", () => {
@@ -61,8 +53,9 @@ describe("MailboxModule", () => {
           ],
         }).compile()
 
-        expect(module.get(RESOLVED_MAILBOX_OPTIONS)).toMatchObject({
+        expect(module.get(RESOLVED_MAILBOX_OPTIONS)).toEqual({
           entity: TestMailboxable,
+          gmailApiBaseUrl: GMAIL_API_BASE_URL_DEFAULT,
         })
       })
     })

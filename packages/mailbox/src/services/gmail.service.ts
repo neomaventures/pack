@@ -89,7 +89,6 @@ export class GmailService {
         `Gmail API ${response.status}`,
         { labelId },
         responseBody,
-        undefined,
       )
     }
 

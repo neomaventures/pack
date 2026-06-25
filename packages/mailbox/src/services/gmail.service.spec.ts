@@ -1,6 +1,7 @@
 import { faker } from "@faker-js/faker"
 import { gmail, GmailClient } from "@neomaventures/google-fixtures"
 import { mockserver } from "@neomaventures/mockserver/fixture"
+import { HttpStatus } from "@nestjs/common"
 import { Test, type TestingModule } from "@nestjs/testing"
 
 import { GMAIL_API_BASE_URL } from "../constants"
@@ -68,28 +69,32 @@ describe("GmailService", () => {
     })
 
     describe.each([
-      [401, "INBOX"],
-      [404, "Label_DoesNotExist"],
-      [500, "INBOX"],
-    ])("Given Gmail returns %i for %s", (statusCode, labelId) => {
-      it("should throw a GmailApiException carrying the labelId in context", async () => {
-        const message = faker.lorem.sentence()
-        await gmailClient.expectLabelError({
-          labelId,
-          token,
-          statusCode,
-          message,
-        })
+      [401, "INBOX", HttpStatus.UNAUTHORIZED],
+      [404, "Label_DoesNotExist", HttpStatus.NOT_FOUND],
+      [500, "INBOX", HttpStatus.BAD_GATEWAY],
+    ])(
+      "Given Gmail returns %i for %s",
+      (upstreamStatus, labelId, mappedStatus) => {
+        it("should throw a GmailApiException carrying the labelId in context and the mapped status", async () => {
+          const message = faker.lorem.sentence()
+          await gmailClient.expectLabelError({
+            labelId,
+            token,
+            statusCode: upstreamStatus,
+            message,
+          })
 
-        await expect(service.getStats(token, labelId)).rejects.toMatchError(
-          GmailApiException,
-          {
-            context: { labelId },
-            endpoint: "/gmail/v1/users/me/labels/{labelId}",
-          },
-        )
-      })
-    })
+          await expect(service.getStats(token, labelId)).rejects.toMatchError(
+            GmailApiException,
+            {
+              context: { labelId },
+              endpoint: "/gmail/v1/users/me/labels/{labelId}",
+              statusCode: mappedStatus,
+            },
+          )
+        })
+      },
+    )
 
     describe("Given the Gmail fetch fails at the network level", () => {
       it("should throw a GmailNetworkException carrying the labelId in context", async () => {

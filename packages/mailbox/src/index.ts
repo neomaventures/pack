@@ -1,11 +1,16 @@
-// Constants
-export { GMAIL_READONLY_SCOPE, GmailSystemLabel } from "./constants"
+// Module & Configuration
+export { MailboxModule, type MailboxModuleAsyncOptions } from "./mailbox.module"
+export { type MailboxOptions, MAILBOX_OPTIONS } from "./mailbox.options"
+
+// Services
+export { MailboxService } from "./services/mailbox.service"
+export { type GmailLabelStats } from "./services/gmail.service"
+
+// Middlewares
+export { MailboxStatsMiddleware } from "./middlewares/mailbox-stats.middleware"
 
 // Decorators
 export { MailboxStats } from "./decorators/mailbox-stats.decorator"
-
-// Entities
-export { MailAccount } from "./entities/mail-account.entity"
 
 // Exceptions
 export { MailboxStatsUnavailableException } from "./exceptions/mailbox-stats-unavailable.exception"
@@ -14,13 +19,8 @@ export { MailboxStatsUnavailableException } from "./exceptions/mailbox-stats-una
 export { type Mailboxable } from "./interfaces/mailboxable.interface"
 export { type TokenAccessor } from "./interfaces/token-accessor.interface"
 
-// Middlewares
-export { MailboxStatsMiddleware } from "./middlewares/mailbox-stats.middleware"
+// Entities
+export { MailAccount } from "./entities/mail-account.entity"
 
-// Module
-export { MailboxModule, type MailboxModuleAsyncOptions } from "./mailbox.module"
-export { type MailboxOptions, MAILBOX_OPTIONS } from "./mailbox.options"
-
-// Services
-export { MailboxService } from "./services/mailbox.service"
-export { type GmailLabelStats } from "./services/gmail.service"
+// Constants
+export { GMAIL_READONLY_SCOPE, GmailSystemLabel } from "./constants"

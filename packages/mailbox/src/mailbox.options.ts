@@ -1,3 +1,5 @@
+import { type Type } from "@nestjs/common"
+
 import { type Mailboxable } from "./interfaces/mailboxable.interface"
 import { type TokenAccessor } from "./interfaces/token-accessor.interface"
 
@@ -60,7 +62,7 @@ export interface MailboxOptions<T extends Mailboxable = Mailboxable> {
    * dependencies (e.g. a host-side `OAuthTokenService`) works naturally via
    * standard NestJS DI.
    */
-  tokenAccessor: new (...args: any[]) => TokenAccessor
+  tokenAccessor: Type<TokenAccessor>
 
   /**
    * Custom entity class implementing {@link Mailboxable}. Defaults to the

@@ -27,8 +27,9 @@ describe("MailboxStatsDecorator", () => {
 
   beforeAll(() => {
     class MailboxStatsDecoratorTest {
-      // eslint-disable-next-line
-      public test(@MailboxStats() _value: GmailLabelStats): void {}
+      public test(@MailboxStats() value: GmailLabelStats): GmailLabelStats {
+        return value
+      }
     }
 
     const args = Reflect.getMetadata(
@@ -42,9 +43,7 @@ describe("MailboxStatsDecorator", () => {
 
   describe("Given the middleware has populated req.mailboxStats", () => {
     it("should return the stats from the request", () => {
-      expect(factory(null, buildContext({ mailboxStats: stats }))).toEqual(
-        stats,
-      )
+      expect(factory(null, buildContext({ mailboxStats: stats }))).toBe(stats)
     })
   })
 
