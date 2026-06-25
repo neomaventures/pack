@@ -134,7 +134,7 @@ export class GmailClient {
    * request is closed without a response, causing `fetch()` to reject.
    *
    * Mirrors {@link GoogleOAuthClient.mockCodeExchangeNetworkError} —
-   * useful for exercising the `GmailNetworkException` path in
+   * useful for exercising the `MailboxNetworkException` path in
    * `GmailService`.
    *
    * @param params - The request parameters
