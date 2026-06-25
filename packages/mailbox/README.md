@@ -123,7 +123,7 @@ Two paths — pick the one that fits.
 
 Mount `MailboxStatsMiddleware` on the routes that need stats, then read
 the resolved value with the `@MailboxStats()` decorator. The middleware
-fetches stats and throws `GmailApiException` / `GmailNetworkException`
+fetches stats and throws `MailboxApiException` / `MailboxNetworkException`
 on failure. Pair with [`@neomaventures/exceptions`][exc]' global
 `errorTemplates` to render a friendly error UI on those exceptions.
 
@@ -156,8 +156,8 @@ export class ProfileController {
   imports: [
     ExceptionHandlerModule.forRoot({
       errorTemplates: {
-        GmailApiException: "errors/mailbox",
-        GmailNetworkException: "errors/mailbox",
+        MailboxApiException: "errors/mailbox",
+        MailboxNetworkException: "errors/mailbox",
         default: "errors/generic",
       },
     }),
@@ -199,21 +199,21 @@ the call so the freshest available token is used.
 
 ## Exceptions
 
-- `GmailApiException` — thrown when Gmail returns a non-2xx. Upstream 401/404
+- `MailboxApiException` — thrown when Gmail returns a non-2xx. Upstream 401/404
   surface verbatim; everything else collapses to `502 Bad Gateway`. Wire
   response is minimal and package-named —
   `{ statusCode, message: "Mailbox API returned <status>", error: "MailboxApi" }`
   — so the wire never discloses which upstream provider the package uses
   today. Debug fields (`endpoint`, `context`, `responseBody`, `cause`) live
   on the instance for server-side logs only.
-- `GmailNetworkException` — thrown when `fetch()` rejects (DNS, TCP,
+- `MailboxNetworkException` — thrown when `fetch()` rejects (DNS, TCP,
   timeout, connection dropped). Returns `502 Bad Gateway` with the
   package-named wire shape
   `{ statusCode, message: "Mailbox network error", error: "MailboxNetwork" }`.
 
 Both exceptions set `this.name` to their class name so they can be keyed
 in `@neomaventures/exceptions`' `errorTemplates` map (e.g.
-`{ GmailApiException: "errors/mailbox" }`).
+`{ MailboxApiException: "errors/mailbox" }`).
 
 ## Constants
 

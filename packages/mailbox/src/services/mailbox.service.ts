@@ -50,9 +50,9 @@ export class MailboxService {
    *
    * @returns Message + unread counts for the inbox.
    *
-   * @throws {GmailApiException} Surfaced from `GmailService` when Gmail
+   * @throws {MailboxApiException} Surfaced from `GmailService` when Gmail
    *   responds with a non-2xx status.
-   * @throws {GmailNetworkException} Surfaced from `GmailService` when the
+   * @throws {MailboxNetworkException} Surfaced from `GmailService` when the
    *   `fetch()` call rejects.
    *
    * @example
