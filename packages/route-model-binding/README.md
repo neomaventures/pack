@@ -124,9 +124,7 @@ export class AppController {
 
 3. **Entity Injection**: Found entities are attached to the request object and made available via the `@RouteModel` decorator.
 
-4. **Automatic 404**: If an entity isn't found, the `@RouteModel` decorator automatically throws a `NotFoundException` with a descriptive message when the controller method accesses it.
-
-> **Important:** The middleware resolves entities silently — it assigns `null` to `req.routeModels` when an entity is not found and never throws. The `NotFoundException` is only thrown by the `@RouteModel()` decorator. This means **every route parameter must be consumed via `@RouteModel()`** in the controller method, otherwise a missing entity will silently pass through as `null` without producing a 404.
+4. **Automatic 404**: If an entity isn't found, `RouteModelBindingMiddleware` throws `NotFoundException` with a descriptive message. The exception flows through the standard NestJS exception pipeline — pair it with `@neomaventures/exceptions`' `ExceptionHandlerModule` `errorTemplates` to render a custom 404 view.
 
 ## API Reference
 
@@ -361,15 +359,32 @@ RouteModelBindingModule.forRoot({
 
 ### Error Handling
 
-When an entity is not found, the `@RouteModel()` decorator throws a NestJS `NotFoundException` with a message like:
+When an entity is not found, `RouteModelBindingMiddleware` throws a NestJS `NotFoundException` with a message like:
 
 ```
 Could not find User with id 123e4567-e89b-12d3-a456-426614174000
 ```
 
-Because the exception is thrown from the param decorator (not middleware), it flows through the full NestJS pipeline — guards, interceptors, and exception filters all run first. This means `@ErrorTemplate`, `@Authenticated`, and other guard-level decorators can intercept or preempt the 404.
+The exception is thrown from `RouteModelBindingMiddleware` before the controller's guards and interceptors run. Pair with `ExceptionHandlerModule.forRoot({ errorTemplates: { NotFoundException: 'errors/not-found' } })` from `@neomaventures/exceptions` to render a custom 404 view; consumers without that module fall back to NestJS's default JSON response.
 
-You can catch and customize these errors using NestJS exception filters as usual.
+```typescript
+import { Module } from "@nestjs/common"
+import { ExceptionHandlerModule } from "@neomaventures/exceptions"
+import { RouteModelBindingModule } from "@neomaventures/route-model-binding"
+
+@Module({
+  imports: [
+    ExceptionHandlerModule.forRoot({
+      errorTemplates: {
+        NotFoundException: "errors/not-found",
+        default: "errors/generic",
+      },
+    }),
+    RouteModelBindingModule.forRoot(),
+  ],
+})
+export class AppModule {}
+```
 
 ## TypeORM Entity Requirements
 

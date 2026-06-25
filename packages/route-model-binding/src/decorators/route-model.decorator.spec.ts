@@ -1,6 +1,5 @@
-import { faker } from "@faker-js/faker"
 import { express, executionContext } from "@neomaventures/fixtures"
-import { ExecutionContext, NotFoundException } from "@nestjs/common"
+import { ExecutionContext } from "@nestjs/common"
 import { ROUTE_ARGS_METADATA } from "@nestjs/common/constants"
 import { post as postEntity } from "fixtures/models/post"
 import { user as userEntity } from "fixtures/models/user"
@@ -69,43 +68,6 @@ describe("RouteModel", () => {
     })
   })
 
-  describe("When the entity is null", () => {
-    const entityId = faker.string.uuid()
-
-    describe("And routeModelMeta is populated", () => {
-      it("should throw a NotFoundException with entityName and id", () => {
-        const context = <ExecutionContext>executionContext(
-          express.request({
-            routeModels: { user: null },
-            routeModelMeta: {
-              user: { id: entityId, entityName: "User" },
-            },
-          }),
-        )
-
-        expect(() => userDecorator("user", context)).toThrow(NotFoundException)
-        expect(() => userDecorator("user", context)).toThrow(
-          `Could not find User with id ${entityId}`,
-        )
-      })
-    })
-
-    describe("And routeModelMeta is undefined", () => {
-      it("should throw a NotFoundException with fallback values", () => {
-        const context = <ExecutionContext>executionContext(
-          express.request({
-            routeModels: { user: null },
-          }),
-        )
-
-        expect(() => userDecorator("user", context)).toThrow(NotFoundException)
-        expect(() => userDecorator("user", context)).toThrow(
-          "Could not find user with id unknown",
-        )
-      })
-    })
-  })
-
   describe("When routeModels is undefined", () => {
     it("should throw a RouteModelBindingNotAppliedException", () => {
       const context = <ExecutionContext>executionContext(express.request({}))
@@ -140,14 +102,14 @@ describe("RouteModel", () => {
   })
 
   describe("When the key does not exist in routeModels", () => {
-    it("should throw a NotFoundException", () => {
+    it("should return undefined when the key is not present", () => {
       const context = <ExecutionContext>executionContext(
         express.request({
           routeModels: { post },
         }),
       )
 
-      expect(() => userDecorator("user", context)).toThrow(NotFoundException)
+      expect(userDecorator("user", context)).toBeUndefined()
     })
   })
 })
