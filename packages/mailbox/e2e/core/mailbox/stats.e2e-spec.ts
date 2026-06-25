@@ -7,7 +7,7 @@ import request from "supertest"
 
 import { TestTokenAccessor } from "../../app/token-accessor"
 
-const { OK, UNAUTHORIZED, NOT_FOUND, BAD_GATEWAY } = HttpStatus
+const { OK, UNAUTHORIZED, BAD_GATEWAY } = HttpStatus
 
 describe("GET /mailbox/stats", () => {
   let app: Awaited<ReturnType<typeof managedAppInstance>>
@@ -47,36 +47,30 @@ describe("GET /mailbox/stats", () => {
     })
   })
 
-  describe.each([
-    { upstreamStatus: 401, expectedStatus: UNAUTHORIZED },
-    { upstreamStatus: 404, expectedStatus: NOT_FOUND },
-  ])(
-    "When Gmail responds with $upstreamStatus",
-    ({ upstreamStatus, expectedStatus }) => {
-      it(`should surface HTTP ${expectedStatus} from GmailApiException`, async () => {
-        const token = faker.string.alphanumeric(40)
-        const message = faker.lorem.sentence()
+  describe.each([401, 404])("When Gmail responds with %i", (status) => {
+    it(`should surface HTTP ${status} from GmailApiException`, async () => {
+      const token = faker.string.alphanumeric(40)
+      const message = faker.lorem.sentence()
 
-        TestTokenAccessor.register(token)
-        await gmailClient.expectLabelError({
-          labelId: "INBOX",
-          token,
-          statusCode: upstreamStatus,
-          message,
-        })
-
-        const { body } = await request(app.getHttpServer())
-          .get("/mailbox/stats")
-          .expect(expectedStatus)
-
-        expect(body).toEqual({
-          statusCode: expectedStatus,
-          message: `Mailbox API returned ${upstreamStatus}`,
-          error: "MailboxApi",
-        })
+      TestTokenAccessor.register(token)
+      await gmailClient.expectLabelError({
+        labelId: "INBOX",
+        token,
+        statusCode: status,
+        message,
       })
-    },
-  )
+
+      const { body } = await request(app.getHttpServer())
+        .get("/mailbox/stats")
+        .expect(status)
+
+      expect(body).toEqual({
+        statusCode: status,
+        message: `Mailbox API returned ${status}`,
+        error: "MailboxApi",
+      })
+    })
+  })
 
   describe("When Gmail responds with 500", () => {
     it("should collapse to HTTP 502 via GmailApiException", async () => {
