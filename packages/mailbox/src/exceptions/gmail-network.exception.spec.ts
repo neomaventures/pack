@@ -32,13 +32,13 @@ describe("GmailNetworkException", () => {
   it("should produce the minimal wire response shape", () => {
     expect(exception.getResponse()).toEqual({
       statusCode: HttpStatus.BAD_GATEWAY,
-      message: `Gmail network error: ${cause.message}`,
-      error: "Bad Gateway",
+      message: "Mailbox network error",
+      error: "MailboxNetwork",
     })
   })
 
   it("should have the correct message", () => {
-    expect(exception.message).toBe(`Gmail network error: ${cause.message}`)
+    expect(exception.message).toBe("Mailbox network error")
   })
 
   describe("code extraction", () => {

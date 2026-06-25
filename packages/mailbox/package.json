@@ -52,9 +52,6 @@
   "peerDependencies": {
     "@nestjs/common": "11.x",
     "@nestjs/core": "11.x",
-    "@nestjs/typeorm": "11.x",
-    "reflect-metadata": ">=0.2",
-    "rxjs": ">=7",
     "typeorm": ">=0.3"
   },
   "devDependencies": {

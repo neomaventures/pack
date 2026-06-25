@@ -50,12 +50,12 @@ export class GmailNetworkException extends HttpException {
     public readonly context: Record<string, unknown>,
     cause: Error,
   ) {
-    const message = `Gmail network error: ${cause.message}`
+    const message = "Mailbox network error"
     super(
       {
         statusCode: HttpStatus.BAD_GATEWAY,
         message,
-        error: "Bad Gateway",
+        error: "MailboxNetwork",
       },
       HttpStatus.BAD_GATEWAY,
       { cause },

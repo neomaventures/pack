@@ -44,7 +44,7 @@ describe("GmailApiException", () => {
       expect(exception.getResponse()).toEqual({
         statusCode: HttpStatus.UNAUTHORIZED,
         message,
-        error: "GmailApi",
+        error: "MailboxApi",
       })
     })
   })
@@ -73,7 +73,7 @@ describe("GmailApiException", () => {
       expect(exception.getResponse()).toEqual({
         statusCode: HttpStatus.NOT_FOUND,
         message,
-        error: "GmailApi",
+        error: "MailboxApi",
       })
     })
   })

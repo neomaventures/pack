@@ -47,9 +47,11 @@ npm install @neomaventures/mailbox
 ### Peer dependencies
 
 ```bash
-npm install @nestjs/common @nestjs/core @nestjs/typeorm \
-  typeorm reflect-metadata rxjs
+npm install @nestjs/common @nestjs/core typeorm
 ```
+
+If you wire `MailAccount` (or your own `Mailboxable` entity) into
+`TypeOrmModule.forFeature`, install `@nestjs/typeorm` as well.
 
 ## Entity model — interface, reference entity, and your own
 
@@ -207,7 +209,6 @@ export class ProfileModule implements NestModule {
 #### Path B — call `MailboxService.getStats()` directly
 
 ```typescript
-import { Authenticated } from "@neomaventures/auth"
 import { MailboxService } from "@neomaventures/mailbox"
 import { Controller, Get } from "@nestjs/common"
 
@@ -215,8 +216,8 @@ import { Controller, Get } from "@nestjs/common"
 export class MailboxController {
   public constructor(private readonly mailbox: MailboxService) {}
 
+  // Whatever auth strategy your app uses
   @Get("stats")
-  @Authenticated()
   public async stats(): Promise<{
     messageCount: number
     unreadCount: number

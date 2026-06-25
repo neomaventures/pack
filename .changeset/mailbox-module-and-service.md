@@ -25,8 +25,8 @@ First release of `@neomaventures/mailbox` — a provider-agnostic mailbox sync p
 
 ## Exceptions (canonical downstream-client shape)
 
-- `GmailApiException` — thrown when Gmail returns a non-2xx. Upstream 401/404 surface verbatim; everything else collapses to `502 Bad Gateway`. Wire response stays minimal (`{ statusCode, message, error: "GmailApi" }`); debug fields (`endpoint`, `context`, `responseBody`, `cause`) on the instance for server-side logs.
-- `GmailNetworkException` — thrown when `fetch()` rejects (DNS, TCP, timeout, connection dropped). Returns `502 Bad Gateway`. Carries a `code` instance property extracted from the cause (`ECONNRESET` | `ETIMEDOUT` | `ENOTFOUND` | `EAI_AGAIN` | `UND_ERR_SOCKET` | `UNKNOWN`).
+- `GmailApiException` — thrown when Gmail returns a non-2xx. Upstream 401/404 surface verbatim; everything else collapses to `502 Bad Gateway`. Wire response is minimal and package-named — `{ statusCode, message: "Mailbox API returned <status>", error: "MailboxApi" }` — so the wire never discloses which upstream provider the package uses today. Debug fields (`endpoint`, `context`, `responseBody`, `cause`) live on the instance for server-side logs only.
+- `GmailNetworkException` — thrown when `fetch()` rejects (DNS, TCP, timeout, connection dropped). Returns `502 Bad Gateway` with the package-named wire shape `{ statusCode, message: "Mailbox network error", error: "MailboxNetwork" }`. Carries a `code` instance property extracted from the cause (`ECONNRESET` | `ETIMEDOUT` | `ENOTFOUND` | `EAI_AGAIN` | `UND_ERR_SOCKET` | `UNKNOWN`); the original cause is preserved via `Error.cause` for server logs.
 - `MailboxStatsUnavailableException` — thrown by `@MailboxStats()` when no middleware-resolved stats are present on the request. Returns `502 Bad Gateway` with wire shape `{ statusCode, message, error: "MailboxStatsUnavailable" }`.
 
 ## Constants

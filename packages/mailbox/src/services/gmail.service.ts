@@ -86,7 +86,7 @@ export class GmailService {
       throw new GmailApiException(
         response.status,
         LABELS_ENDPOINT,
-        `Gmail API ${response.status}`,
+        `Mailbox API returned ${response.status}`,
         { labelId },
         responseBody,
       )
