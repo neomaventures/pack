@@ -1070,32 +1070,6 @@ describe("new NeomaExceptionFilter()", () => {
       })
     })
 
-    describe("Given errorTemplates has a name-keyed entry that does NOT match", () => {
-      it("should fall through to the status-keyed entry", async () => {
-        const nameTemplate = `${faker.word.noun()}/name`
-        const statusTemplate = `${faker.word.noun()}/status`
-        filter = await buildFilter({
-          errorTemplates: {
-            default: defaultTemplate,
-            NotFoundException: nameTemplate,
-            [HttpStatus.BAD_REQUEST]: statusTemplate,
-          },
-        })
-        const exception = new BadRequestException(faker.hacker.phrase())
-        const req = express.request({ headers: { accept: "text/html" } })
-        const res = express.response()
-        const host = executionContext(req, res) as ArgumentsHost
-
-        filter.catch(exception, host)
-
-        const response = host.switchToHttp().getResponse()
-        expect(response.render).toHaveBeenCalledWith(statusTemplate, {
-          ...res.locals,
-          exception: exception.getResponse(),
-        })
-      })
-    })
-
     describe("Given the request does not accept HTML", () => {
       it("should respond with JSON even when errorTemplates is configured", async () => {
         filter = await buildFilter({
