@@ -212,8 +212,10 @@ describe("RouteModelBindingMiddleware", () => {
             jest.fn(),
           )
 
-        it("should reject with NotFoundException", async () => {
-          await expect(invoke()).rejects.toMatchError(NotFoundException)
+        it("should reject with NotFoundException naming the entity and id", async () => {
+          await expect(invoke()).rejects.toMatchError(NotFoundException, {
+            message: `Could not find User with id ${attempt}`,
+          })
         })
       })
 
@@ -227,8 +229,10 @@ describe("RouteModelBindingMiddleware", () => {
             jest.fn(),
           )
 
-        it("should reject with NotFoundException", async () => {
-          await expect(invoke()).rejects.toMatchError(NotFoundException)
+        it("should reject with NotFoundException naming the entity and id", async () => {
+          await expect(invoke()).rejects.toMatchError(NotFoundException, {
+            message: `Could not find Post with id ${attempt}`,
+          })
         })
       })
     })
