@@ -1,6 +1,7 @@
 import { Module, ValidationPipe } from "@nestjs/common"
 import { APP_FILTER, APP_GUARD, APP_PIPE } from "@nestjs/core"
 
+import { ConfigurableModuleClass } from "./exception-handler.module-definition"
 import { NeomaExceptionFilter } from "./filters/exception.filter"
 import { ErrorTemplateMetadataBridge } from "./guards/error-template-metadata-bridge.guard"
 import { validationFactory } from "./pipes/validation.factory"
@@ -27,11 +28,34 @@ import { validationFactory } from "./pipes/validation.factory"
  *   imports: [
  *     RequestContextModule.forRoot(),
  *     LoggingModule.forRoot(),
- *     ExceptionHandlerModule,
+ *     ExceptionHandlerModule.forRoot({}),
  *   ],
  * })
  * export class AppModule {}
  * ```
+ *
+ * Calling `forRoot({})` with an empty object preserves the zero-config
+ * behaviour of earlier releases.
+ *
+ * ## Global error templates
+ *
+ * Pass `errorTemplates` to render a fallback HTML page when no route-level
+ * `@ErrorTemplate` is reachable (middleware-thrown exceptions, unmatched
+ * routes, or guards that throw before the internal metadata bridge runs):
+ *
+ * ```typescript
+ * ExceptionHandlerModule.forRoot({
+ *   errorTemplates: {
+ *     default: "errors/generic",
+ *     404: "errors/404",
+ *     500: "errors/server",
+ *   },
+ * })
+ * ```
+ *
+ * Route-level `@ErrorTemplate` always wins over the global fallback, and
+ * exception-declared `getRedirect()` always wins over both. Global keys are
+ * HTTP status codes; route-level keys are exception names.
  *
  * Once these are in place, all exceptions are automatically caught and
  * routed through `ApplicationLogger`. Bootstrap with
@@ -81,4 +105,4 @@ import { validationFactory } from "./pipes/validation.factory"
   ],
   exports: [],
 })
-export class ExceptionHandlerModule {}
+export class ExceptionHandlerModule extends ConfigurableModuleClass {}

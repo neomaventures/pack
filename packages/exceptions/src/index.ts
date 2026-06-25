@@ -1,5 +1,6 @@
 // Module
 export * from "./exception-handler.module"
+export type { ExceptionHandlerOptions } from "./exception-handler.options"
 
 // Filters
 export * from "./filters/exception.filter"

@@ -4,14 +4,18 @@ import {
   Catch,
   ExceptionFilter,
   HttpStatus,
+  Inject,
 } from "@nestjs/common"
+
+import { MODULE_OPTIONS_TOKEN } from "../exception-handler.module-definition"
+import { type ExceptionHandlerOptions } from "../exception-handler.options"
 
 /**
  * Global exception filter that catches all exceptions and provides
  * intelligent logging based on HTTP status codes.
  *
  * Works as a drop-in replacement for NestJS's built-in exception handling
- * with zero configuration required. Simply import `ExceptionHandlerModule`
+ * with zero configuration required. Call `ExceptionHandlerModule.forRoot({})`
  * and all exceptions are handled automatically.
  *
  * ## Design Principle
@@ -82,7 +86,7 @@ import {
  * imports: [
  *   RequestContextModule.forRoot(),
  *   LoggingModule.forRoot({ logLevel: 'debug' }),
- *   ExceptionHandlerModule,
+ *   ExceptionHandlerModule.forRoot({}),
  * ]
  * ```
  *
@@ -139,43 +143,58 @@ import {
  * ## Response Priority
  *
  * When the request accepts `text/html`, the filter resolves the response
- * using the following priority order. Exception-declared behaviour always
- * takes priority over decorator-declared behaviour:
+ * using the following four-tier ladder. Exception-declared behaviour always
+ * takes priority over decorator-declared behaviour, which in turn takes
+ * priority over module-level configuration:
  *
  * | Priority | Source | Mechanism |
  * |----------|--------|-----------|
  * | 1 | Exception | `getRedirect()` — redirect with `{ status, url }` |
- * | 2 | Decorator | `@ErrorTemplate` with `/` prefix — redirect to route |
- * | 3 | Decorator | `@ErrorTemplate` — render a template |
+ * | 2 | Route decorator | `@ErrorTemplate` matched template (or `/` prefix → redirect) |
+ * | 3 | Module options | `forRoot({ errorTemplates })` matched by HTTP status, then `default` |
  * | 4 | Default | JSON response via `getResponse()` |
  *
  * For non-HTML requests (API clients), the filter always returns JSON.
  *
  * ## Content Negotiation
  *
- * When both conditions are met:
- * 1. The request `Accept` header includes `text/html`
- * 2. `res.locals.errorTemplate` is set (via the {@link ErrorTemplateMetadataBridge})
+ * Two metadata sources can supply a template name when the request accepts
+ * `text/html`:
  *
- * The filter resolves the template name from the {@link ErrorTemplateOptions}
- * object by matching `err.name` against the keys, falling back to `default`:
- * ```typescript
- * const templateName = errorTemplate[err.name] || errorTemplate.default
- * ```
+ * 1. **Route-level `@ErrorTemplate`** — surfaced as `res.locals.errorTemplate`
+ *    by the {@link ErrorTemplateMetadataBridge} internal `APP_GUARD`. Keyed
+ *    by `err.name`, falling back to `default`:
+ *    ```typescript
+ *    const templateName = errorTemplate[err.name] || errorTemplate.default
+ *    ```
+ * 2. **Global `forRoot({ errorTemplates })`** — consulted when no
+ *    route-level metadata reached the response (middleware-thrown
+ *    exceptions, unmatched routes, throwing guards registered before the
+ *    bridge). Keyed by HTTP status, falling back to `default`:
+ *    ```typescript
+ *    const templateName = errorTemplates[err.getStatus()] || errorTemplates.default
+ *    ```
  *
  * If the resolved template starts with `/`, the filter issues a `303 See Other`
- * redirect to that path instead of rendering. This is useful when the error
- * page lives at its own route (e.g. `/error`):
- * ```typescript
- * @ErrorTemplate({ BadRequestException: 'auth/form', default: '/error' })
- * ```
+ * redirect to that path instead of rendering. This applies to both sources.
  *
  * Otherwise, the default JSON response is used. API applications are
  * completely unaffected.
  *
- * Template metadata is resolved upstream by `ErrorTemplateMetadataBridge`
- * (an internal `APP_GUARD`) and read from `res.locals` here — see that
- * class's JSDoc for the lifecycle reason this is a two-step resolution.
+ * ## Global Fallback
+ *
+ * `forRoot({ errorTemplates })` provides a safety net for exceptions thrown
+ * outside the request-handler pipeline, where route-level metadata is never
+ * reachable. The two sources are keyed differently on purpose:
+ *
+ * - Route-level keys by `err.name` — at the route, the developer knows
+ *   exactly which exception types they expect.
+ * - Global keys by HTTP status — at the app boundary, the catch-all care is
+ *   "what status are we returning", not "which class was instantiated".
+ *
+ * Route metadata, when present, always wins. The global fallback is only
+ * consulted when `res.locals.errorTemplate` is absent or its lookup
+ * produced no match.
  *
  * @see NeomaException for the interface to implement
  * @see ExceptionHandlerModule for registration
@@ -183,7 +202,11 @@ import {
  */
 @Catch()
 export class NeomaExceptionFilter implements ExceptionFilter {
-  public constructor(private readonly logger: ApplicationLogger) {}
+  public constructor(
+    private readonly logger: ApplicationLogger,
+    @Inject(MODULE_OPTIONS_TOKEN)
+    private readonly options: ExceptionHandlerOptions,
+  ) {}
 
   /**
    * Catches and handles all exceptions thrown in the application.
@@ -261,30 +284,47 @@ export class NeomaExceptionFilter implements ExceptionFilter {
       )
     }
 
-    if (acceptsHtml && errorTemplate) {
+    if (acceptsHtml) {
+      // Tier 1: route-level @ErrorTemplate (via bridge), keyed by err.name.
       // A missing OR empty template name for this error should fall back to the
       // default template, so `||` (falsy fallback) is intentional here, not `??`.
-      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-      const templateName = errorTemplate[err.name] || errorTemplate.default
-
-      if (templateName.startsWith("/")) {
-        this.logger.debug(
-          `Redirecting to "${templateName}" for [${err.getStatus!()}]`,
-          { err },
-        )
-        response.redirect(HttpStatus.SEE_OTHER, templateName)
-      } else {
-        this.logger.debug(
-          `Rendering error template "${templateName}" for [${err.getStatus!()}]`,
-          { err },
-        )
-        response.status(err.getStatus!()).render(templateName, {
-          ...response.locals,
-          exception: err.getResponse!(),
-        })
+      let routeTemplate: string | undefined
+      if (errorTemplate) {
+        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+        routeTemplate = errorTemplate[err.name] || errorTemplate.default
       }
-    } else {
-      response.status(err.getStatus!()).json(err.getResponse!())
+
+      // Tier 2: global forRoot fallback, keyed by HTTP status.
+      let globalTemplate: string | undefined
+      const globalTemplates = this.options.errorTemplates
+      if (!routeTemplate && globalTemplates) {
+        const status = err.getStatus!()
+        globalTemplate = globalTemplates[status] || globalTemplates.default
+      }
+
+      const templateName = routeTemplate ?? globalTemplate
+
+      if (templateName) {
+        if (templateName.startsWith("/")) {
+          this.logger.debug(
+            `Redirecting to "${templateName}" for [${err.getStatus!()}]`,
+            { err },
+          )
+          response.redirect(HttpStatus.SEE_OTHER, templateName)
+        } else {
+          this.logger.debug(
+            `Rendering error template "${templateName}" for [${err.getStatus!()}]`,
+            { err },
+          )
+          response.status(err.getStatus!()).render(templateName, {
+            ...response.locals,
+            exception: err.getResponse!(),
+          })
+        }
+        return
+      }
     }
+
+    response.status(err.getStatus!()).json(err.getResponse!())
   }
 }

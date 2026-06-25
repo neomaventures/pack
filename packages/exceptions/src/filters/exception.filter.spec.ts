@@ -14,6 +14,8 @@ import {
 } from "@nestjs/common"
 import { Test } from "@nestjs/testing"
 
+import { MODULE_OPTIONS_TOKEN } from "../exception-handler.module-definition"
+
 import { NeomaExceptionFilter } from "./exception.filter"
 
 const httpExceptions = [
@@ -51,6 +53,7 @@ describe("new NeomaExceptionFilter()", () => {
       providers: [
         NeomaExceptionFilter,
         { provide: ApplicationLogger, useValue: logger },
+        { provide: MODULE_OPTIONS_TOKEN, useValue: {} },
       ],
     }).compile()
 
@@ -823,6 +826,218 @@ describe("new NeomaExceptionFilter()", () => {
         `Redirecting [${HttpStatus.UNAUTHORIZED}] to "/login" with ${HttpStatus.SEE_OTHER}`,
         { err },
       )
+    })
+  })
+
+  describe("Global fallback templates", () => {
+    const defaultTemplate = `${faker.word.noun()}/default`
+    const notFoundTemplate = `${faker.word.noun()}/not-found`
+    const serverErrorTemplate = `${faker.word.noun()}/server-error`
+
+    const buildFilter = async (
+      options: Record<string, any>,
+    ): Promise<NeomaExceptionFilter> => {
+      const module = await Test.createTestingModule({
+        providers: [
+          NeomaExceptionFilter,
+          { provide: ApplicationLogger, useValue: logger },
+          { provide: MODULE_OPTIONS_TOKEN, useValue: options },
+        ],
+      }).compile()
+      return module.get(NeomaExceptionFilter)
+    }
+
+    describe("Given errorTemplates with a status-keyed entry matching the exception", () => {
+      it("should render the status-keyed template", async () => {
+        filter = await buildFilter({
+          errorTemplates: {
+            default: defaultTemplate,
+            [HttpStatus.NOT_FOUND]: notFoundTemplate,
+          },
+        })
+        const exception = new NotFoundException(faker.hacker.phrase())
+        const req = express.request({ headers: { accept: "text/html" } })
+        const res = express.response()
+        const host = executionContext(req, res) as ArgumentsHost
+
+        filter.catch(exception, host)
+
+        const response = host.switchToHttp().getResponse()
+        expect(response.render).toHaveBeenCalledWith(notFoundTemplate, {
+          ...res.locals,
+          exception: exception.getResponse(),
+        })
+        expect(response.json).not.toHaveBeenCalled()
+      })
+    })
+
+    describe("Given errorTemplates with no status-keyed entry matching", () => {
+      it("should fall back to the default template", async () => {
+        filter = await buildFilter({
+          errorTemplates: { default: defaultTemplate },
+        })
+        const exception = new BadRequestException(faker.hacker.phrase())
+        const req = express.request({ headers: { accept: "text/html" } })
+        const res = express.response()
+        const host = executionContext(req, res) as ArgumentsHost
+
+        filter.catch(exception, host)
+
+        const response = host.switchToHttp().getResponse()
+        expect(response.render).toHaveBeenCalledWith(defaultTemplate, {
+          ...res.locals,
+          exception: exception.getResponse(),
+        })
+      })
+    })
+
+    describe("Given errorTemplates with a 500 entry and an unhandled Error", () => {
+      it("should render the 500 template using normalised status", async () => {
+        filter = await buildFilter({
+          errorTemplates: {
+            default: defaultTemplate,
+            [HttpStatus.INTERNAL_SERVER_ERROR]: serverErrorTemplate,
+          },
+        })
+        const exception = new Error(faker.hacker.phrase())
+        const req = express.request({ headers: { accept: "text/html" } })
+        const res = express.response()
+        const host = executionContext(req, res) as ArgumentsHost
+
+        filter.catch(exception, host)
+
+        const response = host.switchToHttp().getResponse()
+        expect(response.statusCode).toBe(HttpStatus.INTERNAL_SERVER_ERROR)
+        expect(response.render).toHaveBeenCalledWith(serverErrorTemplate, {
+          ...res.locals,
+          exception: {
+            statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+            message: "Internal server error",
+            error: "Internal Server Error",
+          },
+        })
+      })
+    })
+
+    describe("Given errorTemplates is undefined", () => {
+      it("should respond with JSON for HTML requests", async () => {
+        filter = await buildFilter({})
+        const exception = new NotFoundException(faker.hacker.phrase())
+        const req = express.request({ headers: { accept: "text/html" } })
+        const res = express.response()
+        const host = executionContext(req, res) as ArgumentsHost
+
+        filter.catch(exception, host)
+
+        const response = host.switchToHttp().getResponse()
+        expect(response.json).toHaveBeenCalledWith(exception.getResponse())
+        expect(response.render).not.toHaveBeenCalled()
+      })
+    })
+
+    describe("Given a route-level @ErrorTemplate is also set", () => {
+      it("should prefer the route template over the global fallback", async () => {
+        const routeTemplate = `${faker.word.noun()}/route`
+        filter = await buildFilter({
+          errorTemplates: {
+            default: defaultTemplate,
+            [HttpStatus.NOT_FOUND]: notFoundTemplate,
+          },
+        })
+        const exception = new NotFoundException(faker.hacker.phrase())
+        const req = express.request({ headers: { accept: "text/html" } })
+        const res = express.response({
+          locals: { errorTemplate: { default: routeTemplate } },
+        })
+        const host = executionContext(req, res) as ArgumentsHost
+
+        filter.catch(exception, host)
+
+        const response = host.switchToHttp().getResponse()
+        expect(response.render).toHaveBeenCalledWith(routeTemplate, {
+          ...res.locals,
+          exception: exception.getResponse(),
+        })
+      })
+    })
+
+    describe("Given the exception declares getRedirect()", () => {
+      it("should redirect, ignoring both route and global templates", async () => {
+        filter = await buildFilter({
+          errorTemplates: { default: defaultTemplate },
+        })
+        const err = {
+          ...new Error("Unauthenticated"),
+          name: "UnauthenticatedException",
+          getStatus: (): number => HttpStatus.UNAUTHORIZED,
+          getResponse: (): object => ({
+            statusCode: HttpStatus.UNAUTHORIZED,
+            message: "Unauthenticated",
+            error: "Unauthorized",
+          }),
+          getRedirect: (): { status: number; url: string } => ({
+            status: HttpStatus.SEE_OTHER,
+            url: "/login",
+          }),
+        }
+        const req = express.request({ headers: { accept: "text/html" } })
+        const res = express.response()
+        const host = executionContext(req, res) as ArgumentsHost
+
+        filter.catch(err, host)
+
+        const response = host.switchToHttp().getResponse()
+        expect(response.redirect).toHaveBeenCalledWith(
+          HttpStatus.SEE_OTHER,
+          "/login",
+        )
+        expect(response.render).not.toHaveBeenCalled()
+        expect(response.json).not.toHaveBeenCalled()
+      })
+    })
+
+    describe("Given a status-keyed entry starts with /", () => {
+      it("should issue a 303 See Other redirect", async () => {
+        filter = await buildFilter({
+          errorTemplates: {
+            default: defaultTemplate,
+            [HttpStatus.NOT_FOUND]: "/not-found",
+          },
+        })
+        const exception = new NotFoundException(faker.hacker.phrase())
+        const req = express.request({ headers: { accept: "text/html" } })
+        const res = express.response()
+        const host = executionContext(req, res) as ArgumentsHost
+
+        filter.catch(exception, host)
+
+        const response = host.switchToHttp().getResponse()
+        expect(response.redirect).toHaveBeenCalledWith(
+          HttpStatus.SEE_OTHER,
+          "/not-found",
+        )
+        expect(response.render).not.toHaveBeenCalled()
+      })
+    })
+
+    describe("Given the request does not accept HTML", () => {
+      it("should respond with JSON even when errorTemplates is configured", async () => {
+        filter = await buildFilter({
+          errorTemplates: { default: defaultTemplate },
+        })
+        const exception = new NotFoundException(faker.hacker.phrase())
+        const req = express.request({
+          headers: { accept: "application/json" },
+        })
+        const res = express.response()
+        const host = executionContext(req, res) as ArgumentsHost
+
+        filter.catch(exception, host)
+
+        const response = host.switchToHttp().getResponse()
+        expect(response.json).toHaveBeenCalledWith(exception.getResponse())
+        expect(response.render).not.toHaveBeenCalled()
+      })
     })
   })
 })

@@ -9,7 +9,7 @@ import { AppController } from "./app.controller"
   imports: [
     RequestContextModule.forRoot(),
     LoggingModule.forRoot(),
-    ExceptionHandlerModule,
+    ExceptionHandlerModule.forRoot({}),
   ],
   controllers: [AppController],
 })

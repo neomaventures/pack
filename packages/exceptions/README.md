@@ -67,7 +67,7 @@ import { Module } from '@nestjs/common'
 import { ExceptionHandlerModule } from '@neomaventures/exceptions'
 
 @Module({
-  imports: [ExceptionHandlerModule],
+  imports: [ExceptionHandlerModule.forRoot({})],
   controllers: [UserController],
 })
 export class AppModule {}
@@ -124,12 +124,12 @@ import { Module } from '@nestjs/common'
 import { ExceptionHandlerModule } from '@neomaventures/exceptions'
 
 @Module({
-  imports: [ExceptionHandlerModule],
+  imports: [ExceptionHandlerModule.forRoot({})],
 })
 export class AppModule {}
 ```
 
-That's it. All exceptions are now handled automatically. See [Module import order](#module-import-order) for one wiring constraint to be aware of when combining with other guard-registering modules.
+That's it. All exceptions are now handled automatically. See [Module import order](#module-import-order) for one wiring constraint to be aware of when combining with other guard-registering modules, and [Global error templates](#global-error-templates) for the safety-net fallback that closes that gap.
 
 ### 2. Throw Exceptions Anywhere
 
@@ -172,7 +172,68 @@ export class UserController {
 
 `ExceptionHandlerModule` registers an internal `APP_GUARD` to resolve `@ErrorTemplate` metadata before request handlers run. NestJS executes `APP_GUARD` providers in registration order, so import `ExceptionHandlerModule` **before** any other module that registers its own throwing `APP_GUARD`. If a consumer guard throws before the internal resolver runs, the filter will fall through to JSON instead of rendering the configured template.
 
-*(A future minor release will add `ExceptionHandlerModule.forRoot({ errorTemplates })` global fallback templates that remove this ordering dependency. Tracked under #281.)*
+For applications that want a safety net regardless of guard ordering — and for exceptions thrown by middleware or for unmatched routes, which never see route-level metadata — configure [Global error templates](#global-error-templates) via `forRoot({ errorTemplates })`.
+
+## Global error templates
+
+`forRoot({ errorTemplates })` provides a global HTML fallback rendered when no route-level `@ErrorTemplate` is reachable. It covers three cases that route metadata can never address:
+
+- Middleware that throws before any route binds
+- Guards that throw before the internal metadata bridge runs
+- Unmatched routes (no controller, no decorator)
+
+```typescript
+import { ExceptionHandlerModule } from '@neomaventures/exceptions'
+
+@Module({
+  imports: [
+    ExceptionHandlerModule.forRoot({
+      errorTemplates: {
+        default: 'errors/generic',
+        404: 'errors/404',
+        500: 'errors/server',
+      },
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+### Resolution ladder
+
+When the request accepts `text/html`, the filter resolves the response in this order:
+
+1. **Exception `getRedirect()`** — the exception itself declares a redirect target
+2. **Route-level `@ErrorTemplate`** — matched by `err.name`, then `default`
+3. **Global `errorTemplates`** — matched by HTTP status, then `default`
+4. **JSON fallback** — when nothing above matched
+
+Route-level metadata, when present, always wins over the global fallback. Exception-declared redirects always win over both.
+
+### Path values trigger redirects
+
+Values starting with `/` trigger a `303 See Other` redirect to that path instead of rendering. This works for both the `default` entry and status-keyed entries:
+
+```typescript
+ExceptionHandlerModule.forRoot({
+  errorTemplates: {
+    default: 'errors/generic',
+    404: '/not-found',
+  },
+})
+```
+
+### Key-shape asymmetry
+
+Route-level `@ErrorTemplate` is keyed by **exception name** (`BadRequestException`, `UnauthorizedException`, …). Global `errorTemplates` is keyed by **HTTP status code** (`404`, `500`, …). The shapes differ on purpose: at the route, the developer knows which exception types they expect; at the app boundary, the catch-all care is what status is being returned.
+
+### Opt-in
+
+Without `errorTemplates`, the filter behaviour is unchanged from earlier releases — middleware-thrown exceptions, unmatched routes, and pre-bridge guard throws all return JSON. Pass `forRoot({})` with no options to keep the old behaviour, or pass `errorTemplates` to opt in.
+
+### Migration from earlier releases
+
+Bare `imports: [ExceptionHandlerModule]` no longer compiles. Replace with `imports: [ExceptionHandlerModule.forRoot({})]` for a no-op upgrade, or pass `errorTemplates` to opt in to the new fallback.
 
 ## How It Works
 
@@ -414,7 +475,7 @@ import { ExceptionHandlerModule } from '@neomaventures/exceptions'
 @Module({
   imports: [
     LoggerModule.forRoot(),
-    ExceptionHandlerModule,
+    ExceptionHandlerModule.forRoot({}),
   ],
 })
 export class AppModule {}
@@ -448,12 +509,12 @@ A NestJS module that registers a global exception filter, validation pipe, and e
 import { ExceptionHandlerModule } from '@neomaventures/exceptions'
 
 @Module({
-  imports: [ExceptionHandlerModule],
+  imports: [ExceptionHandlerModule.forRoot({})],
 })
 export class AppModule {}
 ```
 
-**No configuration needed** - works out of the box with sensible defaults.
+**Zero configuration needed** — `forRoot({})` works out of the box with sensible defaults. Pass `{ errorTemplates }` to opt into global HTML fallback templates (see [Global error templates](#global-error-templates)).
 
 Registers:
 - `NeomaExceptionFilter` as a global `APP_FILTER`
@@ -557,7 +618,7 @@ describe('Exception Handling', () => {
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
-      imports: [ExceptionHandlerModule, YourModule],
+      imports: [ExceptionHandlerModule.forRoot({}), YourModule],
     }).compile()
 
     app = module.createNestApplication()
