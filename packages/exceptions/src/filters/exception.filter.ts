@@ -173,6 +173,10 @@ import {
  * Otherwise, the default JSON response is used. API applications are
  * completely unaffected.
  *
+ * Template metadata is resolved upstream by `ErrorTemplateMetadataBridge`
+ * (an internal `APP_GUARD`) and read from `res.locals` here — see that
+ * class's JSDoc for the lifecycle reason this is a two-step resolution.
+ *
  * @see NeomaException for the interface to implement
  * @see ExceptionHandlerModule for registration
  * @see ErrorTemplate for the decorator that enables template rendering
