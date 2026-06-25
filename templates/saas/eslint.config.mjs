@@ -48,6 +48,12 @@ export default tseslint.config(
       sourceType: "commonjs",
       parserOptions: {
         projectService: true,
+        // Anchor project resolution to this config's directory. Without this,
+        // typescript-eslint's project service fails when a single eslint
+        // invocation receives files from multiple candidate roots — notably
+        // `packages/*` (uses the root config) plus `templates/saas` (uses
+        // this config). Each config must anchor its own root.
+        tsconfigRootDir: import.meta.dirname,
       },
     },
   },
