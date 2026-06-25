@@ -1,8 +1,8 @@
 import { Inject, Injectable } from "@nestjs/common"
 
 import { GMAIL_API_BASE_URL, GmailSystemLabel } from "../constants"
-import { GmailApiException } from "../exceptions/gmail-api.exception"
-import { GmailNetworkException } from "../exceptions/gmail-network.exception"
+import { MailboxApiException } from "../exceptions/mailbox-api.exception"
+import { MailboxNetworkException } from "../exceptions/mailbox-network.exception"
 
 const LABELS_ENDPOINT = "/gmail/v1/users/me/labels/{labelId}"
 
@@ -48,10 +48,10 @@ export class GmailService {
    * @param labelId - A {@link GmailSystemLabel} or a user-defined label
    *   ID (e.g. `Label_123`). Defaults to {@link GmailSystemLabel.Inbox}.
    * @returns The label's message + unread counts
-   * @throws {GmailApiException} When Gmail responds with a non-2xx status.
+   * @throws {MailboxApiException} When Gmail responds with a non-2xx status.
    *   Upstream `401` and `404` are surfaced verbatim; everything else
    *   collapses to `502 Bad Gateway`.
-   * @throws {GmailNetworkException} When the `fetch()` call rejects
+   * @throws {MailboxNetworkException} When the `fetch()` call rejects
    *   (dropped connection, DNS failure, etc.) — returns `502 Bad Gateway`.
    *
    * @example
@@ -74,7 +74,7 @@ export class GmailService {
         },
       })
     } catch (error) {
-      throw new GmailNetworkException(
+      throw new MailboxNetworkException(
         LABELS_ENDPOINT,
         { labelId },
         error as Error,
@@ -83,7 +83,7 @@ export class GmailService {
 
     if (!response.ok) {
       const responseBody = await response.text().catch(() => "")
-      throw new GmailApiException(
+      throw new MailboxApiException(
         response.status,
         LABELS_ENDPOINT,
         `Mailbox API returned ${response.status}`,

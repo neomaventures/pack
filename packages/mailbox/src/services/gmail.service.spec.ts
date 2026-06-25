@@ -5,8 +5,8 @@ import { HttpStatus } from "@nestjs/common"
 import { Test, type TestingModule } from "@nestjs/testing"
 
 import { GMAIL_API_BASE_URL } from "../constants"
-import { GmailApiException } from "../exceptions/gmail-api.exception"
-import { GmailNetworkException } from "../exceptions/gmail-network.exception"
+import { MailboxApiException } from "../exceptions/mailbox-api.exception"
+import { MailboxNetworkException } from "../exceptions/mailbox-network.exception"
 
 import { GmailService } from "./gmail.service"
 
@@ -75,7 +75,7 @@ describe("GmailService", () => {
     ])(
       "Given Gmail returns %i for %s",
       (upstreamStatus, labelId, mappedStatus) => {
-        it("should throw a GmailApiException carrying the labelId in context and the mapped status", async () => {
+        it("should throw a MailboxApiException carrying the labelId in context and the mapped status", async () => {
           const message = faker.lorem.sentence()
           await gmailClient.expectLabelError({
             labelId,
@@ -85,7 +85,7 @@ describe("GmailService", () => {
           })
 
           await expect(service.getStats(token, labelId)).rejects.toMatchError(
-            GmailApiException,
+            MailboxApiException,
             {
               context: { labelId },
               endpoint: "/gmail/v1/users/me/labels/{labelId}",
@@ -97,10 +97,10 @@ describe("GmailService", () => {
     )
 
     describe("Given the Gmail fetch fails at the network level", () => {
-      it("should throw a GmailNetworkException carrying the labelId in context", async () => {
+      it("should throw a MailboxNetworkException carrying the labelId in context", async () => {
         await gmailClient.expectNetworkFailure({ labelId, token })
         await expect(service.getStats(token, labelId)).rejects.toMatchError(
-          GmailNetworkException,
+          MailboxNetworkException,
           {
             context: { labelId },
             endpoint: "/gmail/v1/users/me/labels/{labelId}",

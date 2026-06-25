@@ -7,7 +7,7 @@ import { MailboxService } from "../services/mailbox.service"
 /**
  * Resolves Gmail stats for the current request and stashes them on
  * `req.mailboxStats`. Throws upstream Gmail exceptions on failure
- * ({@link GmailApiException}, {@link GmailNetworkException}) — pair with
+ * ({@link MailboxApiException}, {@link MailboxNetworkException}) — pair with
  * `@neomaventures/exceptions`' `ExceptionHandlerModule.forRoot({ errorTemplates })`
  * to render a friendly error UI on those exceptions.
  *

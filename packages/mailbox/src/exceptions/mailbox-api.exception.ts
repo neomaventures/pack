@@ -1,10 +1,5 @@
 import { HttpException, HttpStatus } from "@nestjs/common"
 
-// NOTE: not yet exported from `index.ts`. `GmailService` is internal in
-// v0.1.0, so this exception is only thrown across an internal boundary.
-// It becomes part of the public API when `MailboxService` lands and
-// wraps `GmailService` — at that point add the barrel export.
-
 /**
  * Thrown when the Gmail API responds with a non-2xx status.
  *
@@ -21,7 +16,7 @@ import { HttpException, HttpStatus } from "@nestjs/common"
  *
  * @example
  * ```typescript
- * throw new GmailApiException(
+ * throw new MailboxApiException(
  *   404,
  *   "/gmail/v1/users/me/labels/{labelId}",
  *   "Gmail API 404",
@@ -30,7 +25,7 @@ import { HttpException, HttpStatus } from "@nestjs/common"
  * )
  * ```
  */
-export class GmailApiException extends HttpException {
+export class MailboxApiException extends HttpException {
   public readonly statusCode: number
 
   /**
@@ -53,7 +48,7 @@ export class GmailApiException extends HttpException {
     public readonly responseBody: unknown,
     cause?: Error,
   ) {
-    const mappedStatus = GmailApiException.mapStatus(statusCode)
+    const mappedStatus = MailboxApiException.mapStatus(statusCode)
     super(
       {
         statusCode: mappedStatus,
@@ -63,7 +58,7 @@ export class GmailApiException extends HttpException {
       mappedStatus,
       { cause },
     )
-    this.name = "GmailApiException"
+    this.name = "MailboxApiException"
     this.statusCode = mappedStatus
   }
 

@@ -15,7 +15,7 @@ type KnownCode = (typeof KNOWN_CODES)[number] | "UNKNOWN"
  * (e.g. `fetch()` rejects because the connection is dropped, DNS fails,
  * or the upstream is otherwise unreachable).
  *
- * Distinct from {@link GmailApiException}, which represents an HTTP
+ * Distinct from {@link MailboxApiException}, which represents an HTTP
  * response from Gmail (a non-2xx status). This is for the case where no
  * response was received at all.
  *
@@ -26,7 +26,7 @@ type KnownCode = (typeof KNOWN_CODES)[number] | "UNKNOWN"
  * try {
  *   await fetch(url, { ... })
  * } catch (error) {
- *   throw new GmailNetworkException(
+ *   throw new MailboxNetworkException(
  *     "/gmail/v1/users/me/labels/{labelId}",
  *     { labelId },
  *     error as Error,
@@ -34,7 +34,7 @@ type KnownCode = (typeof KNOWN_CODES)[number] | "UNKNOWN"
  * }
  * ```
  */
-export class GmailNetworkException extends HttpException {
+export class MailboxNetworkException extends HttpException {
   public readonly code: string
 
   /**
@@ -60,8 +60,8 @@ export class GmailNetworkException extends HttpException {
       HttpStatus.BAD_GATEWAY,
       { cause },
     )
-    this.name = "GmailNetworkException"
-    this.code = GmailNetworkException.extractCode(cause)
+    this.name = "MailboxNetworkException"
+    this.code = MailboxNetworkException.extractCode(cause)
   }
 
   private static extractCode(cause: Error): KnownCode {

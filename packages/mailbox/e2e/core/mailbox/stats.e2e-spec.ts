@@ -51,7 +51,7 @@ describe("GET /mailbox/stats", () => {
   describe.each([UNAUTHORIZED, NOT_FOUND])(
     "When Gmail responds with %i",
     (status) => {
-      it(`should surface HTTP ${status} from GmailApiException`, async () => {
+      it(`should surface HTTP ${status} from MailboxApiException`, async () => {
         const token = faker.string.alphanumeric(40)
         const message = faker.lorem.sentence()
 
@@ -77,7 +77,7 @@ describe("GET /mailbox/stats", () => {
   )
 
   describe(`When Gmail responds with ${INTERNAL_SERVER_ERROR}`, () => {
-    it("should collapse to HTTP 502 via GmailApiException", async () => {
+    it("should collapse to HTTP 502 via MailboxApiException", async () => {
       const token = faker.string.alphanumeric(40)
       const message = faker.lorem.sentence()
 
@@ -102,7 +102,7 @@ describe("GET /mailbox/stats", () => {
   })
 
   describe("When Gmail rejects the fetch (network failure)", () => {
-    it("should surface HTTP 502 via GmailNetworkException", async () => {
+    it("should surface HTTP 502 via MailboxNetworkException", async () => {
       const token = faker.string.alphanumeric(40)
 
       TestTokenAccessor.register(token)

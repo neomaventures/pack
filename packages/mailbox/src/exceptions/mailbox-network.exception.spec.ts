@@ -1,16 +1,16 @@
 import { faker } from "@faker-js/faker"
 import { HttpStatus } from "@nestjs/common"
 
-import { GmailNetworkException } from "./gmail-network.exception"
+import { MailboxNetworkException } from "./mailbox-network.exception"
 
-describe("GmailNetworkException", () => {
+describe("MailboxNetworkException", () => {
   const endpoint = "/gmail/v1/users/me/labels/{labelId}"
   const labelId = faker.string.alphanumeric(10)
   const cause = new Error(faker.lorem.sentence())
-  let exception: GmailNetworkException
+  let exception: MailboxNetworkException
 
   beforeEach(() => {
-    exception = new GmailNetworkException(endpoint, { labelId }, cause)
+    exception = new MailboxNetworkException(endpoint, { labelId }, cause)
   })
 
   it("should expose the endpoint property on the instance", () => {
@@ -42,8 +42,8 @@ describe("GmailNetworkException", () => {
   })
 
   describe("name", () => {
-    it('should set this.name to "GmailNetworkException"', () => {
-      expect(exception.name).toBe("GmailNetworkException")
+    it('should set this.name to "MailboxNetworkException"', () => {
+      expect(exception.name).toBe("MailboxNetworkException")
     })
   })
 
@@ -61,7 +61,7 @@ describe("GmailNetworkException", () => {
         })
         const outer = new Error(faker.lorem.sentence(), { cause: nested })
 
-        const ex = new GmailNetworkException(endpoint, { labelId }, outer)
+        const ex = new MailboxNetworkException(endpoint, { labelId }, outer)
 
         expect(ex.code).toBe(code)
       })
@@ -79,7 +79,7 @@ describe("GmailNetworkException", () => {
           code,
         })
 
-        const ex = new GmailNetworkException(endpoint, { labelId }, direct)
+        const ex = new MailboxNetworkException(endpoint, { labelId }, direct)
 
         expect(ex.code).toBe(code)
       })
@@ -90,7 +90,7 @@ describe("GmailNetworkException", () => {
         const abort = new Error(faker.lorem.sentence())
         abort.name = "AbortError"
 
-        const ex = new GmailNetworkException(endpoint, { labelId }, abort)
+        const ex = new MailboxNetworkException(endpoint, { labelId }, abort)
 
         expect(ex.code).toBe("ETIMEDOUT")
       })
@@ -100,7 +100,7 @@ describe("GmailNetworkException", () => {
       it("should expose code = UNKNOWN", () => {
         const plain = new Error(faker.lorem.sentence())
 
-        const ex = new GmailNetworkException(endpoint, { labelId }, plain)
+        const ex = new MailboxNetworkException(endpoint, { labelId }, plain)
 
         expect(ex.code).toBe("UNKNOWN")
       })
@@ -112,7 +112,7 @@ describe("GmailNetworkException", () => {
           code: "EWEIRD",
         })
 
-        const ex = new GmailNetworkException(endpoint, { labelId }, weird)
+        const ex = new MailboxNetworkException(endpoint, { labelId }, weird)
 
         expect(ex.code).toBe("UNKNOWN")
       })

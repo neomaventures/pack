@@ -1,9 +1,9 @@
 import { faker } from "@faker-js/faker"
 import { HttpStatus } from "@nestjs/common"
 
-import { GmailApiException } from "./gmail-api.exception"
+import { MailboxApiException } from "./mailbox-api.exception"
 
-describe("GmailApiException", () => {
+describe("MailboxApiException", () => {
   const endpoint = "/gmail/v1/users/me/labels/{labelId}"
 
   describe("Given an upstream 401", () => {
@@ -12,10 +12,10 @@ describe("GmailApiException", () => {
     const responseBody = {
       error: { code: 401, message: "Invalid Credentials" },
     }
-    let exception: GmailApiException
+    let exception: MailboxApiException
 
     beforeEach(() => {
-      exception = new GmailApiException(
+      exception = new MailboxApiException(
         401,
         endpoint,
         message,
@@ -53,10 +53,10 @@ describe("GmailApiException", () => {
     const labelId = faker.string.alphanumeric(10)
     const message = faker.lorem.sentence()
     const responseBody = { error: { code: 404, message: "Not Found" } }
-    let exception: GmailApiException
+    let exception: MailboxApiException
 
     beforeEach(() => {
-      exception = new GmailApiException(
+      exception = new MailboxApiException(
         404,
         endpoint,
         message,
@@ -82,7 +82,7 @@ describe("GmailApiException", () => {
     it("should chain the cause via Error.cause", () => {
       const cause = new Error(faker.lorem.sentence())
 
-      const exception = new GmailApiException(
+      const exception = new MailboxApiException(
         500,
         endpoint,
         faker.lorem.sentence(),
@@ -96,8 +96,8 @@ describe("GmailApiException", () => {
   })
 
   describe("name", () => {
-    it('should set this.name to "GmailApiException"', () => {
-      const exception = new GmailApiException(
+    it('should set this.name to "MailboxApiException"', () => {
+      const exception = new MailboxApiException(
         500,
         endpoint,
         faker.lorem.sentence(),
@@ -105,7 +105,7 @@ describe("GmailApiException", () => {
         null,
       )
 
-      expect(exception.name).toBe("GmailApiException")
+      expect(exception.name).toBe("MailboxApiException")
     })
   })
 
@@ -113,7 +113,7 @@ describe("GmailApiException", () => {
     "Given an upstream %i",
     (upstreamStatus) => {
       it("should map to HTTP 502 Bad Gateway", () => {
-        const exception = new GmailApiException(
+        const exception = new MailboxApiException(
           upstreamStatus,
           endpoint,
           faker.lorem.sentence(),
