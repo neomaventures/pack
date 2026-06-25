@@ -6,5 +6,5 @@
       "@neomaventures/healthcheck/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*", "e2e/**/*"]
+  "include": ["src/**/*", "fixtures/**/*", "e2e/**/*"]
 }

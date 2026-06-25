@@ -94,6 +94,7 @@ Within each sub-range, the package picks specific ports for the containers it bo
 | [`@neomaventures/storage`](packages/storage) | `3200` | `3200-3499` |
 | [`templates/saas`](templates/saas) | `3500` | `3500-3799` |
 | [`@neomaventures/mailbox`](packages/mailbox) | `3800` | `3800-4099` |
+| [`@neomaventures/healthcheck`](packages/healthcheck) | `4100` | `4100-4399` |
 
 Each container package's README documents the specific port numbers its consumers should use. Each consumer package's `.env` files declare the slot ports plus the consumer-side URLs derived from them (e.g. `MOCKSERVER_URL=http://localhost:3000/mockserver`).
 

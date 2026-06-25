@@ -4,6 +4,7 @@ import { type DataSource } from "typeorm"
 
 import { PROBE_TIMEOUT_MS } from "./healthcheck.constants"
 import { type HealthResult } from "./healthcheck.types"
+import { ProbeRunnerService } from "./probes/probe-runner.service"
 
 /**
  * Aggregates the result of every auto-detected health probe.
@@ -15,6 +16,7 @@ import { type HealthResult } from "./healthcheck.types"
 @Injectable()
 export class HealthService {
   public constructor(
+    private readonly probeRunner: ProbeRunnerService,
     @Optional()
     @Inject(getDataSourceToken())
     private readonly dataSource?: DataSource,
@@ -30,6 +32,10 @@ export class HealthService {
    *   `"error"`; this method never throws. The 503 status on the wrapped
    *   route is the failure signal — no logger is used so consumers don't
    *   pay observability noise on every failed probe.
+   * - `probes` is included only when one or more probes are configured via
+   *   `HealthcheckModule.forRoot({ probes: [...] })`. Each entry is
+   *   `{ ok, latencyMs, error? }`. Any failing probe flips the response
+   *   status to 503 at the interceptor layer.
    * - `checkedAt` is the `Date` the probes were run at. The service owns
    *   this value (rather than the consuming controller) so the timestamp
    *   is consistent across JSON and HTML renderings and reflects the
@@ -55,6 +61,11 @@ export class HealthService {
       } catch {
         result.database = "error"
       }
+    }
+
+    const probes = await this.probeRunner.run()
+    if (probes !== undefined) {
+      result.probes = probes
     }
 
     return result
