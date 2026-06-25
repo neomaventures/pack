@@ -11,18 +11,19 @@ export interface ExceptionHandlerOptions {
    * `@ErrorTemplate` is reachable (middleware-thrown exceptions, unmatched
    * routes, or guards that throw before the internal metadata bridge runs).
    *
-   * Keys are HTTP status codes; `default` is required when this option is
-   * provided. Values starting with `/` trigger a 303 See Other redirect.
-   *
-   * Asymmetry note: route-level `@ErrorTemplate` keys by `err.name`; global
-   * keys by HTTP status. See README "Resolution ladder".
+   * Keys can be either HTTP status codes (e.g. `404`, `500`) or exception
+   * class names (e.g. `"NotFoundException"`, `"BadRequestException"`).
+   * `default` is required when this option is provided. Within this layer,
+   * the filter resolves most-specific-first: exception-name match → status
+   * match → `default`. Values starting with `/` trigger a 303 See Other
+   * redirect.
    *
    * @example
    * ```typescript
    * ExceptionHandlerModule.forRoot({
    *   errorTemplates: {
    *     default: "errors/generic",
-   *     404: "errors/404",
+   *     NotFoundException: "errors/not-found",
    *     500: "errors/server",
    *   },
    * })
@@ -30,6 +31,6 @@ export interface ExceptionHandlerOptions {
    */
   errorTemplates?: {
     default: string
-    [status: number]: string
+    [statusOrName: string]: string
   }
 }

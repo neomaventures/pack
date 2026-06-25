@@ -919,8 +919,8 @@ describe("new NeomaExceptionFilter()", () => {
       })
     })
 
-    describe("Given errorTemplates is undefined", () => {
-      it("should respond with JSON for HTML requests", async () => {
+    describe("Given errorTemplates is not configured (preserved default behaviour)", () => {
+      it("should respond with JSON for HTML requests, matching pre-forRoot behaviour", async () => {
         filter = await buildFilter({})
         const exception = new NotFoundException(faker.hacker.phrase())
         const req = express.request({ headers: { accept: "text/html" } })
@@ -1017,6 +1017,82 @@ describe("new NeomaExceptionFilter()", () => {
           "/not-found",
         )
         expect(response.render).not.toHaveBeenCalled()
+      })
+    })
+
+    describe("Given errorTemplates has both a name-keyed entry and a status-keyed entry", () => {
+      it("should render the name-keyed template (most specific wins)", async () => {
+        const nameTemplate = `${faker.word.noun()}/name`
+        const statusTemplate = `${faker.word.noun()}/status`
+        filter = await buildFilter({
+          errorTemplates: {
+            default: defaultTemplate,
+            NotFoundException: nameTemplate,
+            [HttpStatus.NOT_FOUND]: statusTemplate,
+          },
+        })
+        const exception = new NotFoundException(faker.hacker.phrase())
+        const req = express.request({ headers: { accept: "text/html" } })
+        const res = express.response()
+        const host = executionContext(req, res) as ArgumentsHost
+
+        filter.catch(exception, host)
+
+        const response = host.switchToHttp().getResponse()
+        expect(response.render).toHaveBeenCalledWith(nameTemplate, {
+          ...res.locals,
+          exception: exception.getResponse(),
+        })
+      })
+    })
+
+    describe("Given errorTemplates has only a name-keyed entry matching the exception", () => {
+      it("should render the name-keyed template", async () => {
+        const nameTemplate = `${faker.word.noun()}/name`
+        filter = await buildFilter({
+          errorTemplates: {
+            default: defaultTemplate,
+            BadRequestException: nameTemplate,
+          },
+        })
+        const exception = new BadRequestException(faker.hacker.phrase())
+        const req = express.request({ headers: { accept: "text/html" } })
+        const res = express.response()
+        const host = executionContext(req, res) as ArgumentsHost
+
+        filter.catch(exception, host)
+
+        const response = host.switchToHttp().getResponse()
+        expect(response.render).toHaveBeenCalledWith(nameTemplate, {
+          ...res.locals,
+          exception: exception.getResponse(),
+        })
+      })
+    })
+
+    describe("Given errorTemplates has a name-keyed entry that does NOT match", () => {
+      it("should fall through to the status-keyed entry", async () => {
+        const nameTemplate = `${faker.word.noun()}/name`
+        const statusTemplate = `${faker.word.noun()}/status`
+        filter = await buildFilter({
+          errorTemplates: {
+            default: defaultTemplate,
+            NotFoundException: nameTemplate,
+            [HttpStatus.BAD_REQUEST]: statusTemplate,
+          },
+        })
+        const exception = new BadRequestException(faker.hacker.phrase())
+        const req = express.request({ headers: { accept: "text/html" } })
+        const res = express.response()
+        const host = executionContext(req, res) as ArgumentsHost
+
+        filter.catch(exception, host)
+
+        const response = host.switchToHttp().getResponse()
+        expect(response.render).toHaveBeenCalledWith(statusTemplate, {
+          ...res.locals,
+          exception: exception.getResponse(),
+        })
       })
     })
 

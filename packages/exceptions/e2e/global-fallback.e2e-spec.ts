@@ -141,24 +141,4 @@ describe("Global fallback templates", () => {
       })
     })
   })
-
-  describe("Given forRoot({}) without errorTemplates", () => {
-    let app: Awaited<ReturnType<typeof managedAppInstance>>
-
-    beforeEach(async () => {
-      app = await managedAppInstance({
-        module:
-          "e2e/app/global-fallback-empty.module.ts#GlobalFallbackEmptyModule",
-        configure: configureViewEngine,
-      })
-    })
-
-    it("should respond with JSON for middleware-thrown exceptions even with Accept: text/html", async () => {
-      await request(app.getHttpServer())
-        .get("/middleware-throws")
-        .set("Accept", "text/html")
-        .expect(HttpStatus.NOT_FOUND)
-        .expect("Content-Type", /json/)
-    })
-  })
 })

@@ -170,9 +170,13 @@ import { type ExceptionHandlerOptions } from "../exception-handler.options"
  * 2. **Global `forRoot({ errorTemplates })`** — consulted when no
  *    route-level metadata reached the response (middleware-thrown
  *    exceptions, unmatched routes, throwing guards registered before the
- *    bridge). Keyed by HTTP status, falling back to `default`:
+ *    bridge). Keyed by exception name or HTTP status, resolved
+ *    most-specific-first (name → status → `default`):
  *    ```typescript
- *    const templateName = errorTemplates[err.getStatus()] || errorTemplates.default
+ *    const templateName =
+ *      errorTemplates[err.name] ||
+ *      errorTemplates[err.getStatus()] ||
+ *      errorTemplates.default
  *    ```
  *
  * If the resolved template starts with `/`, the filter issues a `303 See Other`
@@ -185,12 +189,10 @@ import { type ExceptionHandlerOptions } from "../exception-handler.options"
  *
  * `forRoot({ errorTemplates })` provides a safety net for exceptions thrown
  * outside the request-handler pipeline, where route-level metadata is never
- * reachable. The two sources are keyed differently on purpose:
- *
- * - Route-level keys by `err.name` — at the route, the developer knows
- *   exactly which exception types they expect.
- * - Global keys by HTTP status — at the app boundary, the catch-all care is
- *   "what status are we returning", not "which class was instantiated".
+ * reachable. Both sources support exception-name keying; the global source
+ * additionally supports HTTP-status keying for the "catch-all by status"
+ * case at the app boundary. Within the global source, resolution is
+ * most-specific-first: exception name → HTTP status → `default`.
  *
  * Route metadata, when present, always wins. The global fallback is only
  * consulted when `res.locals.errorTemplate` is absent or its lookup
@@ -294,12 +296,16 @@ export class NeomaExceptionFilter implements ExceptionFilter {
         routeTemplate = errorTemplate[err.name] || errorTemplate.default
       }
 
-      // Tier 2: global forRoot fallback, keyed by HTTP status.
+      // Tier 2: global forRoot fallback. Keys can be exception names or HTTP
+      // status codes; resolution is most-specific-first (name → status → default).
       let globalTemplate: string | undefined
       const globalTemplates = this.options.errorTemplates
       if (!routeTemplate && globalTemplates) {
         const status = err.getStatus!()
-        globalTemplate = globalTemplates[status] || globalTemplates.default
+        globalTemplate =
+          globalTemplates[err.name] ||
+          globalTemplates[status] ||
+          globalTemplates.default
       }
 
       const templateName = routeTemplate ?? globalTemplate

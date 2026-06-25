@@ -190,7 +190,7 @@ import { ExceptionHandlerModule } from '@neomaventures/exceptions'
     ExceptionHandlerModule.forRoot({
       errorTemplates: {
         default: 'errors/generic',
-        404: 'errors/404',
+        NotFoundException: 'errors/not-found',
         500: 'errors/server',
       },
     }),
@@ -205,7 +205,7 @@ When the request accepts `text/html`, the filter resolves the response in this o
 
 1. **Exception `getRedirect()`** — the exception itself declares a redirect target
 2. **Route-level `@ErrorTemplate`** — matched by `err.name`, then `default`
-3. **Global `errorTemplates`** — matched by HTTP status, then `default`
+3. **Global `errorTemplates`** — matched by `err.name`, then HTTP status, then `default`
 4. **JSON fallback** — when nothing above matched
 
 Route-level metadata, when present, always wins over the global fallback. Exception-declared redirects always win over both.
@@ -218,14 +218,14 @@ Values starting with `/` trigger a `303 See Other` redirect to that path instead
 ExceptionHandlerModule.forRoot({
   errorTemplates: {
     default: 'errors/generic',
-    404: '/not-found',
+    NotFoundException: '/not-found',
   },
 })
 ```
 
-### Key-shape asymmetry
+### Key shapes
 
-Route-level `@ErrorTemplate` is keyed by **exception name** (`BadRequestException`, `UnauthorizedException`, …). Global `errorTemplates` is keyed by **HTTP status code** (`404`, `500`, …). The shapes differ on purpose: at the route, the developer knows which exception types they expect; at the app boundary, the catch-all care is what status is being returned.
+Route-level `@ErrorTemplate` is keyed by **exception name** only (`BadRequestException`, `UnauthorizedException`, …). Global `errorTemplates` accepts **both** exception names and HTTP status codes (`404`, `500`, …) in the same map, with name-keyed entries winning over status-keyed entries. Use names when you care about the class that was thrown; use status codes when you care about the response class (any 5xx → server-error page).
 
 ### Opt-in
 
