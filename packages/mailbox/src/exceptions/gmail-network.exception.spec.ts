@@ -41,6 +41,12 @@ describe("GmailNetworkException", () => {
     expect(exception.message).toBe("Mailbox network error")
   })
 
+  describe("name", () => {
+    it('should set this.name to "GmailNetworkException"', () => {
+      expect(exception.name).toBe("GmailNetworkException")
+    })
+  })
+
   describe("code extraction", () => {
     describe.each([
       "ECONNRESET",

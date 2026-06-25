@@ -7,7 +7,7 @@ import request from "supertest"
 
 import { TestTokenAccessor } from "../../app/token-accessor"
 
-const { OK, BAD_GATEWAY } = HttpStatus
+const { OK, UNAUTHORIZED, NOT_FOUND, BAD_GATEWAY } = HttpStatus
 
 describe("GET /mailbox/stats", () => {
   let app: Awaited<ReturnType<typeof managedAppInstance>>
@@ -47,38 +47,89 @@ describe("GET /mailbox/stats", () => {
     })
   })
 
-  describe.each([401, 404, 500])(
-    "When Gmail responds with %i",
-    (upstreamStatus) => {
-      it("should surface HTTP 502 — the silent middleware collapses every upstream failure into MailboxStatsUnavailableException", async () => {
+  describe.each([
+    { upstreamStatus: 401, expectedStatus: UNAUTHORIZED },
+    { upstreamStatus: 404, expectedStatus: NOT_FOUND },
+  ])(
+    "When Gmail responds with $upstreamStatus",
+    ({ upstreamStatus, expectedStatus }) => {
+      it(`should surface HTTP ${expectedStatus} from GmailApiException`, async () => {
         const token = faker.string.alphanumeric(40)
+        const message = faker.lorem.sentence()
 
         TestTokenAccessor.register(token)
         await gmailClient.expectLabelError({
           labelId: "INBOX",
           token,
           statusCode: upstreamStatus,
-          message: faker.lorem.sentence(),
+          message,
         })
 
-        await request(app.getHttpServer())
+        const { body } = await request(app.getHttpServer())
           .get("/mailbox/stats")
-          .expect(BAD_GATEWAY)
+          .expect(expectedStatus)
+
+        expect(body).toEqual({
+          statusCode: expectedStatus,
+          message: `Mailbox API returned ${upstreamStatus}`,
+          error: "MailboxApi",
+        })
       })
     },
   )
 
-  describe("When no token is registered (middleware swallows, decorator enforces)", () => {
-    it("should respond with HTTP 502 and the MailboxStatsUnavailable wire shape", async () => {
+  describe("When Gmail responds with 500", () => {
+    it("should collapse to HTTP 502 via GmailApiException", async () => {
+      const token = faker.string.alphanumeric(40)
+      const message = faker.lorem.sentence()
+
+      TestTokenAccessor.register(token)
+      await gmailClient.expectLabelError({
+        labelId: "INBOX",
+        token,
+        statusCode: 500,
+        message,
+      })
+
       const { body } = await request(app.getHttpServer())
         .get("/mailbox/stats")
         .expect(BAD_GATEWAY)
 
       expect(body).toEqual({
         statusCode: BAD_GATEWAY,
-        message: "Mailbox stats are not available for the current request.",
-        error: "MailboxStatsUnavailable",
+        message: "Mailbox API returned 500",
+        error: "MailboxApi",
       })
+    })
+  })
+
+  describe("When Gmail rejects the fetch (network failure)", () => {
+    it("should surface HTTP 502 via GmailNetworkException", async () => {
+      const token = faker.string.alphanumeric(40)
+
+      TestTokenAccessor.register(token)
+      await gmailClient.expectNetworkFailure({
+        labelId: "INBOX",
+        token,
+      })
+
+      const { body } = await request(app.getHttpServer())
+        .get("/mailbox/stats")
+        .expect(BAD_GATEWAY)
+
+      expect(body).toEqual({
+        statusCode: BAD_GATEWAY,
+        message: "Mailbox network error",
+        error: "MailboxNetwork",
+      })
+    })
+  })
+
+  describe("When no token is registered", () => {
+    it("should respond with HTTP 401 — token resolution is the consumer's exception boundary", async () => {
+      await request(app.getHttpServer())
+        .get("/mailbox/stats")
+        .expect(UNAUTHORIZED)
     })
   })
 })

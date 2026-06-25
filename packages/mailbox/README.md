@@ -123,11 +123,14 @@ Two paths — pick the one that fits.
 
 Mount `MailboxStatsMiddleware` on the routes that need stats, then read
 the resolved value with the `@MailboxStats()` decorator. The middleware
-is a silent resolver (never throws); the decorator enforces presence and
-throws `MailboxStatsUnavailableException` (HTTP 502) when stats couldn't
-be resolved. No controller-level try/catch.
+fetches stats and throws `GmailApiException` / `GmailNetworkException`
+on failure. Pair with [`@neomaventures/exceptions`][exc]' global
+`errorTemplates` to render a friendly error UI on those exceptions.
+
+[exc]: ../exceptions
 
 ```typescript
+import { ExceptionHandlerModule } from "@neomaventures/exceptions"
 import {
   GmailLabelStats,
   MailboxStats,
@@ -149,7 +152,18 @@ export class ProfileController {
   }
 }
 
-@Module({ controllers: [ProfileController] })
+@Module({
+  imports: [
+    ExceptionHandlerModule.forRoot({
+      errorTemplates: {
+        GmailApiException: "errors/mailbox",
+        GmailNetworkException: "errors/mailbox",
+        default: "errors/generic",
+      },
+    }),
+  ],
+  controllers: [ProfileController],
+})
 export class ProfileModule implements NestModule {
   public configure(consumer: MiddlewareConsumer): void {
     consumer.apply(MailboxStatsMiddleware).forRoutes("profile/inbox")
@@ -196,10 +210,10 @@ the call so the freshest available token is used.
   timeout, connection dropped). Returns `502 Bad Gateway` with the
   package-named wire shape
   `{ statusCode, message: "Mailbox network error", error: "MailboxNetwork" }`.
-- `MailboxStatsUnavailableException` — thrown by `@MailboxStats()` when no
-  middleware-resolved stats are present on the request. Returns `502 Bad
-  Gateway` with wire shape
-  `{ statusCode, message, error: "MailboxStatsUnavailable" }`.
+
+Both exceptions set `this.name` to their class name so they can be keyed
+in `@neomaventures/exceptions`' `errorTemplates` map (e.g.
+`{ GmailApiException: "errors/mailbox" }`).
 
 ## Constants
 

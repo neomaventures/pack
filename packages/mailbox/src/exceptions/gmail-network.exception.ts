@@ -60,6 +60,7 @@ export class GmailNetworkException extends HttpException {
       HttpStatus.BAD_GATEWAY,
       { cause },
     )
+    this.name = "GmailNetworkException"
     this.code = GmailNetworkException.extractCode(cause)
   }
 
