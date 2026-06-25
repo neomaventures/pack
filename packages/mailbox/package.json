@@ -1,6 +1,6 @@
 {
   "name": "@neomaventures/mailbox",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Provider-agnostic mailbox primitive for NestJS. Gmail-first.",
   "author": "Daniel Bruce",
   "repository": {
