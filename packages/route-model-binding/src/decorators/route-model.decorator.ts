@@ -11,11 +11,17 @@ import { RouteModelBindingNotAppliedException } from "../exceptions/route-model-
  * {@link RouteModelBindingNotAppliedException} (HTTP 500) so the developer
  * misconfiguration is surfaced rather than masked as a 404.
  *
+ * If `req.routeModels` is populated but does not contain the requested key —
+ * meaning the decorator's `data` argument doesn't match any route parameter
+ * the middleware resolved — this decorator throws a plain `Error` listing the
+ * available keys. Both cases are programmer errors and surface as HTTP 500.
+ *
  * @param data - The name of the route parameter (without the colon).
  *               For example, for route "/users/:user", use "user".
  *
  * @throws {@link RouteModelBindingNotAppliedException} when
  *   `RouteModelBindingMiddleware` has not been applied to the route.
+ * @throws `Error` when the requested key is not present in `req.routeModels`.
  *
  * @example
  * ```typescript
@@ -34,6 +40,17 @@ export const RouteModel = createParamDecorator(
 
     if (req.routeModels === undefined) {
       throw new RouteModelBindingNotAppliedException(data)
+    }
+
+    if (!(data in req.routeModels)) {
+      const available = Object.keys(req.routeModels as Record<string, unknown>)
+        .map((k) => `"${k}"`)
+        .join(", ")
+      throw new Error(
+        `@RouteModel("${data}") was invoked but no model was resolved for ` +
+          `that key. Available keys: [${available}]. Check that the key ` +
+          `matches the route parameter name.`,
+      )
     }
 
     return req.routeModels[data]

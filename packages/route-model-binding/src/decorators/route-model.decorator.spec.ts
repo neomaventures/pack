@@ -102,14 +102,19 @@ describe("RouteModel", () => {
   })
 
   describe("When the key does not exist in routeModels", () => {
-    it("should return undefined when the key is not present", () => {
+    it("should throw an error listing the available keys", () => {
       const context = <ExecutionContext>executionContext(
         express.request({
           routeModels: { post },
         }),
       )
 
-      expect(userDecorator("user", context)).toBeUndefined()
+      expect(() => userDecorator("user", context)).toThrowMatching(Error, {
+        message:
+          '@RouteModel("user") was invoked but no model was resolved for ' +
+          'that key. Available keys: ["post"]. Check that the key matches ' +
+          "the route parameter name.",
+      })
     })
   })
 })

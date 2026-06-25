@@ -114,30 +114,19 @@ describe("RouteModelBindingMiddleware", () => {
     })
 
     describe(`And req.params.user has the value ${nonExistentId} of a user that doesn't exist`, () => {
-      const next = jest.fn()
-
       const invoke = (): Promise<void> =>
         middleware.use(
           express.request({
             params: { user: nonExistentId, post: post.id },
           }) as unknown as Request,
           express.response() as unknown as Response,
-          next,
+          jest.fn(),
         )
 
-      it("should throw NotFoundException", async () => {
-        await expect(invoke()).rejects.toThrow(NotFoundException)
-      })
-
-      it("should throw with a message naming the entity and id", async () => {
-        await expect(invoke()).rejects.toThrow(
-          `Could not find User with id ${nonExistentId}`,
-        )
-      })
-
-      it("should not call next()", async () => {
-        await expect(invoke()).rejects.toThrow(NotFoundException)
-        expect(next).not.toHaveBeenCalled()
+      it("should reject with NotFoundException naming the entity and id", async () => {
+        await expect(invoke()).rejects.toMatchError(NotFoundException, {
+          message: `Could not find User with id ${nonExistentId}`,
+        })
       })
     })
 
@@ -168,30 +157,19 @@ describe("RouteModelBindingMiddleware", () => {
     })
 
     describe(`And req.params.user has the value ${user.id} and req.params.post has the value ${nonExistentId} of a post that doesn't exist`, () => {
-      const next = jest.fn()
-
       const invoke = (): Promise<void> =>
         middleware.use(
           express.request({
             params: { user: user.id, post: nonExistentId },
           }) as unknown as Request,
           express.response() as unknown as Response,
-          next,
+          jest.fn(),
         )
 
-      it("should throw NotFoundException", async () => {
-        await expect(invoke()).rejects.toThrow(NotFoundException)
-      })
-
-      it("should throw with a message naming the entity and id", async () => {
-        await expect(invoke()).rejects.toThrow(
-          `Could not find Post with id ${nonExistentId}`,
-        )
-      })
-
-      it("should not call next()", async () => {
-        await expect(invoke()).rejects.toThrow(NotFoundException)
-        expect(next).not.toHaveBeenCalled()
+      it("should reject with NotFoundException naming the entity and id", async () => {
+        await expect(invoke()).rejects.toMatchError(NotFoundException, {
+          message: `Could not find Post with id ${nonExistentId}`,
+        })
       })
     })
 
@@ -225,46 +203,32 @@ describe("RouteModelBindingMiddleware", () => {
 
     sqlInjectionAttempts.forEach((attempt) => {
       describe(`And req.params.user has the value ${attempt} and req.params.post has the value ${post.id}`, () => {
-        const next = jest.fn()
-
         const invoke = (): Promise<void> =>
           middleware.use(
             express.request({
               params: { user: attempt, post: post.id },
             }) as unknown as Request,
             express.response() as unknown as Response,
-            next,
+            jest.fn(),
           )
 
-        it("should throw NotFoundException", async () => {
-          await expect(invoke()).rejects.toThrow(NotFoundException)
-        })
-
-        it("should not call next()", async () => {
-          await expect(invoke()).rejects.toThrow(NotFoundException)
-          expect(next).not.toHaveBeenCalled()
+        it("should reject with NotFoundException", async () => {
+          await expect(invoke()).rejects.toMatchError(NotFoundException)
         })
       })
 
       describe(`And req.params.user has the value ${user.id} and req.params.post has the value ${attempt}`, () => {
-        const next = jest.fn()
-
         const invoke = (): Promise<void> =>
           middleware.use(
             express.request({
               params: { user: user.id, post: attempt },
             }) as unknown as Request,
             express.response() as unknown as Response,
-            next,
+            jest.fn(),
           )
 
-        it("should throw NotFoundException", async () => {
-          await expect(invoke()).rejects.toThrow(NotFoundException)
-        })
-
-        it("should not call next()", async () => {
-          await expect(invoke()).rejects.toThrow(NotFoundException)
-          expect(next).not.toHaveBeenCalled()
+        it("should reject with NotFoundException", async () => {
+          await expect(invoke()).rejects.toMatchError(NotFoundException)
         })
       })
     })
