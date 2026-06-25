@@ -195,7 +195,7 @@ class ContentNegotiationController {
   imports: [
     RequestContextModule.forRoot(),
     LoggingModule.forRoot(),
-    ExceptionHandlerModule,
+    ExceptionHandlerModule.forRoot({}),
   ],
   controllers: [ContentNegotiationController],
 })

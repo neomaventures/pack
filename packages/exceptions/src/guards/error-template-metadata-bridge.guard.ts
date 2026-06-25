@@ -17,11 +17,15 @@ import {
  * template configuration from `res.locals` and content-negotiate between
  * `render()` and `json()`.
  *
- * **Why a guard and not an interceptor?** NestJS execution order is
- * middleware -> guards -> interceptors -> pipes -> handler. When a guard throws,
- * interceptors never run. A global guard registered via `APP_GUARD` runs
- * before class-level and method-level guards, ensuring metadata is always
- * available.
+ * **Why a guard?** This is the only NestJS lifecycle hook where
+ * `ExecutionContext.getHandler()` reliably returns the bound route handler.
+ * Global exception filters receive an `ArgumentsHost` whose underlying
+ * `ExecutionContextHost.handler` is `null` (verified in NestJS 11.1.24) —
+ * `host.getHandler()` returns `undefined`, so the filter cannot read
+ * `@ErrorTemplate` metadata directly. The guard runs inside the route
+ * resolution chain where the handler IS bound, reads the metadata, and
+ * stashes it on `res.locals` for the filter to consume. This is forced by
+ * Nest's lifecycle, not a design choice.
  *
  * **Why `Reflect.getMetadata` instead of `Reflector`?** This guard performs
  * a single-target handler lookup — `Reflector` adds no value over the raw

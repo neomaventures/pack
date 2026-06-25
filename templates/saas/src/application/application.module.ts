@@ -75,7 +75,7 @@ interface AppConfig {
     ConfigModule.forRoot(),
     RequestContextModule.forRoot(),
     LoggingModule.forRoot(),
-    ExceptionHandlerModule,
+    ExceptionHandlerModule.forRoot({}),
     HealthcheckModule.forRoot(),
     DatabaseModule,
     AuthModule.forRootAsync({
