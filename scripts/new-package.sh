@@ -87,6 +87,9 @@ const pkg = {
     "@nestjs/common": "11.x",
     "@nestjs/core": "11.x",
   },
+  devDependencies: {
+    "@neomaventures/fixtures": "workspace:*",
+  },
 }
 fs.writeFileSync(join(dir, "package.json"), JSON.stringify(pkg, null, 2) + "\n")
 
@@ -114,9 +117,15 @@ MIT
 NODE
 
 # --- tsconfig.json (typecheck/test: includes specs) -------------------------
+# `compilerOptions.types` includes `@neomaventures/fixtures/matchers` so the
+# custom matcher type augmentation (toMatchError, toThrowMatching) is loaded —
+# specs can call `await expect(promise).rejects.toMatchError(...)` and typecheck.
 cat > "$PKG_DIR/tsconfig.json" <<'EOF'
 {
   "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node", "jest", "jest-extended", "@neomaventures/fixtures/matchers"]
+  },
   "include": ["src/**/*"]
 }
 EOF
@@ -137,8 +146,17 @@ cat > "$PKG_DIR/tsconfig.lib.json" <<'EOF'
 EOF
 
 # --- jest.config.js (extends the shared root base) --------------------------
+# `setupFilesAfterEnv` is extended (not replaced) so the base's matchers stay
+# registered AND `@neomaventures/fixtures/matchers` registers `toMatchError` /
+# `toThrowMatching` at runtime.
 cat > "$PKG_DIR/jest.config.js" <<'EOF'
-module.exports = require("../../jest.config.base.js")
+const base = require("../../jest.config.base.js")
+
+/** @type {import('jest').Config} */
+module.exports = {
+  ...base,
+  setupFilesAfterEnv: [...base.setupFilesAfterEnv, "@neomaventures/fixtures/matchers"],
+}
 EOF
 
 # --- src/index.ts -----------------------------------------------------------
@@ -188,7 +206,10 @@ SOFTWARE.
 EOF
 
 echo "✅ Created packages/$NAME:"
-echo "   package.json  tsconfig.json  tsconfig.lib.json  jest.config.js"
+echo "   package.json (devDeps include @neomaventures/fixtures workspace:*)"
+echo "   tsconfig.json (compilerOptions.types includes @neomaventures/fixtures/matchers)"
+echo "   tsconfig.lib.json"
+echo "   jest.config.js (setupFilesAfterEnv extends base with @neomaventures/fixtures/matchers)"
 echo "   src/index.ts  src/$NAME.spec.ts  README.md  LICENSE"
 echo
 echo "Next steps:"
