@@ -18,11 +18,9 @@ import { Account } from "../entities/account.entity"
 import { OAuthToken } from "../entities/oauth-token.entity"
 import { AuthenticatedEvent } from "../events/authenticated.event"
 import { RegisteredEvent } from "../events/registered.event"
+import { AuthApiException } from "../exceptions/auth-api.exception"
+import { AuthNetworkException } from "../exceptions/auth-network.exception"
 import { EmailNotVerifiedException } from "../exceptions/email-not-verified.exception"
-import { GoogleCodeExchangeException } from "../exceptions/google-code-exchange.exception"
-import { GoogleNetworkException } from "../exceptions/google-network.exception"
-import { GoogleServiceException } from "../exceptions/google-service.exception"
-import { GoogleTokenException } from "../exceptions/google-token.exception"
 
 import { GoogleAuthService } from "./google-auth.service"
 
@@ -418,7 +416,7 @@ registrations.forEach(([name, register]) => {
         })
       })
 
-      describe("Given Google returns a 4xx HTTP error", () => {
+      describe("Given the OAuth token endpoint returns a 4xx HTTP error", () => {
         let service: GoogleAuthService
 
         beforeEach(async () => {
@@ -426,17 +424,45 @@ registrations.forEach(([name, register]) => {
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
-        it("should throw GoogleCodeExchangeException", async () => {
+        it("should throw an AuthApiException carrying phase=codeExchange and the upstream status", async () => {
           const code = faker.string.alphanumeric(20)
-          await mockHttpError(code, { statusCode: 400 })
+          await mockHttpError(code, { statusCode: 401 })
 
-          await expect(service.authenticate(code)).rejects.toBeInstanceOf(
-            GoogleCodeExchangeException,
-          )
+          try {
+            await service.authenticate(code)
+            throw new Error("expected to throw")
+          } catch (error) {
+            expect(error).toBeInstanceOf(AuthApiException)
+            const ex = error as AuthApiException
+            expect(ex.name).toBe("AuthApiException")
+            expect(ex.statusCode).toBe(401)
+            expect(ex.endpoint).toBe("/oauth/token")
+            expect(ex.context).toMatchObject({
+              provider: "google",
+              phase: "codeExchange",
+            })
+          }
+        })
+
+        it("should produce the minimal wire response shape", async () => {
+          const code = faker.string.alphanumeric(20)
+          await mockHttpError(code, { statusCode: 401 })
+
+          try {
+            await service.authenticate(code)
+            throw new Error("expected to throw")
+          } catch (error) {
+            expect(error).toBeInstanceOf(AuthApiException)
+            expect((error as AuthApiException).getResponse()).toEqual({
+              statusCode: 401,
+              message: "Auth API returned 401",
+              error: "AuthApi",
+            })
+          }
         })
       })
 
-      describe("Given Google returns a 5xx HTTP error", () => {
+      describe("Given the OAuth token endpoint returns a 5xx HTTP error", () => {
         let service: GoogleAuthService
 
         beforeEach(async () => {
@@ -444,17 +470,44 @@ registrations.forEach(([name, register]) => {
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
-        it("should throw GoogleServiceException", async () => {
+        it("should throw an AuthApiException mapped to 502 Bad Gateway", async () => {
           const code = faker.string.alphanumeric(20)
           await mockHttpError(code, { statusCode: 500 })
 
-          await expect(service.authenticate(code)).rejects.toBeInstanceOf(
-            GoogleServiceException,
-          )
+          try {
+            await service.authenticate(code)
+            throw new Error("expected to throw")
+          } catch (error) {
+            expect(error).toBeInstanceOf(AuthApiException)
+            const ex = error as AuthApiException
+            expect(ex.name).toBe("AuthApiException")
+            expect(ex.statusCode).toBe(502)
+            expect(ex.context).toMatchObject({
+              provider: "google",
+              phase: "codeExchange",
+            })
+          }
+        })
+
+        it("should produce the minimal wire response shape", async () => {
+          const code = faker.string.alphanumeric(20)
+          await mockHttpError(code, { statusCode: 500 })
+
+          try {
+            await service.authenticate(code)
+            throw new Error("expected to throw")
+          } catch (error) {
+            expect(error).toBeInstanceOf(AuthApiException)
+            expect((error as AuthApiException).getResponse()).toEqual({
+              statusCode: 502,
+              message: "Auth API returned 500",
+              error: "AuthApi",
+            })
+          }
         })
       })
 
-      describe("Given a network error calling Google", () => {
+      describe("Given the OAuth token endpoint connection fails at the network level", () => {
         let service: GoogleAuthService
 
         beforeEach(async () => {
@@ -462,17 +515,44 @@ registrations.forEach(([name, register]) => {
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
-        it("should throw GoogleNetworkException", async () => {
+        it("should throw an AuthNetworkException carrying phase=codeExchange in context", async () => {
           const code = faker.string.alphanumeric(20)
           await mockNetworkError(code)
 
-          await expect(service.authenticate(code)).rejects.toBeInstanceOf(
-            GoogleNetworkException,
-          )
+          try {
+            await service.authenticate(code)
+            throw new Error("expected to throw")
+          } catch (error) {
+            expect(error).toBeInstanceOf(AuthNetworkException)
+            const ex = error as AuthNetworkException
+            expect(ex.name).toBe("AuthNetworkException")
+            expect(ex.endpoint).toBe("/oauth/token")
+            expect(ex.context).toMatchObject({
+              provider: "google",
+              phase: "codeExchange",
+            })
+          }
+        })
+
+        it("should produce the minimal wire response shape", async () => {
+          const code = faker.string.alphanumeric(20)
+          await mockNetworkError(code)
+
+          try {
+            await service.authenticate(code)
+            throw new Error("expected to throw")
+          } catch (error) {
+            expect(error).toBeInstanceOf(AuthNetworkException)
+            expect((error as AuthNetworkException).getResponse()).toEqual({
+              statusCode: 502,
+              message: "Auth network error",
+              error: "AuthNetwork",
+            })
+          }
         })
       })
 
-      describe("Given Google returns 200 with no access_token", () => {
+      describe("Given the OAuth token endpoint returns 200 with no access_token", () => {
         let service: GoogleAuthService
         let fetchSpy: jest.SpyInstance
 
@@ -485,7 +565,7 @@ registrations.forEach(([name, register]) => {
           fetchSpy?.mockRestore()
         })
 
-        it("should throw GoogleTokenException with reason 'missing access_token in token response'", async () => {
+        it("should throw an AuthApiException with missingField=access_token in context", async () => {
           const idToken = googleFakes.idToken({ email: faker.internet.email() })
           fetchSpy = jest
             .spyOn(global, "fetch")
@@ -496,15 +576,24 @@ registrations.forEach(([name, register]) => {
               ),
             )
 
-          await expect(
-            service.authenticate(faker.string.alphanumeric(20)),
-          ).rejects.toMatchError(GoogleTokenException, {
-            reason: "missing access_token in token response",
-          })
+          try {
+            await service.authenticate(faker.string.alphanumeric(20))
+            throw new Error("expected to throw")
+          } catch (error) {
+            expect(error).toBeInstanceOf(AuthApiException)
+            const ex = error as AuthApiException
+            expect(ex.name).toBe("AuthApiException")
+            expect(ex.statusCode).toBe(502)
+            expect(ex.context).toMatchObject({
+              provider: "google",
+              phase: "codeExchange",
+              missingField: "access_token",
+            })
+          }
         })
       })
 
-      describe("Given Google returns 200 with no expires_in", () => {
+      describe("Given the OAuth token endpoint returns 200 with no expires_in", () => {
         let service: GoogleAuthService
         let fetchSpy: jest.SpyInstance
 
@@ -517,7 +606,7 @@ registrations.forEach(([name, register]) => {
           fetchSpy?.mockRestore()
         })
 
-        it("should throw GoogleTokenException with reason 'missing expires_in in token response'", async () => {
+        it("should throw an AuthApiException with missingField=expires_in in context", async () => {
           const idToken = googleFakes.idToken({ email: faker.internet.email() })
           fetchSpy = jest.spyOn(global, "fetch").mockResolvedValue(
             new Response(
@@ -529,15 +618,24 @@ registrations.forEach(([name, register]) => {
             ),
           )
 
-          await expect(
-            service.authenticate(faker.string.alphanumeric(20)),
-          ).rejects.toMatchError(GoogleTokenException, {
-            reason: "missing expires_in in token response",
-          })
+          try {
+            await service.authenticate(faker.string.alphanumeric(20))
+            throw new Error("expected to throw")
+          } catch (error) {
+            expect(error).toBeInstanceOf(AuthApiException)
+            const ex = error as AuthApiException
+            expect(ex.name).toBe("AuthApiException")
+            expect(ex.statusCode).toBe(502)
+            expect(ex.context).toMatchObject({
+              provider: "google",
+              phase: "codeExchange",
+              missingField: "expires_in",
+            })
+          }
         })
       })
 
-      describe("Given Google returns 200 with no id_token", () => {
+      describe("Given the OAuth token endpoint returns 200 with no id_token", () => {
         let service: GoogleAuthService
         let fetchSpy: jest.SpyInstance
 
@@ -550,7 +648,7 @@ registrations.forEach(([name, register]) => {
           fetchSpy?.mockRestore()
         })
 
-        it("should throw GoogleTokenException with reason 'missing id_token in token response'", async () => {
+        it("should throw an AuthApiException with missingField=id_token in context", async () => {
           fetchSpy = jest.spyOn(global, "fetch").mockResolvedValue(
             new Response(
               JSON.stringify({
@@ -561,11 +659,20 @@ registrations.forEach(([name, register]) => {
             ),
           )
 
-          await expect(
-            service.authenticate(faker.string.alphanumeric(20)),
-          ).rejects.toMatchError(GoogleTokenException, {
-            reason: "missing id_token in token response",
-          })
+          try {
+            await service.authenticate(faker.string.alphanumeric(20))
+            throw new Error("expected to throw")
+          } catch (error) {
+            expect(error).toBeInstanceOf(AuthApiException)
+            const ex = error as AuthApiException
+            expect(ex.name).toBe("AuthApiException")
+            expect(ex.statusCode).toBe(502)
+            expect(ex.context).toMatchObject({
+              provider: "google",
+              phase: "codeExchange",
+              missingField: "id_token",
+            })
+          }
         })
       })
 
@@ -577,7 +684,7 @@ registrations.forEach(([name, register]) => {
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
-        it("should throw GoogleTokenException with reason 'missing sub in ID token'", async () => {
+        it("should throw an AuthApiException with phase=idTokenDecode and missingClaim=sub", async () => {
           const code = faker.string.alphanumeric(20)
           const idToken = jwt.sign(
             { email: faker.internet.email(), name: faker.person.fullName() },
@@ -585,12 +692,20 @@ registrations.forEach(([name, register]) => {
           )
           await mockSuccess(code, { id_token: idToken })
 
-          await expect(service.authenticate(code)).rejects.toMatchError(
-            GoogleTokenException,
-            {
-              reason: "missing sub in ID token",
-            },
-          )
+          try {
+            await service.authenticate(code)
+            throw new Error("expected to throw")
+          } catch (error) {
+            expect(error).toBeInstanceOf(AuthApiException)
+            const ex = error as AuthApiException
+            expect(ex.name).toBe("AuthApiException")
+            expect(ex.statusCode).toBe(502)
+            expect(ex.context).toMatchObject({
+              provider: "google",
+              phase: "idTokenDecode",
+              missingClaim: "sub",
+            })
+          }
         })
       })
 
@@ -602,7 +717,7 @@ registrations.forEach(([name, register]) => {
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
-        it("should throw GoogleTokenException with reason 'missing email in ID token'", async () => {
+        it("should throw an AuthApiException with phase=idTokenDecode and missingClaim=email", async () => {
           const code = faker.string.alphanumeric(20)
           const idToken = jwt.sign(
             { sub: faker.string.numeric(10), name: faker.person.fullName() },
@@ -610,12 +725,20 @@ registrations.forEach(([name, register]) => {
           )
           await mockSuccess(code, { id_token: idToken })
 
-          await expect(service.authenticate(code)).rejects.toMatchError(
-            GoogleTokenException,
-            {
-              reason: "missing email in ID token",
-            },
-          )
+          try {
+            await service.authenticate(code)
+            throw new Error("expected to throw")
+          } catch (error) {
+            expect(error).toBeInstanceOf(AuthApiException)
+            const ex = error as AuthApiException
+            expect(ex.name).toBe("AuthApiException")
+            expect(ex.statusCode).toBe(502)
+            expect(ex.context).toMatchObject({
+              provider: "google",
+              phase: "idTokenDecode",
+              missingClaim: "email",
+            })
+          }
         })
       })
 

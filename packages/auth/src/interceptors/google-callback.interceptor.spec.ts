@@ -1,10 +1,13 @@
 import { faker } from "@faker-js/faker"
 import { executionContext, express } from "@neomaventures/fixtures"
-import { type CallHandler, type ExecutionContext } from "@nestjs/common"
+import {
+  BadRequestException,
+  type CallHandler,
+  type ExecutionContext,
+} from "@nestjs/common"
 import { google } from "fixtures/fakes/google"
 import { of } from "rxjs"
 
-import { GoogleCodeExchangeException } from "../exceptions/google-code-exchange.exception"
 import { type GoogleAuthService } from "../services/google-auth.service"
 
 import { GoogleCallbackInterceptor } from "./google-callback.interceptor"
@@ -30,16 +33,14 @@ describe("GoogleCallbackInterceptor", () => {
   })
 
   describe("Given missing code query param", () => {
-    it("should throw GoogleCodeExchangeException with reason 'missing code query parameter'", async () => {
+    it("should throw BadRequestException when the code query parameter is missing", async () => {
       const req = express.request({ query: {} })
       const res = express.response()
       const ctx = executionContext(req, res) as ExecutionContext
 
       await expect(
         interceptor.intercept(ctx, nextHandler),
-      ).rejects.toMatchError(GoogleCodeExchangeException, {
-        reason: "missing code query parameter",
-      })
+      ).rejects.toBeInstanceOf(BadRequestException)
     })
   })
 

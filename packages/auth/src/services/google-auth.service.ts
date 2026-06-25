@@ -14,11 +14,9 @@ import { Account } from "../entities/account.entity"
 import { OAuthToken } from "../entities/oauth-token.entity"
 import { AuthenticatedEvent } from "../events/authenticated.event"
 import { RegisteredEvent } from "../events/registered.event"
+import { AuthApiException } from "../exceptions/auth-api.exception"
+import { AuthNetworkException } from "../exceptions/auth-network.exception"
 import { EmailNotVerifiedException } from "../exceptions/email-not-verified.exception"
-import { GoogleCodeExchangeException } from "../exceptions/google-code-exchange.exception"
-import { GoogleNetworkException } from "../exceptions/google-network.exception"
-import { GoogleServiceException } from "../exceptions/google-service.exception"
-import { GoogleTokenException } from "../exceptions/google-token.exception"
 import { type Authenticatable } from "../interfaces/authenticatable.interface"
 import { type OAuthTokenable } from "../interfaces/oauth-tokenable.interface"
 
@@ -110,6 +108,8 @@ export class GoogleAuthService<
 
   private static readonly DEFAULT_SCOPES = ["openid", "email", "profile"]
 
+  private static readonly LOGIN_ENDPOINT = "/oauth/token"
+
   public constructor(
     @Inject(AUTH_OPTIONS) private readonly options: AuthOptions,
     @Inject(RESOLVED_AUTH_OPTIONS)
@@ -150,10 +150,8 @@ export class GoogleAuthService<
    *
    * @param code - The authorization code from Google's OAuth redirect
    * @returns Object containing the account, isNewAccount flag, and Google profile
-   * @throws {GoogleCodeExchangeException} If Google's token endpoint returns a non-OK HTTP response
-   * @throws {GoogleServiceException} If Google's token endpoint returns a 5xx server error
-   * @throws {GoogleNetworkException} If the fetch call itself fails (network error, DNS, timeout)
-   * @throws {GoogleTokenException} If the token response is missing required fields (`access_token`, `expires_in`, `id_token`) or the ID token is missing/has no `email` or `sub` claim
+   * @throws {AuthApiException} If Google's token endpoint returns a non-2xx HTTP response, or returns 200 with a malformed body / ID token (missing `id_token`, `access_token`, `expires_in`, `email`, or `sub`). Diagnostic detail lives on `context.phase` (`"codeExchange"` | `"idTokenDecode"`) and `context.missingField` / `context.missingClaim`.
+   * @throws {AuthNetworkException} If the fetch call itself fails (network error, DNS, timeout)
    * @throws {EmailNotVerifiedException} If the ID token has `email_verified` explicitly set to false
    * @throws {Error} If googleAuth is not configured
    *
@@ -168,8 +166,13 @@ export class GoogleAuthService<
   public async authenticate(code: string): Promise<GoogleAuthResult<T>> {
     const googleAuth = this.getGoogleAuth()
 
+    const tokenEndpoint =
+      googleAuth.tokenEndpoint ?? GoogleAuthService.DEFAULT_TOKEN_ENDPOINT
     const tokenResponse = await this.exchangeCodeForTokens(code, googleAuth)
-    const { email, profile } = this.decodeIdToken(tokenResponse.id_token)
+    const { email, profile } = this.decodeIdToken(
+      tokenResponse.id_token,
+      tokenEndpoint,
+    )
 
     const { account, isNewAccount } = await this.datasource.transaction(
       async (manager: EntityManager) => {
@@ -217,11 +220,12 @@ export class GoogleAuthService<
    * is treated as a malformed response. `refresh_token` is optional —
    * Google omits it on subsequent consents.
    *
-   * @throws {GoogleNetworkException} On fetch failure (DNS, TCP, timeout)
-   * @throws {GoogleServiceException} On 5xx responses from Google
-   * @throws {GoogleCodeExchangeException} On 4xx responses from Google
-   * @throws {GoogleTokenException} When the response is 200 but missing
-   *   `access_token`, `expires_in`, or `id_token`
+   * @throws {AuthNetworkException} On fetch failure (DNS, TCP, timeout).
+   *   `context.phase` is `"codeExchange"`.
+   * @throws {AuthApiException} On non-2xx responses from Google, or on a
+   *   200 response missing `access_token`, `expires_in`, or `id_token`.
+   *   `context.phase` is `"codeExchange"`; the malformed-2xx case sets
+   *   `context.missingField` and maps to 502 Bad Gateway.
    */
   private async exchangeCodeForTokens(
     code: string,
@@ -246,8 +250,10 @@ export class GoogleAuthService<
         body: body.toString(),
       })
     } catch (error) {
-      throw new GoogleNetworkException(
-        error instanceof Error ? error.message : "network error",
+      throw new AuthNetworkException(
+        GoogleAuthService.LOGIN_ENDPOINT,
+        { provider: "google", phase: "codeExchange", tokenEndpoint },
+        error as Error,
       )
     }
 
@@ -257,23 +263,63 @@ export class GoogleAuthService<
         (errorBody as Record<string, string>).error_description ??
         `HTTP ${response.status}`
 
-      if (response.status >= 500) {
-        throw new GoogleServiceException(description)
-      }
-
-      throw new GoogleCodeExchangeException(description)
+      throw new AuthApiException(
+        response.status,
+        GoogleAuthService.LOGIN_ENDPOINT,
+        `Auth API returned ${response.status}`,
+        {
+          provider: "google",
+          phase: "codeExchange",
+          tokenEndpoint,
+          errorDescription: description,
+        },
+        errorBody,
+      )
     }
 
     const data = (await response.json()) as Partial<GoogleTokenResponse>
 
     if (!data.id_token) {
-      throw new GoogleTokenException("missing id_token in token response")
+      throw new AuthApiException(
+        200,
+        GoogleAuthService.LOGIN_ENDPOINT,
+        "Auth API returned 200 with malformed token response",
+        {
+          provider: "google",
+          phase: "codeExchange",
+          missingField: "id_token",
+          tokenEndpoint,
+        },
+        data,
+      )
     }
     if (!data.access_token) {
-      throw new GoogleTokenException("missing access_token in token response")
+      throw new AuthApiException(
+        200,
+        GoogleAuthService.LOGIN_ENDPOINT,
+        "Auth API returned 200 with malformed token response",
+        {
+          provider: "google",
+          phase: "codeExchange",
+          missingField: "access_token",
+          tokenEndpoint,
+        },
+        data,
+      )
     }
     if (typeof data.expires_in !== "number") {
-      throw new GoogleTokenException("missing expires_in in token response")
+      throw new AuthApiException(
+        200,
+        GoogleAuthService.LOGIN_ENDPOINT,
+        "Auth API returned 200 with malformed token response",
+        {
+          provider: "google",
+          phase: "codeExchange",
+          missingField: "expires_in",
+          tokenEndpoint,
+        },
+        data,
+      )
     }
 
     return data as GoogleTokenResponse
@@ -288,12 +334,16 @@ export class GoogleAuthService<
    *
    * See: https://developers.google.com/identity/openid-connect/openid-connect#obtainuserinfo
    *
-   * @throws {GoogleTokenException} If the token is missing the `email`
-   *   or `sub` claim
+   * @throws {AuthApiException} If the token is missing the `email` or
+   *   `sub` claim. `context.phase` is `"idTokenDecode"` and
+   *   `context.missingClaim` identifies the offending field.
    * @throws {EmailNotVerifiedException} If `email_verified` is explicitly
    *   `false`
    */
-  private decodeIdToken(idToken: string): {
+  private decodeIdToken(
+    idToken: string,
+    tokenEndpoint: string,
+  ): {
     email: string
     profile: GoogleProfile
   } {
@@ -301,7 +351,18 @@ export class GoogleAuthService<
 
     const email = decoded?.email as string | undefined
     if (!email) {
-      throw new GoogleTokenException("missing email in ID token")
+      throw new AuthApiException(
+        200,
+        GoogleAuthService.LOGIN_ENDPOINT,
+        "Auth API returned ID token with missing claims",
+        {
+          provider: "google",
+          phase: "idTokenDecode",
+          missingClaim: "email",
+          tokenEndpoint,
+        },
+        { idToken },
+      )
     }
 
     if (decoded?.email_verified === false) {
@@ -310,7 +371,18 @@ export class GoogleAuthService<
 
     const sub = decoded?.sub as string | undefined
     if (!sub) {
-      throw new GoogleTokenException("missing sub in ID token")
+      throw new AuthApiException(
+        200,
+        GoogleAuthService.LOGIN_ENDPOINT,
+        "Auth API returned ID token with missing claims",
+        {
+          provider: "google",
+          phase: "idTokenDecode",
+          missingClaim: "sub",
+          tokenEndpoint,
+        },
+        { idToken },
+      )
     }
 
     const name = decoded?.name as string | undefined

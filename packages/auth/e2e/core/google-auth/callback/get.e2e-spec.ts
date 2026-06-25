@@ -10,7 +10,7 @@ import { DataSource } from "typeorm"
 
 import { SESSION_AUDIENCE } from "@neomaventures/auth"
 
-const { OK, UNAUTHORIZED, FORBIDDEN, BAD_GATEWAY } = HttpStatus
+const { OK, FORBIDDEN, BAD_GATEWAY, BAD_REQUEST } = HttpStatus
 
 const clientId = process.env.GOOGLE_CLIENT_ID!
 const clientSecret = process.env.GOOGLE_CLIENT_SECRET!
@@ -147,7 +147,7 @@ appModules.forEach(([name, modulePath]) => {
     })
 
     describe("When Google returns a 4xx HTTP error (invalid code)", () => {
-      it("should respond with HTTP 401", async () => {
+      it("should respond with HTTP 502 mapped from upstream 400", async () => {
         const code = google.code()
         await googleOAuth.mockCodeExchangeHttpError({
           code,
@@ -157,14 +157,13 @@ appModules.forEach(([name, modulePath]) => {
         const response = await request(app.getHttpServer())
           .get("/auth/google/callback")
           .query({ code })
-          .expect(UNAUTHORIZED)
+          .expect(BAD_GATEWAY)
 
-        expect(response.body).toMatchObject({
-          statusCode: UNAUTHORIZED,
-          error: "Unauthorized",
+        expect(response.body).toEqual({
+          statusCode: BAD_GATEWAY,
+          message: "Auth API returned 400",
+          error: "AuthApi",
         })
-        expect(response.body.message).toContain("Google authentication failed")
-        expect(response.body.reason).toBeDefined()
       })
     })
 
@@ -181,12 +180,11 @@ appModules.forEach(([name, modulePath]) => {
           .query({ code })
           .expect(BAD_GATEWAY)
 
-        expect(response.body).toMatchObject({
+        expect(response.body).toEqual({
           statusCode: BAD_GATEWAY,
-          error: "Bad Gateway",
+          message: "Auth API returned 500",
+          error: "AuthApi",
         })
-        expect(response.body.message).toContain("Google service error")
-        expect(response.body.reason).toBeDefined()
       })
     })
 
@@ -205,22 +203,21 @@ appModules.forEach(([name, modulePath]) => {
     })
 
     describe("When called without a code query parameter", () => {
-      it("should respond with HTTP 401 with reason 'missing code query parameter'", async () => {
+      it("should respond with HTTP 400 BadRequest", async () => {
         const response = await request(app.getHttpServer())
           .get("/auth/google/callback")
-          .expect(UNAUTHORIZED)
+          .expect(BAD_REQUEST)
 
         expect(response.body).toMatchObject({
-          statusCode: UNAUTHORIZED,
-          message: "Google authentication failed: missing code query parameter",
-          reason: "missing code query parameter",
-          error: "Unauthorized",
+          statusCode: BAD_REQUEST,
+          message: "Missing code query parameter on Google OAuth callback",
+          error: "Bad Request",
         })
       })
     })
 
     describe("When the Google ID token is missing the sub claim", () => {
-      it("should respond with HTTP 401", async () => {
+      it("should respond with HTTP 502 with AuthApi error", async () => {
         const code = google.code()
         const secret = faker.string.alphanumeric(32)
         const idTokenWithoutSub = jwt.sign(
@@ -244,19 +241,18 @@ appModules.forEach(([name, modulePath]) => {
         const response = await request(app.getHttpServer())
           .get("/auth/google/callback")
           .query({ code })
-          .expect(UNAUTHORIZED)
+          .expect(BAD_GATEWAY)
 
-        expect(response.body).toMatchObject({
-          statusCode: UNAUTHORIZED,
-          message: "Google ID token error: missing sub in ID token",
-          reason: "missing sub in ID token",
-          error: "Unauthorized",
+        expect(response.body).toEqual({
+          statusCode: BAD_GATEWAY,
+          message: "Auth API returned ID token with missing claims",
+          error: "AuthApi",
         })
       })
     })
 
     describe("When the ID token is missing the email claim", () => {
-      it("should respond with HTTP 401 with reason 'missing email in ID token'", async () => {
+      it("should respond with HTTP 502 with AuthApi error", async () => {
         const code = google.code()
         // Create an ID token with no email claim
         const secret = faker.string.alphanumeric(32)
@@ -281,13 +277,12 @@ appModules.forEach(([name, modulePath]) => {
         const response = await request(app.getHttpServer())
           .get("/auth/google/callback")
           .query({ code })
-          .expect(UNAUTHORIZED)
+          .expect(BAD_GATEWAY)
 
-        expect(response.body).toMatchObject({
-          statusCode: UNAUTHORIZED,
-          message: "Google ID token error: missing email in ID token",
-          reason: "missing email in ID token",
-          error: "Unauthorized",
+        expect(response.body).toEqual({
+          statusCode: BAD_GATEWAY,
+          message: "Auth API returned ID token with missing claims",
+          error: "AuthApi",
         })
       })
     })
@@ -312,9 +307,9 @@ appModules.forEach(([name, modulePath]) => {
 
         expect(response.body).toMatchObject({
           statusCode: FORBIDDEN,
-          email,
           error: "Forbidden",
         })
+        expect(response.body.email).toBeUndefined()
         expect(response.body.message).toContain("has not been verified")
       })
     })

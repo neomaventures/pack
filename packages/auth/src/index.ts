@@ -48,11 +48,9 @@ export * from "./types/oauth-token-snapshot.type"
 export * from "./interceptors/google-callback.interceptor"
 
 // Exceptions consumers may catch or reference in filters
+export * from "./exceptions/auth-api.exception"
+export * from "./exceptions/auth-network.exception"
 export * from "./exceptions/email-not-verified.exception"
-export * from "./exceptions/google-code-exchange.exception"
-export * from "./exceptions/google-network.exception"
-export * from "./exceptions/google-service.exception"
-export * from "./exceptions/google-token.exception"
 export * from "./exceptions/incorrect-credentials.exception"
 export * from "./exceptions/invalid-credentials.exception"
 export * from "./exceptions/invalid-magic-link-token.exception"
