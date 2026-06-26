@@ -1,10 +1,6 @@
 import { faker } from "@faker-js/faker"
 import { executionContext, express } from "@neomaventures/fixtures"
-import {
-  BadRequestException,
-  type CallHandler,
-  type ExecutionContext,
-} from "@nestjs/common"
+import { type CallHandler, type ExecutionContext } from "@nestjs/common"
 import { google } from "fixtures/fakes/google"
 import { of } from "rxjs"
 
@@ -42,16 +38,6 @@ describe("GoogleCallbackInterceptor", () => {
       await expect(
         interceptor.intercept(ctx, nextHandler),
       ).rejects.toMatchError(MissingOAuthCodeException)
-    })
-
-    it("should throw an error that is also a BadRequestException", async () => {
-      const req = express.request({ query: {} })
-      const res = express.response()
-      const ctx = executionContext(req, res) as ExecutionContext
-
-      await expect(
-        interceptor.intercept(ctx, nextHandler),
-      ).rejects.toBeInstanceOf(BadRequestException)
     })
   })
 

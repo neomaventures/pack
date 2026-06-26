@@ -8,8 +8,10 @@ import { HttpException, HttpStatus } from "@nestjs/common"
  * Domain-generic: `endpoint` captures the templated path that failed and
  * `context` carries any per-call identifiers, typically including
  * `provider` (e.g. `"google"`) and `phase` (e.g. `"codeExchange"` or
- * `"idTokenDecode"`). `responseBody` preserves the raw upstream body for
- * diagnostics.
+ * `"idTokenDecode"`). The wrapped `cause` (an `HttpException`) carries
+ * the upstream status, message, and response body for diagnostics.
+ *
+ * Symmetric with {@link AuthNetworkException}: `(endpoint, context, cause)`.
  *
  * The HTTP status returned to the caller mirrors the upstream status for
  * the cases the package cares about (`401`, `404`) and collapses
@@ -20,39 +22,37 @@ import { HttpException, HttpStatus } from "@nestjs/common"
  * @example
  * ```typescript
  * throw new AuthApiException(
- *   401,
  *   "/oauth/token",
- *   "Auth API returned 401",
  *   { provider: "google", phase: "codeExchange", tokenEndpoint },
- *   { error: "invalid_grant" },
+ *   new HttpException(
+ *     { statusCode: 401, message: "Auth API returned 401", body: errorBody },
+ *     401,
+ *   ),
  * )
  * ```
  */
 export class AuthApiException extends HttpException {
   /**
-   * @param statusCode - The upstream HTTP status
    * @param endpoint - The auth API endpoint that was called (use a
    *   templated path like `/oauth/token`)
-   * @param message - A human-readable error message
    * @param context - Per-call identifiers relevant to the failure
    *   (typically `{ provider, phase, ... }`)
-   * @param responseBody - The raw upstream response body for diagnostics
-   * @param cause - The original error, if this exception wraps one.
-   *   Passed through to {@link Error}'s `cause` so native stack chains work.
+   * @param cause - An `HttpException` (or subclass) carrying the
+   *   upstream status (via `getStatus()`), human-readable message, and
+   *   raw response body. Passed through to {@link Error}'s `cause` so
+   *   native stack chains work; access via `err.cause` for diagnostics.
    */
   public constructor(
-    statusCode: number,
     public readonly endpoint: string,
-    message: string,
     public readonly context: Record<string, unknown>,
-    public readonly responseBody: unknown,
-    cause?: Error,
+    cause: HttpException,
   ) {
-    const mappedStatus = AuthApiException.mapStatus(statusCode)
+    const upstreamStatus = cause.getStatus()
+    const mappedStatus = AuthApiException.mapStatus(upstreamStatus)
     super(
       {
         statusCode: mappedStatus,
-        message,
+        message: cause.message,
         error: "AuthApi",
       },
       mappedStatus,

@@ -1,25 +1,21 @@
 import { faker } from "@faker-js/faker"
-import { HttpStatus } from "@nestjs/common"
+import { HttpException, HttpStatus } from "@nestjs/common"
 
 import { AuthApiException } from "./auth-api.exception"
 
 describe("AuthApiException", () => {
   const endpoint = "/oauth/token"
+  const context = { provider: "google", phase: "codeExchange" }
 
-  describe("Given an upstream 401", () => {
-    const provider = "google"
+  describe("Given an upstream 401 cause", () => {
     const message = faker.lorem.sentence()
-    const responseBody = { error: "invalid_grant" }
+    const body = { error: "invalid_grant" }
+    let cause: HttpException
     let exception: AuthApiException
 
     beforeEach(() => {
-      exception = new AuthApiException(
-        401,
-        endpoint,
-        message,
-        { provider, phase: "codeExchange" },
-        responseBody,
-      )
+      cause = new HttpException({ statusCode: 401, message, body }, 401)
+      exception = new AuthApiException(endpoint, context, cause)
     })
 
     it("should expose the endpoint property on the instance", () => {
@@ -27,14 +23,14 @@ describe("AuthApiException", () => {
     })
 
     it("should expose the context property on the instance", () => {
-      expect(exception.context).toEqual({ provider, phase: "codeExchange" })
+      expect(exception.context).toEqual(context)
     })
 
-    it("should expose the responseBody property on the instance", () => {
-      expect(exception.responseBody).toEqual(responseBody)
+    it("should chain the cause via Error.cause", () => {
+      expect(exception.cause).toBe(cause)
     })
 
-    it("should return HTTP 401 Unauthorized", () => {
+    it("should return HTTP 401 Unauthorized (passthrough)", () => {
       expect(exception.getStatus()).toBe(HttpStatus.UNAUTHORIZED)
     })
 
@@ -45,24 +41,25 @@ describe("AuthApiException", () => {
         error: "AuthApi",
       })
     })
+
+    it("should inherit the message from the cause", () => {
+      expect(exception.message).toBe(message)
+    })
   })
 
-  describe("Given an upstream 404", () => {
+  describe("Given an upstream 404 cause", () => {
     const message = faker.lorem.sentence()
-    const responseBody = { error: "not_found" }
     let exception: AuthApiException
 
     beforeEach(() => {
       exception = new AuthApiException(
-        404,
         endpoint,
-        message,
-        { provider: "google", phase: "codeExchange" },
-        responseBody,
+        context,
+        new HttpException({ statusCode: 404, message }, 404),
       )
     })
 
-    it("should return HTTP 404 Not Found", () => {
+    it("should return HTTP 404 Not Found (passthrough)", () => {
       expect(exception.getStatus()).toBe(HttpStatus.NOT_FOUND)
     })
 
@@ -75,31 +72,12 @@ describe("AuthApiException", () => {
     })
   })
 
-  describe("Given a cause", () => {
-    it("should chain the cause via Error.cause", () => {
-      const cause = new Error(faker.lorem.sentence())
-
-      const exception = new AuthApiException(
-        500,
-        endpoint,
-        faker.lorem.sentence(),
-        { provider: "google", phase: "codeExchange" },
-        null,
-        cause,
-      )
-
-      expect(exception.cause).toBe(cause)
-    })
-  })
-
   describe("name", () => {
     it('should set this.name to "AuthApiException"', () => {
       const exception = new AuthApiException(
-        500,
         endpoint,
-        faker.lorem.sentence(),
-        { provider: "google", phase: "codeExchange" },
-        null,
+        context,
+        new HttpException(faker.lorem.sentence(), 500),
       )
 
       expect(exception.name).toBe("AuthApiException")
@@ -107,18 +85,31 @@ describe("AuthApiException", () => {
   })
 
   describe.each([500, 502, 503, 429, 418, 200])(
-    "Given an upstream %i",
+    "Given an upstream %i cause",
     (upstreamStatus) => {
       it("should map to HTTP 502 Bad Gateway", () => {
         const exception = new AuthApiException(
-          upstreamStatus,
           endpoint,
-          faker.lorem.sentence(),
-          { provider: "google", phase: "codeExchange" },
-          null,
+          context,
+          new HttpException(faker.lorem.sentence(), upstreamStatus),
         )
 
         expect(exception.getStatus()).toBe(HttpStatus.BAD_GATEWAY)
+      })
+
+      it("should produce the minimal wire response shape with mapped 502", () => {
+        const message = faker.lorem.sentence()
+        const exception = new AuthApiException(
+          endpoint,
+          context,
+          new HttpException(message, upstreamStatus),
+        )
+
+        expect(exception.getResponse()).toEqual({
+          statusCode: HttpStatus.BAD_GATEWAY,
+          message,
+          error: "AuthApi",
+        })
       })
     },
   )

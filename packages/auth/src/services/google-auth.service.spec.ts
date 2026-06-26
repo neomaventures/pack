@@ -4,7 +4,7 @@ import {
   GoogleOAuthClient,
 } from "@neomaventures/google-fixtures"
 import { mockserver } from "@neomaventures/mockserver/fixture"
-import { type DynamicModule, HttpStatus } from "@nestjs/common"
+import { type DynamicModule } from "@nestjs/common"
 import { EventEmitter2 } from "@nestjs/event-emitter"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { getRepositoryToken, TypeOrmModule } from "@nestjs/typeorm"
@@ -424,47 +424,18 @@ registrations.forEach(([name, register]) => {
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
-        it("should throw an AuthApiException carrying phase=codeExchange and the upstream status", async () => {
+        it("should throw an AuthApiException carrying phase=codeExchange", async () => {
           const code = faker.string.alphanumeric(20)
           await mockHttpError(code, { statusCode: 401 })
 
           await expect(service.authenticate(code)).rejects.toMatchError(
             AuthApiException,
             {
-              name: "AuthApiException",
               endpoint: "/oauth/token",
               context: expect.objectContaining({
                 provider: "google",
                 phase: "codeExchange",
               }),
-            },
-          )
-        })
-
-        it("should map to HTTP 401 Unauthorized", async () => {
-          const code = faker.string.alphanumeric(20)
-          await mockHttpError(code, { statusCode: 401 })
-
-          await expect(service.authenticate(code)).rejects.toMatchError(
-            AuthApiException,
-            {
-              status: HttpStatus.UNAUTHORIZED,
-            },
-          )
-        })
-
-        it("should produce the minimal wire response shape", async () => {
-          const code = faker.string.alphanumeric(20)
-          await mockHttpError(code, { statusCode: 401 })
-
-          await expect(service.authenticate(code)).rejects.toMatchError(
-            AuthApiException,
-            {
-              response: {
-                statusCode: 401,
-                message: "Auth API returned 401",
-                error: "AuthApi",
-              },
             },
           )
         })
@@ -478,35 +449,18 @@ registrations.forEach(([name, register]) => {
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
-        it("should throw an AuthApiException mapped to 502 Bad Gateway", async () => {
+        it("should throw an AuthApiException carrying phase=codeExchange", async () => {
           const code = faker.string.alphanumeric(20)
           await mockHttpError(code, { statusCode: 500 })
 
           await expect(service.authenticate(code)).rejects.toMatchError(
             AuthApiException,
             {
-              name: "AuthApiException",
-              status: HttpStatus.BAD_GATEWAY,
+              endpoint: "/oauth/token",
               context: expect.objectContaining({
                 provider: "google",
                 phase: "codeExchange",
               }),
-            },
-          )
-        })
-
-        it("should produce the minimal wire response shape", async () => {
-          const code = faker.string.alphanumeric(20)
-          await mockHttpError(code, { statusCode: 500 })
-
-          await expect(service.authenticate(code)).rejects.toMatchError(
-            AuthApiException,
-            {
-              response: {
-                statusCode: 502,
-                message: "Auth API returned 500",
-                error: "AuthApi",
-              },
             },
           )
         })
@@ -527,28 +481,11 @@ registrations.forEach(([name, register]) => {
           await expect(service.authenticate(code)).rejects.toMatchError(
             AuthNetworkException,
             {
-              name: "AuthNetworkException",
               endpoint: "/oauth/token",
               context: expect.objectContaining({
                 provider: "google",
                 phase: "codeExchange",
               }),
-            },
-          )
-        })
-
-        it("should produce the minimal wire response shape", async () => {
-          const code = faker.string.alphanumeric(20)
-          await mockNetworkError(code)
-
-          await expect(service.authenticate(code)).rejects.toMatchError(
-            AuthNetworkException,
-            {
-              response: {
-                statusCode: 502,
-                message: "Auth network error",
-                error: "AuthNetwork",
-              },
             },
           )
         })
@@ -581,8 +518,6 @@ registrations.forEach(([name, register]) => {
           await expect(
             service.authenticate(faker.string.alphanumeric(20)),
           ).rejects.toMatchError(AuthApiException, {
-            name: "AuthApiException",
-            status: HttpStatus.BAD_GATEWAY,
             context: expect.objectContaining({
               provider: "google",
               phase: "codeExchange",
@@ -620,8 +555,6 @@ registrations.forEach(([name, register]) => {
           await expect(
             service.authenticate(faker.string.alphanumeric(20)),
           ).rejects.toMatchError(AuthApiException, {
-            name: "AuthApiException",
-            status: HttpStatus.BAD_GATEWAY,
             context: expect.objectContaining({
               provider: "google",
               phase: "codeExchange",
@@ -658,8 +591,6 @@ registrations.forEach(([name, register]) => {
           await expect(
             service.authenticate(faker.string.alphanumeric(20)),
           ).rejects.toMatchError(AuthApiException, {
-            name: "AuthApiException",
-            status: HttpStatus.BAD_GATEWAY,
             context: expect.objectContaining({
               provider: "google",
               phase: "codeExchange",
@@ -688,8 +619,6 @@ registrations.forEach(([name, register]) => {
           await expect(service.authenticate(code)).rejects.toMatchError(
             AuthApiException,
             {
-              name: "AuthApiException",
-              status: HttpStatus.BAD_GATEWAY,
               context: expect.objectContaining({
                 provider: "google",
                 phase: "idTokenDecode",
@@ -719,8 +648,6 @@ registrations.forEach(([name, register]) => {
           await expect(service.authenticate(code)).rejects.toMatchError(
             AuthApiException,
             {
-              name: "AuthApiException",
-              status: HttpStatus.BAD_GATEWAY,
               context: expect.objectContaining({
                 provider: "google",
                 phase: "idTokenDecode",

@@ -1,4 +1,4 @@
-import { Inject, Injectable } from "@nestjs/common"
+import { HttpException, Inject, Injectable } from "@nestjs/common"
 import { EventEmitter2 } from "@nestjs/event-emitter"
 import * as jwt from "jsonwebtoken"
 import { DataSource, EntityManager } from "typeorm"
@@ -264,16 +264,21 @@ export class GoogleAuthService<
         `HTTP ${response.status}`
 
       throw new AuthApiException(
-        response.status,
         GoogleAuthService.LOGIN_ENDPOINT,
-        `Auth API returned ${response.status}`,
         {
           provider: "google",
           phase: "codeExchange",
           tokenEndpoint,
           errorDescription: description,
         },
-        errorBody,
+        new HttpException(
+          {
+            statusCode: response.status,
+            message: `Auth API returned ${response.status}`,
+            body: errorBody,
+          },
+          response.status,
+        ),
       )
     }
 
@@ -281,44 +286,59 @@ export class GoogleAuthService<
 
     if (!data.id_token) {
       throw new AuthApiException(
-        200,
         GoogleAuthService.LOGIN_ENDPOINT,
-        "Auth API returned 200 with malformed token response",
         {
           provider: "google",
           phase: "codeExchange",
           missingField: "id_token",
           tokenEndpoint,
         },
-        data,
+        new HttpException(
+          {
+            statusCode: 200,
+            message: "Auth API returned 200 with malformed token response",
+            body: data,
+          },
+          200,
+        ),
       )
     }
     if (!data.access_token) {
       throw new AuthApiException(
-        200,
         GoogleAuthService.LOGIN_ENDPOINT,
-        "Auth API returned 200 with malformed token response",
         {
           provider: "google",
           phase: "codeExchange",
           missingField: "access_token",
           tokenEndpoint,
         },
-        data,
+        new HttpException(
+          {
+            statusCode: 200,
+            message: "Auth API returned 200 with malformed token response",
+            body: data,
+          },
+          200,
+        ),
       )
     }
     if (typeof data.expires_in !== "number") {
       throw new AuthApiException(
-        200,
         GoogleAuthService.LOGIN_ENDPOINT,
-        "Auth API returned 200 with malformed token response",
         {
           provider: "google",
           phase: "codeExchange",
           missingField: "expires_in",
           tokenEndpoint,
         },
-        data,
+        new HttpException(
+          {
+            statusCode: 200,
+            message: "Auth API returned 200 with malformed token response",
+            body: data,
+          },
+          200,
+        ),
       )
     }
 
@@ -352,16 +372,21 @@ export class GoogleAuthService<
     const email = decoded?.email as string | undefined
     if (!email) {
       throw new AuthApiException(
-        200,
         GoogleAuthService.LOGIN_ENDPOINT,
-        "Auth API returned ID token with missing claims",
         {
           provider: "google",
           phase: "idTokenDecode",
           missingClaim: "email",
           tokenEndpoint,
         },
-        { idToken },
+        new HttpException(
+          {
+            statusCode: 200,
+            message: "Auth API returned ID token with missing claims",
+            body: { idToken },
+          },
+          200,
+        ),
       )
     }
 
@@ -372,16 +397,21 @@ export class GoogleAuthService<
     const sub = decoded?.sub as string | undefined
     if (!sub) {
       throw new AuthApiException(
-        200,
         GoogleAuthService.LOGIN_ENDPOINT,
-        "Auth API returned ID token with missing claims",
         {
           provider: "google",
           phase: "idTokenDecode",
           missingClaim: "sub",
           tokenEndpoint,
         },
-        { idToken },
+        new HttpException(
+          {
+            statusCode: 200,
+            message: "Auth API returned ID token with missing claims",
+            body: { idToken },
+          },
+          200,
+        ),
       )
     }
 
