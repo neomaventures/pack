@@ -1,4 +1,4 @@
-import { Inject, Injectable } from "@nestjs/common"
+import { HttpException, Inject, Injectable } from "@nestjs/common"
 
 import { GMAIL_API_BASE_URL, GmailSystemLabel } from "../constants"
 import { MailboxApiException } from "../exceptions/mailbox-api.exception"
@@ -83,12 +83,14 @@ export class GmailService {
 
     if (!response.ok) {
       const responseBody = await response.text().catch(() => "")
+      const message = `Mailbox API returned ${response.status}`
       throw new MailboxApiException(
-        response.status,
         LABELS_ENDPOINT,
-        `Mailbox API returned ${response.status}`,
         { labelId },
-        responseBody,
+        new HttpException(
+          { statusCode: response.status, message, body: responseBody },
+          response.status,
+        ),
       )
     }
 

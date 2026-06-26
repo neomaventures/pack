@@ -1,7 +1,14 @@
 import { faker } from "@faker-js/faker"
-import { HttpStatus } from "@nestjs/common"
+import { HttpException, HttpStatus } from "@nestjs/common"
 
 import { MailboxApiException } from "./mailbox-api.exception"
+
+const buildCause = (
+  status: number,
+  message: string = faker.lorem.sentence(),
+  body: unknown = { error: { code: status, message } },
+): HttpException =>
+  new HttpException({ statusCode: status, message, body }, status)
 
 describe("MailboxApiException", () => {
   const endpoint = "/gmail/v1/users/me/labels/{labelId}"
@@ -9,19 +16,12 @@ describe("MailboxApiException", () => {
   describe("Given an upstream 401", () => {
     const labelId = faker.string.alphanumeric(10)
     const message = faker.lorem.sentence()
-    const responseBody = {
-      error: { code: 401, message: "Invalid Credentials" },
-    }
+    let cause: HttpException
     let exception: MailboxApiException
 
     beforeEach(() => {
-      exception = new MailboxApiException(
-        401,
-        endpoint,
-        message,
-        { labelId },
-        responseBody,
-      )
+      cause = buildCause(401, message)
+      exception = new MailboxApiException(endpoint, { labelId }, cause)
     })
 
     it("should expose the endpoint property on the instance", () => {
@@ -32,8 +32,8 @@ describe("MailboxApiException", () => {
       expect(exception.context).toEqual({ labelId })
     })
 
-    it("should expose the responseBody property on the instance", () => {
-      expect(exception.responseBody).toEqual(responseBody)
+    it("should chain the cause via Error.cause", () => {
+      expect(exception.cause).toBe(cause)
     })
 
     it("should return HTTP 401 Unauthorized", () => {
@@ -52,16 +52,13 @@ describe("MailboxApiException", () => {
   describe("Given an upstream 404", () => {
     const labelId = faker.string.alphanumeric(10)
     const message = faker.lorem.sentence()
-    const responseBody = { error: { code: 404, message: "Not Found" } }
     let exception: MailboxApiException
 
     beforeEach(() => {
       exception = new MailboxApiException(
-        404,
         endpoint,
-        message,
         { labelId },
-        responseBody,
+        buildCause(404, message),
       )
     })
 
@@ -78,47 +75,26 @@ describe("MailboxApiException", () => {
     })
   })
 
-  describe("Given a cause", () => {
-    it("should chain the cause via Error.cause", () => {
-      const cause = new Error(faker.lorem.sentence())
-
-      const exception = new MailboxApiException(
-        500,
-        endpoint,
-        faker.lorem.sentence(),
-        { labelId: faker.string.alphanumeric(10) },
-        null,
-        cause,
-      )
-
-      expect(exception.cause).toBe(cause)
-    })
-  })
-
   describe("name", () => {
-    it('should set this.name to "MailboxApiException"', () => {
+    it('should have name "MailboxApiException"', () => {
       const exception = new MailboxApiException(
-        500,
         endpoint,
-        faker.lorem.sentence(),
         { labelId: faker.string.alphanumeric(10) },
-        null,
+        buildCause(500),
       )
 
       expect(exception.name).toBe("MailboxApiException")
     })
   })
 
-  describe.each([500, 502, 503, 429, 418])(
+  describe.each([500, 502, 503, 429, 418, 200])(
     "Given an upstream %i",
     (upstreamStatus) => {
       it("should map to HTTP 502 Bad Gateway", () => {
         const exception = new MailboxApiException(
-          upstreamStatus,
           endpoint,
-          faker.lorem.sentence(),
           { labelId: faker.string.alphanumeric(10) },
-          null,
+          buildCause(upstreamStatus),
         )
 
         expect(exception.getStatus()).toBe(HttpStatus.BAD_GATEWAY)

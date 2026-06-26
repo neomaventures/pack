@@ -204,8 +204,9 @@ the call so the freshest available token is used.
   response is minimal and package-named —
   `{ statusCode, message: "Mailbox API returned <status>", error: "MailboxApi" }`
   — so the wire never discloses which upstream provider the package uses
-  today. Debug fields (`endpoint`, `context`, `responseBody`, `cause`) live
-  on the instance for server-side logs only.
+  today. Debug fields (`endpoint`, `context`, `cause`) live on the
+  instance for server-side logs only; the raw upstream body is preserved
+  on the `cause` (an `HttpException`) via `cause.getResponse()`.
 - `MailboxNetworkException` — thrown when `fetch()` rejects (DNS, TCP,
   timeout, connection dropped). Returns `502 Bad Gateway` with the
   package-named wire shape
