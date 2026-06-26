@@ -34,10 +34,6 @@ describe("AuthApiException", () => {
       expect(exception.responseBody).toEqual(responseBody)
     })
 
-    it("should expose the statusCode property on the instance", () => {
-      expect(exception.statusCode).toBe(HttpStatus.UNAUTHORIZED)
-    })
-
     it("should return HTTP 401 Unauthorized", () => {
       expect(exception.getStatus()).toBe(HttpStatus.UNAUTHORIZED)
     })

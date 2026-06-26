@@ -4,7 +4,7 @@ import {
   GoogleOAuthClient,
 } from "@neomaventures/google-fixtures"
 import { mockserver } from "@neomaventures/mockserver/fixture"
-import { type DynamicModule } from "@nestjs/common"
+import { type DynamicModule, HttpStatus } from "@nestjs/common"
 import { EventEmitter2 } from "@nestjs/event-emitter"
 import { Test, type TestingModule } from "@nestjs/testing"
 import { getRepositoryToken, TypeOrmModule } from "@nestjs/typeorm"
@@ -428,37 +428,45 @@ registrations.forEach(([name, register]) => {
           const code = faker.string.alphanumeric(20)
           await mockHttpError(code, { statusCode: 401 })
 
-          try {
-            await service.authenticate(code)
-            throw new Error("expected to throw")
-          } catch (error) {
-            expect(error).toBeInstanceOf(AuthApiException)
-            const ex = error as AuthApiException
-            expect(ex.name).toBe("AuthApiException")
-            expect(ex.statusCode).toBe(401)
-            expect(ex.endpoint).toBe("/oauth/token")
-            expect(ex.context).toMatchObject({
-              provider: "google",
-              phase: "codeExchange",
-            })
-          }
+          await expect(service.authenticate(code)).rejects.toMatchError(
+            AuthApiException,
+            {
+              name: "AuthApiException",
+              endpoint: "/oauth/token",
+              context: expect.objectContaining({
+                provider: "google",
+                phase: "codeExchange",
+              }),
+            },
+          )
+        })
+
+        it("should map to HTTP 401 Unauthorized", async () => {
+          const code = faker.string.alphanumeric(20)
+          await mockHttpError(code, { statusCode: 401 })
+
+          await expect(service.authenticate(code)).rejects.toMatchError(
+            AuthApiException,
+            {
+              status: HttpStatus.UNAUTHORIZED,
+            },
+          )
         })
 
         it("should produce the minimal wire response shape", async () => {
           const code = faker.string.alphanumeric(20)
           await mockHttpError(code, { statusCode: 401 })
 
-          try {
-            await service.authenticate(code)
-            throw new Error("expected to throw")
-          } catch (error) {
-            expect(error).toBeInstanceOf(AuthApiException)
-            expect((error as AuthApiException).getResponse()).toEqual({
-              statusCode: 401,
-              message: "Auth API returned 401",
-              error: "AuthApi",
-            })
-          }
+          await expect(service.authenticate(code)).rejects.toMatchError(
+            AuthApiException,
+            {
+              response: {
+                statusCode: 401,
+                message: "Auth API returned 401",
+                error: "AuthApi",
+              },
+            },
+          )
         })
       })
 
@@ -474,36 +482,33 @@ registrations.forEach(([name, register]) => {
           const code = faker.string.alphanumeric(20)
           await mockHttpError(code, { statusCode: 500 })
 
-          try {
-            await service.authenticate(code)
-            throw new Error("expected to throw")
-          } catch (error) {
-            expect(error).toBeInstanceOf(AuthApiException)
-            const ex = error as AuthApiException
-            expect(ex.name).toBe("AuthApiException")
-            expect(ex.statusCode).toBe(502)
-            expect(ex.context).toMatchObject({
-              provider: "google",
-              phase: "codeExchange",
-            })
-          }
+          await expect(service.authenticate(code)).rejects.toMatchError(
+            AuthApiException,
+            {
+              name: "AuthApiException",
+              status: HttpStatus.BAD_GATEWAY,
+              context: expect.objectContaining({
+                provider: "google",
+                phase: "codeExchange",
+              }),
+            },
+          )
         })
 
         it("should produce the minimal wire response shape", async () => {
           const code = faker.string.alphanumeric(20)
           await mockHttpError(code, { statusCode: 500 })
 
-          try {
-            await service.authenticate(code)
-            throw new Error("expected to throw")
-          } catch (error) {
-            expect(error).toBeInstanceOf(AuthApiException)
-            expect((error as AuthApiException).getResponse()).toEqual({
-              statusCode: 502,
-              message: "Auth API returned 500",
-              error: "AuthApi",
-            })
-          }
+          await expect(service.authenticate(code)).rejects.toMatchError(
+            AuthApiException,
+            {
+              response: {
+                statusCode: 502,
+                message: "Auth API returned 500",
+                error: "AuthApi",
+              },
+            },
+          )
         })
       })
 
@@ -519,36 +524,33 @@ registrations.forEach(([name, register]) => {
           const code = faker.string.alphanumeric(20)
           await mockNetworkError(code)
 
-          try {
-            await service.authenticate(code)
-            throw new Error("expected to throw")
-          } catch (error) {
-            expect(error).toBeInstanceOf(AuthNetworkException)
-            const ex = error as AuthNetworkException
-            expect(ex.name).toBe("AuthNetworkException")
-            expect(ex.endpoint).toBe("/oauth/token")
-            expect(ex.context).toMatchObject({
-              provider: "google",
-              phase: "codeExchange",
-            })
-          }
+          await expect(service.authenticate(code)).rejects.toMatchError(
+            AuthNetworkException,
+            {
+              name: "AuthNetworkException",
+              endpoint: "/oauth/token",
+              context: expect.objectContaining({
+                provider: "google",
+                phase: "codeExchange",
+              }),
+            },
+          )
         })
 
         it("should produce the minimal wire response shape", async () => {
           const code = faker.string.alphanumeric(20)
           await mockNetworkError(code)
 
-          try {
-            await service.authenticate(code)
-            throw new Error("expected to throw")
-          } catch (error) {
-            expect(error).toBeInstanceOf(AuthNetworkException)
-            expect((error as AuthNetworkException).getResponse()).toEqual({
-              statusCode: 502,
-              message: "Auth network error",
-              error: "AuthNetwork",
-            })
-          }
+          await expect(service.authenticate(code)).rejects.toMatchError(
+            AuthNetworkException,
+            {
+              response: {
+                statusCode: 502,
+                message: "Auth network error",
+                error: "AuthNetwork",
+              },
+            },
+          )
         })
       })
 
@@ -576,20 +578,17 @@ registrations.forEach(([name, register]) => {
               ),
             )
 
-          try {
-            await service.authenticate(faker.string.alphanumeric(20))
-            throw new Error("expected to throw")
-          } catch (error) {
-            expect(error).toBeInstanceOf(AuthApiException)
-            const ex = error as AuthApiException
-            expect(ex.name).toBe("AuthApiException")
-            expect(ex.statusCode).toBe(502)
-            expect(ex.context).toMatchObject({
+          await expect(
+            service.authenticate(faker.string.alphanumeric(20)),
+          ).rejects.toMatchError(AuthApiException, {
+            name: "AuthApiException",
+            status: HttpStatus.BAD_GATEWAY,
+            context: expect.objectContaining({
               provider: "google",
               phase: "codeExchange",
               missingField: "access_token",
-            })
-          }
+            }),
+          })
         })
       })
 
@@ -618,20 +617,17 @@ registrations.forEach(([name, register]) => {
             ),
           )
 
-          try {
-            await service.authenticate(faker.string.alphanumeric(20))
-            throw new Error("expected to throw")
-          } catch (error) {
-            expect(error).toBeInstanceOf(AuthApiException)
-            const ex = error as AuthApiException
-            expect(ex.name).toBe("AuthApiException")
-            expect(ex.statusCode).toBe(502)
-            expect(ex.context).toMatchObject({
+          await expect(
+            service.authenticate(faker.string.alphanumeric(20)),
+          ).rejects.toMatchError(AuthApiException, {
+            name: "AuthApiException",
+            status: HttpStatus.BAD_GATEWAY,
+            context: expect.objectContaining({
               provider: "google",
               phase: "codeExchange",
               missingField: "expires_in",
-            })
-          }
+            }),
+          })
         })
       })
 
@@ -659,20 +655,17 @@ registrations.forEach(([name, register]) => {
             ),
           )
 
-          try {
-            await service.authenticate(faker.string.alphanumeric(20))
-            throw new Error("expected to throw")
-          } catch (error) {
-            expect(error).toBeInstanceOf(AuthApiException)
-            const ex = error as AuthApiException
-            expect(ex.name).toBe("AuthApiException")
-            expect(ex.statusCode).toBe(502)
-            expect(ex.context).toMatchObject({
+          await expect(
+            service.authenticate(faker.string.alphanumeric(20)),
+          ).rejects.toMatchError(AuthApiException, {
+            name: "AuthApiException",
+            status: HttpStatus.BAD_GATEWAY,
+            context: expect.objectContaining({
               provider: "google",
               phase: "codeExchange",
               missingField: "id_token",
-            })
-          }
+            }),
+          })
         })
       })
 
@@ -692,20 +685,18 @@ registrations.forEach(([name, register]) => {
           )
           await mockSuccess(code, { id_token: idToken })
 
-          try {
-            await service.authenticate(code)
-            throw new Error("expected to throw")
-          } catch (error) {
-            expect(error).toBeInstanceOf(AuthApiException)
-            const ex = error as AuthApiException
-            expect(ex.name).toBe("AuthApiException")
-            expect(ex.statusCode).toBe(502)
-            expect(ex.context).toMatchObject({
-              provider: "google",
-              phase: "idTokenDecode",
-              missingClaim: "sub",
-            })
-          }
+          await expect(service.authenticate(code)).rejects.toMatchError(
+            AuthApiException,
+            {
+              name: "AuthApiException",
+              status: HttpStatus.BAD_GATEWAY,
+              context: expect.objectContaining({
+                provider: "google",
+                phase: "idTokenDecode",
+                missingClaim: "sub",
+              }),
+            },
+          )
         })
       })
 
@@ -725,20 +716,18 @@ registrations.forEach(([name, register]) => {
           )
           await mockSuccess(code, { id_token: idToken })
 
-          try {
-            await service.authenticate(code)
-            throw new Error("expected to throw")
-          } catch (error) {
-            expect(error).toBeInstanceOf(AuthApiException)
-            const ex = error as AuthApiException
-            expect(ex.name).toBe("AuthApiException")
-            expect(ex.statusCode).toBe(502)
-            expect(ex.context).toMatchObject({
-              provider: "google",
-              phase: "idTokenDecode",
-              missingClaim: "email",
-            })
-          }
+          await expect(service.authenticate(code)).rejects.toMatchError(
+            AuthApiException,
+            {
+              name: "AuthApiException",
+              status: HttpStatus.BAD_GATEWAY,
+              context: expect.objectContaining({
+                provider: "google",
+                phase: "idTokenDecode",
+                missingClaim: "email",
+              }),
+            },
+          )
         })
       })
 

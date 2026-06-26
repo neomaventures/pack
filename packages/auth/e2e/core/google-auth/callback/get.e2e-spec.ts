@@ -154,16 +154,15 @@ appModules.forEach(([name, modulePath]) => {
           statusCode: 400,
         })
 
-        const response = await request(app.getHttpServer())
+        await request(app.getHttpServer())
           .get("/auth/google/callback")
           .query({ code })
           .expect(BAD_GATEWAY)
-
-        expect(response.body).toEqual({
-          statusCode: BAD_GATEWAY,
-          message: "Auth API returned 400",
-          error: "AuthApi",
-        })
+          .expect({
+            statusCode: BAD_GATEWAY,
+            message: "Auth API returned 400",
+            error: "AuthApi",
+          })
       })
     })
 
@@ -175,16 +174,15 @@ appModules.forEach(([name, modulePath]) => {
           statusCode: 500,
         })
 
-        const response = await request(app.getHttpServer())
+        await request(app.getHttpServer())
           .get("/auth/google/callback")
           .query({ code })
           .expect(BAD_GATEWAY)
-
-        expect(response.body).toEqual({
-          statusCode: BAD_GATEWAY,
-          message: "Auth API returned 500",
-          error: "AuthApi",
-        })
+          .expect({
+            statusCode: BAD_GATEWAY,
+            message: "Auth API returned 500",
+            error: "AuthApi",
+          })
       })
     })
 
@@ -204,15 +202,14 @@ appModules.forEach(([name, modulePath]) => {
 
     describe("When called without a code query parameter", () => {
       it("should respond with HTTP 400 BadRequest", async () => {
-        const response = await request(app.getHttpServer())
+        await request(app.getHttpServer())
           .get("/auth/google/callback")
           .expect(BAD_REQUEST)
-
-        expect(response.body).toMatchObject({
-          statusCode: BAD_REQUEST,
-          message: "Missing code query parameter on Google OAuth callback",
-          error: "Bad Request",
-        })
+          .expect({
+            statusCode: BAD_REQUEST,
+            message: "Missing code query parameter on Google OAuth callback",
+            error: "Bad Request",
+          })
       })
     })
 
@@ -238,16 +235,15 @@ appModules.forEach(([name, modulePath]) => {
           idToken: idTokenWithoutSub,
         })
 
-        const response = await request(app.getHttpServer())
+        await request(app.getHttpServer())
           .get("/auth/google/callback")
           .query({ code })
           .expect(BAD_GATEWAY)
-
-        expect(response.body).toEqual({
-          statusCode: BAD_GATEWAY,
-          message: "Auth API returned ID token with missing claims",
-          error: "AuthApi",
-        })
+          .expect({
+            statusCode: BAD_GATEWAY,
+            message: "Auth API returned ID token with missing claims",
+            error: "AuthApi",
+          })
       })
     })
 
@@ -274,16 +270,15 @@ appModules.forEach(([name, modulePath]) => {
           idToken: idTokenWithoutEmail,
         })
 
-        const response = await request(app.getHttpServer())
+        await request(app.getHttpServer())
           .get("/auth/google/callback")
           .query({ code })
           .expect(BAD_GATEWAY)
-
-        expect(response.body).toEqual({
-          statusCode: BAD_GATEWAY,
-          message: "Auth API returned ID token with missing claims",
-          error: "AuthApi",
-        })
+          .expect({
+            statusCode: BAD_GATEWAY,
+            message: "Auth API returned ID token with missing claims",
+            error: "AuthApi",
+          })
       })
     })
 
@@ -300,6 +295,9 @@ appModules.forEach(([name, modulePath]) => {
           idToken: google.idToken({ email, email_verified: false }),
         })
 
+        // Partial-match needed: assert absent `email` field and `message`
+        // substring containment — beyond what supertest `.expect(body)`
+        // (deep-equal) can express.
         const response = await request(app.getHttpServer())
           .get("/auth/google/callback")
           .query({ code })

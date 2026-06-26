@@ -21,6 +21,6 @@ ExceptionsModule.forRoot({
 
 **Migration for `try/catch` filters:** `if (e instanceof GoogleXxxException)` collapses to `if (e instanceof AuthApiException)`. Branch on `e.context.phase` and `e.context.missingField` / `e.context.missingClaim` if the call site needs the granular distinction.
 
-Additionally, the `GoogleCallback()` interceptor now throws `BadRequestException` (instead of `GoogleCodeExchangeException`) when the OAuth callback URL is hit without a `code` query parameter — that case was always a client error, not a downstream failure.
+Additionally, the `GoogleCallback()` interceptor now throws `MissingOAuthCodeException` (a typed subclass of `BadRequestException`, replacing the previous `GoogleCodeExchangeException`) when the OAuth callback URL is hit without a `code` query parameter — that case was always a client error, not a downstream failure. The subclass keeps `e instanceof BadRequestException` working for HTTP-semantic filtering while restoring typed-class filtering via `e instanceof MissingOAuthCodeException`.
 
 The wire response for `EmailNotVerifiedException` and `InvalidMagicLinkTokenException` is also tightened: their previously-leaked `email` and `reason` fields are no longer part of the response body. Both remain available as public readonly instance properties for server logs and exception filters.

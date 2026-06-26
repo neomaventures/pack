@@ -29,8 +29,6 @@ import { HttpException, HttpStatus } from "@nestjs/common"
  * ```
  */
 export class AuthApiException extends HttpException {
-  public readonly statusCode: number
-
   /**
    * @param statusCode - The upstream HTTP status
    * @param endpoint - The auth API endpoint that was called (use a
@@ -60,8 +58,6 @@ export class AuthApiException extends HttpException {
       mappedStatus,
       { cause },
     )
-    this.name = "AuthApiException"
-    this.statusCode = mappedStatus
   }
 
   private static mapStatus(upstreamStatus: number): number {

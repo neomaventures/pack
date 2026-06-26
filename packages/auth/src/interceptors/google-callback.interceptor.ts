@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   CallHandler,
   ExecutionContext,
   Injectable,
@@ -7,6 +6,7 @@ import {
 } from "@nestjs/common"
 import { Observable } from "rxjs"
 
+import { MissingOAuthCodeException } from "../exceptions/missing-oauth-code.exception"
 import { GoogleAuthService } from "../services/google-auth.service"
 
 /**
@@ -17,9 +17,10 @@ import { GoogleAuthService } from "../services/google-auth.service"
  * Use the {@link GoogleCallback} decorator to apply this interceptor
  * to a controller method.
  *
- * @throws {BadRequestException} If the `code` query parameter is missing
- *   from the callback request — the upstream provider redirected back
- *   without it, or the route is mis-wired by the consumer.
+ * @throws {MissingOAuthCodeException} If the `code` query parameter is
+ *   missing from the callback request — the upstream provider redirected
+ *   back without it, or the route is mis-wired by the consumer. Subclass
+ *   of `BadRequestException` (HTTP 400).
  *
  * @example
  * ```typescript
@@ -42,7 +43,7 @@ export class GoogleCallbackInterceptor implements NestInterceptor {
     const code = req.query?.code as string | undefined
 
     if (!code) {
-      throw new BadRequestException(
+      throw new MissingOAuthCodeException(
         "Missing code query parameter on Google OAuth callback",
       )
     }

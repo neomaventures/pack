@@ -8,6 +8,7 @@ import {
 import { google } from "fixtures/fakes/google"
 import { of } from "rxjs"
 
+import { MissingOAuthCodeException } from "../exceptions/missing-oauth-code.exception"
 import { type GoogleAuthService } from "../services/google-auth.service"
 
 import { GoogleCallbackInterceptor } from "./google-callback.interceptor"
@@ -33,7 +34,17 @@ describe("GoogleCallbackInterceptor", () => {
   })
 
   describe("Given missing code query param", () => {
-    it("should throw BadRequestException when the code query parameter is missing", async () => {
+    it("should throw MissingOAuthCodeException when the code query parameter is missing", async () => {
+      const req = express.request({ query: {} })
+      const res = express.response()
+      const ctx = executionContext(req, res) as ExecutionContext
+
+      await expect(
+        interceptor.intercept(ctx, nextHandler),
+      ).rejects.toMatchError(MissingOAuthCodeException)
+    })
+
+    it("should throw an error that is also a BadRequestException", async () => {
       const req = express.request({ query: {} })
       const res = express.response()
       const ctx = executionContext(req, res) as ExecutionContext

@@ -60,7 +60,6 @@ export class AuthNetworkException extends HttpException {
       HttpStatus.BAD_GATEWAY,
       { cause },
     )
-    this.name = "AuthNetworkException"
     this.code = AuthNetworkException.extractCode(cause)
   }
 
