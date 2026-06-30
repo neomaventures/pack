@@ -153,6 +153,62 @@ describe("HealthcheckInterceptor", () => {
       })
     })
 
+    describe("Given the result includes a failing probe", () => {
+      const handler = (): void => {}
+      const errorResult = {
+        http: "ok",
+        database: "ok",
+        probes: {
+          storage: { ok: true, latencyMs: 23 },
+          mail: { ok: false, latencyMs: 5000, error: "Timeout after 5000ms" },
+        },
+        checkedAt: faker.date.recent(),
+      }
+
+      beforeEach(() => {
+        Reflect.defineMetadata(HEALTHCHECK_METADATA_KEY, true, handler)
+        healthService.check.mockResolvedValue(errorResult)
+      })
+
+      it("should set the response status to 503", async () => {
+        const res = express.response()
+        const ctx = executionContext(undefined, res, handler)
+
+        const result$ = interceptor.intercept(ctx as never, callHandler())
+        await firstValueFrom(result$)
+
+        expect(res.statusCode).toBe(503)
+      })
+    })
+
+    describe("Given the result includes only passing probes", () => {
+      const handler = (): void => {}
+      const passingResult = {
+        http: "ok",
+        database: "ok",
+        probes: {
+          storage: { ok: true, latencyMs: 23 },
+          mail: { ok: true, latencyMs: 87 },
+        },
+        checkedAt: faker.date.recent(),
+      }
+
+      beforeEach(() => {
+        Reflect.defineMetadata(HEALTHCHECK_METADATA_KEY, true, handler)
+        healthService.check.mockResolvedValue(passingResult)
+      })
+
+      it("should set the response status to 200", async () => {
+        const res = express.response()
+        const ctx = executionContext(undefined, res, handler)
+
+        const result$ = interceptor.intercept(ctx as never, callHandler())
+        await firstValueFrom(result$)
+
+        expect(res.statusCode).toBe(200)
+      })
+    })
+
     describe("Given @HealthCheck() metadata on a non-HTTP route", () => {
       it("should throw because non-HTTP contexts are not supported", () => {
         const handler = (): void => {}

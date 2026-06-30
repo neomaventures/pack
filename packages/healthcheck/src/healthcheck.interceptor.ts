@@ -12,6 +12,7 @@ import {
   HEALTHCHECK_METADATA_KEY,
   HEALTHCHECK_REQUEST_KEY,
 } from "./healthcheck.constants"
+import { type HealthResult } from "./healthcheck.types"
 
 /**
  * Global interceptor that runs the probes for any route marked with
@@ -79,13 +80,28 @@ export class HealthcheckInterceptor implements NestInterceptor {
    */
   private async probeAndAttach(context: ExecutionContext): Promise<void> {
     const result = await this.healthService.check()
-    const anyError = Object.values(result).some((value) => value === "error")
 
     const http = context.switchToHttp()
     http
       .getResponse<{ status: (code: number) => unknown }>()
-      .status(anyError ? 503 : 200)
+      .status(this.hasError(result) ? 503 : 200)
     ;(http.getRequest() as Record<string, unknown>)[HEALTHCHECK_REQUEST_KEY] =
       result
+  }
+
+  /**
+   * Maps the aggregated {@link HealthResult} to a single "any probe in error?"
+   * bit. Generalised over `database` (string slot) and `probes` (per-name
+   * structured slot) — adding new top-level slots in the future requires
+   * extending this predicate.
+   */
+  private hasError(result: HealthResult): boolean {
+    if (result.database === "error") return true
+    if (result.probes) {
+      for (const probe of Object.values(result.probes)) {
+        if (!probe.ok) return true
+      }
+    }
+    return false
   }
 }

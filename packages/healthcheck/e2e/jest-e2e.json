@@ -5,6 +5,8 @@
   "testRegex": ".e2e-spec.ts$",
   "setupFiles": ["reflect-metadata", "<rootDir>/build.setup.ts"],
   "setupFilesAfterEnv": ["jest-extended/all"],
+  "globalSetup": "<rootDir>/../fixtures/e2e/global-setup.ts",
+  "globalTeardown": "<rootDir>/../fixtures/e2e/global-teardown.ts",
   "transform": {
     "^.+\\.tsx?$": [
       "@swc/jest",

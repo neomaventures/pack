@@ -8,6 +8,7 @@ Every NestJS app eventually grows a `/health` endpoint, and every team writes a 
 
 - Always reports HTTP health (`{ "http": "ok" }`) — if the response arrives, the HTTP stack works.
 - Auto-detects a TypeORM `DataSource` and adds a `SELECT 1` connectivity probe.
+- Accepts pluggable upstream probes via `HealthcheckModule.forRoot({ probes: { ... } })` — HTTP probes for the common case (MinIO `/minio/health/live`, mail-provider health endpoints, generic SaaS APIs) and a custom-check escape hatch for everything else.
 - Returns HTTP `503` when any probe is in error, so liveness/readiness probes can act on it directly.
 - Ships the underlying `HealthService` as an injectable, so you can run the same probes from a scheduler, a guard, or your own custom controller.
 
@@ -62,11 +63,43 @@ The global `HealthcheckInterceptor` runs the probes, sets the HTTP status (200 /
 
 | Scenario | Body |
 |---|---|
-| No TypeORM `DataSource` registered | `{ "http": "ok", "checkedAt": "..." }` |
+| No TypeORM `DataSource` registered, no probes | `{ "http": "ok", "checkedAt": "..." }` |
 | `DataSource` registered, healthy | `{ "http": "ok", "database": "ok", "checkedAt": "..." }` |
 | `DataSource` registered, `SELECT 1` fails | `{ "http": "ok", "database": "error", "checkedAt": "..." }` |
+| Probes configured, all healthy | `{ "http": "ok", "probes": { "<name>": { "ok": true, "latencyMs": 23 }, ... }, "checkedAt": "..." }` |
+| Probes configured, one failing | `{ "http": "ok", "probes": { "<name>": { "ok": false, "latencyMs": 5000, "error": "Timeout after 5000ms" }, ... }, "checkedAt": "..." }` |
 
-`checkedAt` is an ISO timestamp generated when the probes ran — the service owns this value so it's consistent across JSON and HTML renderings and reflects the actual probe time, not the response-formatting time.
+`checkedAt` is an ISO timestamp generated when the probes ran — the service owns this value so it's consistent across JSON and HTML renderings and reflects the actual probe time, not the response-formatting time. The `probes` key is omitted entirely when no probes are configured.
+
+## Upstream probes
+
+Pass HTTP or custom probes to `HealthcheckModule.forRoot`:
+
+```typescript
+HealthcheckModule.forRoot({
+  probes: {
+    // HTTP probe — any 2xx is healthy unless expect.status is supplied.
+    storage: { url: `${process.env.S3_ENDPOINT}/minio/health/live` },
+    mail: { url: "https://api.resend.com/health", timeout: 3000 },
+
+    // Custom probe — escape hatch for non-HTTP backends (TCP/SMTP, queues, SDKs).
+    queue: {
+      check: async () => {
+        try {
+          await queue.ping()
+          return { ok: true }
+        } catch (err) {
+          return { ok: false, error: (err as Error).message }
+        }
+      },
+    },
+  },
+})
+```
+
+Probes are keyed by name — the object key becomes the result-record key under `body.probes`, so duplicate names are a compile-time error rather than a runtime gotcha. Each probe contributes one entry under `body.probes[<name>]` with `{ ok, latencyMs, error? }`. Probes run in parallel; any failing probe flips the response status to 503. For k8s-style liveness/readiness pairs, name them `<name>:live` / `<name>:ready`.
+
+HTTP probes use `AbortController` to cancel a hung fetch at the deadline. Custom probes use `Promise.race` — the runner can't cancel a consumer-supplied promise, so the underlying check keeps running until it settles naturally; the runner just stops waiting on it.
 
 ## HTTP status
 
@@ -79,7 +112,7 @@ The status is set directly on the response — no `ServiceUnavailableException` 
 
 ## Probe timeout
 
-The database probe has a 5-second hard timeout. If `SELECT 1` doesn't resolve within `PROBE_TIMEOUT_MS` (exported from `healthcheck.constants`), the probe reports `database: "error"` and the route still returns `503` cleanly — your orchestrator's external timeout won't fire before ours, so the failure surfaces as a `503` and not a hung request.
+Every probe — the auto-detected database probe and each configured upstream probe — has a 5-second default hard timeout (`PROBE_TIMEOUT_MS = 5000`). Upstream probes accept a per-probe `timeout` override. When the deadline elapses the probe reports `ok: false` (or `database: "error"`) and the route still returns `503` cleanly — your orchestrator's external timeout won't fire before ours, so the failure surfaces as a `503` and not a hung request.
 
 ## HTTP-only
 
@@ -140,9 +173,9 @@ Inside HTTP controllers, prefer the `@HealthCheck()` + `@HealthStatus()` decorat
 ## What's not in v0
 
 - Per-probe disable flag (`@HealthCheck({ database: false })`)
-- Custom-probe plugin pattern (no `probes: [...]` option on `forRoot`)
-- Redis, queue, outbound HTTP, or other non-DataSource probes
-- HTML rendering — the package returns JSON only
+- Per-probe retries — every `/health` request runs each probe once.
+- Probe-result caching — every `/health` runs probes fresh.
+- Specialised wrapper packages (`@neomaventures/healthcheck-s3`, `@neomaventures/healthcheck-smtp`) for richer single-call semantics — separate slices.
 
 If you need any of these, please file an issue describing the use case.
 
