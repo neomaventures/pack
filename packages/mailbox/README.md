@@ -295,8 +295,6 @@ handler that needs upstream detail reads it from the cause chain —
 errno under `undici`) for `MailboxNetworkException`. Never expose those
 to the client; that's why they live on the instance, not the wire.
 
-[exc]: ../exceptions
-
 ### `@MailboxStats()`'s plain `Error` is a wiring bug, not a runtime
 condition
 
