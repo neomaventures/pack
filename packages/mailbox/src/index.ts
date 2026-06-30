@@ -9,9 +9,6 @@ export { type GmailLabelStats } from "./services/gmail.service"
 // Middlewares
 export { MailboxStatsMiddleware } from "./middlewares/mailbox-stats.middleware"
 
-// Decorators
-export { MailboxStats } from "./decorators/mailbox-stats.decorator"
-
 // Interfaces
 export { type TokenAccessor } from "./interfaces/token-accessor.interface"
 

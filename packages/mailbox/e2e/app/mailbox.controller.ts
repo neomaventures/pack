@@ -1,11 +1,12 @@
-import { Controller, Get } from "@nestjs/common"
+import { Controller, Get, Req } from "@nestjs/common"
+import { type Request } from "express"
 
-import { type GmailLabelStats, MailboxStats } from "@neomaventures/mailbox"
+import { type GmailLabelStats } from "@neomaventures/mailbox"
 
 @Controller("mailbox")
 export class MailboxController {
   @Get("stats")
-  public stats(@MailboxStats() stats: GmailLabelStats): GmailLabelStats {
-    return stats
+  public stats(@Req() req: Request): GmailLabelStats {
+    return req.mailboxStats!
   }
 }

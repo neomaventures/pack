@@ -119,21 +119,36 @@ Use `forRootAsync` when you need to inject a config service.
 
 Two paths — pick the one that fits.
 
-#### Path A — `@MailboxStats()` param decorator (recommended)
+#### Path A — `MailboxStatsMiddleware` + `req.mailboxStats` (recommended)
 
 Mount `MailboxStatsMiddleware` on the routes that need stats, then read
-the resolved value with the `@MailboxStats()` decorator. The middleware
-fetches stats and throws `MailboxApiException` / `MailboxNetworkException`
-on failure. Pair with [`@neomaventures/exceptions`][exc]' global
-`errorTemplates` to render a friendly error UI on those exceptions.
+the resolved value from `req.mailboxStats`. The middleware fetches stats
+and throws `MailboxApiException` / `MailboxNetworkException` on failure.
+Pair with [`@neomaventures/exceptions`][exc]' global `errorTemplates` to
+render a friendly error UI on those exceptions.
 
 [exc]: ../exceptions
+
+Augment Express's `Request` interface once in your app so the slot is
+typed:
+
+```typescript
+// types/express.d.ts
+import { type GmailLabelStats } from "@neomaventures/mailbox"
+
+declare module "express" {
+  interface Request {
+    mailboxStats?: GmailLabelStats
+  }
+}
+```
+
+Then read it in the controller:
 
 ```typescript
 import { ExceptionHandlerModule } from "@neomaventures/exceptions"
 import {
-  GmailLabelStats,
-  MailboxStats,
+  type GmailLabelStats,
   MailboxStatsMiddleware,
 } from "@neomaventures/mailbox"
 import {
@@ -141,14 +156,16 @@ import {
   Get,
   MiddlewareConsumer,
   Module,
-  NestModule,
+  type NestModule,
+  Req,
 } from "@nestjs/common"
+import { type Request } from "express"
 
 @Controller("profile")
 export class ProfileController {
   @Get("inbox")
-  public inbox(@MailboxStats() stats: GmailLabelStats): GmailLabelStats {
-    return stats
+  public inbox(@Req() req: Request): GmailLabelStats {
+    return req.mailboxStats!
   }
 }
 
