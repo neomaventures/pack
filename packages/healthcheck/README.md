@@ -8,7 +8,7 @@ Every NestJS app eventually grows a `/health` endpoint, and every team writes a 
 
 - Always reports HTTP health (`{ "http": "ok" }`) — if the response arrives, the HTTP stack works.
 - Auto-detects a TypeORM `DataSource` and adds a `SELECT 1` connectivity probe.
-- Accepts pluggable upstream probes via `HealthcheckModule.forRoot({ probes: [...] })` — HTTP probes for the common case (MinIO `/minio/health/live`, mail-provider health endpoints, generic SaaS APIs) and a custom-check escape hatch for everything else.
+- Accepts pluggable upstream probes via `HealthcheckModule.forRoot({ probes: { ... } })` — HTTP probes for the common case (MinIO `/minio/health/live`, mail-provider health endpoints, generic SaaS APIs) and a custom-check escape hatch for everything else.
 - Returns HTTP `503` when any probe is in error, so liveness/readiness probes can act on it directly.
 - Ships the underlying `HealthService` as an injectable, so you can run the same probes from a scheduler, a guard, or your own custom controller.
 
@@ -77,14 +77,13 @@ Pass HTTP or custom probes to `HealthcheckModule.forRoot`:
 
 ```typescript
 HealthcheckModule.forRoot({
-  probes: [
+  probes: {
     // HTTP probe — any 2xx is healthy unless expect.status is supplied.
-    { name: "storage", url: `${process.env.S3_ENDPOINT}/minio/health/live` },
-    { name: "mail", url: "https://api.resend.com/health", timeout: 3000 },
+    storage: { url: `${process.env.S3_ENDPOINT}/minio/health/live` },
+    mail: { url: "https://api.resend.com/health", timeout: 3000 },
 
     // Custom probe — escape hatch for non-HTTP backends (TCP/SMTP, queues, SDKs).
-    {
-      name: "queue",
+    queue: {
       check: async () => {
         try {
           await queue.ping()
@@ -94,11 +93,11 @@ HealthcheckModule.forRoot({
         }
       },
     },
-  ],
+  },
 })
 ```
 
-Each probe contributes one entry under `body.probes[<name>]` with `{ ok, latencyMs, error? }`. Probes run in parallel; any failing probe flips the response status to 503. For k8s-style liveness/readiness pairs, name them `<name>:live` / `<name>:ready`.
+Probes are keyed by name — the object key becomes the result-record key under `body.probes`, so duplicate names are a compile-time error rather than a runtime gotcha. Each probe contributes one entry under `body.probes[<name>]` with `{ ok, latencyMs, error? }`. Probes run in parallel; any failing probe flips the response status to 503. For k8s-style liveness/readiness pairs, name them `<name>:live` / `<name>:ready`.
 
 HTTP probes use `AbortController` to cancel a hung fetch at the deadline. Custom probes use `Promise.race` — the runner can't cancel a consumer-supplied promise, so the underlying check keeps running until it settles naturally; the runner just stops waiting on it.
 

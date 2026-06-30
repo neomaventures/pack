@@ -8,7 +8,7 @@ import { HealthController } from "./health.controller"
 
 /**
  * E2E app module that opts into upstream probes. Probe URLs are read from
- * env vars (`STORAGE_HEALTH_URL`, `MAIL_HEALTH_URL`) populated by each spec
+ * env vars (`STORAGE_HEALTH_URL`, `MAIL_HEALTH_URL`) populated by the spec
  * before the Nest module is compiled. `forRootAsync` defers the env lookup
  * until the testing module is built, avoiding the SWC import-hoist trap
  * that would otherwise capture undefined values.
@@ -17,10 +17,10 @@ import { HealthController } from "./health.controller"
   imports: [
     HealthcheckModule.forRootAsync({
       useFactory: (): HealthcheckOptions => ({
-        probes: [
-          { name: "storage", url: process.env.STORAGE_HEALTH_URL! },
-          { name: "mail", url: process.env.MAIL_HEALTH_URL! },
-        ],
+        probes: {
+          storage: { url: process.env.STORAGE_HEALTH_URL! },
+          mail: { url: process.env.MAIL_HEALTH_URL! },
+        },
       }),
     }),
   ],

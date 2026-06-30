@@ -1,4 +1,4 @@
-import { type ProbeConfig } from "./probes/probe-config"
+import { type ProbeMap } from "./probes/probe-config"
 
 /**
  * Injection token for the resolved {@link HealthcheckOptions}. Consumers
@@ -17,25 +17,27 @@ export const HEALTHCHECK_OPTIONS = Symbol("HEALTHCHECK_OPTIONS")
  */
 export interface HealthcheckOptions {
   /**
-   * Pluggable upstream probes invoked on every `@HealthCheck()` request.
+   * Pluggable upstream probes invoked on every `@HealthCheck()` request,
+   * keyed by the name under which the result is reported in
+   * `body.probes[<name>]`.
    *
    * Probes run in parallel; each contributes one entry under
    * `body.probes[<name>]`. Any failing probe flips the response status to
    * 503, matching the existing database-probe semantic.
    *
-   * Defaults to `[]`. When the resolved list is empty, the runner is a no-op
+   * Defaults to `{}`. When the resolved map is empty, the runner is a no-op
    * and the `probes` key is omitted from the response body — exactly the
    * v0.2.0 shape.
    *
    * @example
    * ```ts
    * HealthcheckModule.forRoot({
-   *   probes: [
-   *     { name: "storage", url: `${process.env.S3_ENDPOINT}/minio/health/live` },
-   *     { name: "mail", url: "https://api.resend.com/health", timeout: 3000 },
-   *   ],
+   *   probes: {
+   *     storage: { url: `${process.env.S3_ENDPOINT}/minio/health/live` },
+   *     mail: { url: "https://api.resend.com/health", timeout: 3000 },
+   *   },
    * })
    * ```
    */
-  probes?: ProbeConfig[]
+  probes?: ProbeMap
 }

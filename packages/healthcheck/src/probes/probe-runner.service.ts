@@ -14,6 +14,19 @@ import {
 } from "./probe-config"
 
 /**
+ * Internal probe representation — every config (HTTP, custom) is desugared
+ * into this shape before running so the runner has a single execution path.
+ *
+ * `check` resolves on success and rejects on failure. The runner observes
+ * the `AbortSignal` argument and aborts in-flight work when the per-probe
+ * timeout elapses.
+ */
+interface Probe {
+  timeoutMs: number
+  check: (signal: AbortSignal) => Promise<void>
+}
+
+/**
  * Runs the configured upstream probes for every `@HealthCheck()` request.
  *
  * **Internal to the package** — not exported from `index.ts`. Consumers
@@ -30,15 +43,7 @@ export class ProbeRunnerService {
   public constructor(
     @Inject(HEALTHCHECK_OPTIONS)
     private readonly options: HealthcheckOptions,
-  ) {
-    const probes = this.options.probes ?? []
-    const names = probes.map((p) => p.name)
-    if (new Set(names).size !== names.length) {
-      console.warn(
-        `[healthcheck] Duplicate probe names detected — last-write-wins on the result record. names=${JSON.stringify(names)}`,
-      )
-    }
-  }
+  ) {}
 
   /**
    * Runs every configured probe in parallel and folds the results into a
@@ -49,95 +54,105 @@ export class ProbeRunnerService {
    * v0.2.0 wire shape for consumers that don't opt in.
    */
   public async run(): Promise<Record<string, ProbeResult> | undefined> {
-    const probes = this.options.probes ?? []
-    if (probes.length === 0) {
+    const configs = this.options.probes ?? {}
+    const names = Object.keys(configs)
+    if (names.length === 0) {
       return undefined
     }
 
-    const settled = await Promise.allSettled(
-      probes.map((probe) => this.runOne(probe)),
+    const results = await Promise.all(
+      names.map((name) => this.runOne(this.desugar(configs[name]))),
     )
 
     const record: Record<string, ProbeResult> = {}
-    for (let i = 0; i < probes.length; i++) {
-      const probe = probes[i]
-      const outcome = settled[i]
-      record[probe.name] =
-        outcome.status === "fulfilled"
-          ? outcome.value
-          : { ok: false, latencyMs: 0, error: String(outcome.reason) }
+    for (let i = 0; i < names.length; i++) {
+      record[names[i]] = results[i]
     }
-
     return record
   }
 
-  private async runOne(config: ProbeConfig): Promise<ProbeResult> {
+  /**
+   * Desugar each consumer-facing probe shape into the internal
+   * `Probe` representation. HTTP becomes a `fetch` against `url` whose
+   * resolution depends on the response status and optional
+   * `expect.status`; custom is passed through almost unchanged, with a
+   * tiny adapter that translates `{ ok: false, error }` into a rejection
+   * so the runner has one outcome model.
+   */
+  private desugar(config: ProbeConfig): Probe {
+    const timeoutMs = config.timeout ?? PROBE_TIMEOUT_MS
     if ("url" in config) {
-      return this.runHttp(config)
+      return { timeoutMs, check: this.httpCheck(config) }
     }
-    return this.runCustom(config)
+    return { timeoutMs, check: this.customCheck(config) }
   }
 
-  private async runHttp(config: HttpProbeConfig): Promise<ProbeResult> {
-    const start = Date.now()
-    const controller = new AbortController()
-    const timeoutMs = config.timeout ?? PROBE_TIMEOUT_MS
-    const timer = setTimeout(() => controller.abort(), timeoutMs)
-
-    try {
-      const response = await fetch(config.url, { signal: controller.signal })
-      const expectedStatus = config.expect?.status
+  private httpCheck(
+    config: HttpProbeConfig,
+  ): (signal: AbortSignal) => Promise<void> {
+    return async (signal) => {
+      const response = await fetch(config.url, { signal })
+      const expected = config.expect?.status
       const ok =
-        expectedStatus === undefined
+        expected === undefined
           ? response.status >= 200 && response.status < 300
-          : response.status === expectedStatus
-
-      if (ok) {
-        return { ok: true, latencyMs: Date.now() - start }
+          : response.status === expected
+      if (!ok) {
+        throw new Error(`Expected ${expected ?? "2xx"}, got ${response.status}`)
       }
-      return {
-        ok: false,
-        latencyMs: Date.now() - start,
-        error: `Expected ${expectedStatus ?? "2xx"}, got ${response.status}`,
-      }
-    } catch (err) {
-      const latencyMs = Date.now() - start
-      if ((err as Error).name === "AbortError") {
-        return { ok: false, latencyMs, error: `Timeout after ${timeoutMs}ms` }
-      }
-      return { ok: false, latencyMs, error: (err as Error).message }
-    } finally {
-      clearTimeout(timer)
     }
   }
 
-  private async runCustom(config: CustomProbeConfig): Promise<ProbeResult> {
-    const start = Date.now()
-    const timeoutMs = config.timeout ?? PROBE_TIMEOUT_MS
+  private customCheck(
+    config: CustomProbeConfig,
+  ): (_signal: AbortSignal) => Promise<void> {
+    return async () => {
+      // Wrap so synchronous throws become rejections we can observe.
+      const outcome = await Promise.resolve().then(() => config.check())
+      if (!outcome.ok) {
+        throw new Error(outcome.error)
+      }
+    }
+  }
+
+  /**
+   * Race the desugared `check` against the per-probe timeout, capture
+   * real latency in both the fulfilled and rejected branches, and map
+   * the outcome onto `{ ok, latencyMs, error? }`.
+   */
+  private async runOne(probe: Probe): Promise<ProbeResult> {
+    const started = performance.now()
+    const controller = new AbortController()
     let timer: NodeJS.Timeout | undefined
 
     try {
-      const outcome = await Promise.race([
-        // Wrap synchronous throws into rejections so the race observes them.
-        Promise.resolve().then(() => config.check()),
+      await Promise.race([
+        probe.check(controller.signal),
         new Promise<never>((_, reject) => {
-          timer = setTimeout(
-            () => reject(new Error(`Timeout after ${timeoutMs}ms`)),
-            timeoutMs,
-          )
+          timer = setTimeout(() => {
+            controller.abort()
+            reject(new Error(`Timeout after ${probe.timeoutMs}ms`))
+          }, probe.timeoutMs)
         }),
       ])
-      return outcome.ok
-        ? { ok: true, latencyMs: Date.now() - start }
-        : { ok: false, latencyMs: Date.now() - start, error: outcome.error }
+      return { ok: true, latencyMs: this.elapsed(started) }
     } catch (err) {
-      return {
-        ok: false,
-        latencyMs: Date.now() - start,
-        error: (err as Error).message,
+      const latencyMs = this.elapsed(started)
+      const error = err as Error
+      if (error.name === "AbortError") {
+        return {
+          ok: false,
+          latencyMs,
+          error: `Timeout after ${probe.timeoutMs}ms`,
+        }
       }
+      return { ok: false, latencyMs, error: error.message }
     } finally {
       if (timer !== undefined) clearTimeout(timer)
     }
+  }
+
+  private elapsed(startedAt: number): number {
+    return Math.max(0, Math.round(performance.now() - startedAt))
   }
 }

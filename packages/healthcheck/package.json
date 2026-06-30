@@ -33,7 +33,7 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc -p ./tsconfig.lib.json",
-    "test": "jest --runInBand --passWithNoTests",
+    "test": "node --env-file=.env.test ./node_modules/jest/bin/jest.js --runInBand --passWithNoTests",
     "pretest:e2e": "pnpm build",
     "test:e2e": "node --env-file=.env.e2e --experimental-vm-modules ./node_modules/jest/bin/jest.js --config ./e2e/jest-e2e.json --runInBand",
     "lint": "eslint ."
@@ -48,6 +48,7 @@
   "devDependencies": {
     "@faker-js/faker": "^9.6.0",
     "@neomaventures/fixtures": "workspace:*",
+    "@neomaventures/managed-app": "workspace:*",
     "@neomaventures/mockserver": "workspace:*",
     "@nestjs/common": "^11.1.18",
     "@nestjs/core": "^11.1.18",

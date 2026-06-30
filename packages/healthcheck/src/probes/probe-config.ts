@@ -1,10 +1,21 @@
 /**
- * Pluggable upstream probe configuration. Discriminated union of
- * {@link HttpProbeConfig} (most consumers) and {@link CustomProbeConfig}
- * (escape hatch for non-HTTP backends or richer semantics).
+ * Map of pluggable upstream probes keyed by name. The key is the stable
+ * identifier under which the result is reported in `body.probes[<name>]`;
+ * the value is either an {@link HttpProbeConfig} (most consumers) or a
+ * {@link CustomProbeConfig} (escape hatch for non-HTTP backends or richer
+ * semantics).
  *
- * Discriminator: presence of the `url` field selects the HTTP branch;
- * otherwise the probe is treated as custom.
+ * Discriminator on the value: presence of the `url` field selects the HTTP
+ * branch; otherwise the probe is treated as custom.
+ *
+ * Using a keyed object (rather than an array) makes duplicate names a
+ * compile-time error and renders consumer config self-documenting.
+ */
+export type ProbeMap = Record<string, HttpProbeConfig | CustomProbeConfig>
+
+/**
+ * Union of the two configured probe shapes. Retained as a convenience for
+ * consumers handling either branch in a single expression.
  */
 export type ProbeConfig = HttpProbeConfig | CustomProbeConfig
 
@@ -16,14 +27,6 @@ export type ProbeConfig = HttpProbeConfig | CustomProbeConfig
  * supplied, in which case the response status must match exactly.
  */
 export interface HttpProbeConfig {
-  /**
-   * Stable key under which the result is reported in `body.probes[name]`.
-   * Names follow the consumer's naming convention; pair `<name>:live` /
-   * `<name>:ready` to map k8s-style liveness/readiness probes onto a single
-   * backend.
-   */
-  name: string
-
   /**
    * Absolute URL the probe issues a `GET` against.
    */
@@ -49,11 +52,6 @@ export interface HttpProbeConfig {
  * (TCP/SMTP, message queues, third-party SDKs).
  */
 export interface CustomProbeConfig {
-  /**
-   * Stable key under which the result is reported in `body.probes[name]`.
-   */
-  name: string
-
   /**
    * Probe implementation. Resolves to `{ ok: true }` on success, or
    * `{ ok: false, error }` to surface a domain-specific error message.

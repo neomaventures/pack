@@ -7,7 +7,7 @@ import {
   HEALTHCHECK_OPTIONS,
   type HealthcheckOptions,
 } from "./healthcheck.options"
-import { type ProbeConfig } from "./probes/probe-config"
+import { type ProbeMap } from "./probes/probe-config"
 import { ProbeRunnerService } from "./probes/probe-runner.service"
 
 const HEALTHCHECK_PROVIDERS = [HealthService, ProbeRunnerService]
@@ -21,7 +21,7 @@ export const {
   optionsInjectionToken: HEALTHCHECK_OPTIONS,
 })
   .setClassMethodName("forRoot")
-  .setExtras({ probes: [] as ProbeConfig[] }, (definition) => ({
+  .setExtras({ probes: {} as ProbeMap }, (definition) => ({
     ...definition,
     providers: [
       ...(definition.providers ?? []),

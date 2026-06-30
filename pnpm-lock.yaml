@@ -486,6 +486,9 @@ importers:
       '@neomaventures/fixtures':
         specifier: workspace:*
         version: link:../fixtures
+      '@neomaventures/managed-app':
+        specifier: workspace:*
+        version: link:../managed-app
       '@neomaventures/mockserver':
         specifier: workspace:*
         version: link:../mockserver
