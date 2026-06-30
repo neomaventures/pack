@@ -25,7 +25,11 @@ export * from "./services/token.service"
 export * from "./dtos/email.dto"
 
 // Account (context slot)
-export { getAccount, CurrentAccountToken } from "./account/account.slot"
+export {
+  getAccount,
+  setAccount,
+  CurrentAccountToken,
+} from "./account/account.slot"
 
 // Decorators used in consumer controllers
 export {

@@ -71,6 +71,10 @@ export class GoogleOAuthClient {
    * @param params.grantType - The grant type to match (defaults to `"authorization_code"`)
    * @param params.idToken - The ID token to return (defaults to {@link google.idToken})
    * @param params.refreshToken - An optional refresh token to include
+   * @param params.scopes - The granted scopes to embed in the token
+   *   response's space-separated `scope` field. Defaults to
+   *   {@link google.scopes}. Tests covering app-level features that depend
+   *   on additional scopes (e.g. `gmail.readonly`) pass them here.
    * @param params.times - How many times to match (defaults to `{ remainingTimes: 1 }`)
    * @returns The response object so tests can inspect the returned tokens
    */
@@ -82,13 +86,14 @@ export class GoogleOAuthClient {
     grantType?: string
     idToken?: string
     refreshToken?: string
+    scopes?: string[]
     times?: MockserverSpecificTimes | MockserverUnlimitedTimes
   }): Promise<GoogleOAuthCodeExchangeResponse> {
     const response: GoogleOAuthCodeExchangeResponse = {
       access_token: google.accessToken(),
       expires_in: 3600,
       token_type: "Bearer",
-      scope: google.scopes().join(" "),
+      scope: (params.scopes ?? google.scopes()).join(" "),
       id_token: params.idToken ?? google.idToken(),
       ...(params.refreshToken !== undefined && {
         refresh_token: params.refreshToken,
