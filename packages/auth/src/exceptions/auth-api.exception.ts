@@ -1,3 +1,5 @@
+import { STATUS_CODES } from "node:http"
+
 import { HttpException, HttpStatus } from "@nestjs/common"
 
 /**
@@ -48,7 +50,7 @@ export class AuthApiException extends HttpException {
     super(
       {
         statusCode: HttpStatus.BAD_GATEWAY,
-        message: "Bad Gateway",
+        message: STATUS_CODES[HttpStatus.BAD_GATEWAY],
         error: "AuthApi",
       },
       HttpStatus.BAD_GATEWAY,
