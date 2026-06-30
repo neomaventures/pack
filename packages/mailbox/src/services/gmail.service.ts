@@ -3,23 +3,9 @@ import { HttpException, Inject, Injectable } from "@nestjs/common"
 import { GMAIL_API_BASE_URL, GmailSystemLabel } from "../constants"
 import { MailboxApiException } from "../exceptions/mailbox-api.exception"
 import { MailboxNetworkException } from "../exceptions/mailbox-network.exception"
+import { type MailboxLabelStats } from "../interfaces/mailbox-label-stats"
 
 const LABELS_ENDPOINT = "/gmail/v1/users/me/labels/{labelId}"
-
-/**
- * Stats for a single Gmail label, as returned by `GmailService.getStats`.
- *
- * Vocabulary is intentionally renamed from Gmail's `messagesTotal` /
- * `messagesUnread` to `messageCount` / `unreadCount` — mailbox uses the
- * latter as its public stats shape, and `GmailService` is the boundary
- * where that translation happens.
- */
-export type GmailLabelStats = {
-  /** Total message count for the label */
-  messageCount: number
-  /** Unread message count for the label */
-  unreadCount: number
-}
 
 /**
  * Internal Gmail REST client.
@@ -63,7 +49,7 @@ export class GmailService {
   public async getStats(
     token: string,
     labelId: GmailSystemLabel | string = GmailSystemLabel.Inbox,
-  ): Promise<GmailLabelStats> {
+  ): Promise<MailboxLabelStats> {
     const url = `${this.baseUrl}/gmail/v1/users/me/labels/${encodeURIComponent(labelId)}`
     let response: Response
     try {

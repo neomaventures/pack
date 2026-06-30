@@ -1,10 +1,11 @@
 import { Inject, Injectable } from "@nestjs/common"
 
 import { GMAIL_READONLY_SCOPE, GmailSystemLabel } from "../constants"
+import { type MailboxLabelStats } from "../interfaces/mailbox-label-stats"
 import { type TokenAccessor } from "../interfaces/token-accessor.interface"
 import { TOKEN_ACCESSOR } from "../mailbox.options"
 
-import { type GmailLabelStats, GmailService } from "./gmail.service"
+import { GmailService } from "./gmail.service"
 
 /**
  * Public mailbox surface.
@@ -61,7 +62,7 @@ export class MailboxService {
    * // => { messageCount: 1234, unreadCount: 5 }
    * ```
    */
-  public async getStats(): Promise<GmailLabelStats> {
+  public async getStats(): Promise<MailboxLabelStats> {
     const token = await this.tokenAccessor.getToken(GMAIL_READONLY_SCOPE)
     return this.gmailService.getStats(token, GmailSystemLabel.Inbox)
   }

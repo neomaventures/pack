@@ -1,7 +1,7 @@
 import { Controller, Get } from "@nestjs/common"
 
 import {
-  type GmailLabelStats,
+  type MailboxLabelStats,
   MailboxStats,
   WithMailboxStats,
 } from "@neomaventures/mailbox"
@@ -10,7 +10,7 @@ import {
 export class MailboxController {
   @Get("stats")
   @WithMailboxStats()
-  public stats(@MailboxStats() stats: GmailLabelStats): GmailLabelStats {
+  public stats(@MailboxStats() stats: MailboxLabelStats): MailboxLabelStats {
     return stats
   }
 }

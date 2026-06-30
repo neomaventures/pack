@@ -22,7 +22,7 @@ export const MAILBOX_STATS_METADATA_KEY = "mailbox:stats"
  * ```typescript
  * @Get("profile")
  * @WithMailboxStats()
- * public profile(@MailboxStats() stats: GmailLabelStats) {
+ * public profile(@MailboxStats() stats: MailboxLabelStats) {
  *   return { stats }
  * }
  * ```

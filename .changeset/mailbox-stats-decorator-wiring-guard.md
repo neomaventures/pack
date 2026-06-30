@@ -14,3 +14,5 @@ Removed:
 Migration: drop the `configure(consumer)` middleware wiring and add `@WithMailboxStats()` to each route handler that uses `@MailboxStats()`. The `@MailboxStats()` wiring-error message now reads `"MailboxStats is not available — did you apply @WithMailboxStats() to this route?"`.
 
 The Express `Request.mailboxStats` type augmentation now ships from inside the package (declared alongside `MailboxStatsInterceptor`, the artifact that writes the slot) — consumers do not need a hand-rolled `declare module "express"` block.
+
+**BREAKING**: `GmailLabelStats` type renamed to `MailboxLabelStats`. Same shape (`{ messageCount, unreadCount }`); only the type name changes. Aligns with the package-named convention used for exception classes (`MailboxApiException`, `MailboxNetworkException`).

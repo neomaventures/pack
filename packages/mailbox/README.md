@@ -140,7 +140,7 @@ goes away.
 ```typescript
 import { ExceptionHandlerModule } from "@neomaventures/exceptions"
 import {
-  type GmailLabelStats,
+  type MailboxLabelStats,
   MailboxStats,
   WithMailboxStats,
 } from "@neomaventures/mailbox"
@@ -150,7 +150,7 @@ import { Controller, Get, Module } from "@nestjs/common"
 export class ProfileController {
   @Get("inbox")
   @WithMailboxStats()
-  public inbox(@MailboxStats() stats: GmailLabelStats): GmailLabelStats {
+  public inbox(@MailboxStats() stats: MailboxLabelStats): MailboxLabelStats {
     return stats
   }
 }
@@ -248,7 +248,7 @@ are unaffected:
 
 ```typescript
 import {
-  type GmailLabelStats,
+  type MailboxLabelStats,
   MailboxStats,
   WithMailboxStats,
 } from "@neomaventures/mailbox"
@@ -258,7 +258,7 @@ import { Controller, Get } from "@nestjs/common"
 export class ProfileController {
   @Get("inbox")
   @WithMailboxStats()
-  public inbox(@MailboxStats() stats: GmailLabelStats): GmailLabelStats {
+  public inbox(@MailboxStats() stats: MailboxLabelStats): MailboxLabelStats {
     return stats
   }
 }

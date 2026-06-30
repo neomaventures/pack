@@ -3,7 +3,7 @@ import { callHandler, executionContext, express } from "@neomaventures/fixtures"
 import { type ExecutionContext } from "@nestjs/common"
 import { Test, type TestingModule } from "@nestjs/testing"
 
-import { type GmailLabelStats } from "../services/gmail.service"
+import { type MailboxLabelStats } from "../interfaces/mailbox-label-stats"
 import { MailboxService } from "../services/mailbox.service"
 
 import { MailboxStatsInterceptor } from "./mailbox-stats.interceptor"
@@ -27,7 +27,7 @@ describe("MailboxStatsInterceptor", () => {
 
   describe("Given MailboxService.getStats resolves", () => {
     it("should populate req.mailboxStats with the resolved stats", async () => {
-      const stats: GmailLabelStats = {
+      const stats: MailboxLabelStats = {
         messageCount: faker.number.int({ min: 1, max: 10000 }),
         unreadCount: faker.number.int({ min: 0, max: 500 }),
       }

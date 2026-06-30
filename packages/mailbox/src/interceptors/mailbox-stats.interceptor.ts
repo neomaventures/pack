@@ -7,12 +7,12 @@ import {
 import { type Request } from "express"
 import { type Observable } from "rxjs"
 
-import { type GmailLabelStats } from "../services/gmail.service"
+import { type MailboxLabelStats } from "../interfaces/mailbox-label-stats"
 import { MailboxService } from "../services/mailbox.service"
 
 declare module "express" {
   interface Request {
-    mailboxStats?: GmailLabelStats
+    mailboxStats?: MailboxLabelStats
   }
 }
 
