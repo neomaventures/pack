@@ -11,13 +11,10 @@ import { HttpException, HttpStatus } from "@nestjs/common"
  * `"idTokenDecode"`). The wrapped `cause` (an `HttpException`) carries
  * the upstream status, message, and response body for diagnostics.
  *
- * Symmetric with {@link AuthNetworkException}: `(endpoint, context, cause)`.
- *
- * The HTTP status returned to the caller mirrors the upstream status for
- * the cases the package cares about (`401`, `404`) and collapses
- * everything else into `502 Bad Gateway` — upstream 5xx, unexpected
- * statuses, and the malformed-2xx case are surfaced as a gateway
- * failure, not leaked verbatim.
+ * Symmetric with {@link AuthNetworkException}: `(endpoint, context, cause)`
+ * — always returns HTTP 502 Bad Gateway. The upstream status is never put
+ * on the wire; consumers that want to branch on it can read
+ * `err.cause.getStatus()` from a filter or log handler.
  *
  * @example
  * ```typescript
@@ -47,26 +44,14 @@ export class AuthApiException extends HttpException {
     public readonly context: Record<string, unknown>,
     cause: HttpException,
   ) {
-    const upstreamStatus = cause.getStatus()
-    const mappedStatus = AuthApiException.mapStatus(upstreamStatus)
     super(
       {
-        statusCode: mappedStatus,
+        statusCode: HttpStatus.BAD_GATEWAY,
         message: cause.message,
         error: "AuthApi",
       },
-      mappedStatus,
+      HttpStatus.BAD_GATEWAY,
       { cause },
     )
-  }
-
-  private static mapStatus(upstreamStatus: number): number {
-    if (upstreamStatus === HttpStatus.UNAUTHORIZED) {
-      return HttpStatus.UNAUTHORIZED
-    }
-    if (upstreamStatus === HttpStatus.NOT_FOUND) {
-      return HttpStatus.NOT_FOUND
-    }
-    return HttpStatus.BAD_GATEWAY
   }
 }

@@ -147,7 +147,7 @@ appModules.forEach(([name, modulePath]) => {
     })
 
     describe("When Google returns a 4xx HTTP error (invalid code)", () => {
-      it("should respond with HTTP 502 mapped from upstream 400", async () => {
+      it("should respond with HTTP 502", async () => {
         const code = google.code()
         await googleOAuth.mockCodeExchangeHttpError({
           code,
