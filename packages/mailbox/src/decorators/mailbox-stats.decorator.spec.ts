@@ -46,10 +46,11 @@ describe("MailboxStatsDecorator", () => {
   })
 
   describe("Given req.mailboxStats is undefined", () => {
-    it("should throw an Error naming MailboxStatsMiddleware", () => {
-      expect(() => factory(null, buildContext({}))).toThrow(
-        /MailboxStatsMiddleware/,
-      )
+    it("should throw an Error pointing at the missing middleware wiring", () => {
+      expect(() => factory(null, buildContext({}))).toThrowMatching(Error, {
+        message:
+          "MailboxStats is not available — did you install MailboxStatsMiddleware on this route?",
+      })
     })
   })
 })
