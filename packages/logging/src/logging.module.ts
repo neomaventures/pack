@@ -10,7 +10,6 @@ import {
 import { ApplicationLogger } from "./services/application-logger"
 import { createLogger } from "./services/create-logger"
 import { LOGGING_MODULE_OPTIONS } from "./symbols"
-import { getLoggerToken } from "./tokens"
 
 const PROVIDERS: Provider[] = [
   ApplicationLogger,
@@ -100,9 +99,10 @@ export class LoggingModule {
   /**
    * Register one or more namespaced loggers for a feature module or package.
    *
-   * Each entry produces a non-global provider keyed by the internal logger
-   * token for that namespace, exported from the returned dynamic module so the
-   * module's own providers can inject it via `@InjectLogger(namespace)`.
+   * Each entry produces a non-global provider keyed by the **namespace string
+   * itself**, exported from the returned dynamic module so the module's own
+   * providers can inject it via `@InjectLogger(namespace)`. Tests can
+   * substitute the logger with `overrideProvider(namespace).useValue(...)`.
    *
    * Accepts the shorthand `string` form — equivalent to
    * `{ namespace: '<string>' }` with no level (package default applies; floor
@@ -139,11 +139,11 @@ export class LoggingModule {
     return {
       module: LoggingModule,
       providers: normalised.map((cfg) => ({
-        provide: getLoggerToken(cfg.namespace),
+        provide: cfg.namespace,
         useFactory: (opts: LoggingModuleOptions) => createLogger(opts, cfg),
         inject: [LOGGING_MODULE_OPTIONS],
       })),
-      exports: normalised.map((cfg) => getLoggerToken(cfg.namespace)),
+      exports: normalised.map((cfg) => cfg.namespace),
     }
   }
 }

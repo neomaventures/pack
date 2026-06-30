@@ -10,8 +10,6 @@ import {
   LoggingModule,
 } from "@neomaventures/logging"
 
-import { getLoggerToken } from "../tokens"
-
 describe("@InjectLogger", () => {
   describe("Given the parameterless form @InjectLogger()", () => {
     @Injectable()
@@ -57,7 +55,7 @@ describe("@InjectLogger", () => {
       }).compile()
 
       const sut = module.get(SUT)
-      const provider = module.get<Logger>(getLoggerToken(namespace))
+      const provider = module.get<Logger>(namespace)
 
       expect(sut.logger).toBe(provider)
     })

@@ -5,7 +5,7 @@ export { LoggingModule } from "./logging.module"
 export {
   type Logger,
   type LogContext,
-  type LogLevel,
+  LogLevel,
 } from "./interfaces/logger.interface"
 export { type LoggerConfig } from "./interfaces/logger-config.interface"
 export {

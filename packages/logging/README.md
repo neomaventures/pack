@@ -30,14 +30,14 @@ Install both modules at the root. `RequestContextModule.forRoot()` must come bef
 
 ```ts
 import { Module } from "@nestjs/common"
-import { LoggingModule } from "@neomaventures/logging"
+import { LoggingModule, LogLevel } from "@neomaventures/logging"
 import { RequestContextModule } from "@neomaventures/request-context"
 
 @Module({
   imports: [
     RequestContextModule.forRoot(),
     LoggingModule.forRoot({
-      defaultLevel: "debug",
+      defaultLevel: LogLevel.Debug,
       context: { service: "api", version: "1.0.0" },
     }),
   ],
@@ -121,7 +121,7 @@ export class AuthService {
 
 ```ts
 LoggingModule.forFeature([
-  { namespace: "neomaventures:auth", level: "warn", name: "auth" },
+  { namespace: "neomaventures:auth", level: LogLevel.Warn, name: "auth" },
 ])
 ```
 
@@ -147,9 +147,9 @@ Bound directly to `forRoot.defaultLevel` (default `'info'`). No override chain.
 
 ```ts
 LoggingModule.forRoot({
-  defaultLevel: "debug",
+  defaultLevel: LogLevel.Debug,
   loggers: [
-    { namespace: "neomaventures:auth", level: "trace" },
+    { namespace: "neomaventures:auth", level: LogLevel.Trace },
   ],
 })
 ```
@@ -157,6 +157,20 @@ LoggingModule.forRoot({
 - `ApplicationLogger` emits at `debug` and above.
 - The `neomaventures:auth` logger emits at `trace` and above.
 - Every other namespaced logger floors at `error`.
+
+### Silencing a namespaced logger
+
+Set the level to `LogLevel.Silent` to suppress every entry from a namespace
+(pino native — Infinity threshold). Useful for opting a noisy package out
+entirely, or in tests where a package's logger would otherwise pollute output:
+
+```ts
+LoggingModule.forRoot({
+  loggers: [
+    { namespace: "neomaventures:auth", level: LogLevel.Silent },
+  ],
+})
+```
 
 ## LogContext
 
@@ -213,7 +227,14 @@ interface LoggingModuleOptions {
 }
 ```
 
-`LogLevel` is the pino-native vocabulary: `'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal'`.
+`LogLevel` is exposed as a **const object** so consumers reference levels via importable identifiers (`LogLevel.Debug`) rather than magic strings — the rest of the pack uses the same convention for namespaces, tokens, and scopes. The companion `LogLevel` type still resolves to the underlying string union (`'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal' | 'silent'`), so existing call sites passing string literals continue to typecheck.
+
+```ts
+import { LogLevel } from "@neomaventures/logging"
+
+LogLevel.Debug   // "debug"
+LogLevel.Silent  // "silent"
+```
 
 ## Async configuration
 

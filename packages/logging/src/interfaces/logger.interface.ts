@@ -5,24 +5,43 @@
  * **and every level above it** — i.e. setting `level: 'warn'` emits `warn`,
  * `error`, and `fatal` but suppresses `trace`, `debug`, and `info`.
  *
- * | Level   | Fires when level is set to                          |
- * |---------|-----------------------------------------------------|
- * | `trace` | `trace` only                                        |
- * | `debug` | `trace`, `debug`                                    |
- * | `info`  | `trace`, `debug`, `info`                            |
- * | `warn`  | `trace`, `debug`, `info`, `warn`                    |
- * | `error` | `trace`, `debug`, `info`, `warn`, `error`           |
- * | `fatal` | every level                                         |
+ * | Level    | Fires when level is set to                          |
+ * |----------|-----------------------------------------------------|
+ * | `trace`  | `trace` only                                        |
+ * | `debug`  | `trace`, `debug`                                    |
+ * | `info`   | `trace`, `debug`, `info`                            |
+ * | `warn`   | `trace`, `debug`, `info`, `warn`                    |
+ * | `error`  | `trace`, `debug`, `info`, `warn`, `error`           |
+ * | `fatal`  | every level                                         |
+ * | `silent` | nothing — pino suppresses all entries on this child |
  *
  * Values map 1:1 to pino's native level vocabulary — no translation layer.
  *
+ * Exposed as a **const object** so consumers reference levels via importable
+ * identifiers (`LogLevel.Debug`) rather than magic strings, matching the rest
+ * of the pack's namespace/token/scope conventions. The companion `LogLevel`
+ * type resolves to the union of values, so existing call sites passing string
+ * literals still typecheck.
+ *
  * @example
  * ```ts
- * LoggingModule.forRoot({ defaultLevel: "debug" })
+ * import { LogLevel, LoggingModule } from "@neomaventures/logging"
+ *
+ * LoggingModule.forRoot({ defaultLevel: LogLevel.Debug })
  * // ApplicationLogger now emits debug + info + warn + error + fatal
  * ```
  */
-export type LogLevel = "trace" | "debug" | "info" | "warn" | "error" | "fatal"
+export const LogLevel = {
+  Trace: "trace",
+  Debug: "debug",
+  Info: "info",
+  Warn: "warn",
+  Error: "error",
+  Fatal: "fatal",
+  Silent: "silent",
+} as const
+
+export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel]
 
 /**
  * Structured context merged into a log entry.

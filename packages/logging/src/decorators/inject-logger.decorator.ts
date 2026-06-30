@@ -1,7 +1,6 @@
 import { Inject } from "@nestjs/common"
 
 import { ApplicationLogger } from "../services/application-logger"
-import { getLoggerToken } from "../tokens"
 
 /**
  * Parameter decorator that injects a logger.
@@ -43,4 +42,4 @@ import { getLoggerToken } from "../tokens"
  * @see LoggingModule.forFeature
  */
 export const InjectLogger = (namespace?: string): ParameterDecorator =>
-  Inject(namespace ? getLoggerToken(namespace) : ApplicationLogger)
+  Inject(namespace ?? ApplicationLogger)

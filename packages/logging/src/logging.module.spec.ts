@@ -8,9 +8,8 @@ import {
   InjectLogger,
   type Logger,
   LoggingModule,
+  LogLevel,
 } from "@neomaventures/logging"
-
-import { getLoggerToken } from "./tokens"
 
 describe("LoggingModule", () => {
   describe("forRootAsync", () => {
@@ -30,7 +29,7 @@ describe("LoggingModule", () => {
           ],
         }).compile()
 
-        const ns = module.get<Logger>(getLoggerToken(namespace))
+        const ns = module.get<Logger>(namespace)
 
         ns.debug("ns-debug")
 
@@ -70,8 +69,8 @@ describe("LoggingModule", () => {
           ],
         }).compile()
 
-        const fromString = stringModule.get<Logger>(getLoggerToken(namespace))
-        const fromObject = objectModule.get<Logger>(getLoggerToken(namespace))
+        const fromString = stringModule.get<Logger>(namespace)
+        const fromObject = objectModule.get<Logger>(namespace)
 
         expect(fromString).toBeDefined()
         expect(fromObject).toBeDefined()
@@ -85,6 +84,70 @@ describe("LoggingModule", () => {
             msg: "shorthand",
           }),
         ])
+      })
+    })
+  })
+
+  describe("LogLevel.Silent", () => {
+    describe("Given level is LogLevel.Silent in forRoot loggers", () => {
+      it("should emit no log entries for the namespaced logger", async () => {
+        const logs: any[] = []
+        const namespace = `neomaventures:${faker.lorem.word()}`
+
+        const module = await Test.createTestingModule({
+          imports: [
+            LoggingModule.forRoot({
+              destination: new ArrayStream(logs),
+              loggers: [{ namespace, level: LogLevel.Silent }],
+            }),
+            LoggingModule.forFeature([{ namespace }]),
+          ],
+        }).compile()
+
+        const ns = module.get<Logger>(namespace)
+
+        ns.trace("nope")
+        ns.debug("nope")
+        ns.info("nope")
+        ns.warn("nope")
+        ns.error("nope")
+        ns.fatal("nope")
+
+        expect(logs).toEqual([])
+      })
+    })
+  })
+
+  describe("test-time override", () => {
+    describe("Given overrideProvider(namespace).useValue(mockLogger)", () => {
+      it("should substitute the namespaced logger cleanly", async () => {
+        const namespace = `neomaventures:${faker.lorem.word()}`
+        const mockLogger: Logger = {
+          trace: jest.fn(),
+          debug: jest.fn(),
+          info: jest.fn(),
+          warn: jest.fn(),
+          error: jest.fn(),
+          fatal: jest.fn(),
+        }
+
+        const module = await Test.createTestingModule({
+          imports: [
+            LoggingModule.forRoot({ destination: new ArrayStream() }),
+            LoggingModule.forFeature([{ namespace }]),
+          ],
+        })
+          .overrideProvider(namespace)
+          .useValue(mockLogger)
+          .compile()
+
+        const resolved = module.get<Logger>(namespace)
+
+        expect(resolved).toBe(mockLogger)
+
+        resolved.info("via mock", { foo: "bar" })
+
+        expect(mockLogger.info).toHaveBeenCalledWith("via mock", { foo: "bar" })
       })
     })
   })
