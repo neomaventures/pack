@@ -5,10 +5,17 @@ export default defineConfig({
   globalTeardown: "./fixtures/ui/global-teardown.ts",
   testDir: "./ui-specs",
   testMatch: "**/*.ui-spec.ts",
-  fullyParallel: true,
+  // UI specs interact with a process-wide MockServer singleton (see
+  // `@neomaventures/mockserver/fixture`) whose `reset()` clears expectations
+  // for all callers. Running workers in parallel lets one worker's
+  // `beforeEach` reset wipe another worker's just-registered expectations,
+  // causing flaky failures in any spec that exercises the Google OAuth
+  // callback or Gmail flow. Pin to a single worker so expectations stay
+  // owned by the test that registers them.
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: 1,
   reporter: "html",
   use: {
     baseURL: "http://localhost:3000",
