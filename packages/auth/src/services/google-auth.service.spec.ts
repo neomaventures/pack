@@ -432,10 +432,12 @@ registrations.forEach(([name, register]) => {
             AuthApiException,
             {
               endpoint: "/oauth/token",
-              context: expect.objectContaining({
+              context: {
                 provider: "google",
                 phase: "codeExchange",
-              }),
+                tokenEndpoint: googleAuth.tokenEndpoint,
+                errorDescription: "Bad Request",
+              },
             },
           )
         })
@@ -457,10 +459,12 @@ registrations.forEach(([name, register]) => {
             AuthApiException,
             {
               endpoint: "/oauth/token",
-              context: expect.objectContaining({
+              context: {
                 provider: "google",
                 phase: "codeExchange",
-              }),
+                tokenEndpoint: googleAuth.tokenEndpoint,
+                errorDescription: "Bad Request",
+              },
             },
           )
         })
@@ -482,10 +486,11 @@ registrations.forEach(([name, register]) => {
             AuthNetworkException,
             {
               endpoint: "/oauth/token",
-              context: expect.objectContaining({
+              context: {
                 provider: "google",
                 phase: "codeExchange",
-              }),
+                tokenEndpoint: googleAuth.tokenEndpoint,
+              },
             },
           )
         })
@@ -518,11 +523,12 @@ registrations.forEach(([name, register]) => {
           await expect(
             service.authenticate(faker.string.alphanumeric(20)),
           ).rejects.toMatchError(AuthApiException, {
-            context: expect.objectContaining({
+            context: {
               provider: "google",
               phase: "codeExchange",
               missingField: "access_token",
-            }),
+              tokenEndpoint: googleAuth.tokenEndpoint,
+            },
           })
         })
       })
@@ -555,11 +561,12 @@ registrations.forEach(([name, register]) => {
           await expect(
             service.authenticate(faker.string.alphanumeric(20)),
           ).rejects.toMatchError(AuthApiException, {
-            context: expect.objectContaining({
+            context: {
               provider: "google",
               phase: "codeExchange",
               missingField: "expires_in",
-            }),
+              tokenEndpoint: googleAuth.tokenEndpoint,
+            },
           })
         })
       })
@@ -591,11 +598,12 @@ registrations.forEach(([name, register]) => {
           await expect(
             service.authenticate(faker.string.alphanumeric(20)),
           ).rejects.toMatchError(AuthApiException, {
-            context: expect.objectContaining({
+            context: {
               provider: "google",
               phase: "codeExchange",
               missingField: "id_token",
-            }),
+              tokenEndpoint: googleAuth.tokenEndpoint,
+            },
           })
         })
       })
@@ -619,11 +627,12 @@ registrations.forEach(([name, register]) => {
           await expect(service.authenticate(code)).rejects.toMatchError(
             AuthApiException,
             {
-              context: expect.objectContaining({
+              context: {
                 provider: "google",
                 phase: "idTokenDecode",
                 missingClaim: "sub",
-              }),
+                tokenEndpoint: googleAuth.tokenEndpoint,
+              },
             },
           )
         })
@@ -648,11 +657,12 @@ registrations.forEach(([name, register]) => {
           await expect(service.authenticate(code)).rejects.toMatchError(
             AuthApiException,
             {
-              context: expect.objectContaining({
+              context: {
                 provider: "google",
                 phase: "idTokenDecode",
                 missingClaim: "email",
-              }),
+                tokenEndpoint: googleAuth.tokenEndpoint,
+              },
             },
           )
         })
