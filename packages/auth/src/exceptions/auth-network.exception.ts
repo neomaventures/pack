@@ -1,14 +1,6 @@
+import { STATUS_CODES } from "node:http"
+
 import { HttpException, HttpStatus } from "@nestjs/common"
-
-const KNOWN_CODES = [
-  "ECONNRESET",
-  "ETIMEDOUT",
-  "ENOTFOUND",
-  "EAI_AGAIN",
-  "UND_ERR_SOCKET",
-] as const
-
-type KnownCode = (typeof KNOWN_CODES)[number] | "UNKNOWN"
 
 /**
  * Thrown when a network-level failure occurs talking to a downstream
@@ -19,7 +11,10 @@ type KnownCode = (typeof KNOWN_CODES)[number] | "UNKNOWN"
  * response from the upstream (a non-2xx status, or a malformed 2xx). This
  * is for the case where no response was received at all.
  *
- * Returns HTTP 502 Bad Gateway — downstream is unreachable.
+ * Returns HTTP 502 Bad Gateway. The original error is passed through to
+ * `err.cause`; consumers that need the underlying `code`, `message`, or
+ * stack can read them from there (`undici` puts the real socket error at
+ * `err.cause.cause`).
  *
  * @example
  * ```typescript
@@ -35,8 +30,6 @@ type KnownCode = (typeof KNOWN_CODES)[number] | "UNKNOWN"
  * ```
  */
 export class AuthNetworkException extends HttpException {
-  public readonly code: string
-
   /**
    * @param endpoint - The auth API endpoint that was called (use a
    *   templated path like `/oauth/token`)
@@ -50,35 +43,14 @@ export class AuthNetworkException extends HttpException {
     public readonly context: Record<string, unknown>,
     cause: Error,
   ) {
-    const message = "Auth network error"
     super(
       {
         statusCode: HttpStatus.BAD_GATEWAY,
-        message,
+        message: STATUS_CODES[HttpStatus.BAD_GATEWAY],
         error: "AuthNetwork",
       },
       HttpStatus.BAD_GATEWAY,
       { cause },
     )
-    this.code = AuthNetworkException.extractCode(cause)
-  }
-
-  private static extractCode(cause: Error): KnownCode {
-    const nestedCode = (cause as { cause?: { code?: unknown } }).cause?.code
-    if (typeof nestedCode === "string" && this.isKnown(nestedCode)) {
-      return nestedCode
-    }
-    const directCode = (cause as { code?: unknown }).code
-    if (typeof directCode === "string" && this.isKnown(directCode)) {
-      return directCode
-    }
-    if (cause.name === "AbortError") {
-      return "ETIMEDOUT"
-    }
-    return "UNKNOWN"
-  }
-
-  private static isKnown(code: string): code is (typeof KNOWN_CODES)[number] {
-    return (KNOWN_CODES as readonly string[]).includes(code)
   }
 }
