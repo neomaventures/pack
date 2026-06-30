@@ -13,8 +13,8 @@ export { WithMailboxStats } from "./decorators/with-mailbox-stats.decorator"
 export { MailboxStatsInterceptor } from "./interceptors/mailbox-stats.interceptor"
 
 // Interfaces
-export type { MailboxLabelStats } from "./interfaces/mailbox-label-stats"
+export type { MailboxFolderStats } from "./interfaces/mailbox-folder-stats"
 export { type TokenAccessor } from "./interfaces/token-accessor.interface"
 
 // Constants
-export { GMAIL_READONLY_SCOPE, GmailSystemLabel } from "./constants"
+export { GMAIL_READONLY_SCOPE, MailboxFolder } from "./constants"

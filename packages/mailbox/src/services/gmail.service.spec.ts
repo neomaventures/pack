@@ -43,7 +43,7 @@ describe("GmailService", () => {
         })
 
         await expect(service.getStats(token, labelId)).resolves.toEqual({
-          label: labelId,
+          folder: labelId,
           messageCount: messagesTotal,
           unreadCount: messagesUnread,
         })
@@ -63,7 +63,7 @@ describe("GmailService", () => {
         })
 
         await expect(service.getStats(token)).resolves.toEqual({
-          label: "INBOX",
+          folder: "INBOX",
           messageCount: messagesTotal,
           unreadCount: messagesUnread,
         })

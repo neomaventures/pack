@@ -1,6 +1,6 @@
 import { createParamDecorator, type ExecutionContext } from "@nestjs/common"
 
-import { type MailboxLabelStats } from "../interfaces/mailbox-label-stats"
+import { type MailboxFolderStats } from "../interfaces/mailbox-folder-stats"
 
 import { MAILBOX_STATS_METADATA_KEY } from "./with-mailbox-stats.decorator"
 
@@ -27,13 +27,13 @@ import { MAILBOX_STATS_METADATA_KEY } from "./with-mailbox-stats.decorator"
  * ```typescript
  * @Get("stats")
  * @WithMailboxStats()
- * public stats(@MailboxStats() stats: MailboxLabelStats): MailboxLabelStats {
+ * public stats(@MailboxStats() stats: MailboxFolderStats): MailboxFolderStats {
  *   return stats
  * }
  * ```
  */
 export const MailboxStats = createParamDecorator(
-  (_data: unknown, ctx: ExecutionContext): MailboxLabelStats => {
+  (_data: unknown, ctx: ExecutionContext): MailboxFolderStats => {
     const hasWiring = Reflect.getMetadata(
       MAILBOX_STATS_METADATA_KEY,
       ctx.getHandler(),
@@ -45,7 +45,7 @@ export const MailboxStats = createParamDecorator(
     }
     const stats = ctx
       .switchToHttp()
-      .getRequest<{ mailboxStats?: MailboxLabelStats }>().mailboxStats
+      .getRequest<{ mailboxStats?: MailboxFolderStats }>().mailboxStats
     if (!stats) {
       throw new Error(
         "MailboxStats invariant violated — @WithMailboxStats() is applied but the interceptor did not populate req.mailboxStats. This indicates a mailbox bug.",

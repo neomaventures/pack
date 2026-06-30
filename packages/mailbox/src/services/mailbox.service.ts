@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common"
 
-import { GMAIL_READONLY_SCOPE, GmailSystemLabel } from "../constants"
-import { type MailboxLabelStats } from "../interfaces/mailbox-label-stats"
+import { GMAIL_READONLY_SCOPE, MailboxFolder } from "../constants"
+import { type MailboxFolderStats } from "../interfaces/mailbox-folder-stats"
 import { type TokenAccessor } from "../interfaces/token-accessor.interface"
 import { TOKEN_ACCESSOR } from "../mailbox.options"
 
@@ -12,7 +12,8 @@ import { GmailService } from "./gmail.service"
  *
  * Resolves an OAuth access token via the consumer-supplied
  * {@link TokenAccessor} class, then delegates to {@link GmailService} for
- * the live Gmail label fetch. No caching — every call hits the Gmail API.
+ * the live folder-stats fetch. No caching — every call hits the upstream
+ * provider.
  *
  * Mailbox is account-agnostic: `getStats()` takes no principal. The
  * consumer's `TokenAccessor` resolves "for whom" internally via ambient
@@ -43,13 +44,16 @@ export class MailboxService {
   ) {}
 
   /**
-   * Fetches Gmail stats for the mailbox connected to the current request.
+   * Fetch stats for a folder. Defaults to {@link MailboxFolder.Inbox}.
    *
    * Requests a token via {@link TokenAccessor.getToken} with the
    * `gmail.readonly` scope, then calls {@link GmailService.getStats} for
-   * the configured label (defaults to {@link GmailSystemLabel.Inbox}).
+   * the requested folder. The folder identifier is currently treated as a
+   * Gmail label ID under the hood.
    *
-   * @returns Message + unread counts for the inbox.
+   * @param folder - The folder to fetch stats for. Defaults to
+   *   {@link MailboxFolder.Inbox}.
+   * @returns Message + unread counts for the folder.
    *
    * @throws {MailboxApiException} Surfaced from `GmailService` when Gmail
    *   responds with a non-2xx status.
@@ -59,11 +63,13 @@ export class MailboxService {
    * @example
    * ```typescript
    * const stats = await mailbox.getStats()
-   * // => { label: "INBOX", messageCount: 1234, unreadCount: 5 }
+   * // => { folder: "INBOX", messageCount: 1234, unreadCount: 5 }
    * ```
    */
-  public async getStats(): Promise<MailboxLabelStats> {
+  public async getStats(
+    folder: MailboxFolder | string = MailboxFolder.Inbox,
+  ): Promise<MailboxFolderStats> {
     const token = await this.tokenAccessor.getToken(GMAIL_READONLY_SCOPE)
-    return this.gmailService.getStats(token, GmailSystemLabel.Inbox)
+    return this.gmailService.getStats(token, folder)
   }
 }

@@ -27,15 +27,16 @@ export const GMAIL_API_BASE_URL = Symbol("GMAIL_API_BASE_URL")
 export const GMAIL_API_BASE_URL_DEFAULT = "https://gmail.googleapis.com"
 
 /**
- * Gmail's built-in system labels. These IDs are stable across all Gmail
- * accounts and are documented at
+ * Well-known mailbox folders. Values map to the underlying provider's
+ * identifiers — currently Gmail label IDs, which are stable across all
+ * Gmail accounts and documented at
  * https://developers.google.com/gmail/api/guides/labels.
  *
- * Exported as a string enum so consumers can refer to system labels by
- * name (`GmailSystemLabel.Inbox`) while the underlying string value
- * stays the literal Gmail expects (`"INBOX"`).
+ * Exported as a string enum so consumers can refer to folders by name
+ * (`MailboxFolder.Inbox`) while the underlying string value stays the
+ * literal the wire expects today (`"INBOX"`).
  */
-export enum GmailSystemLabel {
+export enum MailboxFolder {
   Inbox = "INBOX",
   Sent = "SENT",
   Draft = "DRAFT",

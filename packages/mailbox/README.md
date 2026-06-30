@@ -140,7 +140,7 @@ goes away.
 ```typescript
 import { ExceptionHandlerModule } from "@neomaventures/exceptions"
 import {
-  type MailboxLabelStats,
+  type MailboxFolderStats,
   MailboxStats,
   WithMailboxStats,
 } from "@neomaventures/mailbox"
@@ -150,7 +150,7 @@ import { Controller, Get, Module } from "@nestjs/common"
 export class ProfileController {
   @Get("inbox")
   @WithMailboxStats()
-  public inbox(@MailboxStats() stats: MailboxLabelStats): MailboxLabelStats {
+  public inbox(@MailboxStats() stats: MailboxFolderStats): MailboxFolderStats {
     return stats
   }
 }
@@ -183,7 +183,7 @@ export class MailboxController {
   // Whatever auth strategy your app uses
   @Get("stats")
   public async stats(): Promise<{
-    label: string
+    folder: string
     messageCount: number
     unreadCount: number
   }> {
@@ -249,7 +249,7 @@ are unaffected:
 
 ```typescript
 import {
-  type MailboxLabelStats,
+  type MailboxFolderStats,
   MailboxStats,
   WithMailboxStats,
 } from "@neomaventures/mailbox"
@@ -259,7 +259,7 @@ import { Controller, Get } from "@nestjs/common"
 export class ProfileController {
   @Get("inbox")
   @WithMailboxStats()
-  public inbox(@MailboxStats() stats: MailboxLabelStats): MailboxLabelStats {
+  public inbox(@MailboxStats() stats: MailboxFolderStats): MailboxFolderStats {
     return stats
   }
 }
@@ -315,8 +315,9 @@ points straight at the fix.
 ## Constants
 
 - `GMAIL_READONLY_SCOPE` — the Gmail OAuth scope mailbox requires.
-- `GmailSystemLabel` enum — Gmail's well-known label IDs (`Inbox`, `Sent`,
-  `Draft`, `Trash`, `Spam`, `Starred`, `Important`, `Unread`).
+- `MailboxFolder` enum — well-known folder identifiers (`Inbox`, `Sent`,
+  `Draft`, `Trash`, `Spam`, `Starred`, `Important`, `Unread`). Values map
+  to the underlying provider's identifiers (currently Gmail label IDs).
 
 ## What this slice does **not** ship
 

@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker"
 import { Test, type TestingModule } from "@nestjs/testing"
 
-import { GMAIL_READONLY_SCOPE, GmailSystemLabel } from "../constants"
+import { GMAIL_READONLY_SCOPE, MailboxFolder } from "../constants"
 import { type TokenAccessor } from "../interfaces/token-accessor.interface"
 import { TOKEN_ACCESSOR } from "../mailbox.options"
 
@@ -9,7 +9,7 @@ import { GmailService } from "./gmail.service"
 import { MailboxService } from "./mailbox.service"
 
 const token = faker.string.alphanumeric(40)
-const labelId = GmailSystemLabel.Inbox
+const folder = MailboxFolder.Inbox
 const messageCount = faker.number.int({ min: 1, max: 10000 })
 const unreadCount = faker.number.int({ min: 0, max: 500 })
 
@@ -23,7 +23,7 @@ describe("MailboxService", () => {
     gmailService = {
       getStats: jest
         .fn()
-        .mockResolvedValue({ label: labelId, messageCount, unreadCount }),
+        .mockResolvedValue({ folder, messageCount, unreadCount }),
     }
 
     getTokenSpy = jest.fn().mockResolvedValue(token)
@@ -48,21 +48,31 @@ describe("MailboxService", () => {
         expect(getTokenSpy).toHaveBeenCalledWith(GMAIL_READONLY_SCOPE)
       })
 
-      it("should delegate to GmailService.getStats with the resolved token and INBOX label", async () => {
+      it("should delegate to GmailService.getStats with the resolved token and INBOX folder", async () => {
         await service.getStats()
 
         expect(gmailService.getStats).toHaveBeenCalledWith(
           token,
-          GmailSystemLabel.Inbox,
+          MailboxFolder.Inbox,
         )
       })
 
       it("should return the stats from GmailService unchanged", async () => {
         await expect(service.getStats()).resolves.toEqual({
-          label: labelId,
+          folder,
           messageCount,
           unreadCount,
         })
+      })
+    })
+
+    describe("Given an explicit folder argument", () => {
+      it("should pass the folder through to GmailService.getStats", async () => {
+        const customFolder = faker.string.alphanumeric(10)
+
+        await service.getStats(customFolder)
+
+        expect(gmailService.getStats).toHaveBeenCalledWith(token, customFolder)
       })
     })
   })

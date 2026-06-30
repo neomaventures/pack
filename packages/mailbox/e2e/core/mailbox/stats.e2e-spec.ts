@@ -20,7 +20,7 @@ describe("GET /mailbox/stats", () => {
     app = await managedAppInstance()
   })
 
-  describe("When Gmail returns label stats", () => {
+  describe("When Gmail returns folder stats", () => {
     it("should respond with HTTP 200 and the renamed shape", async () => {
       const token = faker.string.alphanumeric(40)
       const messagesTotal = faker.number.int({ min: 1, max: 10000 })
@@ -41,7 +41,7 @@ describe("GET /mailbox/stats", () => {
         .get("/mailbox/stats")
         .expect(OK)
         .expect({
-          label: "INBOX",
+          folder: "INBOX",
           messageCount: messagesTotal,
           unreadCount: messagesUnread,
         })
