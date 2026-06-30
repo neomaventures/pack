@@ -4,8 +4,7 @@ import { GMAIL_READONLY_SCOPE, MailboxFolder } from "../constants"
 import { type MailboxFolderStats } from "../interfaces/mailbox-folder-stats"
 import { type TokenAccessor } from "../interfaces/token-accessor.interface"
 import { TOKEN_ACCESSOR } from "../mailbox.options"
-
-import { GmailService } from "./gmail.service"
+import { GmailService } from "../providers/gmail/gmail.service"
 
 /**
  * Public mailbox surface.

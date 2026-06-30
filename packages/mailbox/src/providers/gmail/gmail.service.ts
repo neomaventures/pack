@@ -1,9 +1,11 @@
 import { HttpException, Inject, Injectable } from "@nestjs/common"
 
-import { GMAIL_API_BASE_URL, MailboxFolder } from "../constants"
-import { MailboxApiException } from "../exceptions/mailbox-api.exception"
-import { MailboxNetworkException } from "../exceptions/mailbox-network.exception"
-import { type MailboxFolderStats } from "../interfaces/mailbox-folder-stats"
+import { MailboxFolder } from "../../constants"
+import { MailboxApiException } from "../../exceptions/mailbox-api.exception"
+import { MailboxNetworkException } from "../../exceptions/mailbox-network.exception"
+import { type MailboxFolderStats } from "../../interfaces/mailbox-folder-stats"
+
+import { GMAIL_API_BASE_URL } from "./constants"
 
 const LABELS_ENDPOINT = "/gmail/v1/users/me/labels/{labelId}"
 

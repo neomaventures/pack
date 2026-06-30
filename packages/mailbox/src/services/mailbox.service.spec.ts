@@ -4,8 +4,8 @@ import { Test, type TestingModule } from "@nestjs/testing"
 import { GMAIL_READONLY_SCOPE, MailboxFolder } from "../constants"
 import { type TokenAccessor } from "../interfaces/token-accessor.interface"
 import { TOKEN_ACCESSOR } from "../mailbox.options"
+import { GmailService } from "../providers/gmail/gmail.service"
 
-import { GmailService } from "./gmail.service"
 import { MailboxService } from "./mailbox.service"
 
 const token = faker.string.alphanumeric(40)
