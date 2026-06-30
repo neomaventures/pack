@@ -46,7 +46,7 @@ npm install @neomaventures/mailbox
 ### Peer dependencies
 
 ```bash
-npm install @nestjs/common @nestjs/core
+npm install @nestjs/common @nestjs/core typeorm
 ```
 
 ## Getting started
@@ -119,35 +119,38 @@ Use `forRootAsync` when you need to inject a config service.
 
 Two paths — pick the one that fits.
 
-#### Path A — `@MailboxStats()` param decorator (recommended)
+#### Path A — `@WithMailboxStats()` + `@MailboxStats()` (recommended)
 
-Mount `MailboxStatsMiddleware` on the routes that need stats, then read
-the resolved value with the `@MailboxStats()` decorator. The middleware
-fetches stats and throws `MailboxApiException` / `MailboxNetworkException`
-on failure. Pair with [`@neomaventures/exceptions`][exc]' global
-`errorTemplates` to render a friendly error UI on those exceptions.
+Apply `@WithMailboxStats()` to the routes that need stats, then inject
+the resolved value into a handler parameter with `@MailboxStats()`.
+`@WithMailboxStats()` attaches an interceptor that fetches stats and
+throws `MailboxApiException` / `MailboxNetworkException` on failure.
+Pair with [`@neomaventures/exceptions`][exc]' global `errorTemplates` to
+render a friendly error UI on those exceptions.
 
 [exc]: ../exceptions
+
+`@MailboxStats()` reads `req.mailboxStats`. If `@WithMailboxStats()`
+wasn't applied to the route, `req.mailboxStats` is `undefined` and the
+decorator throws a plain `Error` naming the likely fix (apply
+`@WithMailboxStats()`). This is a programmer-error signal, not a runtime
+exception your app should catch — apply the decorator and the error
+goes away.
 
 ```typescript
 import { ExceptionHandlerModule } from "@neomaventures/exceptions"
 import {
-  GmailLabelStats,
+  type MailboxFolderStats,
   MailboxStats,
-  MailboxStatsMiddleware,
+  WithMailboxStats,
 } from "@neomaventures/mailbox"
-import {
-  Controller,
-  Get,
-  MiddlewareConsumer,
-  Module,
-  NestModule,
-} from "@nestjs/common"
+import { Controller, Get, Module } from "@nestjs/common"
 
 @Controller("profile")
 export class ProfileController {
   @Get("inbox")
-  public inbox(@MailboxStats() stats: GmailLabelStats): GmailLabelStats {
+  @WithMailboxStats()
+  public inbox(@MailboxStats() stats: MailboxFolderStats): MailboxFolderStats {
     return stats
   }
 }
@@ -164,11 +167,7 @@ export class ProfileController {
   ],
   controllers: [ProfileController],
 })
-export class ProfileModule implements NestModule {
-  public configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(MailboxStatsMiddleware).forRoutes("profile/inbox")
-  }
-}
+export class ProfileModule {}
 ```
 
 #### Path B — call `MailboxService.getStats()` directly
@@ -184,6 +183,7 @@ export class MailboxController {
   // Whatever auth strategy your app uses
   @Get("stats")
   public async stats(): Promise<{
+    folder: string
     messageCount: number
     unreadCount: number
   }> {
@@ -197,31 +197,127 @@ Either way, `getStats` calls the Gmail Labels API
 v0.1.0. The `TokenAccessor` is invoked with `GMAIL_READONLY_SCOPE` before
 the call so the freshest available token is used.
 
-## Exceptions
+## Failure modes
 
-- `MailboxApiException` — thrown when Gmail returns a non-2xx. Always
-  collapses to `502 Bad Gateway` regardless of upstream status. Wire
-  response is minimal and package-named —
-  `{ statusCode: 502, message: "Bad Gateway", error: "MailboxApi" }` —
-  so the wire never discloses which upstream provider the package uses
-  today, nor the upstream status. Debug fields (`endpoint`, `context`,
-  `cause`) live on the instance for server-side logs only; the raw
-  upstream status and body are preserved on the `cause` (an
-  `HttpException`) via `cause.getStatus()` / `cause.getResponse()`.
-- `MailboxNetworkException` — thrown when `fetch()` rejects (DNS, TCP,
-  timeout, connection dropped). Returns `502 Bad Gateway` with the
-  package-named wire shape
-  `{ statusCode: 502, message: "Bad Gateway", error: "MailboxNetwork" }`.
+Mailbox surfaces two kinds of failure from `MailboxStatsInterceptor`,
+and one programmer-error signal from `@MailboxStats()`. This section
+covers what each one is, where the interceptor is applied, and how to
+render the runtime exceptions via `@neomaventures/exceptions`.
 
-Both exceptions set `this.name` to their class name so they can be keyed
-in `@neomaventures/exceptions`' `errorTemplates` map (e.g.
-`{ MailboxApiException: "errors/mailbox" }`).
+### What the interceptor throws
+
+`MailboxStatsInterceptor` calls Gmail on every request to a route
+decorated with `@WithMailboxStats()`. On failure it throws one of:
+
+- **`MailboxApiException`** — Gmail responded with a non-2xx status.
+- **`MailboxNetworkException`** — `fetch()` rejected (DNS, TCP, timeout,
+  connection dropped); no response was received.
+
+Both **always** return HTTP `502 Bad Gateway` regardless of what Gmail
+did. Both wire shapes are deliberately opaque so the wire never
+discloses which upstream provider the package uses today, nor the
+upstream status:
+
+```jsonc
+// MailboxApiException
+{ "statusCode": 502, "message": "Bad Gateway", "error": "MailboxApi" }
+
+// MailboxNetworkException
+{ "statusCode": 502, "message": "Bad Gateway", "error": "MailboxNetwork" }
+```
+
+The `error` field is a stable discriminator a template or log handler
+can branch on. Server-side debug fields live on the instance, not the
+wire:
+
+- `endpoint` — the templated Gmail path that failed
+  (`/gmail/v1/users/me/labels/{labelId}`)
+- `context` — per-endpoint identifiers (`{ labelId }`)
+- `cause` — the underlying error, chained via `Error`'s native `cause`
+  so stacks compose. For `MailboxApiException`, `cause` is an
+  `HttpException` whose `cause.getStatus()` reports the upstream Gmail
+  status and `cause.getResponse()` carries the raw upstream body. For
+  `MailboxNetworkException`, `cause` is the original rejected `fetch()`
+  error (with `undici` placing the real socket error at `cause.cause`).
+
+### Where the interceptor is applied
+
+The consumer chooses which routes need stats by applying
+`@WithMailboxStats()` to the handler. Only routes that opt in pay the
+Gmail round-trip — there is no global registration, so unrelated routes
+are unaffected:
+
+```typescript
+import {
+  type MailboxFolderStats,
+  MailboxStats,
+  WithMailboxStats,
+} from "@neomaventures/mailbox"
+import { Controller, Get } from "@nestjs/common"
+
+@Controller("profile")
+export class ProfileController {
+  @Get("inbox")
+  @WithMailboxStats()
+  public inbox(@MailboxStats() stats: MailboxFolderStats): MailboxFolderStats {
+    return stats
+  }
+}
+```
+
+### Rendering interceptor-thrown exceptions
+
+Wire a global fallback via `@neomaventures/exceptions`'
+`ExceptionHandlerModule.forRoot({ errorTemplates })` (see
+[`@neomaventures/exceptions`][exc]). The filter resolves
+most-specific-first: exception class name → HTTP status → `default`.
+Both forms work for mailbox:
+
+```typescript
+import { ExceptionHandlerModule } from "@neomaventures/exceptions"
+
+ExceptionHandlerModule.forRoot({
+  errorTemplates: {
+    // Status-keyed (catches both mailbox exceptions and any other 502)
+    502: "errors/upstream",
+    // Or class-keyed if you want a mailbox-specific page
+    MailboxApiException: "errors/mailbox",
+    MailboxNetworkException: "errors/mailbox",
+    default: "errors/generic",
+  },
+})
+```
+
+The `error` field (`"MailboxApi"` / `"MailboxNetwork"`) is available to
+the template if a single page wants to branch per failure type. A log
+handler that needs upstream detail reads it from the cause chain —
+`err.cause.getStatus()` and `err.cause.getResponse()` for
+`MailboxApiException`, `err.cause` (and `err.cause.cause` for the OS
+errno under `undici`) for `MailboxNetworkException`. Never expose those
+to the client; that's why they live on the instance, not the wire.
+
+### `@MailboxStats()`'s plain `Error` is a wiring bug, not a runtime
+condition
+
+If you use `@MailboxStats()` on a handler that doesn't also have
+`@WithMailboxStats()` applied, the decorator throws:
+
+```
+Error: MailboxStats is not available — did you apply @WithMailboxStats() to this route?
+```
+
+This is a programmer-error signal — the fix is to apply
+`@WithMailboxStats()` to the handler, not to catch the error. Do **not**
+add a `500` or `Error` entry to `errorTemplates` to paper over it. The
+exception surfaces on the first request to the misconfigured route and
+points straight at the fix.
 
 ## Constants
 
 - `GMAIL_READONLY_SCOPE` — the Gmail OAuth scope mailbox requires.
-- `GmailSystemLabel` enum — Gmail's well-known label IDs (`Inbox`, `Sent`,
-  `Draft`, `Trash`, `Spam`, `Starred`, `Important`, `Unread`).
+- `MailboxFolder` enum — well-known folder identifiers (`Inbox`, `Sent`,
+  `Draft`, `Trash`, `Spam`, `Starred`, `Important`, `Unread`). Values map
+  to the underlying provider's identifiers (currently Gmail label IDs).
 
 ## What this slice does **not** ship
 

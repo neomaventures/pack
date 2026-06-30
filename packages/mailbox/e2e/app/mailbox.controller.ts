@@ -1,11 +1,16 @@
 import { Controller, Get } from "@nestjs/common"
 
-import { type GmailLabelStats, MailboxStats } from "@neomaventures/mailbox"
+import {
+  type MailboxFolderStats,
+  MailboxStats,
+  WithMailboxStats,
+} from "@neomaventures/mailbox"
 
 @Controller("mailbox")
 export class MailboxController {
   @Get("stats")
-  public stats(@MailboxStats() stats: GmailLabelStats): GmailLabelStats {
+  @WithMailboxStats()
+  public stats(@MailboxStats() stats: MailboxFolderStats): MailboxFolderStats {
     return stats
   }
 }

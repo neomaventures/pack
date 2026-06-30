@@ -1,13 +1,16 @@
 import { ConfigurableModuleBuilder } from "@nestjs/common"
 
-import { GMAIL_API_BASE_URL, GMAIL_API_BASE_URL_DEFAULT } from "./constants"
 import {
   type MailboxOptionsBase,
   type ResolvedMailboxOptions,
   MAILBOX_OPTIONS,
   RESOLVED_MAILBOX_OPTIONS,
 } from "./mailbox.options"
-import { GmailService } from "./services/gmail.service"
+import {
+  GMAIL_API_BASE_URL,
+  GMAIL_API_BASE_URL_DEFAULT,
+} from "./providers/gmail/constants"
+import { GmailService } from "./providers/gmail/gmail.service"
 import { MailboxService } from "./services/mailbox.service"
 
 const MAILBOX_PROVIDERS = [GmailService, MailboxService]

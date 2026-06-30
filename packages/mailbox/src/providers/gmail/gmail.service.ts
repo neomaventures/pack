@@ -1,25 +1,13 @@
 import { HttpException, Inject, Injectable } from "@nestjs/common"
 
-import { GMAIL_API_BASE_URL, GmailSystemLabel } from "../constants"
-import { MailboxApiException } from "../exceptions/mailbox-api.exception"
-import { MailboxNetworkException } from "../exceptions/mailbox-network.exception"
+import { MailboxFolder } from "../../constants"
+import { MailboxApiException } from "../../exceptions/mailbox-api.exception"
+import { MailboxNetworkException } from "../../exceptions/mailbox-network.exception"
+import { type MailboxFolderStats } from "../../interfaces/mailbox-folder-stats"
+
+import { GMAIL_API_BASE_URL } from "./constants"
 
 const LABELS_ENDPOINT = "/gmail/v1/users/me/labels/{labelId}"
-
-/**
- * Stats for a single Gmail label, as returned by `GmailService.getStats`.
- *
- * Vocabulary is intentionally renamed from Gmail's `messagesTotal` /
- * `messagesUnread` to `messageCount` / `unreadCount` — mailbox uses the
- * latter as its public stats shape, and `GmailService` is the boundary
- * where that translation happens.
- */
-export type GmailLabelStats = {
-  /** Total message count for the label */
-  messageCount: number
-  /** Unread message count for the label */
-  unreadCount: number
-}
 
 /**
  * Internal Gmail REST client.
@@ -45,8 +33,9 @@ export class GmailService {
    * vocabulary (`messageCount` / `unreadCount`).
    *
    * @param token - A Gmail OAuth access token covering `gmail.readonly`
-   * @param labelId - A {@link GmailSystemLabel} or a user-defined label
-   *   ID (e.g. `Label_123`). Defaults to {@link GmailSystemLabel.Inbox}.
+   * @param labelId - A Gmail label ID. The public {@link MailboxFolder}
+   *   enum values double as label IDs at this boundary. Defaults to
+   *   {@link MailboxFolder.Inbox}.
    * @returns The label's message + unread counts
    * @throws {MailboxApiException} When Gmail responds with a non-2xx status.
    *   Upstream `401` and `404` are surfaced verbatim; everything else
@@ -57,13 +46,13 @@ export class GmailService {
    * @example
    * ```typescript
    * const stats = await gmail.getStats(token)
-   * // => { messageCount: 1234, unreadCount: 5 }
+   * // => { folder: "INBOX", messageCount: 1234, unreadCount: 5 }
    * ```
    */
   public async getStats(
     token: string,
-    labelId: GmailSystemLabel | string = GmailSystemLabel.Inbox,
-  ): Promise<GmailLabelStats> {
+    labelId: MailboxFolder | string = MailboxFolder.Inbox,
+  ): Promise<MailboxFolderStats> {
     const url = `${this.baseUrl}/gmail/v1/users/me/labels/${encodeURIComponent(labelId)}`
     let response: Response
     try {
@@ -99,6 +88,7 @@ export class GmailService {
     }
 
     return {
+      folder: labelId,
       messageCount: body.messagesTotal ?? 0,
       unreadCount: body.messagesUnread ?? 0,
     }

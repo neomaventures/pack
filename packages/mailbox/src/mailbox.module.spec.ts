@@ -3,9 +3,12 @@ import { Test } from "@nestjs/testing"
 
 import { StubTokenAccessor } from "../fixtures/token-accessors/stub.token-accessor"
 
-import { GMAIL_API_BASE_URL, GMAIL_API_BASE_URL_DEFAULT } from "./constants"
 import { MailboxModule } from "./mailbox.module"
 import { RESOLVED_MAILBOX_OPTIONS } from "./mailbox.options"
+import {
+  GMAIL_API_BASE_URL,
+  GMAIL_API_BASE_URL_DEFAULT,
+} from "./providers/gmail/constants"
 
 describe("MailboxModule", () => {
   describe("forRootAsync", () => {

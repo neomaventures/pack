@@ -4,10 +4,10 @@ import { mockserver } from "@neomaventures/mockserver/fixture"
 import { HttpStatus } from "@nestjs/common"
 import { Test, type TestingModule } from "@nestjs/testing"
 
-import { GMAIL_API_BASE_URL } from "../constants"
-import { MailboxApiException } from "../exceptions/mailbox-api.exception"
-import { MailboxNetworkException } from "../exceptions/mailbox-network.exception"
+import { MailboxApiException } from "../../exceptions/mailbox-api.exception"
+import { MailboxNetworkException } from "../../exceptions/mailbox-network.exception"
 
+import { GMAIL_API_BASE_URL } from "./constants"
 import { GmailService } from "./gmail.service"
 
 const gmailClient = new GmailClient(mockserver)
@@ -43,6 +43,7 @@ describe("GmailService", () => {
         })
 
         await expect(service.getStats(token, labelId)).resolves.toEqual({
+          folder: labelId,
           messageCount: messagesTotal,
           unreadCount: messagesUnread,
         })
@@ -62,6 +63,7 @@ describe("GmailService", () => {
         })
 
         await expect(service.getStats(token)).resolves.toEqual({
+          folder: "INBOX",
           messageCount: messagesTotal,
           unreadCount: messagesUnread,
         })
