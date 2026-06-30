@@ -39,17 +39,17 @@ describe("MailboxStatsDecorator", () => {
     factory = args[Object.keys(args)[0]].factory
   })
 
-  describe("Given the middleware has populated req.mailboxStats", () => {
+  describe("Given the interceptor has populated req.mailboxStats", () => {
     it("should return the stats from the request", () => {
       expect(factory(null, buildContext({ mailboxStats: stats }))).toBe(stats)
     })
   })
 
   describe("Given req.mailboxStats is undefined", () => {
-    it("should throw an Error pointing at the missing middleware wiring", () => {
+    it("should throw an Error pointing at the missing @WithMailboxStats() wiring", () => {
       expect(() => factory(null, buildContext({}))).toThrowMatching(Error, {
         message:
-          "MailboxStats is not available — did you install MailboxStatsMiddleware on this route?",
+          "MailboxStats is not available — did you apply @WithMailboxStats() to this route?",
       })
     })
   })
