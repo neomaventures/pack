@@ -37,14 +37,13 @@ describe("GET /mailbox/stats", () => {
         }),
       })
 
-      const { body } = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .get("/mailbox/stats")
         .expect(OK)
-
-      expect(body).toEqual({
-        messageCount: messagesTotal,
-        unreadCount: messagesUnread,
-      })
+        .expect({
+          messageCount: messagesTotal,
+          unreadCount: messagesUnread,
+        })
     })
   })
 
@@ -63,15 +62,14 @@ describe("GET /mailbox/stats", () => {
           message,
         })
 
-        const { body } = await request(app.getHttpServer())
+        await request(app.getHttpServer())
           .get("/mailbox/stats")
           .expect(BAD_GATEWAY)
-
-        expect(body).toEqual({
-          statusCode: BAD_GATEWAY,
-          message: "Bad Gateway",
-          error: "MailboxApi",
-        })
+          .expect({
+            statusCode: BAD_GATEWAY,
+            message: "Bad Gateway",
+            error: "MailboxApi",
+          })
       })
     },
   )
@@ -86,15 +84,14 @@ describe("GET /mailbox/stats", () => {
         token,
       })
 
-      const { body } = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .get("/mailbox/stats")
         .expect(BAD_GATEWAY)
-
-      expect(body).toEqual({
-        statusCode: BAD_GATEWAY,
-        message: "Bad Gateway",
-        error: "MailboxNetwork",
-      })
+        .expect({
+          statusCode: BAD_GATEWAY,
+          message: "Bad Gateway",
+          error: "MailboxNetwork",
+        })
     })
   })
 
