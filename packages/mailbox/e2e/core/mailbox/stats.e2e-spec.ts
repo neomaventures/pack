@@ -41,7 +41,7 @@ describe("GET /mailbox/stats", () => {
         .get("/mailbox/stats")
         .expect(OK)
         .expect({
-          labelId: "INBOX",
+          label: "INBOX",
           messageCount: messagesTotal,
           unreadCount: messagesUnread,
         })

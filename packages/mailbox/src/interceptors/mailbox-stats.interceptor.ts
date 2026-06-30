@@ -7,12 +7,12 @@ import {
 import { type Request } from "express"
 import { type Observable } from "rxjs"
 
-import { type MailboxStats } from "../interfaces/mailbox-stats"
+import { type MailboxLabelStats } from "../interfaces/mailbox-label-stats"
 import { MailboxService } from "../services/mailbox.service"
 
 declare module "express" {
   interface Request {
-    mailboxStats?: MailboxStats
+    mailboxStats?: MailboxLabelStats
   }
 }
 

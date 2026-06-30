@@ -7,14 +7,16 @@
  * provider adapters (IMAP, Microsoft Graph, etc.) translate their own
  * native shapes into the same fields.
  */
-export type MailboxStats = {
+export type MailboxLabelStats = {
   /**
-   * The Gmail label ID these stats are for (e.g. `INBOX`, `SENT`, or a
-   * custom user label like `Label_42`). Stable identifier — consumers
-   * should compare against `GmailSystemLabel` enum values rather than
-   * display names.
+   * Identifier of the Gmail label these stats describe (e.g. `INBOX`,
+   * `SENT`, or a custom label ID like `Label_42`). Stable identifier —
+   * compare against `GmailSystemLabel` enum values rather than display
+   * names. May widen to `string | MailboxLabel` (rich metadata) in a
+   * future minor; consumers branching on the string today will need a
+   * `typeof` narrow at that point.
    */
-  labelId: string
+  label: string
   /** Total message count for the label */
   messageCount: number
   /** Unread message count for the label */

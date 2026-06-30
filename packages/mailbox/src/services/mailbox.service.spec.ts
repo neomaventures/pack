@@ -23,7 +23,7 @@ describe("MailboxService", () => {
     gmailService = {
       getStats: jest
         .fn()
-        .mockResolvedValue({ labelId, messageCount, unreadCount }),
+        .mockResolvedValue({ label: labelId, messageCount, unreadCount }),
     }
 
     getTokenSpy = jest.fn().mockResolvedValue(token)
@@ -59,7 +59,7 @@ describe("MailboxService", () => {
 
       it("should return the stats from GmailService unchanged", async () => {
         await expect(service.getStats()).resolves.toEqual({
-          labelId,
+          label: labelId,
           messageCount,
           unreadCount,
         })
