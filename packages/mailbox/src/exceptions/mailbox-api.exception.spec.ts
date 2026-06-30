@@ -6,7 +6,14 @@ import { MailboxApiException } from "./mailbox-api.exception"
 describe("MailboxApiException", () => {
   const endpoint = "/gmail/v1/users/me/labels/{labelId}"
 
-  describe("Given an upstream 401", () => {
+  describe.each([
+    HttpStatus.UNAUTHORIZED,
+    HttpStatus.NOT_FOUND,
+    HttpStatus.INTERNAL_SERVER_ERROR,
+    HttpStatus.BAD_GATEWAY,
+    HttpStatus.SERVICE_UNAVAILABLE,
+    HttpStatus.TOO_MANY_REQUESTS,
+  ])("Given an upstream status of %i", (upstreamStatus) => {
     const labelId = faker.string.alphanumeric(10)
     const message = faker.lorem.sentence()
     let cause: HttpException
@@ -14,8 +21,8 @@ describe("MailboxApiException", () => {
 
     beforeEach(() => {
       cause = new HttpException(
-        { statusCode: HttpStatus.UNAUTHORIZED, message },
-        HttpStatus.UNAUTHORIZED,
+        { statusCode: upstreamStatus, message },
+        upstreamStatus,
       )
       exception = new MailboxApiException(endpoint, { labelId }, cause)
     })
@@ -32,42 +39,13 @@ describe("MailboxApiException", () => {
       expect(exception.cause).toBe(cause)
     })
 
-    it("should return HTTP 401 Unauthorized", () => {
-      expect(exception.getStatus()).toBe(HttpStatus.UNAUTHORIZED)
+    it("should return HTTP 502 Bad Gateway regardless of upstream", () => {
+      expect(exception.getStatus()).toBe(HttpStatus.BAD_GATEWAY)
     })
 
     it("should produce the minimal wire response shape", () => {
       expect(exception.getResponse()).toEqual({
-        statusCode: HttpStatus.UNAUTHORIZED,
-        message,
-        error: "MailboxApi",
-      })
-    })
-  })
-
-  describe("Given an upstream 404", () => {
-    const labelId = faker.string.alphanumeric(10)
-    const message = faker.lorem.sentence()
-    let exception: MailboxApiException
-
-    beforeEach(() => {
-      exception = new MailboxApiException(
-        endpoint,
-        { labelId },
-        new HttpException(
-          { statusCode: HttpStatus.NOT_FOUND, message },
-          HttpStatus.NOT_FOUND,
-        ),
-      )
-    })
-
-    it("should return HTTP 404 Not Found", () => {
-      expect(exception.getStatus()).toBe(HttpStatus.NOT_FOUND)
-    })
-
-    it("should produce the minimal wire response shape", () => {
-      expect(exception.getResponse()).toEqual({
-        statusCode: HttpStatus.NOT_FOUND,
+        statusCode: HttpStatus.BAD_GATEWAY,
         message,
         error: "MailboxApi",
       })
@@ -91,22 +69,4 @@ describe("MailboxApiException", () => {
       expect(exception.name).toBe("MailboxApiException")
     })
   })
-
-  describe.each([500, 502, 503, 429, 418, 200])(
-    "Given an upstream %i",
-    (upstreamStatus) => {
-      it("should map to HTTP 502 Bad Gateway", () => {
-        const exception = new MailboxApiException(
-          endpoint,
-          { labelId: faker.string.alphanumeric(10) },
-          new HttpException(
-            { statusCode: upstreamStatus, message: faker.lorem.sentence() },
-            upstreamStatus,
-          ),
-        )
-
-        expect(exception.getStatus()).toBe(HttpStatus.BAD_GATEWAY)
-      })
-    },
-  )
 })

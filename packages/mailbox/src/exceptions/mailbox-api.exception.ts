@@ -10,11 +10,12 @@ import { HttpException, HttpStatus } from "@nestjs/common"
  * upstream Gmail status and whose response carries the raw upstream
  * body for diagnostics.
  *
- * The HTTP status returned to the caller mirrors the upstream Gmail
- * status for the cases the package cares about (`401`, `404`) and
- * collapses everything else into `502 Bad Gateway` — upstream 5xx and
- * unexpected statuses are surfaced as a gateway failure, not leaked
- * verbatim.
+ * Always returns HTTP 502 Bad Gateway, regardless of the upstream Gmail
+ * status. Upstream-status leakage onto the wire is misleading (a 401
+ * from Gmail is not the client's credentials to our API being bad) and
+ * asymmetric with {@link MailboxNetworkException}, which is already
+ * flat-502. Consumers that need to branch on the upstream status can
+ * read `err.cause.getStatus()` from a filter or log handler.
  *
  * @example
  * ```typescript
@@ -44,25 +45,14 @@ export class MailboxApiException extends HttpException {
     public readonly context: Record<string, unknown>,
     cause: HttpException,
   ) {
-    const mappedStatus = MailboxApiException.mapStatus(cause.getStatus())
     super(
       {
-        statusCode: mappedStatus,
+        statusCode: HttpStatus.BAD_GATEWAY,
         message: cause.message,
         error: "MailboxApi",
       },
-      mappedStatus,
+      HttpStatus.BAD_GATEWAY,
       { cause },
     )
-  }
-
-  private static mapStatus(upstreamStatus: number): number {
-    if (upstreamStatus === HttpStatus.UNAUTHORIZED) {
-      return HttpStatus.UNAUTHORIZED
-    }
-    if (upstreamStatus === HttpStatus.NOT_FOUND) {
-      return HttpStatus.NOT_FOUND
-    }
-    return HttpStatus.BAD_GATEWAY
   }
 }

@@ -48,10 +48,10 @@ describe("GET /mailbox/stats", () => {
     })
   })
 
-  describe.each([UNAUTHORIZED, NOT_FOUND])(
+  describe.each([UNAUTHORIZED, NOT_FOUND, INTERNAL_SERVER_ERROR])(
     "When Gmail responds with %i",
-    (status) => {
-      it(`should surface HTTP ${status} from MailboxApiException`, async () => {
+    (upstreamStatus) => {
+      it("should surface HTTP 502 via MailboxApiException with the upstream status in the message", async () => {
         const token = faker.string.alphanumeric(40)
         const message = faker.lorem.sentence()
 
@@ -59,47 +59,22 @@ describe("GET /mailbox/stats", () => {
         await gmailClient.expectLabelError({
           labelId: "INBOX",
           token,
-          statusCode: status,
+          statusCode: upstreamStatus,
           message,
         })
 
         const { body } = await request(app.getHttpServer())
           .get("/mailbox/stats")
-          .expect(status)
+          .expect(BAD_GATEWAY)
 
         expect(body).toEqual({
-          statusCode: status,
-          message: `Mailbox API returned ${status}`,
+          statusCode: BAD_GATEWAY,
+          message: `Mailbox API returned ${upstreamStatus}`,
           error: "MailboxApi",
         })
       })
     },
   )
-
-  describe(`When Gmail responds with ${INTERNAL_SERVER_ERROR}`, () => {
-    it("should collapse to HTTP 502 via MailboxApiException", async () => {
-      const token = faker.string.alphanumeric(40)
-      const message = faker.lorem.sentence()
-
-      TestTokenAccessor.register(token)
-      await gmailClient.expectLabelError({
-        labelId: "INBOX",
-        token,
-        statusCode: INTERNAL_SERVER_ERROR,
-        message,
-      })
-
-      const { body } = await request(app.getHttpServer())
-        .get("/mailbox/stats")
-        .expect(BAD_GATEWAY)
-
-      expect(body).toEqual({
-        statusCode: BAD_GATEWAY,
-        message: `Mailbox API returned ${INTERNAL_SERVER_ERROR}`,
-        error: "MailboxApi",
-      })
-    })
-  })
 
   describe("When Gmail rejects the fetch (network failure)", () => {
     it("should surface HTTP 502 via MailboxNetworkException", async () => {
