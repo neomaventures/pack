@@ -51,7 +51,7 @@ describe("GET /mailbox/stats", () => {
   describe.each([UNAUTHORIZED, NOT_FOUND, INTERNAL_SERVER_ERROR])(
     "When Gmail responds with %i",
     (upstreamStatus) => {
-      it("should surface HTTP 502 via MailboxApiException with the upstream status in the message", async () => {
+      it("should surface HTTP 502 via MailboxApiException with a fixed generic message", async () => {
         const token = faker.string.alphanumeric(40)
         const message = faker.lorem.sentence()
 
@@ -69,7 +69,7 @@ describe("GET /mailbox/stats", () => {
 
         expect(body).toEqual({
           statusCode: BAD_GATEWAY,
-          message: `Mailbox API returned ${upstreamStatus}`,
+          message: "Mailbox API error",
           error: "MailboxApi",
         })
       })

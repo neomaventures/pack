@@ -43,12 +43,16 @@ describe("MailboxApiException", () => {
       expect(exception.getStatus()).toBe(HttpStatus.BAD_GATEWAY)
     })
 
-    it("should produce the minimal wire response shape", () => {
+    it("should produce the minimal wire response shape with a fixed generic message", () => {
       expect(exception.getResponse()).toEqual({
         statusCode: HttpStatus.BAD_GATEWAY,
-        message,
+        message: "Mailbox API error",
         error: "MailboxApi",
       })
+    })
+
+    it("should not leak the upstream cause's message onto the wire", () => {
+      expect(exception.getResponse()).not.toMatchObject({ message })
     })
   })
 

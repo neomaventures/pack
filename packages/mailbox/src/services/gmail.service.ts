@@ -83,12 +83,11 @@ export class GmailService {
 
     if (!response.ok) {
       const responseBody = await response.text().catch(() => "")
-      const message = `Mailbox API returned ${response.status}`
       throw new MailboxApiException(
         LABELS_ENDPOINT,
         { labelId },
         new HttpException(
-          { statusCode: response.status, message, body: responseBody },
+          { statusCode: response.status, body: responseBody },
           response.status,
         ),
       )

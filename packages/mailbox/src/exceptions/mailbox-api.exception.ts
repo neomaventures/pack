@@ -14,8 +14,10 @@ import { HttpException, HttpStatus } from "@nestjs/common"
  * status. Upstream-status leakage onto the wire is misleading (a 401
  * from Gmail is not the client's credentials to our API being bad) and
  * asymmetric with {@link MailboxNetworkException}, which is already
- * flat-502. Consumers that need to branch on the upstream status can
- * read `err.cause.getStatus()` from a filter or log handler.
+ * flat-502. The wire `message` is likewise a fixed generic string
+ * (`"Mailbox API error"`) — the upstream status and message stay
+ * accessible via `err.cause.getStatus()` / `err.cause.getResponse()`
+ * for filters and log handlers, but never reach the client.
  *
  * @example
  * ```typescript
@@ -23,7 +25,7 @@ import { HttpException, HttpStatus } from "@nestjs/common"
  *   "/gmail/v1/users/me/labels/{labelId}",
  *   { labelId: "Label_42" },
  *   new HttpException(
- *     { statusCode: 404, message: "Mailbox API returned 404", body: errorBody },
+ *     { statusCode: 404, body: errorBody },
  *     404,
  *   ),
  * )
@@ -48,7 +50,7 @@ export class MailboxApiException extends HttpException {
     super(
       {
         statusCode: HttpStatus.BAD_GATEWAY,
-        message: cause.message,
+        message: "Mailbox API error",
         error: "MailboxApi",
       },
       HttpStatus.BAD_GATEWAY,
