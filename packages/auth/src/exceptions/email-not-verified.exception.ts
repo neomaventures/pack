@@ -6,6 +6,10 @@ import { HttpException, HttpStatus } from "@nestjs/common"
  * Returns HTTP 403 Forbidden because the user is identified but not authorized
  * to proceed without a verified email.
  *
+ * The wire response is intentionally minimal — `email` is preserved as a
+ * public readonly instance property for server-side logging and filter
+ * use, but never reaches the client.
+ *
  * @example
  * ```typescript
  * if (decoded.email_verified === false) {
@@ -25,7 +29,6 @@ export class EmailNotVerifiedException extends HttpException {
       {
         statusCode: HttpStatus.FORBIDDEN,
         message,
-        email,
         error: "Forbidden",
       },
       HttpStatus.FORBIDDEN,

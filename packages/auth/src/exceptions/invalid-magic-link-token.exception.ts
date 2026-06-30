@@ -5,6 +5,10 @@ import { HttpStatus, UnauthorizedException } from "@nestjs/common"
  *
  * Returns HTTP 401 Unauthorized.
  *
+ * The wire response is intentionally minimal — `reason` is preserved as
+ * a public readonly instance property for server-side logging, but never
+ * reaches the client.
+ *
  * @example
  * ```typescript
  * if (payload.aud !== MAGIC_LINK_AUDIENCE) {
@@ -21,15 +25,14 @@ export class InvalidMagicLinkTokenException extends UnauthorizedException {
   }
 
   /**
-   * Returns the error response body.
+   * Returns the minimal error response body.
    *
-   * @returns Object containing statusCode (401), message, reason, and error
+   * @returns Object containing statusCode (401), message, and error
    */
   public getResponse(): object {
     return {
       statusCode: HttpStatus.UNAUTHORIZED,
       message: this.message,
-      reason: this.reason,
       error: "Unauthorized",
     }
   }

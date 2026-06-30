@@ -1,16 +1,16 @@
 import { faker } from "@faker-js/faker"
 import { HttpStatus } from "@nestjs/common"
 
-import { MailboxNetworkException } from "./mailbox-network.exception"
+import { AuthNetworkException } from "./auth-network.exception"
 
-describe("MailboxNetworkException", () => {
-  const endpoint = "/gmail/v1/users/me/labels/{labelId}"
-  const context = { labelId: faker.string.alphanumeric(10) }
+describe("AuthNetworkException", () => {
+  const endpoint = "/oauth/token"
+  const context = { provider: "google", phase: "codeExchange" }
   const cause = new Error(faker.lorem.sentence())
-  let exception: MailboxNetworkException
+  let exception: AuthNetworkException
 
   beforeEach(() => {
-    exception = new MailboxNetworkException(endpoint, context, cause)
+    exception = new AuthNetworkException(endpoint, context, cause)
   })
 
   it("should expose the endpoint property on the instance", () => {
@@ -33,13 +33,13 @@ describe("MailboxNetworkException", () => {
     expect(exception.getResponse()).toEqual({
       statusCode: HttpStatus.BAD_GATEWAY,
       message: "Bad Gateway",
-      error: "MailboxNetwork",
+      error: "AuthNetwork",
     })
   })
 
   describe("name", () => {
-    it('should set this.name to "MailboxNetworkException"', () => {
-      expect(exception.name).toBe("MailboxNetworkException")
+    it('should set this.name to "AuthNetworkException"', () => {
+      expect(exception.name).toBe("AuthNetworkException")
     })
   })
 })

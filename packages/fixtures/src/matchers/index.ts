@@ -1,11 +1,12 @@
-import { isDeepStrictEqual } from "node:util"
-
 import { EXPECTED_COLOR, RECEIVED_COLOR } from "jest-matcher-utils"
+
+type EqualsFn = (a: unknown, b: unknown) => boolean
 
 const checkErrorInstance = (
   subject: unknown,
   ErrorClass: new (...args: any[]) => Error,
-  expectedProps?: Record<string, unknown>,
+  expectedProps: Record<string, unknown> | undefined,
+  equals: EqualsFn,
 ): jest.CustomMatcherResult => {
   // Check type
   if (!(subject instanceof ErrorClass)) {
@@ -25,9 +26,10 @@ const checkErrorInstance = (
     }
   }
 
-  // Check properties
+  // Check properties using Jest's equality engine so asymmetric matchers
+  // (expect.objectContaining, expect.any, expect.stringMatching, etc.) compose.
   for (const [key, value] of Object.entries(expectedProps)) {
-    if (!isDeepStrictEqual((subject as any)[key], value)) {
+    if (!equals((subject as any)[key], value)) {
       return {
         pass: false,
         message: () =>
@@ -43,11 +45,12 @@ const checkErrorInstance = (
   }
 }
 
-const toThrowMatching = (
+function toThrowMatching(
+  this: jest.MatcherContext,
   subject: unknown,
   ErrorClass: new (...args: any[]) => Error,
   expectedProps?: Record<string, unknown>,
-): jest.CustomMatcherResult => {
+): jest.CustomMatcherResult {
   if (!(subject instanceof Function)) {
     return {
       pass: false,
@@ -64,15 +67,16 @@ const toThrowMatching = (
         `Expected function to throw ${EXPECTED_COLOR(ErrorClass.name)}, but it did not throw`,
     }
   } catch (e) {
-    return checkErrorInstance(e, ErrorClass, expectedProps)
+    return checkErrorInstance(e, ErrorClass, expectedProps, this.equals)
   }
 }
 
-const toMatchError = (
+function toMatchError(
+  this: jest.MatcherContext,
   subject: unknown,
   ErrorClass: new (...args: any[]) => Error,
   expectedProps?: Record<string, unknown>,
-): jest.CustomMatcherResult => {
+): jest.CustomMatcherResult {
   if (subject instanceof Function) {
     return {
       pass: false,
@@ -81,7 +85,7 @@ const toMatchError = (
     }
   }
 
-  return checkErrorInstance(subject, ErrorClass, expectedProps)
+  return checkErrorInstance(subject, ErrorClass, expectedProps, this.equals)
 }
 
 expect.extend({
@@ -95,26 +99,28 @@ declare global {
     interface Matchers<R> {
       /**
        * Checks if a function throws an instance of an error class, optionally
-       * with specific properties.
+       * with specific properties. Property values may be Jest asymmetric
+       * matchers (e.g. `expect.objectContaining(...)`).
        *
        * @param ErrorClass The expected error class/constructor
        * @param expectedProps Optional object of properties to match
        */
       toThrowMatching<T>(
         ErrorClass: new (...args: any[]) => T,
-        expectedProps?: Partial<T>,
+        expectedProps?: Partial<T> | Record<string, unknown>,
       ): R
 
       /**
        * Checks if a value is an instance of an error class, optionally
-       * with specific properties.
+       * with specific properties. Property values may be Jest asymmetric
+       * matchers (e.g. `expect.objectContaining(...)`).
        *
        * @param ErrorClass The expected error class/constructor
        * @param expectedProps Optional object of properties to match
        */
       toMatchError<T>(
         ErrorClass: new (...args: any[]) => T,
-        expectedProps?: Partial<T>,
+        expectedProps?: Partial<T> | Record<string, unknown>,
       ): R
     }
   }

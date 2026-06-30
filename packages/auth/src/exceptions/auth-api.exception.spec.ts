@@ -1,24 +1,24 @@
 import { faker } from "@faker-js/faker"
 import { HttpException, HttpStatus } from "@nestjs/common"
 
-import { MailboxApiException } from "./mailbox-api.exception"
+import { AuthApiException } from "./auth-api.exception"
 
-describe("MailboxApiException", () => {
-  const endpoint = "/gmail/v1/users/me/labels/{labelId}"
-  const context = { labelId: faker.string.alphanumeric(10) }
+describe("AuthApiException", () => {
+  const endpoint = "/oauth/token"
+  const context = { provider: "google", phase: "codeExchange" }
 
   describe("Given any upstream cause", () => {
     const causeMessage = faker.lorem.sentence()
-    const body = { error: "notFound" }
+    const body = { error: "invalid_grant" }
     let cause: HttpException
-    let exception: MailboxApiException
+    let exception: AuthApiException
 
     beforeEach(() => {
       cause = new HttpException(
-        { statusCode: 404, message: causeMessage, body },
-        404,
+        { statusCode: 401, message: causeMessage, body },
+        401,
       )
-      exception = new MailboxApiException(endpoint, context, cause)
+      exception = new AuthApiException(endpoint, context, cause)
     })
 
     it("should expose the endpoint property on the instance", () => {
@@ -39,14 +39,14 @@ describe("MailboxApiException", () => {
   })
 
   describe("name", () => {
-    it('should set this.name to "MailboxApiException"', () => {
-      const exception = new MailboxApiException(
+    it('should set this.name to "AuthApiException"', () => {
+      const exception = new AuthApiException(
         endpoint,
         context,
         new HttpException(faker.lorem.sentence(), 500),
       )
 
-      expect(exception.name).toBe("MailboxApiException")
+      expect(exception.name).toBe("AuthApiException")
     })
   })
 
@@ -54,7 +54,7 @@ describe("MailboxApiException", () => {
     "Given an upstream %i cause",
     (upstreamStatus) => {
       it("should always return HTTP 502 Bad Gateway", () => {
-        const exception = new MailboxApiException(
+        const exception = new AuthApiException(
           endpoint,
           context,
           new HttpException(faker.lorem.sentence(), upstreamStatus),
@@ -64,7 +64,7 @@ describe("MailboxApiException", () => {
       })
 
       it("should produce an opaque wire response that does not leak upstream status or message", () => {
-        const exception = new MailboxApiException(
+        const exception = new AuthApiException(
           endpoint,
           context,
           new HttpException(faker.lorem.sentence(), upstreamStatus),
@@ -73,7 +73,7 @@ describe("MailboxApiException", () => {
         expect(exception.getResponse()).toEqual({
           statusCode: HttpStatus.BAD_GATEWAY,
           message: "Bad Gateway",
-          error: "MailboxApi",
+          error: "AuthApi",
         })
       })
     },

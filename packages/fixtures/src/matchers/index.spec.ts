@@ -4,6 +4,9 @@ class TestError extends Error {
   public constructor(
     public readonly code: string,
     message?: string,
+    public readonly details?: Record<string, unknown>,
+    public readonly tags?: string[],
+    public readonly inner?: Error,
   ) {
     super(message)
   }
@@ -49,6 +52,69 @@ describe("toThrowMatching", () => {
       expect(new TestError("ERR")).toThrowMatching(TestError)
     }).toThrow(/toThrowMatching requires a function/)
   })
+
+  describe("with asymmetric matchers", () => {
+    it("should match expect.objectContaining at the top level", () => {
+      expect(() => {
+        throw new TestError("ERR", undefined, { phase: "exchange", extra: 1 })
+      }).toThrowMatching(TestError, {
+        details: expect.objectContaining({ phase: "exchange" }),
+      })
+    })
+
+    it("should match expect.objectContaining inside a nested property", () => {
+      expect(() => {
+        throw new TestError("ERR", undefined, {
+          provider: "google",
+          nested: { kind: "codeExchange", attempt: 2 },
+        })
+      }).toThrowMatching(TestError, {
+        details: expect.objectContaining({
+          nested: expect.objectContaining({ kind: "codeExchange" }),
+        }),
+      })
+    })
+
+    it("should match expect.arrayContaining", () => {
+      expect(() => {
+        throw new TestError("ERR", undefined, undefined, ["a", "b", "c"])
+      }).toThrowMatching(TestError, {
+        tags: expect.arrayContaining(["b"]),
+      })
+    })
+
+    it("should match expect.any(Class) against an instance property", () => {
+      expect(() => {
+        throw new TestError(
+          "ERR",
+          undefined,
+          undefined,
+          undefined,
+          new Error("inner"),
+        )
+      }).toThrowMatching(TestError, {
+        inner: expect.any(Error),
+      })
+    })
+
+    it("should match expect.stringMatching against a string property", () => {
+      expect(() => {
+        throw new TestError("ERR_FOO_BAR")
+      }).toThrowMatching(TestError, {
+        code: expect.stringMatching(/^ERR_/),
+      })
+    })
+
+    it("should fail when objectContaining keys are absent", () => {
+      expect(() => {
+        expect(() => {
+          throw new TestError("ERR", undefined, { phase: "exchange" })
+        }).toThrowMatching(TestError, {
+          details: expect.objectContaining({ phase: "decode" }),
+        })
+      }).toThrow(/details/)
+    })
+  })
 })
 
 describe("toMatchError", () => {
@@ -74,5 +140,65 @@ describe("toMatchError", () => {
         throw new TestError("ERR")
       }).toMatchError(TestError)
     }).toThrow(/toMatchError requires an error instance.*received a function/)
+  })
+
+  describe("with asymmetric matchers", () => {
+    it("should match expect.objectContaining at the top level", () => {
+      const error = new TestError("ERR", undefined, {
+        phase: "exchange",
+        extra: 1,
+      })
+      expect(error).toMatchError(TestError, {
+        details: expect.objectContaining({ phase: "exchange" }),
+      })
+    })
+
+    it("should match expect.objectContaining inside a nested property", () => {
+      const error = new TestError("ERR", undefined, {
+        provider: "google",
+        nested: { kind: "codeExchange", attempt: 2 },
+      })
+      expect(error).toMatchError(TestError, {
+        details: expect.objectContaining({
+          nested: expect.objectContaining({ kind: "codeExchange" }),
+        }),
+      })
+    })
+
+    it("should match expect.arrayContaining", () => {
+      const error = new TestError("ERR", undefined, undefined, ["a", "b", "c"])
+      expect(error).toMatchError(TestError, {
+        tags: expect.arrayContaining(["b"]),
+      })
+    })
+
+    it("should match expect.any(Class) against an instance property", () => {
+      const error = new TestError(
+        "ERR",
+        undefined,
+        undefined,
+        undefined,
+        new Error("inner"),
+      )
+      expect(error).toMatchError(TestError, {
+        inner: expect.any(Error),
+      })
+    })
+
+    it("should match expect.stringMatching against a string property", () => {
+      const error = new TestError("ERR_FOO_BAR")
+      expect(error).toMatchError(TestError, {
+        code: expect.stringMatching(/^ERR_/),
+      })
+    })
+
+    it("should fail when objectContaining keys are absent", () => {
+      const error = new TestError("ERR", undefined, { phase: "exchange" })
+      expect(() => {
+        expect(error).toMatchError(TestError, {
+          details: expect.objectContaining({ phase: "decode" }),
+        })
+      }).toThrow(/details/)
+    })
   })
 })

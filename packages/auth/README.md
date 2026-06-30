@@ -719,10 +719,8 @@ public async onRegistered(event: RegisteredEvent): Promise<void> {
 | `TokenFailedVerificationException` | 401    | JWT verification failed (expired, invalid signature)                              |
 | `IncorrectCredentialsException`    | 401    | Account not found for valid token                                                 |
 | `InvalidCredentialsException`      | 401    | Token invalid, wrong audience, or malformed header                                |
-| `GoogleCodeExchangeException`      | 401    | Google rejected the authorization code (4xx)                                      |
-| `GoogleTokenException`             | 401    | ID token missing required claims                                                  |
-| `GoogleServiceException`           | 502    | Google returned 5xx                                                               |
-| `GoogleNetworkException`           | 502    | Network failure reaching Google                                                   |
+| `AuthApiException`                 | 401 / 404 / 502 | Downstream auth API returned a non-2xx, or 200 with a malformed token/ID-token payload. `error.context.provider` identifies the upstream. |
+| `AuthNetworkException`             | 502    | Network failure reaching the downstream auth API (DNS, TCP, timeout). `error.context.provider` identifies the upstream. |
 | `EmailNotVerifiedException`        | 403    | Google account email not verified                                                 |
 | `UnauthorizedRedirectException`    | 401    | Unauthenticated route with redirect strategy. Body includes `redirect: { url, status }` |
 | `PermissionDeniedException`        | 403    | User lacks required permission(s)                                                 |

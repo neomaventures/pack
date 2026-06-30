@@ -132,7 +132,7 @@ export class ApplicationLogger implements Logger {
   }
 
   private logAtLevel(
-    level: LogLevel,
+    level: Exclude<LogLevel, "silent">,
     message: string,
     context?: LogContext,
   ): void {

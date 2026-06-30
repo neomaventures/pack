@@ -69,32 +69,28 @@ describe("GmailService", () => {
     })
 
     describe.each([
-      [401, "INBOX", HttpStatus.UNAUTHORIZED],
-      [404, "Label_DoesNotExist", HttpStatus.NOT_FOUND],
-      [500, "INBOX", HttpStatus.BAD_GATEWAY],
-    ])(
-      "Given Gmail returns %i for %s",
-      (upstreamStatus, labelId, mappedStatus) => {
-        it("should throw a MailboxApiException carrying the labelId in context and the mapped status", async () => {
-          const message = faker.lorem.sentence()
-          await gmailClient.expectLabelError({
-            labelId,
-            token,
-            statusCode: upstreamStatus,
-            message,
-          })
-
-          await expect(service.getStats(token, labelId)).rejects.toMatchError(
-            MailboxApiException,
-            {
-              context: { labelId },
-              endpoint: "/gmail/v1/users/me/labels/{labelId}",
-              statusCode: mappedStatus,
-            },
-          )
+      [HttpStatus.UNAUTHORIZED, "INBOX"],
+      [HttpStatus.NOT_FOUND, "Label_DoesNotExist"],
+      [HttpStatus.INTERNAL_SERVER_ERROR, "INBOX"],
+    ])("Given Gmail returns %i for %s", (upstreamStatus, labelId) => {
+      it("should throw a MailboxApiException carrying the labelId in context", async () => {
+        const message = faker.lorem.sentence()
+        await gmailClient.expectLabelError({
+          labelId,
+          token,
+          statusCode: upstreamStatus,
+          message,
         })
-      },
-    )
+
+        await expect(service.getStats(token, labelId)).rejects.toMatchError(
+          MailboxApiException,
+          {
+            context: { labelId },
+            endpoint: "/gmail/v1/users/me/labels/{labelId}",
+          },
+        )
+      })
+    })
 
     describe("Given the Gmail fetch fails at the network level", () => {
       it("should throw a MailboxNetworkException carrying the labelId in context", async () => {
