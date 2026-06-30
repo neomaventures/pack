@@ -10,7 +10,7 @@ import { DataSource } from "typeorm"
 
 import { SESSION_AUDIENCE } from "@neomaventures/auth"
 
-const { OK, UNAUTHORIZED, FORBIDDEN, BAD_GATEWAY } = HttpStatus
+const { OK, FORBIDDEN, BAD_GATEWAY, BAD_REQUEST } = HttpStatus
 
 const clientId = process.env.GOOGLE_CLIENT_ID!
 const clientSecret = process.env.GOOGLE_CLIENT_SECRET!
@@ -147,24 +147,22 @@ appModules.forEach(([name, modulePath]) => {
     })
 
     describe("When Google returns a 4xx HTTP error (invalid code)", () => {
-      it("should respond with HTTP 401", async () => {
+      it("should respond with HTTP 502", async () => {
         const code = google.code()
         await googleOAuth.mockCodeExchangeHttpError({
           code,
           statusCode: 400,
         })
 
-        const response = await request(app.getHttpServer())
+        await request(app.getHttpServer())
           .get("/auth/google/callback")
           .query({ code })
-          .expect(UNAUTHORIZED)
-
-        expect(response.body).toMatchObject({
-          statusCode: UNAUTHORIZED,
-          error: "Unauthorized",
-        })
-        expect(response.body.message).toContain("Google authentication failed")
-        expect(response.body.reason).toBeDefined()
+          .expect(BAD_GATEWAY)
+          .expect({
+            statusCode: BAD_GATEWAY,
+            message: "Bad Gateway",
+            error: "AuthApi",
+          })
       })
     })
 
@@ -176,17 +174,15 @@ appModules.forEach(([name, modulePath]) => {
           statusCode: 500,
         })
 
-        const response = await request(app.getHttpServer())
+        await request(app.getHttpServer())
           .get("/auth/google/callback")
           .query({ code })
           .expect(BAD_GATEWAY)
-
-        expect(response.body).toMatchObject({
-          statusCode: BAD_GATEWAY,
-          error: "Bad Gateway",
-        })
-        expect(response.body.message).toContain("Google service error")
-        expect(response.body.reason).toBeDefined()
+          .expect({
+            statusCode: BAD_GATEWAY,
+            message: "Bad Gateway",
+            error: "AuthApi",
+          })
       })
     })
 
@@ -205,22 +201,20 @@ appModules.forEach(([name, modulePath]) => {
     })
 
     describe("When called without a code query parameter", () => {
-      it("should respond with HTTP 401 with reason 'missing code query parameter'", async () => {
-        const response = await request(app.getHttpServer())
+      it("should respond with HTTP 400 BadRequest", async () => {
+        await request(app.getHttpServer())
           .get("/auth/google/callback")
-          .expect(UNAUTHORIZED)
-
-        expect(response.body).toMatchObject({
-          statusCode: UNAUTHORIZED,
-          message: "Google authentication failed: missing code query parameter",
-          reason: "missing code query parameter",
-          error: "Unauthorized",
-        })
+          .expect(BAD_REQUEST)
+          .expect({
+            statusCode: BAD_REQUEST,
+            message: "Missing code query parameter on Google OAuth callback",
+            error: "Bad Request",
+          })
       })
     })
 
     describe("When the Google ID token is missing the sub claim", () => {
-      it("should respond with HTTP 401", async () => {
+      it("should respond with HTTP 502 with AuthApi error", async () => {
         const code = google.code()
         const secret = faker.string.alphanumeric(32)
         const idTokenWithoutSub = jwt.sign(
@@ -241,22 +235,20 @@ appModules.forEach(([name, modulePath]) => {
           idToken: idTokenWithoutSub,
         })
 
-        const response = await request(app.getHttpServer())
+        await request(app.getHttpServer())
           .get("/auth/google/callback")
           .query({ code })
-          .expect(UNAUTHORIZED)
-
-        expect(response.body).toMatchObject({
-          statusCode: UNAUTHORIZED,
-          message: "Google ID token error: missing sub in ID token",
-          reason: "missing sub in ID token",
-          error: "Unauthorized",
-        })
+          .expect(BAD_GATEWAY)
+          .expect({
+            statusCode: BAD_GATEWAY,
+            message: "Bad Gateway",
+            error: "AuthApi",
+          })
       })
     })
 
     describe("When the ID token is missing the email claim", () => {
-      it("should respond with HTTP 401 with reason 'missing email in ID token'", async () => {
+      it("should respond with HTTP 502 with AuthApi error", async () => {
         const code = google.code()
         // Create an ID token with no email claim
         const secret = faker.string.alphanumeric(32)
@@ -278,17 +270,15 @@ appModules.forEach(([name, modulePath]) => {
           idToken: idTokenWithoutEmail,
         })
 
-        const response = await request(app.getHttpServer())
+        await request(app.getHttpServer())
           .get("/auth/google/callback")
           .query({ code })
-          .expect(UNAUTHORIZED)
-
-        expect(response.body).toMatchObject({
-          statusCode: UNAUTHORIZED,
-          message: "Google ID token error: missing email in ID token",
-          reason: "missing email in ID token",
-          error: "Unauthorized",
-        })
+          .expect(BAD_GATEWAY)
+          .expect({
+            statusCode: BAD_GATEWAY,
+            message: "Bad Gateway",
+            error: "AuthApi",
+          })
       })
     })
 
@@ -305,6 +295,9 @@ appModules.forEach(([name, modulePath]) => {
           idToken: google.idToken({ email, email_verified: false }),
         })
 
+        // Partial-match needed: assert absent `email` field and `message`
+        // substring containment — beyond what supertest `.expect(body)`
+        // (deep-equal) can express.
         const response = await request(app.getHttpServer())
           .get("/auth/google/callback")
           .query({ code })
@@ -312,9 +305,9 @@ appModules.forEach(([name, modulePath]) => {
 
         expect(response.body).toMatchObject({
           statusCode: FORBIDDEN,
-          email,
           error: "Forbidden",
         })
+        expect(response.body.email).toBeUndefined()
         expect(response.body.message).toContain("has not been verified")
       })
     })

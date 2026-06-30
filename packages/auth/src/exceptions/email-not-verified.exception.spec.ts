@@ -11,7 +11,7 @@ describe("EmailNotVerifiedException", () => {
     exception = new EmailNotVerifiedException(email)
   })
 
-  it("should have the email property", () => {
+  it("should expose the email property on the instance", () => {
     expect(exception.email).toBe(email)
   })
 
@@ -19,11 +19,10 @@ describe("EmailNotVerifiedException", () => {
     expect(exception.getStatus()).toBe(HttpStatus.FORBIDDEN)
   })
 
-  it("should include email in the response body", () => {
-    expect(exception.getResponse()).toMatchObject({
+  it("should produce the minimal wire response shape", () => {
+    expect(exception.getResponse()).toEqual({
       statusCode: HttpStatus.FORBIDDEN,
       message: `The email address ${email} has not been verified.`,
-      email,
       error: "Forbidden",
     })
   })

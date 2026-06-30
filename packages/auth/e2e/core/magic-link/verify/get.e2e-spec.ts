@@ -178,7 +178,6 @@ appModules.forEach(([name, modulePath]) => {
           .expect({
             statusCode: UNAUTHORIZED,
             message: "Invalid magic link token: missing email claim",
-            reason: "missing email claim",
             error: "Unauthorized",
           })
       })
@@ -199,7 +198,6 @@ appModules.forEach(([name, modulePath]) => {
           .expect({
             statusCode: UNAUTHORIZED,
             message: "Invalid magic link token: invalid audience",
-            reason: "invalid audience",
             error: "Unauthorized",
           })
       })
@@ -218,7 +216,6 @@ appModules.forEach(([name, modulePath]) => {
           .expect({
             statusCode: UNAUTHORIZED,
             message: "Invalid magic link token: invalid audience",
-            reason: "invalid audience",
             error: "Unauthorized",
           })
       })
