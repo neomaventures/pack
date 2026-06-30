@@ -3,13 +3,6 @@ import { HttpException, HttpStatus } from "@nestjs/common"
 
 import { MailboxApiException } from "./mailbox-api.exception"
 
-const buildCause = (
-  status: number,
-  message: string = faker.lorem.sentence(),
-  body: unknown = { error: { code: status, message } },
-): HttpException =>
-  new HttpException({ statusCode: status, message, body }, status)
-
 describe("MailboxApiException", () => {
   const endpoint = "/gmail/v1/users/me/labels/{labelId}"
 
@@ -20,7 +13,10 @@ describe("MailboxApiException", () => {
     let exception: MailboxApiException
 
     beforeEach(() => {
-      cause = buildCause(401, message)
+      cause = new HttpException(
+        { statusCode: HttpStatus.UNAUTHORIZED, message },
+        HttpStatus.UNAUTHORIZED,
+      )
       exception = new MailboxApiException(endpoint, { labelId }, cause)
     })
 
@@ -58,7 +54,10 @@ describe("MailboxApiException", () => {
       exception = new MailboxApiException(
         endpoint,
         { labelId },
-        buildCause(404, message),
+        new HttpException(
+          { statusCode: HttpStatus.NOT_FOUND, message },
+          HttpStatus.NOT_FOUND,
+        ),
       )
     })
 
@@ -80,7 +79,13 @@ describe("MailboxApiException", () => {
       const exception = new MailboxApiException(
         endpoint,
         { labelId: faker.string.alphanumeric(10) },
-        buildCause(500),
+        new HttpException(
+          {
+            statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+            message: faker.lorem.sentence(),
+          },
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        ),
       )
 
       expect(exception.name).toBe("MailboxApiException")
@@ -94,7 +99,10 @@ describe("MailboxApiException", () => {
         const exception = new MailboxApiException(
           endpoint,
           { labelId: faker.string.alphanumeric(10) },
-          buildCause(upstreamStatus),
+          new HttpException(
+            { statusCode: upstreamStatus, message: faker.lorem.sentence() },
+            upstreamStatus,
+          ),
         )
 
         expect(exception.getStatus()).toBe(HttpStatus.BAD_GATEWAY)

@@ -1,6 +1,7 @@
 import { faker } from "@faker-js/faker"
 import { gmail, GmailClient } from "@neomaventures/google-fixtures"
 import { mockserver } from "@neomaventures/mockserver/fixture"
+import { HttpStatus } from "@nestjs/common"
 import { Test, type TestingModule } from "@nestjs/testing"
 
 import { GMAIL_API_BASE_URL } from "../constants"
@@ -68,9 +69,9 @@ describe("GmailService", () => {
     })
 
     describe.each([
-      [401, "INBOX"],
-      [404, "Label_DoesNotExist"],
-      [500, "INBOX"],
+      [HttpStatus.UNAUTHORIZED, "INBOX"],
+      [HttpStatus.NOT_FOUND, "Label_DoesNotExist"],
+      [HttpStatus.INTERNAL_SERVER_ERROR, "INBOX"],
     ])("Given Gmail returns %i for %s", (upstreamStatus, labelId) => {
       it("should throw a MailboxApiException carrying the labelId in context", async () => {
         const message = faker.lorem.sentence()
