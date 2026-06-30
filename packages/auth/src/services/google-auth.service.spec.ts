@@ -424,7 +424,7 @@ registrations.forEach(([name, register]) => {
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
-        it("should throw an AuthApiException carrying phase=codeExchange", async () => {
+        it("should throw an AuthApiException wrapping the upstream 4xx response", async () => {
           const code = faker.string.alphanumeric(20)
           await mockHttpError(code, { statusCode: 401 })
 
@@ -438,6 +438,17 @@ registrations.forEach(([name, register]) => {
                 tokenEndpoint: googleAuth.tokenEndpoint,
                 errorDescription: "Bad Request",
               },
+              cause: expect.objectContaining({
+                status: 401,
+                response: {
+                  statusCode: 401,
+                  message: "Auth API returned 401",
+                  body: {
+                    error: "invalid_grant",
+                    error_description: "Bad Request",
+                  },
+                },
+              }),
             },
           )
         })
@@ -451,7 +462,7 @@ registrations.forEach(([name, register]) => {
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
-        it("should throw an AuthApiException carrying phase=codeExchange", async () => {
+        it("should throw an AuthApiException wrapping the upstream 5xx response", async () => {
           const code = faker.string.alphanumeric(20)
           await mockHttpError(code, { statusCode: 500 })
 
@@ -465,6 +476,17 @@ registrations.forEach(([name, register]) => {
                 tokenEndpoint: googleAuth.tokenEndpoint,
                 errorDescription: "Bad Request",
               },
+              cause: expect.objectContaining({
+                status: 500,
+                response: {
+                  statusCode: 500,
+                  message: "Auth API returned 500",
+                  body: {
+                    error: "invalid_grant",
+                    error_description: "Bad Request",
+                  },
+                },
+              }),
             },
           )
         })
@@ -478,7 +500,7 @@ registrations.forEach(([name, register]) => {
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
-        it("should throw an AuthNetworkException carrying phase=codeExchange in context", async () => {
+        it("should throw an AuthNetworkException wrapping the raw fetch error", async () => {
           const code = faker.string.alphanumeric(20)
           await mockNetworkError(code)
 
@@ -491,6 +513,7 @@ registrations.forEach(([name, register]) => {
                 phase: "codeExchange",
                 tokenEndpoint: googleAuth.tokenEndpoint,
               },
+              cause: expect.objectContaining({ message: "fetch failed" }),
             },
           )
         })
@@ -509,15 +532,13 @@ registrations.forEach(([name, register]) => {
           fetchSpy?.mockRestore()
         })
 
-        it("should throw an AuthApiException with missingField=access_token in context", async () => {
+        it("should throw an AuthApiException wrapping a synthetic 200 cause", async () => {
           const idToken = googleFakes.idToken({ email: faker.internet.email() })
+          const body = { id_token: idToken, expires_in: 3600 }
           fetchSpy = jest
             .spyOn(global, "fetch")
             .mockResolvedValue(
-              new Response(
-                JSON.stringify({ id_token: idToken, expires_in: 3600 }),
-                { status: 200 },
-              ),
+              new Response(JSON.stringify(body), { status: 200 }),
             )
 
           await expect(
@@ -529,6 +550,14 @@ registrations.forEach(([name, register]) => {
               missingField: "access_token",
               tokenEndpoint: googleAuth.tokenEndpoint,
             },
+            cause: expect.objectContaining({
+              status: 200,
+              response: {
+                statusCode: 200,
+                message: "Auth API returned 200 with malformed token response",
+                body,
+              },
+            }),
           })
         })
       })
@@ -546,17 +575,17 @@ registrations.forEach(([name, register]) => {
           fetchSpy?.mockRestore()
         })
 
-        it("should throw an AuthApiException with missingField=expires_in in context", async () => {
+        it("should throw an AuthApiException wrapping a synthetic 200 cause", async () => {
           const idToken = googleFakes.idToken({ email: faker.internet.email() })
-          fetchSpy = jest.spyOn(global, "fetch").mockResolvedValue(
-            new Response(
-              JSON.stringify({
-                id_token: idToken,
-                access_token: faker.string.alphanumeric(40),
-              }),
-              { status: 200 },
-            ),
-          )
+          const body = {
+            id_token: idToken,
+            access_token: faker.string.alphanumeric(40),
+          }
+          fetchSpy = jest
+            .spyOn(global, "fetch")
+            .mockResolvedValue(
+              new Response(JSON.stringify(body), { status: 200 }),
+            )
 
           await expect(
             service.authenticate(faker.string.alphanumeric(20)),
@@ -567,6 +596,14 @@ registrations.forEach(([name, register]) => {
               missingField: "expires_in",
               tokenEndpoint: googleAuth.tokenEndpoint,
             },
+            cause: expect.objectContaining({
+              status: 200,
+              response: {
+                statusCode: 200,
+                message: "Auth API returned 200 with malformed token response",
+                body,
+              },
+            }),
           })
         })
       })
@@ -584,16 +621,16 @@ registrations.forEach(([name, register]) => {
           fetchSpy?.mockRestore()
         })
 
-        it("should throw an AuthApiException with missingField=id_token in context", async () => {
-          fetchSpy = jest.spyOn(global, "fetch").mockResolvedValue(
-            new Response(
-              JSON.stringify({
-                access_token: faker.string.alphanumeric(40),
-                expires_in: 3600,
-              }),
-              { status: 200 },
-            ),
-          )
+        it("should throw an AuthApiException wrapping a synthetic 200 cause", async () => {
+          const body = {
+            access_token: faker.string.alphanumeric(40),
+            expires_in: 3600,
+          }
+          fetchSpy = jest
+            .spyOn(global, "fetch")
+            .mockResolvedValue(
+              new Response(JSON.stringify(body), { status: 200 }),
+            )
 
           await expect(
             service.authenticate(faker.string.alphanumeric(20)),
@@ -604,6 +641,14 @@ registrations.forEach(([name, register]) => {
               missingField: "id_token",
               tokenEndpoint: googleAuth.tokenEndpoint,
             },
+            cause: expect.objectContaining({
+              status: 200,
+              response: {
+                statusCode: 200,
+                message: "Auth API returned 200 with malformed token response",
+                body,
+              },
+            }),
           })
         })
       })
@@ -616,7 +661,7 @@ registrations.forEach(([name, register]) => {
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
-        it("should throw an AuthApiException with phase=idTokenDecode and missingClaim=sub", async () => {
+        it("should throw an AuthApiException wrapping a synthetic 200 cause", async () => {
           const code = faker.string.alphanumeric(20)
           const idToken = jwt.sign(
             { email: faker.internet.email(), name: faker.person.fullName() },
@@ -633,6 +678,14 @@ registrations.forEach(([name, register]) => {
                 missingClaim: "sub",
                 tokenEndpoint: googleAuth.tokenEndpoint,
               },
+              cause: expect.objectContaining({
+                status: 200,
+                response: {
+                  statusCode: 200,
+                  message: "Auth API returned ID token with missing claims",
+                  body: { idToken },
+                },
+              }),
             },
           )
         })
@@ -646,7 +699,7 @@ registrations.forEach(([name, register]) => {
           service = module.get<GoogleAuthService>(GoogleAuthService)
         })
 
-        it("should throw an AuthApiException with phase=idTokenDecode and missingClaim=email", async () => {
+        it("should throw an AuthApiException wrapping a synthetic 200 cause", async () => {
           const code = faker.string.alphanumeric(20)
           const idToken = jwt.sign(
             { sub: faker.string.numeric(10), name: faker.person.fullName() },
@@ -663,6 +716,14 @@ registrations.forEach(([name, register]) => {
                 missingClaim: "email",
                 tokenEndpoint: googleAuth.tokenEndpoint,
               },
+              cause: expect.objectContaining({
+                status: 200,
+                response: {
+                  statusCode: 200,
+                  message: "Auth API returned ID token with missing claims",
+                  body: { idToken },
+                },
+              }),
             },
           )
         })
