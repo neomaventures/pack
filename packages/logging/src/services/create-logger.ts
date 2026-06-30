@@ -56,10 +56,14 @@ const rootFor = (options: LoggingModuleOptions): pino.Logger => {
 /**
  * Emit at the requested level. An explicit switch keeps level dispatch
  * statically analysable — no dynamic property access on the pino instance.
+ *
+ * Note: `'silent'` is a configured level only, never an emission level — the
+ * {@link Logger} contract has no `silent(...)` method. The case is unreachable
+ * but listed to keep the switch exhaustive over {@link LogLevel}.
  */
 const emitAt = (
   instance: pino.Logger,
-  level: LogLevel,
+  level: Exclude<LogLevel, "silent">,
   payload: Record<string, unknown>,
   message: string,
 ): void => {
@@ -91,7 +95,7 @@ const emitAt = (
  */
 const wrap = (instance: pino.Logger): Logger => {
   const emit = (
-    level: LogLevel,
+    level: Exclude<LogLevel, "silent">,
     message: string,
     context?: LogContext,
   ): void => {
