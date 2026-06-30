@@ -6,6 +6,7 @@ import { type CustomParamFactory } from "@nestjs/common/interfaces"
 import { type GmailLabelStats } from "../services/gmail.service"
 
 import { MailboxStats } from "./mailbox-stats.decorator"
+import { MAILBOX_STATS_METADATA_KEY } from "./with-mailbox-stats.decorator"
 
 type Args = Record<string, { factory: CustomParamFactory }>
 
@@ -14,22 +15,24 @@ const stats: GmailLabelStats = {
   unreadCount: faker.number.int({ min: 0, max: 500 }),
 }
 
-const buildContext = (req: {
-  mailboxStats?: GmailLabelStats
-}): ExecutionContext =>
+class MailboxStatsDecoratorTest {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public test(@MailboxStats() _value: GmailLabelStats): void {}
+}
+
+const buildContext = (
+  handler: (...args: any[]) => any,
+  req: { mailboxStats?: GmailLabelStats } = {},
+): ExecutionContext =>
   ({
     switchToHttp: () => ({ getRequest: () => req }),
+    getHandler: () => handler,
   }) as unknown as ExecutionContext
 
 describe("MailboxStatsDecorator", () => {
   let factory: CustomParamFactory
 
   beforeAll(() => {
-    class MailboxStatsDecoratorTest {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      public test(@MailboxStats() _value: GmailLabelStats): void {}
-    }
-
     const args = Reflect.getMetadata(
       ROUTE_ARGS_METADATA,
       MailboxStatsDecoratorTest,
@@ -39,18 +42,31 @@ describe("MailboxStatsDecorator", () => {
     factory = args[Object.keys(args)[0]].factory
   })
 
-  describe("Given the interceptor has populated req.mailboxStats", () => {
+  describe("Given @WithMailboxStats is applied to the handler", () => {
+    const handler = (): void => {}
+
+    beforeAll(() => {
+      Reflect.defineMetadata(MAILBOX_STATS_METADATA_KEY, true, handler)
+    })
+
     it("should return the stats from the request", () => {
-      expect(factory(null, buildContext({ mailboxStats: stats }))).toBe(stats)
+      expect(
+        factory(null, buildContext(handler, { mailboxStats: stats })),
+      ).toBe(stats)
     })
   })
 
-  describe("Given req.mailboxStats is undefined", () => {
+  describe("Given @WithMailboxStats is not applied to the handler", () => {
+    const handler = (): void => {}
+
     it("should throw an Error pointing at the missing @WithMailboxStats() wiring", () => {
-      expect(() => factory(null, buildContext({}))).toThrowMatching(Error, {
-        message:
-          "MailboxStats is not available — did you apply @WithMailboxStats() to this route?",
-      })
+      expect(() => factory(null, buildContext(handler))).toThrowMatching(
+        Error,
+        {
+          message:
+            "@WithMailboxStats() must be applied to routes using @MailboxStats()",
+        },
+      )
     })
   })
 })

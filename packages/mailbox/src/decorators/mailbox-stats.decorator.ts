@@ -2,17 +2,21 @@ import { createParamDecorator, type ExecutionContext } from "@nestjs/common"
 
 import { type GmailLabelStats } from "../services/gmail.service"
 
+import { MAILBOX_STATS_METADATA_KEY } from "./with-mailbox-stats.decorator"
+
 /**
  * Parameter decorator that returns the Gmail stats resolved on the current
  * request by {@link MailboxStatsInterceptor}.
  *
- * The interceptor throws upstream Gmail exceptions on failure, so by the
- * time the decorator runs, `req.mailboxStats` is populated whenever
- * `@WithMailboxStats()` was applied to the route. If it's missing, that
- * can only mean the consumer forgot to apply `@WithMailboxStats()` to
- * this handler — a wiring bug. The decorator throws a plain `Error`
- * pointing at the likely fix so the mistake surfaces at first request
- * rather than leaking `undefined` into handler code.
+ * Reads {@link MAILBOX_STATS_METADATA_KEY} from the route handler to verify
+ * that {@link WithMailboxStats} was applied. If the metadata is missing, the
+ * decorator throws a plain `Error` pointing at the likely fix so the wiring
+ * mistake surfaces at first request rather than leaking `undefined` into
+ * handler code.
+ *
+ * When the metadata is present the interceptor will have run; if it succeeded
+ * `req.mailboxStats` is populated, and if it failed the upstream Gmail
+ * exception propagated and this decorator never runs.
  *
  * Must be called with parentheses: `@MailboxStats()`.
  *
@@ -27,14 +31,16 @@ import { type GmailLabelStats } from "../services/gmail.service"
  */
 export const MailboxStats = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext): GmailLabelStats => {
-    const req = ctx.switchToHttp().getRequest<{
-      mailboxStats?: GmailLabelStats
-    }>()
-    if (!req.mailboxStats) {
+    const hasWiring = Reflect.getMetadata(
+      MAILBOX_STATS_METADATA_KEY,
+      ctx.getHandler(),
+    ) as boolean | undefined
+    if (!hasWiring) {
       throw new Error(
-        "MailboxStats is not available — did you apply @WithMailboxStats() to this route?",
+        "@WithMailboxStats() must be applied to routes using @MailboxStats()",
       )
     }
-    return req.mailboxStats
+    return ctx.switchToHttp().getRequest<{ mailboxStats: GmailLabelStats }>()
+      .mailboxStats
   },
 )
