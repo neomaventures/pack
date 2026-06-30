@@ -69,4 +69,22 @@ describe("MailboxStatsDecorator", () => {
       )
     })
   })
+
+  describe("Given the wiring metadata is set but req.mailboxStats is undefined (interceptor invariant violated)", () => {
+    const handler = (): void => {}
+
+    beforeAll(() => {
+      Reflect.defineMetadata(MAILBOX_STATS_METADATA_KEY, true, handler)
+    })
+
+    it("should throw indicating the contract was broken — this shouldn't happen under correct mailbox behavior", () => {
+      expect(() => factory(null, buildContext(handler))).toThrowMatching(
+        Error,
+        {
+          message:
+            "MailboxStats invariant violated — @WithMailboxStats() is applied but the interceptor did not populate req.mailboxStats. This indicates a mailbox bug.",
+        },
+      )
+    })
+  })
 })

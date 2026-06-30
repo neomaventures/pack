@@ -16,7 +16,10 @@ import { MAILBOX_STATS_METADATA_KEY } from "./with-mailbox-stats.decorator"
  *
  * When the metadata is present the interceptor will have run; if it succeeded
  * `req.mailboxStats` is populated, and if it failed the upstream Gmail
- * exception propagated and this decorator never runs.
+ * exception propagated and this decorator never runs. If `req.mailboxStats`
+ * is somehow still undefined despite the wiring being present, the decorator
+ * throws a second invariant-violation error — this indicates a bug in the
+ * mailbox package itself rather than consumer misuse.
  *
  * Must be called with parentheses: `@MailboxStats()`.
  *
@@ -40,7 +43,14 @@ export const MailboxStats = createParamDecorator(
         "@WithMailboxStats() must be applied to routes using @MailboxStats()",
       )
     }
-    return ctx.switchToHttp().getRequest<{ mailboxStats: GmailLabelStats }>()
-      .mailboxStats
+    const stats = ctx
+      .switchToHttp()
+      .getRequest<{ mailboxStats?: GmailLabelStats }>().mailboxStats
+    if (!stats) {
+      throw new Error(
+        "MailboxStats invariant violated — @WithMailboxStats() is applied but the interceptor did not populate req.mailboxStats. This indicates a mailbox bug.",
+      )
+    }
+    return stats
   },
 )
