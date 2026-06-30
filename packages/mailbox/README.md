@@ -119,36 +119,29 @@ Use `forRootAsync` when you need to inject a config service.
 
 Two paths — pick the one that fits.
 
-#### Path A — `MailboxStatsMiddleware` + `req.mailboxStats` (recommended)
+#### Path A — `MailboxStatsMiddleware` + `@MailboxStats()` (recommended)
 
-Mount `MailboxStatsMiddleware` on the routes that need stats, then read
-the resolved value from `req.mailboxStats`. The middleware fetches stats
-and throws `MailboxApiException` / `MailboxNetworkException` on failure.
-Pair with [`@neomaventures/exceptions`][exc]' global `errorTemplates` to
-render a friendly error UI on those exceptions.
+Mount `MailboxStatsMiddleware` on the routes that need stats, then inject
+the resolved value into a handler parameter with `@MailboxStats()`. The
+middleware fetches stats and throws `MailboxApiException` /
+`MailboxNetworkException` on failure. Pair with
+[`@neomaventures/exceptions`][exc]' global `errorTemplates` to render a
+friendly error UI on those exceptions.
 
 [exc]: ../exceptions
 
-Augment Express's `Request` interface once in your app so the slot is
-typed:
-
-```typescript
-// types/express.d.ts
-import { type GmailLabelStats } from "@neomaventures/mailbox"
-
-declare module "express" {
-  interface Request {
-    mailboxStats?: GmailLabelStats
-  }
-}
-```
-
-Then read it in the controller:
+`@MailboxStats()` reads `req.mailboxStats`. If the middleware wasn't
+installed on the route, `req.mailboxStats` is `undefined` and the
+decorator throws a plain `Error` naming the likely fix (install
+`MailboxStatsMiddleware`). This is a programmer-error signal, not a
+runtime exception your app should catch — install the middleware and the
+error goes away.
 
 ```typescript
 import { ExceptionHandlerModule } from "@neomaventures/exceptions"
 import {
   type GmailLabelStats,
+  MailboxStats,
   MailboxStatsMiddleware,
 } from "@neomaventures/mailbox"
 import {
@@ -157,15 +150,13 @@ import {
   MiddlewareConsumer,
   Module,
   type NestModule,
-  Req,
 } from "@nestjs/common"
-import { type Request } from "express"
 
 @Controller("profile")
 export class ProfileController {
   @Get("inbox")
-  public inbox(@Req() req: Request): GmailLabelStats {
-    return req.mailboxStats!
+  public inbox(@MailboxStats() stats: GmailLabelStats): GmailLabelStats {
+    return stats
   }
 }
 

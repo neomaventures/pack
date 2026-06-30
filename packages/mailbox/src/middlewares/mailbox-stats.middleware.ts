@@ -4,6 +4,12 @@ import { NextFunction, Request, Response } from "express"
 import { type GmailLabelStats } from "../services/gmail.service"
 import { MailboxService } from "../services/mailbox.service"
 
+declare module "express" {
+  interface Request {
+    mailboxStats?: GmailLabelStats
+  }
+}
+
 /**
  * Resolves Gmail stats for the current request and stashes them on
  * `req.mailboxStats`. Throws upstream Gmail exceptions on failure
