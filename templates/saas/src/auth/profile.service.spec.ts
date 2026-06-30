@@ -5,9 +5,9 @@ import { Test, type TestingModule } from "@nestjs/testing"
 import { getRepositoryToken } from "@nestjs/typeorm"
 import { type DataSource, type Repository } from "typeorm"
 
+import { Profile } from "~auth/profile.entity"
+import { ProfileService } from "~auth/profile.service"
 import { Upload } from "~auth/upload.entity"
-import { Profile } from "~profile/profile.entity"
-import { ProfileService } from "~profile/profile.service"
 
 describe("ProfileService", () => {
   let datasource: DataSource

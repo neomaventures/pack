@@ -4,10 +4,11 @@ import {
   type OAuthToken as AuthOAuthToken,
 } from "@neomaventures/auth"
 import { express } from "@neomaventures/fixtures"
+import { type MailboxFolderStats } from "@neomaventures/mailbox"
 
 import { ProfileController } from "~auth/profile.controller"
+import { type ProfileService } from "~auth/profile.service"
 import { type Upload } from "~auth/upload.entity"
-import { type ProfileService } from "~profile/profile.service"
 
 describe("ProfileController", () => {
   let controller: ProfileController
@@ -23,6 +24,12 @@ describe("ProfileController", () => {
   })
 
   describe("index()", () => {
+    const stats: MailboxFolderStats = {
+      folder: "INBOX",
+      messageCount: 1234,
+      unreadCount: 5,
+    }
+
     describe("Given an authenticated account with no oauthTokens", () => {
       it("should return an empty connectedAccounts list", () => {
         const account = {
@@ -30,7 +37,10 @@ describe("ProfileController", () => {
           email: faker.internet.email(),
         } as Account
 
-        expect(controller.index(account)).toEqual({ connectedAccounts: [] })
+        expect(controller.index(account, stats)).toEqual({
+          connectedAccounts: [],
+          stats,
+        })
       })
     })
 
@@ -52,7 +62,7 @@ describe("ProfileController", () => {
           ],
         } as Account
 
-        const result = controller.index(account)
+        const result = controller.index(account, stats)
 
         expect(result.connectedAccounts).toEqual([
           { provider: "google", scopes, expiresAt, active: true },
@@ -79,10 +89,23 @@ describe("ProfileController", () => {
           ],
         } as Account
 
-        const result = controller.index(account)
+        const result = controller.index(account, stats)
 
         expect(result.connectedAccounts).toHaveLength(1)
         expect(result.connectedAccounts[0]!.active).toBe(false)
+      })
+    })
+
+    describe("Given an authenticated account and resolved mailbox stats", () => {
+      it("should return { connectedAccounts, stats } for the template", () => {
+        const account = {
+          id: faker.string.uuid(),
+          email: faker.internet.email(),
+        } as Account
+
+        const result = controller.index(account, stats)
+
+        expect(result).toEqual({ connectedAccounts: [], stats })
       })
     })
   })

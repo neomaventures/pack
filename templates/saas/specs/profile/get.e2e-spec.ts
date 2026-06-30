@@ -43,12 +43,21 @@ describe("GET /profile", () => {
     it(`should respond with HTTP ${OK} and the profile template`, async () => {
       const cookie = await authenticate(app, email)
 
+      // The authenticated user has no Google OAuth token, so the mailbox
+      // interceptor's accessor throws `GmailNotConnectedException` and the
+      // route-level @ErrorTemplate maps that to a 200 re-render of the
+      // profile template with `exception` populated by the filter.
       const expectedHtml = ejs.render(
         template,
         {
           npmPackageName,
           npmPackageVersion,
           connectedAccounts: [],
+          exception: {
+            statusCode: OK,
+            message: "Gmail is not connected.",
+            error: "GmailNotConnected",
+          },
         },
         { filename: join(process.cwd(), "views", "profile.ejs") },
       )
@@ -56,6 +65,7 @@ describe("GET /profile", () => {
       await request(app.getHttpServer())
         .get("/profile")
         .set("Cookie", cookie)
+        .set("Accept", "text/html")
         .expect(OK)
         .expect(expectedHtml)
     })

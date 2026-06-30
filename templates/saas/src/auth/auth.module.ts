@@ -1,14 +1,17 @@
 import { Account, OAuthToken } from "@neomaventures/auth"
 import { ConfigService, type TypedConfig } from "@neomaventures/config"
+import { MailboxModule, type MailboxOptions } from "@neomaventures/mailbox"
 import { StorageModule } from "@neomaventures/storage"
 import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
 
 import { AccountAvatarKeyResolver } from "~auth/account-avatar-key.resolver"
 import { AuthController } from "~auth/auth.controller"
+import { GmailTokenAccessor } from "~auth/gmail-token-accessor"
 import { ProfileController } from "~auth/profile.controller"
+import { Profile } from "~auth/profile.entity"
+import { ProfileService } from "~auth/profile.service"
 import { Upload } from "~auth/upload.entity"
-import { ProfileModule } from "~profile/profile.module"
 
 /**
  * Narrow view of `AppConfig` — just the storage bucket name — used by the
@@ -17,6 +20,17 @@ import { ProfileModule } from "~profile/profile.module"
 interface AuthStorageConfig {
   /** Bucket name avatar uploads are written to. */
   avatarBucket: string
+}
+
+/**
+ * Narrow view of `AppConfig` — just the Gmail API base URL override —
+ * used by the `MailboxModule.forRootAsync` factory below. Optional in
+ * production (mailbox defaults to `https://gmail.googleapis.com`); set in
+ * spec / e2e / ui-spec env files to point at mockserver.
+ */
+interface AuthMailboxConfig {
+  /** Override for Gmail's API base URL. Used in tests to point at a mocked endpoint. */
+  gmailApiBaseUrl: string
 }
 
 /**
@@ -29,8 +43,8 @@ interface AuthStorageConfig {
  *
  * Registers the {@link Account} and `OAuthToken` entities from auth (so
  * the auth services can resolve them via `DataSource.getRepository`),
- * plus the consumer-owned {@link Upload}. {@link ProfileModule} owns the
- * `Profile` entity and `ProfileService`.
+ * plus the consumer-owned {@link Upload} and {@link Profile} entities and
+ * the {@link ProfileService} provider.
  *
  * `StorageModule.forFeatureAsync` is imported here — not at the
  * application root — because the feature scope provides
@@ -43,16 +57,26 @@ interface AuthStorageConfig {
  */
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Account, OAuthToken, Upload]),
+    TypeOrmModule.forFeature([Account, OAuthToken, Upload, Profile]),
     StorageModule.forFeatureAsync({
       useFactory: (config: TypedConfig<AuthStorageConfig>) => ({
         bucket: config.avatarBucket,
       }),
       inject: [ConfigService],
     }),
-    ProfileModule,
+    MailboxModule.forRootAsync({
+      tokenAccessor: GmailTokenAccessor,
+      useFactory: (
+        config: TypedConfig<AuthMailboxConfig>,
+      ): Omit<MailboxOptions, "tokenAccessor"> => ({
+        ...(config.gmailApiBaseUrl && {
+          gmailApiBaseUrl: config.gmailApiBaseUrl,
+        }),
+      }),
+      inject: [ConfigService],
+    }),
   ],
   controllers: [AuthController, ProfileController],
-  providers: [AccountAvatarKeyResolver],
+  providers: [AccountAvatarKeyResolver, GmailTokenAccessor, ProfileService],
 })
 export class SaasAuthModule {}

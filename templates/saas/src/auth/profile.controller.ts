@@ -5,6 +5,11 @@ import {
 } from "@neomaventures/auth"
 import { ErrorTemplate } from "@neomaventures/exceptions"
 import {
+  MailboxStats,
+  type MailboxFolderStats,
+  WithMailboxStats,
+} from "@neomaventures/mailbox"
+import {
   StoredFile,
   TemporaryLink,
   Upload as UploadDecorator,
@@ -20,8 +25,8 @@ import {
 import { type Response } from "express"
 
 import { AccountAvatarKeyResolver } from "~auth/account-avatar-key.resolver"
+import { ProfileService } from "~auth/profile.service"
 import { Upload } from "~auth/upload.entity"
-import { ProfileService } from "~profile/profile.service"
 
 /**
  * Handles the profile page and profile-scoped asset endpoints.
@@ -54,19 +59,40 @@ export class ProfileController {
    * `account.oauthTokens` — `accessToken` and `refreshToken` are
    * deliberately omitted so they never reach the rendered HTML.
    *
+   * `@WithMailboxStats()` wires the mailbox interceptor for this route;
+   * `@MailboxStats()` injects the resolved Gmail INBOX stats. The
+   * `@ErrorTemplate` mapping covers the three exception classes the
+   * accessor / mailbox can throw — all three re-render the `profile`
+   * template, and the template branches on `exception.error` to pick the
+   * right Mailbox-section variant (connected / not_connected /
+   * unavailable).
+   *
    * @param account - The authenticated account, injected via `@AuthenticatedAccount()`.
-   * @returns A view model with the connected-accounts list.
+   * @param stats - Gmail INBOX stats resolved by the mailbox interceptor.
+   * @returns A view model with the connected-accounts list and the
+   *   resolved mailbox stats.
    */
   @Get("profile")
   @Authenticated()
+  @WithMailboxStats()
+  @ErrorTemplate({
+    GmailNotConnectedException: "profile",
+    MailboxApiException: "profile",
+    MailboxNetworkException: "profile",
+    default: "/error",
+  })
   @Render("profile")
-  public index(@AuthenticatedAccount() account: Account): {
+  public index(
+    @AuthenticatedAccount() account: Account,
+    @MailboxStats() stats: MailboxFolderStats,
+  ): {
     connectedAccounts: Array<{
       provider: string
       scopes: string[]
       expiresAt: Date
       active: boolean
     }>
+    stats: MailboxFolderStats
   } {
     const now = Date.now()
     const connectedAccounts = (account.oauthTokens ?? []).map((token) => ({
@@ -75,7 +101,7 @@ export class ProfileController {
       expiresAt: token.expiresAt,
       active: new Date(token.expiresAt).getTime() > now,
     }))
-    return { connectedAccounts }
+    return { connectedAccounts, stats }
   }
 
   /**

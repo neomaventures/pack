@@ -3,8 +3,8 @@ import { Injectable } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import { Repository } from "typeorm"
 
+import { Profile } from "~auth/profile.entity"
 import { Upload } from "~auth/upload.entity"
-import { Profile } from "~profile/profile.entity"
 
 /**
  * Application-layer service for the profile domain.

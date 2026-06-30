@@ -4,6 +4,7 @@ import { join } from "path"
 import { faker } from "@faker-js/faker"
 import { ConfigService } from "@neomaventures/config"
 import { google } from "@neomaventures/google-fixtures"
+import { GMAIL_READONLY_SCOPE } from "@neomaventures/mailbox"
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
 import ejs from "ejs"
@@ -41,7 +42,7 @@ describe("POST /auth/register", () => {
           googleAuthorizeUrl: google.authorizeUrl(
             process.env.GOOGLE_CLIENT_ID!,
             `${process.env.APP_URL!}/auth/google/callback`,
-            google.sensibleScopes(),
+            ["openid", "email", "profile", GMAIL_READONLY_SCOPE],
           ),
           exception: {
             email: {
@@ -68,7 +69,7 @@ describe("POST /auth/register", () => {
           googleAuthorizeUrl: google.authorizeUrl(
             process.env.GOOGLE_CLIENT_ID!,
             `${process.env.APP_URL!}/auth/google/callback`,
-            google.sensibleScopes(),
+            ["openid", "email", "profile", GMAIL_READONLY_SCOPE],
           ),
           exception: {
             email: {

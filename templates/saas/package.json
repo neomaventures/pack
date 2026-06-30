@@ -32,6 +32,7 @@
     "@neomaventures/exceptions": "workspace:*",
     "@neomaventures/healthcheck": "workspace:*",
     "@neomaventures/logging": "workspace:*",
+    "@neomaventures/mailbox": "workspace:*",
     "@neomaventures/request-context": "workspace:*",
     "@neomaventures/storage": "workspace:*",
     "@nestjs/common": "^11.1.18",

@@ -7,6 +7,7 @@ import {
 import { ExceptionHandlerModule } from "@neomaventures/exceptions"
 import { HealthcheckModule } from "@neomaventures/healthcheck"
 import { LoggingModule } from "@neomaventures/logging"
+import { GMAIL_READONLY_SCOPE } from "@neomaventures/mailbox"
 import { RequestContextModule } from "@neomaventures/request-context"
 import { StorageModule } from "@neomaventures/storage"
 import {
@@ -50,6 +51,8 @@ interface AppConfig {
   googleClientSecret: string
   /** Optional override for Google's token endpoint URL. Used in tests to point at a mocked endpoint; production reads from Google. */
   googleTokenEndpoint: string
+  /** Optional override for Gmail's API base URL. Used in tests to point at a mocked endpoint; production reads from `https://gmail.googleapis.com`. */
+  gmailApiBaseUrl: string
 
   /** S3-compatible endpoint for `@neomaventures/storage` (MinIO locally, real S3/R2/B2 in production). */
   s3Endpoint: string
@@ -111,6 +114,7 @@ interface AppConfig {
             clientId: config.googleClientId,
             clientSecret: config.googleClientSecret,
             redirectUri: `${config.appUrl}/auth/google/callback`,
+            scopes: ["openid", "email", "profile", GMAIL_READONLY_SCOPE],
             ...(config.googleTokenEndpoint && {
               tokenEndpoint: config.googleTokenEndpoint,
             }),

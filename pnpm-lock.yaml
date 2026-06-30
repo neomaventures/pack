@@ -1038,6 +1038,9 @@ importers:
       '@neomaventures/logging':
         specifier: workspace:*
         version: link:../../packages/logging
+      '@neomaventures/mailbox':
+        specifier: workspace:*
+        version: link:../../packages/mailbox
       '@neomaventures/request-context':
         specifier: workspace:*
         version: link:../../packages/request-context
