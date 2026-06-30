@@ -43,13 +43,13 @@ describe("LoggingModule", () => {
     })
   })
 
-  describe("forFeature(string[])", () => {
+  describe("forFeature shorthand parity", () => {
     describe("Given a namespace passed as a bare string", () => {
-      it("should register a logger equivalent to { namespace: string }", async () => {
+      it("should register a logger that emits under the namespace", async () => {
         const logs: any[] = []
         const namespace = `neomaventures:${faker.lorem.word()}`
 
-        const stringModule = await Test.createTestingModule({
+        const module = await Test.createTestingModule({
           imports: [
             LoggingModule.forRoot({
               destination: new ArrayStream(logs),
@@ -59,29 +59,42 @@ describe("LoggingModule", () => {
           ],
         }).compile()
 
-        const objectModule = await Test.createTestingModule({
-          imports: [
-            LoggingModule.forRoot({
-              destination: new ArrayStream([]),
-              loggers: [{ namespace, level: "debug" }],
-            }),
-            LoggingModule.forFeature([{ namespace }]),
-          ],
-        }).compile()
-
-        const fromString = stringModule.get<Logger>(namespace)
-        const fromObject = objectModule.get<Logger>(namespace)
-
-        expect(fromString).toBeDefined()
-        expect(fromObject).toBeDefined()
-
-        fromString.debug("shorthand")
+        const logger = module.get<Logger>(namespace)
+        logger.debug("shorthand")
 
         expect(logs).toEqual([
           expect.objectContaining({
             level: LogLevelNumber.debug,
             ns: namespace,
             msg: "shorthand",
+          }),
+        ])
+      })
+    })
+
+    describe("Given a namespace passed as { namespace }", () => {
+      it("should register a logger that emits under the namespace", async () => {
+        const logs: any[] = []
+        const namespace = `neomaventures:${faker.lorem.word()}`
+
+        const module = await Test.createTestingModule({
+          imports: [
+            LoggingModule.forRoot({
+              destination: new ArrayStream(logs),
+              loggers: [{ namespace, level: "debug" }],
+            }),
+            LoggingModule.forFeature([{ namespace }]),
+          ],
+        }).compile()
+
+        const logger = module.get<Logger>(namespace)
+        logger.debug("object form")
+
+        expect(logs).toEqual([
+          expect.objectContaining({
+            level: LogLevelNumber.debug,
+            ns: namespace,
+            msg: "object form",
           }),
         ])
       })
