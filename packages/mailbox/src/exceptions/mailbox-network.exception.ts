@@ -1,3 +1,5 @@
+import { STATUS_CODES } from "node:http"
+
 import { HttpException, HttpStatus } from "@nestjs/common"
 
 const KNOWN_CODES = [
@@ -50,17 +52,15 @@ export class MailboxNetworkException extends HttpException {
     public readonly context: Record<string, unknown>,
     cause: Error,
   ) {
-    const message = "Mailbox network error"
     super(
       {
         statusCode: HttpStatus.BAD_GATEWAY,
-        message,
+        message: STATUS_CODES[HttpStatus.BAD_GATEWAY],
         error: "MailboxNetwork",
       },
       HttpStatus.BAD_GATEWAY,
       { cause },
     )
-    this.name = "MailboxNetworkException"
     this.code = MailboxNetworkException.extractCode(cause)
   }
 

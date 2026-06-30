@@ -69,7 +69,7 @@ describe("GET /mailbox/stats", () => {
 
         expect(body).toEqual({
           statusCode: BAD_GATEWAY,
-          message: "Mailbox API error",
+          message: "Bad Gateway",
           error: "MailboxApi",
         })
       })
@@ -92,7 +92,7 @@ describe("GET /mailbox/stats", () => {
 
       expect(body).toEqual({
         statusCode: BAD_GATEWAY,
-        message: "Mailbox network error",
+        message: "Bad Gateway",
         error: "MailboxNetwork",
       })
     })

@@ -1,3 +1,5 @@
+import { STATUS_CODES } from "node:http"
+
 import { HttpException, HttpStatus } from "@nestjs/common"
 
 /**
@@ -15,9 +17,10 @@ import { HttpException, HttpStatus } from "@nestjs/common"
  * from Gmail is not the client's credentials to our API being bad) and
  * asymmetric with {@link MailboxNetworkException}, which is already
  * flat-502. The wire `message` is likewise a fixed generic string
- * (`"Mailbox API error"`) — the upstream status and message stay
- * accessible via `err.cause.getStatus()` / `err.cause.getResponse()`
- * for filters and log handlers, but never reach the client.
+ * (`"Bad Gateway"`, the NestJS idiom for 502) — the upstream status and
+ * message stay accessible via `err.cause.getStatus()` /
+ * `err.cause.getResponse()` for filters and log handlers, but never
+ * reach the client.
  *
  * @example
  * ```typescript
@@ -50,7 +53,7 @@ export class MailboxApiException extends HttpException {
     super(
       {
         statusCode: HttpStatus.BAD_GATEWAY,
-        message: "Mailbox API error",
+        message: STATUS_CODES[HttpStatus.BAD_GATEWAY],
         error: "MailboxApi",
       },
       HttpStatus.BAD_GATEWAY,
