@@ -1,5 +1,37 @@
 # @neomaventures/mailbox
 
+## 0.3.0
+
+### Minor Changes
+
+- 551842f: Renamed `GmailApiException` → `MailboxApiException`, `GmailNetworkException` → `MailboxNetworkException` per the pack-wide naming convention (#287). Consumers configuring `errorTemplates` must update their keys: `GmailApiException` → `MailboxApiException`, `GmailNetworkException` → `MailboxNetworkException`. No behavioural change; constructor signatures, instance properties, wire response (`error: "MailboxApi"` / `"MailboxNetwork"`), and HTTP status mappings are identical.
+- 6eaeb37: **BREAKING**: Stats wiring switches from middleware to the composition-decorator pattern. Apply `@WithMailboxStats()` to a route handler to opt in; the decorator composes `UseInterceptors(MailboxStatsInterceptor) + SetMetadata(...)`, matching the storage `@Upload` pattern. `@MailboxStats()` still reads `req.mailboxStats` and is unchanged at the call site.
+
+  Gained:
+  - `WithMailboxStats()` — method decorator that attaches the stats interceptor.
+  - `MailboxStatsInterceptor` — fetches Gmail stats before the handler runs and stashes them on `req.mailboxStats`. Throws `MailboxApiException` / `MailboxNetworkException` on upstream failure (same wire contract as before).
+
+  Removed:
+  - `MailboxStatsMiddleware` — deleted. Consumers no longer wire stats via `MiddlewareConsumer.apply(...).forRoutes(...)`; applying `@WithMailboxStats()` to the route is the entire opt-in.
+
+  Migration: drop the `configure(consumer)` middleware wiring and add `@WithMailboxStats()` to each route handler that uses `@MailboxStats()`. The `@MailboxStats()` wiring-error message now reads `"MailboxStats is not available — did you apply @WithMailboxStats() to this route?"`.
+
+  The Express `Request.mailboxStats` type augmentation now ships from inside the package (declared alongside `MailboxStatsInterceptor`, the artifact that writes the slot) — consumers do not need a hand-rolled `declare module "express"` block.
+
+  **BREAKING**: `MailboxLabelStats` (formerly `GmailLabelStats`) gains a new required field `label: string` identifying which Gmail label the stats describe. Type name stays `MailboxLabelStats` — the briefly-shipped `MailboxStats` rename caused a naming collision with the `@MailboxStats()` decorator that required an internal alias dance, so it was reverted. The field is designed to widen to `string | MailboxLabel` (rich metadata) in a future minor without forcing a consumer migration today; consumers branching on the string at that point will need a `typeof` narrow.
+
+  **BREAKING**: Public surface renamed for provider neutrality. `MailboxLabelStats` → `MailboxFolderStats`; `GmailSystemLabel` enum → `MailboxFolder`; `MailboxService.getStats(labelId)` → `getStats(folder)`; the field on the stats type renames from `label` to `folder`. Enum values are unchanged (still the underlying Gmail label IDs like `"INBOX"`); only the type/enum/param/field names become provider-neutral. `GMAIL_READONLY_SCOPE` stays Gmail-named — OAuth scopes are inherently provider-specific.
+
+- 9e17066: **BREAKING**: Renamed `MailboxApiException` constructor signature from `(statusCode, endpoint, message, context, responseBody, cause?)` to `(endpoint, context, cause: HttpException)` to match the symmetric shape now used by `@neomaventures/auth`'s `AuthApiException`. The cause's `getStatus()` provides the upstream status. Consumers constructing this exception directly must migrate.
+
+  **BREAKING**: `MailboxApiException` now always returns HTTP 502 regardless of upstream Gmail status. Previously 401/404 passed through verbatim. Consumers branching on the wire status receive 502 uniformly for upstream Gmail failures; branch on `err.cause.getStatus()` from a filter / log handler if upstream-status access is needed. Symmetric with `MailboxNetworkException` (already flat-502) and aligned with `AuthApiException` post-#294.
+
+  **BREAKING**: `MailboxApiException`'s wire `message` is now `"Bad Gateway"` (the NestJS idiom for a 502, matching `AuthApiException`) instead of `"Mailbox API returned <upstreamStatus>"`. The upstream status was the second channel by which upstream details reached the client — the wire response no longer discloses it. Upstream status and message remain accessible via `err.cause.getStatus()` / `err.cause.message` for server logs. Consumers rendering or asserting on the message string will see the new value.
+
+  **BREAKING**: `MailboxNetworkException`'s wire `message` is now `"Bad Gateway"` (matching `MailboxApiException` and `AuthNetworkException`) instead of `"Mailbox network error"`. Both API and Network exceptions now produce identical opaque wire shapes apart from the `error` discriminator (`"MailboxApi"` vs `"MailboxNetwork"`).
+
+  **BREAKING**: Dropped the `code` instance property from `MailboxNetworkException`. The field duplicated information already available on the cause chain and required an `AbortError → ETIMEDOUT` inference that wasn't always correct. Consumers and log handlers that need the underlying OS errno should read it from `err.cause.cause?.code` (undici-wrapped) or `err.cause.code` (older shape) — matching the auth-network pattern.
+
 ## 0.2.0
 
 ### Minor Changes
