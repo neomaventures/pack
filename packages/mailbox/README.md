@@ -139,18 +139,14 @@ goes away.
 
 ```typescript
 import { ExceptionHandlerModule } from "@neomaventures/exceptions"
-import {
-  type MailboxLabelStats,
-  MailboxStats,
-  WithMailboxStats,
-} from "@neomaventures/mailbox"
+import { MailboxStats, WithMailboxStats } from "@neomaventures/mailbox"
 import { Controller, Get, Module } from "@nestjs/common"
 
 @Controller("profile")
 export class ProfileController {
   @Get("inbox")
   @WithMailboxStats()
-  public inbox(@MailboxStats() stats: MailboxLabelStats): MailboxLabelStats {
+  public inbox(@MailboxStats() stats: MailboxStats): MailboxStats {
     return stats
   }
 }
@@ -183,6 +179,7 @@ export class MailboxController {
   // Whatever auth strategy your app uses
   @Get("stats")
   public async stats(): Promise<{
+    labelId: string
     messageCount: number
     unreadCount: number
   }> {
@@ -247,18 +244,14 @@ Gmail round-trip — there is no global registration, so unrelated routes
 are unaffected:
 
 ```typescript
-import {
-  type MailboxLabelStats,
-  MailboxStats,
-  WithMailboxStats,
-} from "@neomaventures/mailbox"
+import { MailboxStats, WithMailboxStats } from "@neomaventures/mailbox"
 import { Controller, Get } from "@nestjs/common"
 
 @Controller("profile")
 export class ProfileController {
   @Get("inbox")
   @WithMailboxStats()
-  public inbox(@MailboxStats() stats: MailboxLabelStats): MailboxLabelStats {
+  public inbox(@MailboxStats() stats: MailboxStats): MailboxStats {
     return stats
   }
 }

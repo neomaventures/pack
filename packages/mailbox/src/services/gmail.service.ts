@@ -3,7 +3,7 @@ import { HttpException, Inject, Injectable } from "@nestjs/common"
 import { GMAIL_API_BASE_URL, GmailSystemLabel } from "../constants"
 import { MailboxApiException } from "../exceptions/mailbox-api.exception"
 import { MailboxNetworkException } from "../exceptions/mailbox-network.exception"
-import { type MailboxLabelStats } from "../interfaces/mailbox-label-stats"
+import { type MailboxStats } from "../interfaces/mailbox-stats"
 
 const LABELS_ENDPOINT = "/gmail/v1/users/me/labels/{labelId}"
 
@@ -43,13 +43,13 @@ export class GmailService {
    * @example
    * ```typescript
    * const stats = await gmail.getStats(token)
-   * // => { messageCount: 1234, unreadCount: 5 }
+   * // => { labelId: "INBOX", messageCount: 1234, unreadCount: 5 }
    * ```
    */
   public async getStats(
     token: string,
     labelId: GmailSystemLabel | string = GmailSystemLabel.Inbox,
-  ): Promise<MailboxLabelStats> {
+  ): Promise<MailboxStats> {
     const url = `${this.baseUrl}/gmail/v1/users/me/labels/${encodeURIComponent(labelId)}`
     let response: Response
     try {
@@ -85,6 +85,7 @@ export class GmailService {
     }
 
     return {
+      labelId,
       messageCount: body.messagesTotal ?? 0,
       unreadCount: body.messagesUnread ?? 0,
     }

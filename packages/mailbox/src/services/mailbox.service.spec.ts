@@ -9,6 +9,7 @@ import { GmailService } from "./gmail.service"
 import { MailboxService } from "./mailbox.service"
 
 const token = faker.string.alphanumeric(40)
+const labelId = GmailSystemLabel.Inbox
 const messageCount = faker.number.int({ min: 1, max: 10000 })
 const unreadCount = faker.number.int({ min: 0, max: 500 })
 
@@ -20,7 +21,9 @@ describe("MailboxService", () => {
 
   beforeEach(async () => {
     gmailService = {
-      getStats: jest.fn().mockResolvedValue({ messageCount, unreadCount }),
+      getStats: jest
+        .fn()
+        .mockResolvedValue({ labelId, messageCount, unreadCount }),
     }
 
     getTokenSpy = jest.fn().mockResolvedValue(token)
@@ -56,6 +59,7 @@ describe("MailboxService", () => {
 
       it("should return the stats from GmailService unchanged", async () => {
         await expect(service.getStats()).resolves.toEqual({
+          labelId,
           messageCount,
           unreadCount,
         })

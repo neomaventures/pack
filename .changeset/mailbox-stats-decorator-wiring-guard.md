@@ -15,4 +15,4 @@ Migration: drop the `configure(consumer)` middleware wiring and add `@WithMailbo
 
 The Express `Request.mailboxStats` type augmentation now ships from inside the package (declared alongside `MailboxStatsInterceptor`, the artifact that writes the slot) — consumers do not need a hand-rolled `declare module "express"` block.
 
-**BREAKING**: `GmailLabelStats` type renamed to `MailboxLabelStats`. Same shape (`{ messageCount, unreadCount }`); only the type name changes. Aligns with the package-named convention used for exception classes (`MailboxApiException`, `MailboxNetworkException`).
+**BREAKING**: `GmailLabelStats` type renamed to `MailboxStats`. Aligns with the package-named convention used for exception classes (`MailboxApiException`, `MailboxNetworkException`) and matches the `@MailboxStats` decorator name (TypeScript's type/value namespace split keeps them coexisting cleanly — same pattern as Nest's `@Module` + `Module` interface). New required field `labelId: string` identifies which Gmail label the stats are for. Consumers update their type imports and either destructure the new field or ignore it.

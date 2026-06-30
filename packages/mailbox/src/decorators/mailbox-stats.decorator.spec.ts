@@ -3,26 +3,27 @@ import { type ExecutionContext } from "@nestjs/common"
 import { ROUTE_ARGS_METADATA } from "@nestjs/common/constants"
 import { type CustomParamFactory } from "@nestjs/common/interfaces"
 
-import { type MailboxLabelStats } from "../interfaces/mailbox-label-stats"
+import { type MailboxStats } from "../interfaces/mailbox-stats"
 
 import { MailboxStats } from "./mailbox-stats.decorator"
 import { MAILBOX_STATS_METADATA_KEY } from "./with-mailbox-stats.decorator"
 
 type Args = Record<string, { factory: CustomParamFactory }>
 
-const stats: MailboxLabelStats = {
+const stats: MailboxStats = {
+  labelId: faker.string.alphanumeric(10),
   messageCount: faker.number.int({ min: 1, max: 10000 }),
   unreadCount: faker.number.int({ min: 0, max: 500 }),
 }
 
 class MailboxStatsDecoratorTest {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public test(@MailboxStats() _value: MailboxLabelStats): void {}
+  public test(@MailboxStats() _value: MailboxStats): void {}
 }
 
 const buildContext = (
   handler: (...args: any[]) => any,
-  req: { mailboxStats?: MailboxLabelStats } = {},
+  req: { mailboxStats?: MailboxStats } = {},
 ): ExecutionContext =>
   ({
     switchToHttp: () => ({ getRequest: () => req }),
