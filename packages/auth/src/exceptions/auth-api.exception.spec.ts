@@ -8,13 +8,16 @@ describe("AuthApiException", () => {
   const context = { provider: "google", phase: "codeExchange" }
 
   describe("Given any upstream cause", () => {
-    const message = faker.lorem.sentence()
+    const causeMessage = faker.lorem.sentence()
     const body = { error: "invalid_grant" }
     let cause: HttpException
     let exception: AuthApiException
 
     beforeEach(() => {
-      cause = new HttpException({ statusCode: 401, message, body }, 401)
+      cause = new HttpException(
+        { statusCode: 401, message: causeMessage, body },
+        401,
+      )
       exception = new AuthApiException(endpoint, context, cause)
     })
 
@@ -30,8 +33,8 @@ describe("AuthApiException", () => {
       expect(exception.cause).toBe(cause)
     })
 
-    it("should inherit the message from the cause", () => {
-      expect(exception.message).toBe(message)
+    it("should preserve the cause message on err.cause.message (not on err.message)", () => {
+      expect((exception.cause as HttpException).message).toBe(causeMessage)
     })
   })
 
@@ -60,17 +63,16 @@ describe("AuthApiException", () => {
         expect(exception.getStatus()).toBe(HttpStatus.BAD_GATEWAY)
       })
 
-      it("should produce the minimal wire response shape", () => {
-        const message = faker.lorem.sentence()
+      it("should produce an opaque wire response that does not leak upstream status or message", () => {
         const exception = new AuthApiException(
           endpoint,
           context,
-          new HttpException(message, upstreamStatus),
+          new HttpException(faker.lorem.sentence(), upstreamStatus),
         )
 
         expect(exception.getResponse()).toEqual({
           statusCode: HttpStatus.BAD_GATEWAY,
-          message,
+          message: "Bad Gateway",
           error: "AuthApi",
         })
       })

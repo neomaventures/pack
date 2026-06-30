@@ -160,7 +160,7 @@ appModules.forEach(([name, modulePath]) => {
           .expect(BAD_GATEWAY)
           .expect({
             statusCode: BAD_GATEWAY,
-            message: "Auth API returned 400",
+            message: "Bad Gateway",
             error: "AuthApi",
           })
       })
@@ -180,7 +180,7 @@ appModules.forEach(([name, modulePath]) => {
           .expect(BAD_GATEWAY)
           .expect({
             statusCode: BAD_GATEWAY,
-            message: "Auth API returned 500",
+            message: "Bad Gateway",
             error: "AuthApi",
           })
       })
@@ -241,7 +241,7 @@ appModules.forEach(([name, modulePath]) => {
           .expect(BAD_GATEWAY)
           .expect({
             statusCode: BAD_GATEWAY,
-            message: "Auth API returned ID token with missing claims",
+            message: "Bad Gateway",
             error: "AuthApi",
           })
       })
@@ -276,7 +276,7 @@ appModules.forEach(([name, modulePath]) => {
           .expect(BAD_GATEWAY)
           .expect({
             statusCode: BAD_GATEWAY,
-            message: "Auth API returned ID token with missing claims",
+            message: "Bad Gateway",
             error: "AuthApi",
           })
       })

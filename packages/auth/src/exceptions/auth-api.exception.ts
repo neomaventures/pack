@@ -12,9 +12,10 @@ import { HttpException, HttpStatus } from "@nestjs/common"
  * the upstream status, message, and response body for diagnostics.
  *
  * Symmetric with {@link AuthNetworkException}: `(endpoint, context, cause)`
- * — always returns HTTP 502 Bad Gateway. The upstream status is never put
- * on the wire; consumers that want to branch on it can read
- * `err.cause.getStatus()` from a filter or log handler.
+ * — always returns HTTP 502 Bad Gateway with a generic `"Bad Gateway"`
+ * message. Neither the upstream status nor the upstream message is put on
+ * the wire; consumers that need either can read `err.cause.getStatus()`
+ * and `err.cause.message` from a filter or log handler.
  *
  * @example
  * ```typescript
@@ -47,7 +48,7 @@ export class AuthApiException extends HttpException {
     super(
       {
         statusCode: HttpStatus.BAD_GATEWAY,
-        message: cause.message,
+        message: "Bad Gateway",
         error: "AuthApi",
       },
       HttpStatus.BAD_GATEWAY,
