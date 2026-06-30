@@ -30,7 +30,7 @@ describe("GET /auth/register", () => {
         googleAuthorizeUrl: google.authorizeUrl(
           process.env.GOOGLE_CLIENT_ID!,
           `${process.env.APP_URL!}/auth/google/callback`,
-          ["openid", "email", "profile", GMAIL_READONLY_SCOPE],
+          [...google.sensibleScopes(), GMAIL_READONLY_SCOPE],
         ),
       })
 

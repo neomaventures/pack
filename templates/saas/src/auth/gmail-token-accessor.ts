@@ -1,9 +1,12 @@
-import { type Account, OAuthTokenService } from "@neomaventures/auth"
+import {
+  type Account,
+  getAccount,
+  OAuthTokenService,
+} from "@neomaventures/auth"
 import {
   GMAIL_READONLY_SCOPE,
   type TokenAccessor,
 } from "@neomaventures/mailbox"
-import { getRequest } from "@neomaventures/request-context"
 import { Injectable } from "@nestjs/common"
 
 import { GmailNotConnectedException } from "~auth/gmail-not-connected.exception"
@@ -14,16 +17,16 @@ import { GmailNotConnectedException } from "~auth/gmail-not-connected.exception"
  *
  * Mailbox is account-agnostic: it asks the host for a token covering a
  * given scope and lets the host decide whose token to return. This accessor
- * reads the authenticated `Account` from `@neomaventures/request-context`,
- * looks up the active `google` `OAuthToken`, and returns its access token
- * when the `gmail.readonly` scope is present.
+ * reads the authenticated `Account` from the `@neomaventures/auth`
+ * request-scoped account slot, looks up the active `google` `OAuthToken`,
+ * and returns its access token when the `gmail.readonly` scope is present.
  *
  * - **Unsupported scope** — throws a plain `Error`. v0.1.0 mailbox only
  *   requests `GMAIL_READONLY_SCOPE`; surface anything else loudly so the
  *   bug is obvious.
- * - **No request / no account** — throws a plain `Error`. The auth
- *   middleware should have populated `req.account`; missing it indicates a
- *   wiring bug, not a user-facing state.
+ * - **No account on the current request** — throws a plain `Error`. The
+ *   auth middleware should have populated the account slot; missing it
+ *   indicates a wiring bug, not a user-facing state.
  * - **No google token / expired token / token missing the scope** — throws
  *   {@link GmailNotConnectedException}. This is a user-facing state and
  *   maps to the "Connect Gmail" UI on the profile page.
@@ -47,7 +50,7 @@ export class GmailTokenAccessor implements TokenAccessor {
    * @returns The access token string from the request account's active
    *   google OAuth token.
    * @throws {Error} When `scope` is not `GMAIL_READONLY_SCOPE`, or when no
-   *   request / authenticated account is in scope.
+   *   authenticated account is on the current request.
    * @throws {GmailNotConnectedException} When the account has no active
    *   google OAuth token or the token's scopes do not include
    *   `gmail.readonly`.
@@ -57,8 +60,7 @@ export class GmailTokenAccessor implements TokenAccessor {
       throw new Error(`Unsupported scope: ${scope}`)
     }
 
-    const request = getRequest()
-    const account = (request as { account?: Account } | undefined)?.account
+    const account = getAccount<Account>()
     if (!account) {
       throw new Error("No authenticated account on the current request")
     }

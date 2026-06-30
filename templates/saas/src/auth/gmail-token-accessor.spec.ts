@@ -1,32 +1,27 @@
 import { faker } from "@faker-js/faker"
+import { setAccount } from "@neomaventures/auth"
 import { entities } from "@neomaventures/auth/testing"
+import { google } from "@neomaventures/google-fixtures"
 import { GMAIL_READONLY_SCOPE } from "@neomaventures/mailbox"
+import { RequestContextModule } from "@neomaventures/request-context"
 import { Test, type TestingModule } from "@nestjs/testing"
+import { ClsService } from "nestjs-cls"
 
 import { GmailNotConnectedException } from "~auth/gmail-not-connected.exception"
 import { GmailTokenAccessor } from "~auth/gmail-token-accessor"
 
-jest.mock("@neomaventures/request-context", () => ({
-  ...jest.requireActual("@neomaventures/request-context"),
-  getRequest: jest.fn(),
-}))
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { getRequest } = require("@neomaventures/request-context") as {
-  getRequest: jest.Mock
-}
-
 describe("GmailTokenAccessor", () => {
   let accessor: GmailTokenAccessor
+  let cls: ClsService
 
   beforeEach(async () => {
-    getRequest.mockReset()
-
     const module: TestingModule = await Test.createTestingModule({
+      imports: [RequestContextModule.forRoot()],
       providers: [GmailTokenAccessor],
     }).compile()
 
-    accessor = module.get<GmailTokenAccessor>(GmailTokenAccessor)
+    accessor = module.get(GmailTokenAccessor)
+    cls = module.get(ClsService)
   })
 
   describe("getToken()", () => {
@@ -34,40 +29,36 @@ describe("GmailTokenAccessor", () => {
       it("should throw with a clear unsupported-scope error", async () => {
         const scope = faker.internet.url()
 
-        await expect(accessor.getToken(scope)).rejects.toThrow(
-          `Unsupported scope: ${scope}`,
-        )
+        await expect(accessor.getToken(scope)).rejects.toMatchError(Error, {
+          message: `Unsupported scope: ${scope}`,
+        })
       })
     })
 
-    describe("Given no request is in scope", () => {
+    describe("Given no account is on the current request", () => {
       it("should throw 'No authenticated account on the current request'", async () => {
-        getRequest.mockReturnValue(undefined)
-
-        await expect(accessor.getToken(GMAIL_READONLY_SCOPE)).rejects.toThrow(
-          "No authenticated account on the current request",
-        )
-      })
-    })
-
-    describe("Given a request with no authenticated account", () => {
-      it("should throw 'No authenticated account on the current request'", async () => {
-        getRequest.mockReturnValue({})
-
-        await expect(accessor.getToken(GMAIL_READONLY_SCOPE)).rejects.toThrow(
-          "No authenticated account on the current request",
-        )
+        await cls.run(async () => {
+          await expect(
+            accessor.getToken(GMAIL_READONLY_SCOPE),
+          ).rejects.toMatchError(Error, {
+            message: "No authenticated account on the current request",
+          })
+        })
       })
     })
 
     describe("Given the account has no google OAuthToken", () => {
       it("should throw GmailNotConnectedException", async () => {
         const account = entities.account({ oauthTokens: [] })
-        getRequest.mockReturnValue({ account })
 
-        await expect(accessor.getToken(GMAIL_READONLY_SCOPE)).rejects.toThrow(
-          GmailNotConnectedException,
-        )
+        await cls.run(async () => {
+          setAccount(account)
+          await expect(
+            accessor.getToken(GMAIL_READONLY_SCOPE),
+          ).rejects.toMatchError(GmailNotConnectedException, {
+            message: "Gmail is not connected.",
+          })
+        })
       })
     })
 
@@ -78,15 +69,19 @@ describe("GmailTokenAccessor", () => {
             entities.oauthToken({
               provider: "google",
               expiresAt: new Date(Date.now() - 60 * 1000),
-              scopes: ["openid", "email", "profile", GMAIL_READONLY_SCOPE],
+              scopes: [...google.sensibleScopes(), GMAIL_READONLY_SCOPE],
             }),
           ],
         })
-        getRequest.mockReturnValue({ account })
 
-        await expect(accessor.getToken(GMAIL_READONLY_SCOPE)).rejects.toThrow(
-          GmailNotConnectedException,
-        )
+        await cls.run(async () => {
+          setAccount(account)
+          await expect(
+            accessor.getToken(GMAIL_READONLY_SCOPE),
+          ).rejects.toMatchError(GmailNotConnectedException, {
+            message: "Gmail is not connected.",
+          })
+        })
       })
     })
 
@@ -96,36 +91,42 @@ describe("GmailTokenAccessor", () => {
           oauthTokens: [
             entities.oauthToken({
               provider: "google",
-              scopes: ["openid", "email", "profile"],
+              scopes: google.sensibleScopes(),
             }),
           ],
         })
-        getRequest.mockReturnValue({ account })
 
-        await expect(accessor.getToken(GMAIL_READONLY_SCOPE)).rejects.toThrow(
-          GmailNotConnectedException,
-        )
+        await cls.run(async () => {
+          setAccount(account)
+          await expect(
+            accessor.getToken(GMAIL_READONLY_SCOPE),
+          ).rejects.toMatchError(GmailNotConnectedException, {
+            message: "Gmail is not connected.",
+          })
+        })
       })
     })
 
     describe("Given the account has an active google token with the gmail.readonly scope", () => {
-      it("should return that token's accessToken", async () => {
-        const accessToken = faker.string.alphanumeric(40)
+      it("should resolve the account from the request slot and return that token's accessToken", async () => {
+        const accessToken = google.accessToken()
         const account = entities.account({
           oauthTokens: [
             entities.oauthToken({
               provider: "google",
               accessToken,
               expiresAt: new Date(Date.now() + 3600 * 1000),
-              scopes: ["openid", "email", "profile", GMAIL_READONLY_SCOPE],
+              scopes: [...google.sensibleScopes(), GMAIL_READONLY_SCOPE],
             }),
           ],
         })
-        getRequest.mockReturnValue({ account })
 
-        await expect(accessor.getToken(GMAIL_READONLY_SCOPE)).resolves.toBe(
-          accessToken,
-        )
+        await cls.run(async () => {
+          setAccount(account)
+          await expect(accessor.getToken(GMAIL_READONLY_SCOPE)).resolves.toBe(
+            accessToken,
+          )
+        })
       })
     })
   })

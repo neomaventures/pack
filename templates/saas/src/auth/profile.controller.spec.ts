@@ -4,7 +4,11 @@ import {
   type OAuthToken as AuthOAuthToken,
 } from "@neomaventures/auth"
 import { express } from "@neomaventures/fixtures"
-import { type MailboxFolderStats } from "@neomaventures/mailbox"
+import { google } from "@neomaventures/google-fixtures"
+import {
+  GMAIL_READONLY_SCOPE,
+  type MailboxFolderStats,
+} from "@neomaventures/mailbox"
 
 import { ProfileController } from "~auth/profile.controller"
 import { type ProfileService } from "~auth/profile.service"
@@ -47,15 +51,15 @@ describe("ProfileController", () => {
     describe("Given an authenticated account with an active Google token", () => {
       it("should return a connectedAccounts entry with active: true and no access/refresh tokens", () => {
         const expiresAt = new Date(Date.now() + 3600 * 1000)
-        const scopes = ["openid", "email", "profile"]
+        const scopes = [...google.sensibleScopes(), GMAIL_READONLY_SCOPE]
         const account = {
           id: faker.string.uuid(),
           email: faker.internet.email(),
           oauthTokens: [
             {
               provider: "google",
-              accessToken: faker.string.alphanumeric(40),
-              refreshToken: faker.string.alphanumeric(40),
+              accessToken: google.accessToken(),
+              refreshToken: google.refreshToken(),
               expiresAt,
               scopes,
             } as AuthOAuthToken,
@@ -81,10 +85,10 @@ describe("ProfileController", () => {
           oauthTokens: [
             {
               provider: "google",
-              accessToken: faker.string.alphanumeric(40),
+              accessToken: google.accessToken(),
               refreshToken: null,
               expiresAt,
-              scopes: ["openid", "email"],
+              scopes: google.sensibleScopes(),
             } as AuthOAuthToken,
           ],
         } as Account
@@ -96,16 +100,32 @@ describe("ProfileController", () => {
       })
     })
 
-    describe("Given an authenticated account and resolved mailbox stats", () => {
+    describe("Given an authenticated account with a connected Google token and resolved mailbox stats", () => {
       it("should return { connectedAccounts, stats } for the template", () => {
+        const expiresAt = new Date(Date.now() + 3600 * 1000)
+        const scopes = [...google.sensibleScopes(), GMAIL_READONLY_SCOPE]
         const account = {
           id: faker.string.uuid(),
           email: faker.internet.email(),
+          oauthTokens: [
+            {
+              provider: "google",
+              accessToken: google.accessToken(),
+              refreshToken: google.refreshToken(),
+              expiresAt,
+              scopes,
+            } as AuthOAuthToken,
+          ],
         } as Account
 
         const result = controller.index(account, stats)
 
-        expect(result).toEqual({ connectedAccounts: [], stats })
+        expect(result).toEqual({
+          connectedAccounts: [
+            { provider: "google", scopes, expiresAt, active: true },
+          ],
+          stats,
+        })
       })
     })
   })

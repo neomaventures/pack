@@ -58,20 +58,28 @@
         <h2 class="text-lg font-semibold text-slate-800">Mailbox</h2>
         <% if (typeof stats !== "undefined" && stats) { %>
         <p class="mt-2 text-sm text-slate-700" data-mailbox-state="connected">
-          <%= stats.messageCount %> messages (<%= stats.unreadCount %> unread)
+          <span data-test="mailbox-message-count"><%= stats.messageCount %></span>
+          messages
+          (<span data-test="mailbox-unread-count"><%= stats.unreadCount %></span>
+          unread)
         </p>
         <% } else if (typeof exception !== "undefined" && exception &&
         exception.error === "GmailNotConnected") { %>
         <p
           class="mt-2 text-sm text-slate-500"
           data-mailbox-state="not_connected"
+          data-test="mailbox-not-connected"
         >
           Gmail is not connected. Sign in with Google to see your inbox stats.
         </p>
         <% } else if (typeof exception !== "undefined" && exception &&
         (exception.error === "MailboxApi" || exception.error ===
         "MailboxNetwork")) { %>
-        <p class="mt-2 text-sm text-slate-500" data-mailbox-state="unavailable">
+        <p
+          class="mt-2 text-sm text-slate-500"
+          data-mailbox-state="unavailable"
+          data-test="mailbox-unavailable"
+        >
           Mailbox stats are temporarily unavailable.
         </p>
         <% } %>

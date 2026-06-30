@@ -15,5 +15,9 @@
   },
   "globalSetup": "<rootDir>/fixtures/e2e/global-setup.ts",
   "globalTeardown": "<rootDir>/fixtures/e2e/global-teardown.ts",
-  "testEnvironment": "node"
+  "testEnvironment": "node",
+  "setupFilesAfterEnv": [
+    "jest-extended/all",
+    "@neomaventures/fixtures/matchers"
+  ]
 }

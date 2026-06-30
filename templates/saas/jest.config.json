@@ -16,5 +16,9 @@
   "globalSetup": "<rootDir>/../fixtures/spec/global-setup.ts",
   "globalTeardown": "<rootDir>/../fixtures/spec/global-teardown.ts",
   "testEnvironment": "node",
+  "setupFilesAfterEnv": [
+    "jest-extended/all",
+    "@neomaventures/fixtures/matchers"
+  ],
   "maxWorkers": 1
 }

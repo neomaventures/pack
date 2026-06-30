@@ -1,7 +1,15 @@
+import { google, GoogleOAuthClient } from "@neomaventures/google-fixtures"
+import { GMAIL_READONLY_SCOPE } from "@neomaventures/mailbox"
 import { MailpitClient } from "@neomaventures/mailpit"
+import { mockserver } from "@neomaventures/mockserver/fixture"
 import { test as base } from "@playwright/test"
 
 import { extractCallbackUrl } from "../email/content"
+
+const clientId = process.env.GOOGLE_CLIENT_ID ?? "test-client-id"
+const clientSecret = process.env.GOOGLE_CLIENT_SECRET ?? "test-client-secret"
+const appUrl = process.env.APP_URL ?? "http://localhost:3000"
+const redirectUri = `${appUrl}/auth/google/callback`
 
 /**
  * Login helpers exposed via the Playwright `login` fixture.
@@ -17,11 +25,11 @@ import { extractCallbackUrl } from "../email/content"
  * - {@link LoginFixture.viaMagicLink} — alias for `as`, kept as a verb
  *   for tests that want to be explicit that they're exercising the
  *   magic-link flow (e.g. specs under `ui-specs/auth/magic-link/`).
- *
- * `viaGoogle` deliberately omitted — the Google flow is already tested
- * at the source by `ui-specs/auth/google/callback.ui-spec.ts`. No
- * downstream spec needs "I am logged in via Google specifically." Add
- * back when a real consumer surfaces.
+ * - {@link LoginFixture.viaGoogle} — drives the Google OAuth callback flow.
+ *   Used by specs that need a Google-authenticated session, optionally with
+ *   `gmail.readonly` granted. The token endpoint is mocked via
+ *   {@link GoogleOAuthClient}; the returned access token is exposed so the
+ *   spec can register a matching Gmail expectation.
  */
 export interface LoginFixture {
   /**
@@ -39,6 +47,30 @@ export interface LoginFixture {
    * @param email - The email address to authenticate as.
    */
   viaMagicLink(email: string): Promise<void>
+
+  /**
+   * Logs the page in as the given email via the Google OAuth callback,
+   * driving a single round-trip against a MockServer expectation. Leaves
+   * the page on `/dashboard`.
+   *
+   * The OAuth code-exchange response embeds the granted scopes; when
+   * `gmail.readonly` is included, downstream Gmail-scoped requests through
+   * the saas-template's `GmailTokenAccessor` will resolve. The returned
+   * `accessToken` is the value the saved `OAuthToken.accessToken` row
+   * carries — pass it through to `GmailClient.expect*` so the Gmail
+   * MockServer expectation matches the bearer the app sends upstream.
+   *
+   * @param email - The email address to authenticate as.
+   * @param options - Optional scope override and account email.
+   * @param options.scopes - The granted scopes embedded on the token
+   *   response. Defaults to `[...google.sensibleScopes(), GMAIL_READONLY_SCOPE]`.
+   * @returns The mocked Google `access_token` so the spec can register
+   *   matching Gmail expectations.
+   */
+  viaGoogle(
+    email: string,
+    options?: { scopes?: string[] },
+  ): Promise<{ accessToken: string }>
 }
 
 interface AuthFixtures {
@@ -77,9 +109,36 @@ export const test = base.extend<AuthFixtures>({
       await page.waitForURL("/dashboard")
     }
 
+    const performGoogle = async (
+      email: string,
+      options: { scopes?: string[] } = {},
+    ): Promise<{ accessToken: string }> => {
+      const scopes = options.scopes ?? [
+        ...google.sensibleScopes(),
+        GMAIL_READONLY_SCOPE,
+      ]
+      const googleOAuth = new GoogleOAuthClient(mockserver)
+      const code = google.code()
+      const tokenResponse = await googleOAuth.mockCodeExchange({
+        code,
+        clientId,
+        clientSecret,
+        redirectUri,
+        idToken: google.idToken({ email }),
+        refreshToken: google.refreshToken(),
+        scopes,
+      })
+
+      await page.goto(`/auth/google/callback?code=${encodeURIComponent(code)}`)
+      await page.waitForURL("/dashboard")
+
+      return { accessToken: tokenResponse.access_token }
+    }
+
     await use({
       as: performMagicLink,
       viaMagicLink: performMagicLink,
+      viaGoogle: performGoogle,
     })
   },
 })
