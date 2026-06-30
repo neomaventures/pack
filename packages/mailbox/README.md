@@ -199,17 +199,19 @@ the call so the freshest available token is used.
 
 ## Exceptions
 
-- `MailboxApiException` — thrown when Gmail returns a non-2xx. Upstream 401/404
-  surface verbatim; everything else collapses to `502 Bad Gateway`. Wire
+- `MailboxApiException` — thrown when Gmail returns a non-2xx. Always
+  collapses to `502 Bad Gateway` regardless of upstream status. Wire
   response is minimal and package-named —
-  `{ statusCode, message: "Mailbox API returned <status>", error: "MailboxApi" }`
-  — so the wire never discloses which upstream provider the package uses
-  today. Debug fields (`endpoint`, `context`, `responseBody`, `cause`) live
-  on the instance for server-side logs only.
+  `{ statusCode: 502, message: "Bad Gateway", error: "MailboxApi" }` —
+  so the wire never discloses which upstream provider the package uses
+  today, nor the upstream status. Debug fields (`endpoint`, `context`,
+  `cause`) live on the instance for server-side logs only; the raw
+  upstream status and body are preserved on the `cause` (an
+  `HttpException`) via `cause.getStatus()` / `cause.getResponse()`.
 - `MailboxNetworkException` — thrown when `fetch()` rejects (DNS, TCP,
   timeout, connection dropped). Returns `502 Bad Gateway` with the
   package-named wire shape
-  `{ statusCode, message: "Mailbox network error", error: "MailboxNetwork" }`.
+  `{ statusCode: 502, message: "Bad Gateway", error: "MailboxNetwork" }`.
 
 Both exceptions set `this.name` to their class name so they can be keyed
 in `@neomaventures/exceptions`' `errorTemplates` map (e.g.

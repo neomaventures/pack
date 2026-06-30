@@ -37,21 +37,20 @@ describe("GET /mailbox/stats", () => {
         }),
       })
 
-      const { body } = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .get("/mailbox/stats")
         .expect(OK)
-
-      expect(body).toEqual({
-        messageCount: messagesTotal,
-        unreadCount: messagesUnread,
-      })
+        .expect({
+          messageCount: messagesTotal,
+          unreadCount: messagesUnread,
+        })
     })
   })
 
-  describe.each([UNAUTHORIZED, NOT_FOUND])(
+  describe.each([UNAUTHORIZED, NOT_FOUND, INTERNAL_SERVER_ERROR])(
     "When Gmail responds with %i",
-    (status) => {
-      it(`should surface HTTP ${status} from MailboxApiException`, async () => {
+    (upstreamStatus) => {
+      it("should surface HTTP 502 via MailboxApiException with a fixed generic message", async () => {
         const token = faker.string.alphanumeric(40)
         const message = faker.lorem.sentence()
 
@@ -59,47 +58,21 @@ describe("GET /mailbox/stats", () => {
         await gmailClient.expectLabelError({
           labelId: "INBOX",
           token,
-          statusCode: status,
+          statusCode: upstreamStatus,
           message,
         })
 
-        const { body } = await request(app.getHttpServer())
+        await request(app.getHttpServer())
           .get("/mailbox/stats")
-          .expect(status)
-
-        expect(body).toEqual({
-          statusCode: status,
-          message: `Mailbox API returned ${status}`,
-          error: "MailboxApi",
-        })
+          .expect(BAD_GATEWAY)
+          .expect({
+            statusCode: BAD_GATEWAY,
+            message: "Bad Gateway",
+            error: "MailboxApi",
+          })
       })
     },
   )
-
-  describe(`When Gmail responds with ${INTERNAL_SERVER_ERROR}`, () => {
-    it("should collapse to HTTP 502 via MailboxApiException", async () => {
-      const token = faker.string.alphanumeric(40)
-      const message = faker.lorem.sentence()
-
-      TestTokenAccessor.register(token)
-      await gmailClient.expectLabelError({
-        labelId: "INBOX",
-        token,
-        statusCode: INTERNAL_SERVER_ERROR,
-        message,
-      })
-
-      const { body } = await request(app.getHttpServer())
-        .get("/mailbox/stats")
-        .expect(BAD_GATEWAY)
-
-      expect(body).toEqual({
-        statusCode: BAD_GATEWAY,
-        message: `Mailbox API returned ${INTERNAL_SERVER_ERROR}`,
-        error: "MailboxApi",
-      })
-    })
-  })
 
   describe("When Gmail rejects the fetch (network failure)", () => {
     it("should surface HTTP 502 via MailboxNetworkException", async () => {
@@ -111,15 +84,14 @@ describe("GET /mailbox/stats", () => {
         token,
       })
 
-      const { body } = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .get("/mailbox/stats")
         .expect(BAD_GATEWAY)
-
-      expect(body).toEqual({
-        statusCode: BAD_GATEWAY,
-        message: "Mailbox network error",
-        error: "MailboxNetwork",
-      })
+        .expect({
+          statusCode: BAD_GATEWAY,
+          message: "Bad Gateway",
+          error: "MailboxNetwork",
+        })
     })
   })
 
