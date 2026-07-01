@@ -14,12 +14,22 @@ import { MAILBOX_STATS_METADATA_KEY } from "./with-mailbox-stats.decorator"
  * mistake surfaces at first request rather than leaking `undefined` into
  * handler code.
  *
- * When the metadata is present the interceptor will have run; if it succeeded
- * `req.mailboxStats` is populated, and if it failed the upstream Gmail
- * exception propagated and this decorator never runs. If `req.mailboxStats`
- * is somehow still undefined despite the wiring being present, the decorator
- * throws a second invariant-violation error — this indicates a bug in the
- * mailbox package itself rather than consumer misuse.
+ * When the metadata is present the interceptor will have run. Three outcomes:
+ *
+ * - **`req.mailboxStats` is a stats object** — the accessor returned a
+ *   token and the upstream call succeeded; the decorator returns the stats.
+ * - **`req.mailboxStats` is `null`** — the accessor returned `null` (no
+ *   token available on this request; a normal, non-exceptional state per
+ *   the {@link TokenAccessor} contract); the decorator returns `null`.
+ *   Handlers branch on presence.
+ * - **`req.mailboxStats` is `undefined`** — the interceptor didn't run
+ *   despite the wiring being present; the decorator throws an invariant-
+ *   violation error indicating a bug in the mailbox package itself.
+ *
+ * If the wiring metadata is missing (i.e. `@WithMailboxStats()` was not
+ * applied to the handler), the decorator throws a plain `Error` pointing
+ * at the likely fix so the wiring mistake surfaces at first request
+ * rather than leaking `undefined` into handler code.
  *
  * Must be called with parentheses: `@MailboxStats()`.
  *
@@ -27,13 +37,15 @@ import { MAILBOX_STATS_METADATA_KEY } from "./with-mailbox-stats.decorator"
  * ```typescript
  * @Get("stats")
  * @WithMailboxStats()
- * public stats(@MailboxStats() stats: MailboxFolderStats): MailboxFolderStats {
- *   return stats
+ * public stats(
+ *   @MailboxStats() stats: MailboxFolderStats | null,
+ * ): { stats: MailboxFolderStats | null } {
+ *   return { stats }
  * }
  * ```
  */
 export const MailboxStats = createParamDecorator(
-  (_data: unknown, ctx: ExecutionContext): MailboxFolderStats => {
+  (_data: unknown, ctx: ExecutionContext): MailboxFolderStats | null => {
     const hasWiring = Reflect.getMetadata(
       MAILBOX_STATS_METADATA_KEY,
       ctx.getHandler(),
@@ -45,8 +57,8 @@ export const MailboxStats = createParamDecorator(
     }
     const stats = ctx
       .switchToHttp()
-      .getRequest<{ mailboxStats?: MailboxFolderStats }>().mailboxStats
-    if (!stats) {
+      .getRequest<{ mailboxStats?: MailboxFolderStats | null }>().mailboxStats
+    if (stats === undefined) {
       throw new Error(
         "MailboxStats invariant violated — @WithMailboxStats() is applied but the interceptor did not populate req.mailboxStats. This indicates a mailbox bug.",
       )

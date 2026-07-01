@@ -53,16 +53,44 @@ npm install @nestjs/common @nestjs/core typeorm
 
 ### 1. Implement `TokenAccessor`
 
-`TokenAccessor.getToken` takes a single `scope` string and returns an access
-token. Mailbox does **not** pass a principal — application concerns ("which
-user owns this request?") belong on the application side. The adapter
-resolves "for whom" itself via ambient request context. The canonical
-mechanism in the pack is [`@neomaventures/request-context`][rc], which
-exposes an `AsyncLocalStorage`-backed request slot you can read from
-anywhere below the controller boundary. Mailbox doesn't depend on it; you
-wire it in.
+`TokenAccessor.getToken` takes a single `scope` string. Mailbox does **not**
+pass a principal — application concerns ("which user owns this request?")
+belong on the application side. The adapter resolves "for whom" itself via
+ambient request context. The canonical mechanism in the pack is
+[`@neomaventures/request-context`][rc], which exposes an
+`AsyncLocalStorage`-backed request slot you can read from anywhere below
+the controller boundary. Mailbox doesn't depend on it; you wire it in.
 
 [rc]: ../request-context
+
+`getToken(scope)` has three possible outcomes, and choosing between
+"absence returns null" and "absence throws" is a **consumer application-
+logic call**. Mailbox propagates whichever the accessor chooses faithfully.
+
+1. **Return a `string`** — a valid token exists. Mailbox calls Gmail.
+2. **Return `null`** — no token is available on this request, and that
+   is a *normal, expected* state. Mailbox skips the upstream call and
+   `MailboxService.getStats()` resolves `null`. The interceptor writes
+   `null` to `req.mailboxStats` and `res.locals.mailboxStats`; templates
+   branch on presence.
+3. **Throw** — something genuinely exceptional happened (missing ambient
+   context, a token store outage, a hard-required token being absent when
+   the calling flow depends on it). Mailbox propagates the exception and
+   the global exception filter renders your `@ErrorTemplate`.
+
+The policy — "is absence normal or exceptional in this app?" — is entirely
+the accessor's call. Mailbox has no opinion.
+
+**Example: SaaS with optional Gmail integration.** In a product where
+connecting your inbox is optional and most users won't have done it,
+absence is the common case. The accessor returns `null`; the profile page
+renders an "Unavailable" cell where the counts would be. No exception, no
+error UI — this is normal control flow.
+
+**Example: internal tool where Gmail is a hard prerequisite.** In a tool
+where every authenticated user is expected to have connected Gmail as part
+of onboarding, absence means the app is misconfigured. The accessor throws;
+`@neomaventures/exceptions`' global filter renders your error template.
 
 ```typescript
 import { OAuthTokenService } from "@neomaventures/auth"
@@ -73,11 +101,12 @@ import {
 import { getRequest } from "@neomaventures/request-context"
 import { Injectable } from "@nestjs/common"
 
+// SaaS-style: absence is normal.
 @Injectable()
-export class AuthTokenAccessor implements TokenAccessor {
+export class OptionalGmailTokenAccessor implements TokenAccessor {
   public constructor(private readonly oauthTokens: OAuthTokenService) {}
 
-  public async getToken(scope: string): Promise<string> {
+  public async getToken(scope: string): Promise<string | null> {
     if (scope !== GMAIL_READONLY_SCOPE) {
       throw new Error(`Unsupported scope: ${scope}`)
     }
@@ -85,7 +114,10 @@ export class AuthTokenAccessor implements TokenAccessor {
     if (!account) {
       throw new Error("No authenticated account on the current request")
     }
-    const token = await this.oauthTokens.getActiveToken(account.id, "google")
+    const token = await this.oauthTokens.findActiveToken(account.id, "google")
+    if (!token || !token.scopes.includes(scope)) {
+      return null // normal — the user hasn't connected Gmail yet.
+    }
     return token.accessToken
   }
 }
@@ -124,23 +156,25 @@ Two paths — pick the one that fits.
 Apply `@WithMailboxStats()` to the routes that need stats, then inject
 the resolved value into a handler parameter with `@MailboxStats()`.
 `@WithMailboxStats()` attaches an interceptor that fetches stats and
-throws `MailboxApiException` / `MailboxNetworkException` on failure.
-Pair with [`@neomaventures/exceptions`][exc]' global `errorTemplates` to
-render a friendly error UI on those exceptions.
+throws `MailboxApiException` / `MailboxNetworkException` on genuine
+upstream failure. Pair with [`@neomaventures/exceptions`][exc]' global
+`errorTemplates` to render a friendly error UI on those exceptions.
 
 [exc]: ../exceptions
 
-`@MailboxStats()` reads `req.mailboxStats`. If `@WithMailboxStats()`
-wasn't applied to the route, `req.mailboxStats` is `undefined` and the
-decorator throws a plain `Error` naming the likely fix (apply
-`@WithMailboxStats()`). This is a programmer-error signal, not a runtime
-exception your app should catch — apply the decorator and the error
-goes away.
+`@MailboxStats()` reads `req.mailboxStats`. Its type is
+`MailboxFolderStats | null` — handlers must branch on presence, because
+the consumer's `TokenAccessor` may have signalled "no token available on
+this request" by returning `null` (a normal, non-exceptional state; see
+above). If `@WithMailboxStats()` wasn't applied to the route,
+`req.mailboxStats` is `undefined` and the decorator throws a plain
+`Error` naming the likely fix. This is a programmer-error signal, not a
+runtime exception your app should catch.
 
-The interceptor also mirrors the resolved stats to
-`res.locals.mailboxStats`, so view templates can read
-`<%= mailboxStats.messageCount %>` directly without a controller-level
-view-model shim.
+The interceptor also mirrors the resolved value (a stats object OR
+`null`) to `res.locals.mailboxStats`, so view templates can read
+`<%= mailboxStats && mailboxStats.messageCount %>` directly without a
+controller-level view-model shim.
 
 ```typescript
 import { ExceptionHandlerModule } from "@neomaventures/exceptions"
@@ -155,8 +189,10 @@ import { Controller, Get, Module } from "@nestjs/common"
 export class ProfileController {
   @Get("inbox")
   @WithMailboxStats()
-  public inbox(@MailboxStats() stats: MailboxFolderStats): MailboxFolderStats {
-    return stats
+  public inbox(
+    @MailboxStats() stats: MailboxFolderStats | null,
+  ): { stats: MailboxFolderStats | null } {
+    return { stats } // stats === null when the accessor returned null
   }
 }
 
@@ -191,7 +227,7 @@ export class MailboxController {
     folder: string
     messageCount: number
     unreadCount: number
-  }> {
+  } | null> {
     return this.mailbox.getStats()
   }
 }
@@ -202,12 +238,28 @@ Either way, `getStats` calls the Gmail Labels API
 v0.1.0. The `TokenAccessor` is invoked with `GMAIL_READONLY_SCOPE` before
 the call so the freshest available token is used.
 
-## Failure modes
+## Absence vs failure
 
-Mailbox surfaces two kinds of failure from `MailboxStatsInterceptor`,
-and one programmer-error signal from `@MailboxStats()`. This section
-covers what each one is, where the interceptor is applied, and how to
-render the runtime exceptions via `@neomaventures/exceptions`.
+Mailbox distinguishes **absence** (no token available on this request;
+a normal control-flow state) from **failure** (something exceptional
+happened; needs a rendered error UI).
+
+### Absence — `null` propagates end-to-end
+
+When the consumer's `TokenAccessor.getToken` resolves `null`:
+
+- `MailboxService.getStats()` resolves `null` without touching Gmail.
+- `MailboxStatsInterceptor` writes `null` to both `req.mailboxStats`
+  and `res.locals.mailboxStats`.
+- `@MailboxStats()` returns `null` to the handler parameter.
+
+No exception is thrown, no error template renders. Handlers and templates
+branch on presence.
+
+### Failure — exceptions render via `@neomaventures/exceptions`
+
+Mailbox surfaces two kinds of *failure* from `MailboxStatsInterceptor`,
+and one programmer-error signal from `@MailboxStats()`.
 
 ### What the interceptor throws
 
@@ -266,8 +318,10 @@ import { Controller, Get } from "@nestjs/common"
 export class ProfileController {
   @Get("inbox")
   @WithMailboxStats()
-  public inbox(@MailboxStats() stats: MailboxFolderStats): MailboxFolderStats {
-    return stats
+  public inbox(
+    @MailboxStats() stats: MailboxFolderStats | null,
+  ): { stats: MailboxFolderStats | null } {
+    return { stats }
   }
 }
 ```
