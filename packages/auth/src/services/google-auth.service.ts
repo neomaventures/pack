@@ -476,12 +476,17 @@ export class GoogleAuthService<
     const tokenRepo = manager.getRepository(this.resolved.oauthTokenEntity)
     // `U` defaults to the reference OAuthToken; consumers that pass a
     // custom `oauthTokenEntity` narrow the existing-token shape here.
-    const existing = (await tokenRepo.findOne({
-      where: {
-        account: { id: account.id },
-        provider: "google",
-      },
-    })) as U | null
+    // `refreshToken` is `select: false` on the entity, so opt in
+    // explicitly via `.addSelect(...)` — this is the only production
+    // reader of the column.
+    const existing = (await tokenRepo
+      .createQueryBuilder("oauth_token")
+      .where(
+        "oauth_token.accountId = :accountId AND oauth_token.provider = :provider",
+        { accountId: account.id, provider: "google" },
+      )
+      .addSelect("oauth_token.refreshToken")
+      .getOne()) as U | null
 
     const expiresAt = new Date(Date.now() + tokenResponse.expires_in * 1000)
     const scopes = tokenResponse.scope ? tokenResponse.scope.split(" ") : []
