@@ -5,9 +5,10 @@ import {
 } from "@neomaventures/auth"
 import { ErrorTemplate } from "@neomaventures/exceptions"
 import {
-  MailboxStats,
+  MailboxApiException,
+  MailboxNetworkException,
+  MailboxService,
   type MailboxFolderStats,
-  WithMailboxStats,
 } from "@neomaventures/mailbox"
 import {
   StoredFile,
@@ -25,8 +26,26 @@ import {
 import { type Response } from "express"
 
 import { AccountAvatarKeyResolver } from "~auth/account-avatar-key.resolver"
+import { GmailNotConnectedException } from "~auth/gmail-not-connected.exception"
 import { ProfileService } from "~auth/profile.service"
 import { Upload } from "~auth/upload.entity"
+
+/**
+ * Row view-model for the "Connected accounts" table on `views/profile.ejs`.
+ *
+ * One row per persisted `OAuthToken`. When the provider is `google` and the
+ * account is active with `gmail.readonly` scope, `stats` / `statsError` are
+ * populated per the mailbox call outcome; otherwise both are `null`.
+ */
+interface ConnectedAccountRow {
+  provider: string
+  email: string
+  scopes: string[]
+  expiresAt: Date
+  active: boolean
+  stats: MailboxFolderStats | null
+  statsError: "unavailable" | null
+}
 
 /**
  * Handles the profile page and profile-scoped asset endpoints.
@@ -48,7 +67,10 @@ import { Upload } from "~auth/upload.entity"
  */
 @Controller()
 export class ProfileController {
-  public constructor(private readonly profileService: ProfileService) {}
+  public constructor(
+    private readonly profileService: ProfileService,
+    private readonly mailbox: MailboxService,
+  ) {}
 
   /**
    * Renders the profile page for the authenticated user.
@@ -59,49 +81,58 @@ export class ProfileController {
    * `account.oauthTokens` — `accessToken` and `refreshToken` are
    * deliberately omitted so they never reach the rendered HTML.
    *
-   * `@WithMailboxStats()` wires the mailbox interceptor for this route;
-   * `@MailboxStats()` injects the resolved Gmail INBOX stats. The
-   * `@ErrorTemplate` mapping covers the three exception classes the
-   * accessor / mailbox can throw — all three re-render the `profile`
-   * template, and the template branches on `exception.error` to pick the
-   * right Mailbox-section variant (connected / not_connected /
-   * unavailable).
+   * Mailbox stats are fetched inline for the account's active Google token
+   * when its scopes include `gmail.readonly`. Any of the three mailbox
+   * exception classes are caught and surfaced on the row itself — the row
+   * is always rendered so the user sees which providers are connected even
+   * when Gmail is unreachable. `GmailNotConnectedException` leaves
+   * `stats: null` (no CTA needed — the row still shows the provider);
+   * `MailboxApiException` / `MailboxNetworkException` set
+   * `statsError: "unavailable"` so the template renders "Unavailable" in
+   * the counts cells.
    *
    * @param account - The authenticated account, injected via `@AuthenticatedAccount()`.
-   * @param stats - Gmail INBOX stats resolved by the mailbox interceptor.
-   * @returns A view model with the connected-accounts list and the
-   *   resolved mailbox stats.
+   * @returns A view model with the connected-accounts rows.
    */
   @Get("profile")
   @Authenticated()
-  @WithMailboxStats()
-  @ErrorTemplate({
-    GmailNotConnectedException: "profile",
-    MailboxApiException: "profile",
-    MailboxNetworkException: "profile",
-    default: "/error",
-  })
+  @ErrorTemplate({ default: "/error" })
   @Render("profile")
-  public index(
+  public async index(
     @AuthenticatedAccount() account: Account,
-    @MailboxStats() stats: MailboxFolderStats,
-  ): {
-    connectedAccounts: Array<{
-      provider: string
-      scopes: string[]
-      expiresAt: Date
-      active: boolean
-    }>
-    stats: MailboxFolderStats
-  } {
+  ): Promise<{ connectedAccounts: ConnectedAccountRow[] }> {
     const now = Date.now()
-    const connectedAccounts = (account.oauthTokens ?? []).map((token) => ({
-      provider: token.provider,
-      scopes: token.scopes,
-      expiresAt: token.expiresAt,
-      active: new Date(token.expiresAt).getTime() > now,
-    }))
-    return { connectedAccounts, stats }
+    const rows: ConnectedAccountRow[] = []
+    for (const token of account.oauthTokens ?? []) {
+      const active = new Date(token.expiresAt).getTime() > now
+      const row: ConnectedAccountRow = {
+        provider: token.provider,
+        email: account.email,
+        scopes: token.scopes,
+        expiresAt: token.expiresAt,
+        active,
+        stats: null,
+        statsError: null,
+      }
+      if (token.provider === "google") {
+        try {
+          row.stats = await this.mailbox.getStats()
+        } catch (error) {
+          if (error instanceof GmailNotConnectedException) {
+            // Leave stats null; row still renders with the provider.
+          } else if (
+            error instanceof MailboxApiException ||
+            error instanceof MailboxNetworkException
+          ) {
+            row.statsError = "unavailable"
+          } else {
+            throw error
+          }
+        }
+      }
+      rows.push(row)
+    }
+    return { connectedAccounts: rows }
   }
 
   /**
