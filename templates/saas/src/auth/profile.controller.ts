@@ -4,12 +4,7 @@ import {
   AuthenticatedAccount,
 } from "@neomaventures/auth"
 import { ErrorTemplate } from "@neomaventures/exceptions"
-import {
-  MailboxApiException,
-  MailboxNetworkException,
-  MailboxService,
-  type MailboxFolderStats,
-} from "@neomaventures/mailbox"
+import { WithMailboxStats } from "@neomaventures/mailbox"
 import {
   StoredFile,
   TemporaryLink,
@@ -26,26 +21,8 @@ import {
 import { type Response } from "express"
 
 import { AccountAvatarKeyResolver } from "~auth/account-avatar-key.resolver"
-import { GmailNotConnectedException } from "~auth/gmail-not-connected.exception"
 import { ProfileService } from "~auth/profile.service"
 import { Upload } from "~auth/upload.entity"
-
-/**
- * Row view-model for the "Connected accounts" table on `views/profile.ejs`.
- *
- * One row per persisted `OAuthToken`. When the provider is `google` and the
- * account is active with `gmail.readonly` scope, `stats` / `statsError` are
- * populated per the mailbox call outcome; otherwise both are `null`.
- */
-interface ConnectedAccountRow {
-  provider: string
-  email: string
-  scopes: string[]
-  expiresAt: Date
-  active: boolean
-  stats: MailboxFolderStats | null
-  statsError: "unavailable" | null
-}
 
 /**
  * Handles the profile page and profile-scoped asset endpoints.
@@ -67,73 +44,33 @@ interface ConnectedAccountRow {
  */
 @Controller()
 export class ProfileController {
-  public constructor(
-    private readonly profileService: ProfileService,
-    private readonly mailbox: MailboxService,
-  ) {}
+  public constructor(private readonly profileService: ProfileService) {}
 
   /**
    * Renders the profile page for the authenticated user.
    *
-   * Avatar bytes are loaded by the page itself via `GET /profile/avatar`
-   * rather than threaded through the view model. Connected third-party
-   * accounts are passed inline as a sanitised view of
-   * `account.oauthTokens` — `accessToken` and `refreshToken` are
-   * deliberately omitted so they never reach the rendered HTML.
+   * All view data is delivered via `res.locals`:
+   * - `account` — populated by the auth middleware from `req.account`.
+   *   The template reads `account.email` and iterates
+   *   `account.oauthTokens` directly (tokens themselves are `select:false`
+   *   so `accessToken` / `refreshToken` never reach the render context).
+   * - `mailboxStats` — populated by `MailboxStatsInterceptor` when
+   *   `@WithMailboxStats()` is applied. The template guards on
+   *   `typeof mailboxStats !== "undefined"` so it renders "Unavailable"
+   *   when the interceptor's exception is caught by `@ErrorTemplate`.
    *
-   * Mailbox stats are fetched inline for the account's active Google token
-   * when its scopes include `gmail.readonly`. Any of the three mailbox
-   * exception classes are caught and surfaced on the row itself — the row
-   * is always rendered so the user sees which providers are connected even
-   * when Gmail is unreachable. `GmailNotConnectedException` leaves
-   * `stats: null` (no CTA needed — the row still shows the provider);
-   * `MailboxApiException` / `MailboxNetworkException` set
-   * `statsError: "unavailable"` so the template renders "Unavailable" in
-   * the counts cells.
-   *
-   * @param account - The authenticated account, injected via `@AuthenticatedAccount()`.
-   * @returns A view model with the connected-accounts rows.
+   * On {@link MailboxApiException} / {@link MailboxNetworkException} the
+   * `@ErrorTemplate({ default: "profile" })` mapping re-renders this same
+   * page with `exception` populated so the mailbox cells fall back to the
+   * "Unavailable" copy while the rest of the Connected Accounts row still
+   * renders.
    */
   @Get("profile")
   @Authenticated()
-  @ErrorTemplate({ default: "/error" })
+  @WithMailboxStats()
+  @ErrorTemplate({ default: "profile" })
   @Render("profile")
-  public async index(
-    @AuthenticatedAccount() account: Account,
-  ): Promise<{ connectedAccounts: ConnectedAccountRow[] }> {
-    const now = Date.now()
-    const rows: ConnectedAccountRow[] = []
-    for (const token of account.oauthTokens ?? []) {
-      const active = new Date(token.expiresAt).getTime() > now
-      const row: ConnectedAccountRow = {
-        provider: token.provider,
-        email: account.email,
-        scopes: token.scopes,
-        expiresAt: token.expiresAt,
-        active,
-        stats: null,
-        statsError: null,
-      }
-      if (token.provider === "google") {
-        try {
-          row.stats = await this.mailbox.getStats()
-        } catch (error) {
-          if (error instanceof GmailNotConnectedException) {
-            // Leave stats null; row still renders with the provider.
-          } else if (
-            error instanceof MailboxApiException ||
-            error instanceof MailboxNetworkException
-          ) {
-            row.statsError = "unavailable"
-          } else {
-            throw error
-          }
-        }
-      }
-      rows.push(row)
-    }
-    return { connectedAccounts: rows }
-  }
+  public index(): void {}
 
   /**
    * Serves the authenticated user's avatar.

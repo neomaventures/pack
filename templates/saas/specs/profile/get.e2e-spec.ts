@@ -2,10 +2,12 @@ import { readFileSync } from "fs"
 import { join } from "path"
 
 import { faker } from "@faker-js/faker"
+import { Account } from "@neomaventures/auth"
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
 import ejs from "ejs"
 import request from "supertest"
+import { DataSource } from "typeorm"
 
 import { authenticate } from "~fixtures/auth/e2e"
 import { configureViewEngine } from "~fixtures/configure-view-engine"
@@ -13,10 +15,8 @@ import { npmPackageName, npmPackageVersion } from "~fixtures/package-version"
 
 const { OK, SEE_OTHER } = HttpStatus
 
-const template = readFileSync(
-  join(process.cwd(), "views", "profile.ejs"),
-  "utf-8",
-)
+const templatePath = join(process.cwd(), "views", "profile.ejs")
+const template = readFileSync(templatePath, "utf-8")
 
 describe("GET /profile", () => {
   let app: Awaited<ReturnType<typeof managedAppInstance>>
@@ -37,23 +37,20 @@ describe("GET /profile", () => {
     })
   })
 
-  describe("When an authenticated request is made", () => {
-    const email = faker.internet.email()
-
-    it(`should respond with HTTP ${OK} and the profile template`, async () => {
+  describe("When an authenticated request is made with no connected accounts", () => {
+    it(`should respond with HTTP ${OK} and render the profile template`, async () => {
+      const email = faker.internet.email().toLowerCase()
       const cookie = await authenticate(app, email)
 
-      // The authenticated user has no Google OAuth token, so the controller
-      // renders an empty `connectedAccounts` list — the profile template
-      // shows the "No third-party accounts connected." message.
+      const datasource = app.get(DataSource)
+      const account = await datasource
+        .getRepository(Account)
+        .findOneOrFail({ where: { email } })
+
       const expectedHtml = ejs.render(
         template,
-        {
-          npmPackageName,
-          npmPackageVersion,
-          connectedAccounts: [],
-        },
-        { filename: join(process.cwd(), "views", "profile.ejs") },
+        { npmPackageName, npmPackageVersion, account },
+        { filename: templatePath },
       )
 
       await request(app.getHttpServer())
