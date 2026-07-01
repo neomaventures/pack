@@ -28,8 +28,7 @@
           method="post"
           enctype="multipart/form-data"
         >
-          <% const avatarExceptionErrors = ["Payload Too Large", "Unsupported Media Type", "Bad Request"]; %>
-          <% if (typeof exception !== "undefined" && exception.message && avatarExceptionErrors.includes(exception.error)) { %>
+          <% if (typeof exception !== "undefined" && exception.message) { %>
           <p
             class="w-full rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
             role="alert"
@@ -81,8 +80,7 @@
             <% const active = new Date(token.expiresAt).getTime() > Date.now(); %>
             <% const statsAvailable = token.provider === "google"
                  && typeof mailboxStats !== "undefined"
-                 && mailboxStats
-                 && typeof exception === "undefined"; %>
+                 && mailboxStats; %>
             <% const statsUnavailable = token.provider === "google" && !statsAvailable; %>
             <tr class="border-b border-slate-100 last:border-b-0">
               <td class="py-2 pr-4"><%= account.email %></td>

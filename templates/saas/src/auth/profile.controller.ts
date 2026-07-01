@@ -4,7 +4,7 @@ import {
   AuthenticatedAccount,
 } from "@neomaventures/auth"
 import { ErrorTemplate } from "@neomaventures/exceptions"
-import { WithMailboxStats } from "@neomaventures/mailbox"
+import { type MailboxFolderStats, MailboxService } from "@neomaventures/mailbox"
 import {
   StoredFile,
   TemporaryLink,
@@ -44,33 +44,38 @@ import { Upload } from "~auth/upload.entity"
  */
 @Controller()
 export class ProfileController {
-  public constructor(private readonly profileService: ProfileService) {}
+  public constructor(
+    private readonly profileService: ProfileService,
+    private readonly mailbox: MailboxService,
+  ) {}
 
   /**
    * Renders the profile page for the authenticated user.
    *
-   * All view data is delivered via `res.locals`:
-   * - `account` — populated by the auth middleware from `req.account`.
-   *   The template reads `account.email` and iterates
+   * View data:
+   * - `account` — populated on `res.locals` by the auth middleware from
+   *   `req.account`. The template reads `account.email` and iterates
    *   `account.oauthTokens` directly (tokens themselves are `select:false`
    *   so `accessToken` / `refreshToken` never reach the render context).
-   * - `mailboxStats` — populated by `MailboxStatsInterceptor` when
-   *   `@WithMailboxStats()` is applied. The template guards on
-   *   `typeof mailboxStats !== "undefined"` so it renders "Unavailable"
-   *   when the interceptor's exception is caught by `@ErrorTemplate`.
+   * - `mailboxStats` — returned from this handler. When the consumer's
+   *   `GmailTokenAccessor` returns `null` (the user hasn't connected
+   *   Gmail — the common case), `MailboxService.getStats()` resolves
+   *   `null` and the template renders "Unavailable" cells. The template
+   *   branches on `mailboxStats == null`.
    *
-   * On {@link MailboxApiException} / {@link MailboxNetworkException} the
-   * `@ErrorTemplate({ default: "profile" })` mapping re-renders this same
-   * page with `exception` populated so the mailbox cells fall back to the
-   * "Unavailable" copy while the rest of the Connected Accounts row still
-   * renders.
+   * On {@link MailboxApiException} / {@link MailboxNetworkException} —
+   * genuine upstream Gmail failure — the `@ErrorTemplate({ default:
+   * "profile" })` mapping re-renders this same page with `exception`
+   * populated. The template's exception banner surfaces the failure and
+   * the stats cells fall back to "Unavailable".
    */
   @Get("profile")
   @Authenticated()
-  @WithMailboxStats()
   @ErrorTemplate({ default: "profile" })
   @Render("profile")
-  public index(): void {}
+  public async index(): Promise<{ mailboxStats: MailboxFolderStats | null }> {
+    return { mailboxStats: await this.mailbox.getStats() }
+  }
 
   /**
    * Serves the authenticated user's avatar.
