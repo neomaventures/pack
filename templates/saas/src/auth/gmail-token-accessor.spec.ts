@@ -1,6 +1,5 @@
 import { faker } from "@faker-js/faker"
-import { setAccount } from "@neomaventures/auth"
-import { entities } from "@neomaventures/auth/testing"
+import { entities, setAccount } from "@neomaventures/auth/testing"
 import { google } from "@neomaventures/google-fixtures"
 import { GMAIL_READONLY_SCOPE } from "@neomaventures/mailbox"
 import { RequestContextModule } from "@neomaventures/request-context"

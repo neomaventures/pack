@@ -4,6 +4,8 @@ import { google } from "@neomaventures/google-fixtures"
 import { Account } from "../entities/account.entity"
 import { OAuthToken } from "../entities/oauth-token.entity"
 
+export { setAccount } from "../account/account.slot"
+
 /**
  * A collection of factory functions for creating test entities. Each function
  * returns a real entity instance, so methods like `account.activeToken(provider)`
