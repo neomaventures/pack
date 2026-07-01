@@ -42,7 +42,7 @@ describe("POST /auth/register", () => {
           googleAuthorizeUrl: google.authorizeUrl(
             process.env.GOOGLE_CLIENT_ID!,
             `${process.env.APP_URL!}/auth/google/callback`,
-            [...google.sensibleScopes(), GMAIL_READONLY_SCOPE],
+            google.sensibleScopes([GMAIL_READONLY_SCOPE]),
           ),
           exception: {
             email: {
@@ -69,7 +69,7 @@ describe("POST /auth/register", () => {
           googleAuthorizeUrl: google.authorizeUrl(
             process.env.GOOGLE_CLIENT_ID!,
             `${process.env.APP_URL!}/auth/google/callback`,
-            [...google.sensibleScopes(), GMAIL_READONLY_SCOPE],
+            google.sensibleScopes([GMAIL_READONLY_SCOPE]),
           ),
           exception: {
             email: {

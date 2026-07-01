@@ -63,7 +63,7 @@ export interface LoginFixture {
    * @param email - The email address to authenticate as.
    * @param options - Optional scope override and account email.
    * @param options.scopes - The granted scopes embedded on the token
-   *   response. Defaults to `[...google.sensibleScopes(), GMAIL_READONLY_SCOPE]`.
+   *   response. Defaults to `google.sensibleScopes([GMAIL_READONLY_SCOPE])`.
    * @returns The mocked Google `access_token` so the spec can register
    *   matching Gmail expectations.
    */
@@ -113,10 +113,8 @@ export const test = base.extend<AuthFixtures>({
       email: string,
       options: { scopes?: string[] } = {},
     ): Promise<{ accessToken: string }> => {
-      const scopes = options.scopes ?? [
-        ...google.sensibleScopes(),
-        GMAIL_READONLY_SCOPE,
-      ]
+      const scopes =
+        options.scopes ?? google.sensibleScopes([GMAIL_READONLY_SCOPE])
       const googleOAuth = new GoogleOAuthClient(mockserver)
       const code = google.code()
       const tokenResponse = await googleOAuth.mockCodeExchange({
