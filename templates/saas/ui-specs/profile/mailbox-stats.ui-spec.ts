@@ -5,7 +5,7 @@ import { mockserver } from "@neomaventures/mockserver/fixture"
 
 import { expect, test } from "../../fixtures/auth/test"
 
-test.describe("Profile Page — Mailbox section", () => {
+test.describe("Profile Page — Connected accounts", () => {
   let gmailClient: GmailClient
 
   test.beforeEach(async () => {
@@ -17,7 +17,7 @@ test.describe("Profile Page — Mailbox section", () => {
   })
 
   test.describe("Given a magic-link-only user (no Google auth)", () => {
-    test('should render the Mailbox heading and the "not connected" CTA, with no connected accounts', async ({
+    test('should render "No third-party accounts connected."', async ({
       login,
       page,
     }) => {
@@ -25,19 +25,17 @@ test.describe("Profile Page — Mailbox section", () => {
       await login.viaMagicLink(email)
       await page.goto("/profile")
 
-      const section = page.locator('[data-section="mailbox"]')
-      await expect(section.getByRole("heading", { level: 2 })).toHaveText(
-        "Mailbox",
-      )
       await expect(
-        section.locator('[data-test="mailbox-not-connected"]'),
+        page.getByRole("heading", { name: "Connected accounts" }),
       ).toBeVisible()
-      await expect(page.locator('[data-provider="google"]')).toHaveCount(0)
+      await expect(
+        page.getByText("No third-party accounts connected."),
+      ).toBeVisible()
     })
   })
 
   test.describe("Given a Google-authenticated user with gmail.readonly and a successful Gmail response", () => {
-    test("should render the mailbox-message-count and mailbox-unread-count spans with the upstream label values", async ({
+    test("should render a row for the Google account with the message + unread counts", async ({
       login,
       page,
     }) => {
@@ -57,18 +55,21 @@ test.describe("Profile Page — Mailbox section", () => {
 
       await page.goto("/profile")
 
-      const section = page.locator('[data-section="mailbox"]')
+      const row = page.getByRole("row", { name: new RegExp(email, "i") })
+      await expect(row).toBeVisible()
+      await expect(row.getByText("Google")).toBeVisible()
+      await expect(row.getByText("Active")).toBeVisible()
       await expect(
-        section.locator('[data-test="mailbox-message-count"]'),
-      ).toHaveText(String(messageCount))
+        row.getByRole("cell", { name: String(messageCount) }),
+      ).toBeVisible()
       await expect(
-        section.locator('[data-test="mailbox-unread-count"]'),
-      ).toHaveText(String(unreadCount))
+        row.getByRole("cell", { name: String(unreadCount) }),
+      ).toBeVisible()
     })
   })
 
   test.describe("Given a Google-authenticated user with gmail.readonly but Gmail errors", () => {
-    test('should render the "unavailable" state when Gmail returns HTTP 500', async ({
+    test('should render the row with "Unavailable" cells when Gmail returns HTTP 500', async ({
       login,
       page,
     }) => {
@@ -83,13 +84,11 @@ test.describe("Profile Page — Mailbox section", () => {
 
       await page.goto("/profile")
 
-      const section = page.locator('[data-section="mailbox"]')
-      await expect(
-        section.locator('[data-test="mailbox-unavailable"]'),
-      ).toBeVisible()
+      const row = page.getByRole("row", { name: new RegExp(email, "i") })
+      await expect(row.getByText("Unavailable").first()).toBeVisible()
     })
 
-    test('should render the "unavailable" state when the Gmail fetch is dropped at the network layer', async ({
+    test('should render the row with "Unavailable" cells when the Gmail fetch is dropped at the network layer', async ({
       login,
       page,
     }) => {
@@ -102,10 +101,8 @@ test.describe("Profile Page — Mailbox section", () => {
 
       await page.goto("/profile")
 
-      const section = page.locator('[data-section="mailbox"]')
-      await expect(
-        section.locator('[data-test="mailbox-unavailable"]'),
-      ).toBeVisible()
+      const row = page.getByRole("row", { name: new RegExp(email, "i") })
+      await expect(row.getByText("Unavailable").first()).toBeVisible()
     })
   })
 
@@ -118,7 +115,7 @@ test.describe("Profile Page — Mailbox section", () => {
       // First sign in via magic-link, then link Google to the same email.
       await login.viaMagicLink(email)
       const { accessToken } = await login.viaGoogle(email, {
-        scopes: [...google.sensibleScopes(), GMAIL_READONLY_SCOPE],
+        scopes: google.sensibleScopes([GMAIL_READONLY_SCOPE]),
       })
 
       const messageCount = faker.number.int({ min: 100, max: 5000 })
@@ -135,13 +132,13 @@ test.describe("Profile Page — Mailbox section", () => {
 
       await page.goto("/profile")
 
-      const section = page.locator('[data-section="mailbox"]')
+      const row = page.getByRole("row", { name: new RegExp(email, "i") })
       await expect(
-        section.locator('[data-test="mailbox-message-count"]'),
-      ).toHaveText(String(messageCount))
+        row.getByRole("cell", { name: String(messageCount) }),
+      ).toBeVisible()
       await expect(
-        section.locator('[data-test="mailbox-unread-count"]'),
-      ).toHaveText(String(unreadCount))
+        row.getByRole("cell", { name: String(unreadCount) }),
+      ).toBeVisible()
     })
   })
 })
