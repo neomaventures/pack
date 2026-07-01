@@ -394,6 +394,10 @@ the `Authorization: Bearer <token>` header or the `auth.sid` cookie
 respectively, and attach the authenticated account. Bearer takes priority
 when both are present.
 
+Both middlewares mirror the resolved account onto `res.locals.account`
+alongside `req.account`, so view templates can read `<%= account.email %>`
+directly without threading a view-model through the controller.
+
 #### Choosing an unauthenticated strategy
 
 Different route types want different responses when the caller is
