@@ -1,26 +1,22 @@
 import { faker } from "@faker-js/faker"
-import { entities, setAccount } from "@neomaventures/auth/testing"
+import { entities, runInAuthContext } from "@neomaventures/auth/testing"
 import { google } from "@neomaventures/google-fixtures"
 import { GMAIL_READONLY_SCOPE } from "@neomaventures/mailbox"
-import { RequestContextModule } from "@neomaventures/request-context"
+import { runInRequestContext } from "@neomaventures/request-context/testing"
 import { Test, type TestingModule } from "@nestjs/testing"
-import { ClsService } from "nestjs-cls"
 
 import { GmailNotConnectedException } from "~auth/gmail-not-connected.exception"
 import { GmailTokenAccessor } from "~auth/gmail-token-accessor"
 
 describe("GmailTokenAccessor", () => {
   let accessor: GmailTokenAccessor
-  let cls: ClsService
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [RequestContextModule.forRoot()],
       providers: [GmailTokenAccessor],
     }).compile()
 
     accessor = module.get(GmailTokenAccessor)
-    cls = module.get(ClsService)
   })
 
   describe("getToken()", () => {
@@ -30,17 +26,19 @@ describe("GmailTokenAccessor", () => {
 
         await expect(accessor.getToken(scope)).rejects.toMatchError(Error, {
           message: `Unsupported scope: ${scope}`,
+          name: "Error",
         })
       })
     })
 
     describe("Given no account is on the current request", () => {
       it("should throw 'No authenticated account on the current request'", async () => {
-        await cls.run(async () => {
+        await runInRequestContext(async () => {
           await expect(
             accessor.getToken(GMAIL_READONLY_SCOPE),
           ).rejects.toMatchError(Error, {
             message: "No authenticated account on the current request",
+            name: "Error",
           })
         })
       })
@@ -50,12 +48,12 @@ describe("GmailTokenAccessor", () => {
       it("should throw GmailNotConnectedException", async () => {
         const account = entities.account({ oauthTokens: [] })
 
-        await cls.run(async () => {
-          setAccount(account)
+        await runInAuthContext(account, async () => {
           await expect(
             accessor.getToken(GMAIL_READONLY_SCOPE),
           ).rejects.toMatchError(GmailNotConnectedException, {
             message: "Gmail is not connected.",
+            name: "GmailNotConnectedException",
           })
         })
       })
@@ -68,17 +66,17 @@ describe("GmailTokenAccessor", () => {
             entities.oauthToken({
               provider: "google",
               expiresAt: new Date(Date.now() - 60 * 1000),
-              scopes: [...google.sensibleScopes(), GMAIL_READONLY_SCOPE],
+              scopes: google.sensibleScopes([GMAIL_READONLY_SCOPE]),
             }),
           ],
         })
 
-        await cls.run(async () => {
-          setAccount(account)
+        await runInAuthContext(account, async () => {
           await expect(
             accessor.getToken(GMAIL_READONLY_SCOPE),
           ).rejects.toMatchError(GmailNotConnectedException, {
             message: "Gmail is not connected.",
+            name: "GmailNotConnectedException",
           })
         })
       })
@@ -95,12 +93,12 @@ describe("GmailTokenAccessor", () => {
           ],
         })
 
-        await cls.run(async () => {
-          setAccount(account)
+        await runInAuthContext(account, async () => {
           await expect(
             accessor.getToken(GMAIL_READONLY_SCOPE),
           ).rejects.toMatchError(GmailNotConnectedException, {
             message: "Gmail is not connected.",
+            name: "GmailNotConnectedException",
           })
         })
       })
@@ -115,13 +113,12 @@ describe("GmailTokenAccessor", () => {
               provider: "google",
               accessToken,
               expiresAt: new Date(Date.now() + 3600 * 1000),
-              scopes: [...google.sensibleScopes(), GMAIL_READONLY_SCOPE],
+              scopes: google.sensibleScopes([GMAIL_READONLY_SCOPE]),
             }),
           ],
         })
 
-        await cls.run(async () => {
-          setAccount(account)
+        await runInAuthContext(account, async () => {
           await expect(accessor.getToken(GMAIL_READONLY_SCOPE)).resolves.toBe(
             accessToken,
           )
