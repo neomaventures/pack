@@ -137,6 +137,11 @@ decorator throws a plain `Error` naming the likely fix (apply
 exception your app should catch — apply the decorator and the error
 goes away.
 
+The interceptor also mirrors the resolved stats to
+`res.locals.mailboxStats`, so view templates can read
+`<%= mailboxStats.messageCount %>` directly without a controller-level
+view-model shim.
+
 ```typescript
 import { ExceptionHandlerModule } from "@neomaventures/exceptions"
 import {
@@ -245,7 +250,9 @@ wire:
 The consumer chooses which routes need stats by applying
 `@WithMailboxStats()` to the handler. Only routes that opt in pay the
 Gmail round-trip — there is no global registration, so unrelated routes
-are unaffected:
+are unaffected. On success the resolved stats are attached to both
+`req.mailboxStats` (for the `@MailboxStats()` param decorator) and
+`res.locals.mailboxStats` (for view templates):
 
 ```typescript
 import {

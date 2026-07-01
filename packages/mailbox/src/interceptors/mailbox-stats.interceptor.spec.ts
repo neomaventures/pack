@@ -26,21 +26,32 @@ describe("MailboxStatsInterceptor", () => {
   })
 
   describe("Given MailboxService.getStats resolves", () => {
-    it("should populate req.mailboxStats with the resolved stats", async () => {
-      const stats: MailboxFolderStats = {
+    let stats: MailboxFolderStats
+    let req: ReturnType<typeof express.request>
+    let res: ReturnType<typeof express.response>
+
+    beforeEach(async () => {
+      stats = {
         folder: faker.string.alphanumeric(10),
         messageCount: faker.number.int({ min: 1, max: 10000 }),
         unreadCount: faker.number.int({ min: 0, max: 500 }),
       }
       mailbox.getStats.mockResolvedValue(stats)
-      const req = express.request()
+      res = express.response()
+      req = express.request({ res })
 
       await interceptor.intercept(
-        executionContext(req) as ExecutionContext,
+        executionContext(req, res) as ExecutionContext,
         callHandler(),
       )
+    })
 
+    it("should populate req.mailboxStats with the resolved stats", () => {
       expect(req.mailboxStats).toEqual(stats)
+    })
+
+    it("should mirror the resolved stats to res.locals.mailboxStats", () => {
+      expect(res.locals.mailboxStats).toEqual(stats)
     })
   })
 
