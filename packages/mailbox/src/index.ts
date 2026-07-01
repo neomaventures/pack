@@ -16,5 +16,9 @@ export { MailboxStatsInterceptor } from "./interceptors/mailbox-stats.intercepto
 export type { MailboxFolderStats } from "./interfaces/mailbox-folder-stats"
 export { type TokenAccessor } from "./interfaces/token-accessor.interface"
 
+// Exceptions
+export { MailboxApiException } from "./exceptions/mailbox-api.exception"
+export { MailboxNetworkException } from "./exceptions/mailbox-network.exception"
+
 // Constants
 export { GMAIL_READONLY_SCOPE, MailboxFolder } from "./constants"
