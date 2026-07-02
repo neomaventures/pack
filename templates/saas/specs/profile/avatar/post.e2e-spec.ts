@@ -2,10 +2,12 @@ import { readFileSync } from "fs"
 import { join } from "path"
 
 import { faker } from "@faker-js/faker"
+import { Account } from "@neomaventures/auth"
 import { managedAppInstance } from "@neomaventures/managed-app"
 import { HttpStatus } from "@nestjs/common"
 import ejs from "ejs"
 import request from "supertest"
+import { DataSource } from "typeorm"
 
 import { authenticate } from "~fixtures/auth/e2e"
 import { configureViewEngine } from "~fixtures/configure-view-engine"
@@ -64,6 +66,12 @@ describe("POST /profile/avatar", () => {
     app = await managedAppInstance({ configure: configureViewEngine })
   })
 
+  const loadAccount = async (email: string): Promise<Account> =>
+    app
+      .get(DataSource)
+      .getRepository(Account)
+      .findOneOrFail({ where: { email: email.toLowerCase() } })
+
   describe("When an authenticated user uploads a valid JPEG under the size limit", () => {
     it("should redirect to /profile", async () => {
       const cookie = await authenticate(app, faker.internet.email())
@@ -95,14 +103,17 @@ describe("POST /profile/avatar", () => {
     })
 
     it("should re-render the profile page with an inline error message", async () => {
-      const cookie = await authenticate(app, faker.internet.email())
+      const email = faker.internet.email()
+      const cookie = await authenticate(app, email)
       const oversizeBytes = AVATAR_MAX_SIZE + 1
+      const account = await loadAccount(email)
 
       const expectedHtml = ejs.render(
         profileTemplate,
         {
           npmPackageName,
           npmPackageVersion,
+          account,
           exception: {
             statusCode: PAYLOAD_TOO_LARGE,
             message: `File size ${oversizeBytes} bytes exceeds the maximum allowed size of ${AVATAR_MAX_SIZE} bytes.`,
@@ -143,14 +154,17 @@ describe("POST /profile/avatar", () => {
     })
 
     it("should re-render the profile page with an inline error message", async () => {
-      const cookie = await authenticate(app, faker.internet.email())
+      const email = faker.internet.email()
+      const cookie = await authenticate(app, email)
       const rejectedMimeType = "application/pdf"
+      const account = await loadAccount(email)
 
       const expectedHtml = ejs.render(
         profileTemplate,
         {
           npmPackageName,
           npmPackageVersion,
+          account,
           exception: {
             statusCode: UNSUPPORTED_MEDIA_TYPE,
             message: `File type "${rejectedMimeType}" is not supported. Allowed types: ${AVATAR_ALLOWED_TYPES.join(", ")}.`,
@@ -187,13 +201,16 @@ describe("POST /profile/avatar", () => {
     })
 
     it("should re-render the profile page with an inline error message", async () => {
-      const cookie = await authenticate(app, faker.internet.email())
+      const email = faker.internet.email()
+      const cookie = await authenticate(app, email)
+      const account = await loadAccount(email)
 
       const expectedHtml = ejs.render(
         profileTemplate,
         {
           npmPackageName,
           npmPackageVersion,
+          account,
           exception: {
             statusCode: BAD_REQUEST,
             message: "No file was provided in the request.",

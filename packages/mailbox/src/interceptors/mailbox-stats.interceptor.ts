@@ -4,7 +4,7 @@ import {
   Injectable,
   type NestInterceptor,
 } from "@nestjs/common"
-import { type Request } from "express"
+import { type Request, type Response } from "express"
 import { type Observable } from "rxjs"
 
 import { type MailboxFolderStats } from "../interfaces/mailbox-folder-stats"
@@ -19,7 +19,9 @@ declare module "express" {
 /**
  * Interceptor that resolves Gmail stats for the current request and stashes
  * them on `req.mailboxStats` for downstream consumption by the
- * {@link MailboxStats} param decorator.
+ * {@link MailboxStats} param decorator. The result is also mirrored to
+ * `res.locals.mailboxStats` so view templates can read stats directly
+ * without a controller-level view-model shim.
  *
  * Attached automatically by the {@link WithMailboxStats} method decorator —
  * consumers do not register it directly. Because attachment is
@@ -47,8 +49,12 @@ export class MailboxStatsInterceptor implements NestInterceptor {
     context: ExecutionContext,
     next: CallHandler,
   ): Promise<Observable<unknown>> {
-    const req = context.switchToHttp().getRequest<Request>()
-    req.mailboxStats = await this.mailbox.getStats()
+    const http = context.switchToHttp()
+    const req = http.getRequest<Request>()
+    const res = http.getResponse<Response>()
+    const stats = await this.mailbox.getStats()
+    req.mailboxStats = stats
+    res.locals.mailboxStats = stats
     return next.handle()
   }
 }

@@ -1,6 +1,6 @@
 import { ApplicationLogger } from "@neomaventures/logging"
 import { Injectable, NestMiddleware } from "@nestjs/common"
-import { Request, NextFunction } from "express"
+import { Request, Response, NextFunction } from "express"
 
 import { setAccount } from "../account/account.slot"
 import { InvalidCredentialsException } from "../exceptions/invalid-credentials.exception"
@@ -33,7 +33,7 @@ export class BearerAuthenticationMiddleware implements NestMiddleware {
 
   public async use(
     req: Request,
-    _res: Express.Response,
+    res: Response,
     next: NextFunction,
   ): Promise<void> {
     if (req.account) {
@@ -69,6 +69,7 @@ export class BearerAuthenticationMiddleware implements NestMiddleware {
 
     if (req.account) {
       setAccount(req.account)
+      res.locals.account = req.account
     }
 
     next()

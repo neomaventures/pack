@@ -16,3 +16,7 @@ S3_REGION=us-east-1
 AVATAR_BUCKET=test-bucket
 S3_ACCESS_KEY_ID=minioadmin
 S3_SECRET_ACCESS_KEY=minioadmin
+
+# Mailbox — unit specs do not hit Gmail; value must be present so
+# MailboxModule.forRootAsync can resolve and the app boots.
+GMAIL_API_BASE_URL=http://localhost:1080

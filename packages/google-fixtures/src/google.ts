@@ -41,10 +41,23 @@ export const google = {
    * These scopes are not strictly required for authentication, but are often necessary for applications that want to personalize the user experience or need access to the user's email.
    * Use `requiredScopes()` if you only want the minimal scopes needed for authentication without additional user info.
    *
-   * @returns An array of scope strings that includes both required and commonly used scopes for Google authentication
+   * Pass `extras` to append feature-specific scopes (e.g. `gmail.readonly`)
+   * without callers spreading and concatenating at the call site.
+   *
+   * @param extras - Additional scopes to append after the sensible defaults.
+   * @returns An array of scope strings that includes both required and commonly used scopes for Google authentication, plus any `extras`.
+   *
+   * @example
+   * ```typescript
+   * google.sensibleScopes()
+   * // => ["openid", "email", "profile"]
+   *
+   * google.sensibleScopes(["https://www.googleapis.com/auth/gmail.readonly"])
+   * // => ["openid", "email", "profile", "https://www.googleapis.com/auth/gmail.readonly"]
+   * ```
    */
-  sensibleScopes(): string[] {
-    return ["openid", "email", "profile"]
+  sensibleScopes(extras: string[] = []): string[] {
+    return ["openid", "email", "profile", ...extras]
   },
   /**
    * Builds a Google OAuth authorize URL.

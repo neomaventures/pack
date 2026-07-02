@@ -26,6 +26,12 @@ import { Account } from "./account.entity"
  * first consent Google does not return a refresh token on subsequent
  * logins, so the persisted value is sticky once captured.
  *
+ * The column is `select: false` so it is never loaded by default queries
+ * and cannot accidentally leak through eager relations. Consumers that
+ * need the value must opt in explicitly via
+ * `.addSelect("oauth_token.refreshToken")` on a query builder (or the
+ * equivalent `find({ select: [...] })` shape).
+ *
  * @example
  * ```typescript
  * import { OAuthToken } from "@neomaventures/auth"
@@ -52,7 +58,7 @@ export class OAuthToken implements OAuthTokenable {
   @Column()
   public accessToken!: string
 
-  @Column({ type: "text", nullable: true })
+  @Column({ type: "text", nullable: true, select: false })
   public refreshToken!: string | null
 
   @Column({ type: Date })

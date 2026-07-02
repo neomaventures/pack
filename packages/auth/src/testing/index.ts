@@ -1,8 +1,43 @@
 import { faker } from "@faker-js/faker"
 import { google } from "@neomaventures/google-fixtures"
+import { runInRequestContext } from "@neomaventures/request-context/testing"
 
+import { setAccount } from "../account/account.slot"
 import { Account } from "../entities/account.entity"
 import { OAuthToken } from "../entities/oauth-token.entity"
+import { type Authenticatable } from "../interfaces/authenticatable.interface"
+
+export { setAccount } from "../account/account.slot"
+
+/**
+ * Runs `fn` inside an active request context with the given account seeded
+ * into the auth account slot. Layers on top of
+ * `runInRequestContext` — consumers writing auth-touching specs never
+ * need to know about the underlying CLS or the `setAccount` primitive.
+ *
+ * @param account - The authenticated account to seed into the slot.
+ * @param fn - The async function to run inside the auth context.
+ * @returns Whatever `fn` returns.
+ *
+ * @example Assert a service reads the current account
+ * ```typescript
+ * import { runInAuthContext, entities } from "@neomaventures/auth/testing"
+ *
+ * const account = entities.account()
+ * await runInAuthContext(account, async () => {
+ *   await expect(service.doThing()).resolves.toBe(account.id)
+ * })
+ * ```
+ */
+export const runInAuthContext = async <A extends Authenticatable, T>(
+  account: A,
+  fn: () => Promise<T>,
+): Promise<T> => {
+  return runInRequestContext(async () => {
+    setAccount(account)
+    return fn()
+  })
+}
 
 /**
  * A collection of factory functions for creating test entities. Each function

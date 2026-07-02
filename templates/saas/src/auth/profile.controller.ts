@@ -4,6 +4,7 @@ import {
   AuthenticatedAccount,
 } from "@neomaventures/auth"
 import { ErrorTemplate } from "@neomaventures/exceptions"
+import { WithMailboxStats } from "@neomaventures/mailbox"
 import {
   StoredFile,
   TemporaryLink,
@@ -20,8 +21,8 @@ import {
 import { type Response } from "express"
 
 import { AccountAvatarKeyResolver } from "~auth/account-avatar-key.resolver"
+import { ProfileService } from "~auth/profile.service"
 import { Upload } from "~auth/upload.entity"
-import { ProfileService } from "~profile/profile.service"
 
 /**
  * Handles the profile page and profile-scoped asset endpoints.
@@ -48,35 +49,42 @@ export class ProfileController {
   /**
    * Renders the profile page for the authenticated user.
    *
-   * Avatar bytes are loaded by the page itself via `GET /profile/avatar`
-   * rather than threaded through the view model. Connected third-party
-   * accounts are passed inline as a sanitised view of
-   * `account.oauthTokens` — `accessToken` and `refreshToken` are
-   * deliberately omitted so they never reach the rendered HTML.
+   * All view data is delivered via `res.locals`:
+   * - `account` — populated by the auth middleware from `req.account`.
+   *   The template reads `account.email` and iterates
+   *   `account.oauthTokens` directly (tokens themselves are `select:false`
+   *   so `accessToken` / `refreshToken` never reach the render context).
    *
-   * @param account - The authenticated account, injected via `@AuthenticatedAccount()`.
-   * @returns A view model with the connected-accounts list.
+   * The Connected Accounts section renders the shell (one row per
+   * OAuthToken) and each active-token row emits an htmx fragment target
+   * (`hx-get="/profile/mailbox-stats" hx-trigger="load"`) which the
+   * client swaps in with the {@link mailboxStats} fragment below. This
+   * keeps the initial `/profile` render free of upstream Gmail I/O — the
+   * page paints immediately and stats stream in per row.
    */
   @Get("profile")
   @Authenticated()
+  @ErrorTemplate({ default: "profile" })
   @Render("profile")
-  public index(@AuthenticatedAccount() account: Account): {
-    connectedAccounts: Array<{
-      provider: string
-      scopes: string[]
-      expiresAt: Date
-      active: boolean
-    }>
-  } {
-    const now = Date.now()
-    const connectedAccounts = (account.oauthTokens ?? []).map((token) => ({
-      provider: token.provider,
-      scopes: token.scopes,
-      expiresAt: token.expiresAt,
-      active: new Date(token.expiresAt).getTime() > now,
-    }))
-    return { connectedAccounts }
-  }
+  public index(): void {}
+
+  /**
+   * Renders the htmx fragment for the authenticated user's mailbox stats.
+   *
+   * Wired via `@WithMailboxStats()`: the mailbox interceptor resolves
+   * stats for the current account's active Google token before the
+   * handler runs and stashes them on `res.locals.mailboxStats`, which the
+   * `views/profile/mailbox-stats.ejs` template reads directly.
+   *
+   * Upstream failures (`MailboxApiException`, `MailboxNetworkException`,
+   * `GmailNotConnectedException`) currently bubble as HTTP errors —
+   * error rendering for the fragment is wired in a follow-up slice.
+   */
+  @Get("profile/mailbox-stats")
+  @Authenticated()
+  @WithMailboxStats()
+  @Render("profile/mailbox-stats")
+  public mailboxStats(): void {}
 
   /**
    * Serves the authenticated user's avatar.

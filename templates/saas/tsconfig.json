@@ -22,7 +22,12 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
-    "types": ["jest", "node"],
+    "types": [
+      "jest",
+      "jest-extended",
+      "node",
+      "@neomaventures/fixtures/matchers"
+    ],
     "paths": {
       "~*": ["./src/*"],
       "~fixtures/*": ["./fixtures/*"]

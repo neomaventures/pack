@@ -74,7 +74,7 @@ describe("CookieAuthenticationMiddleware", () => {
   })
 
   describe("When called with a auth.sid cookie", () => {
-    it("should use it to authenticate and assign the result to req.account", (done) => {
+    it("should use it to authenticate and assign the result to req.account and res.locals.account", (done) => {
       const id = v4()
       const sid = jwt.sign({ sub: id }, v4())
       const account = { id, email: faker.internet.email() }
@@ -85,14 +85,16 @@ describe("CookieAuthenticationMiddleware", () => {
           cookie: "auth.sid=" + encodeURIComponent(sid),
         },
       })
+      const res = express.response()
 
       cls.run(() => {
         void middleware.use(
           req as unknown as Request,
-          express.response() as unknown as Response,
+          res as unknown as Response,
           () => {
             expect(service.authenticate).toHaveBeenCalledWith(sid)
             expect(req.account).toBe(account)
+            expect(res.locals.account).toBe(account)
             expect(getAccount()).toBe(account)
             done()
           },
@@ -102,16 +104,18 @@ describe("CookieAuthenticationMiddleware", () => {
   })
 
   describe("When called without a cookie header", () => {
-    it("should call next without calling service", (done) => {
+    it("should call next without calling service and leave res.locals.account unset", (done) => {
       const req = express.request()
+      const res = express.response()
 
       cls.run(() => {
         void middleware.use(
           req as unknown as Request,
-          express.response() as unknown as Response,
+          res as unknown as Response,
           () => {
             expect(service.authenticate).not.toHaveBeenCalled()
             expect(req.account).toBeUndefined()
+            expect(res.locals.account).toBeUndefined()
             expect(getAccount()).toBeUndefined()
             done()
           },

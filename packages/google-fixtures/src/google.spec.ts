@@ -71,8 +71,22 @@ describe("google", () => {
   })
 
   describe("sensibleScopes()", () => {
-    it("should return openid, email, and profile", () => {
+    it("should return openid, email, and profile when called with no arguments", () => {
       expect(google.sensibleScopes()).toEqual(["openid", "email", "profile"])
+    })
+
+    it("should append any extras after the sensible defaults", () => {
+      const extra = "https://www.googleapis.com/auth/gmail.readonly"
+      expect(google.sensibleScopes([extra])).toEqual([
+        "openid",
+        "email",
+        "profile",
+        extra,
+      ])
+    })
+
+    it("should return the defaults unchanged when extras is an empty array", () => {
+      expect(google.sensibleScopes([])).toEqual(["openid", "email", "profile"])
     })
   })
 

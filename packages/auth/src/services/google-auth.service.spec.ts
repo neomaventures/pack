@@ -831,9 +831,13 @@ registrations.forEach(([name, register]) => {
             const result = await service.authenticate(code)
             const after = Date.now()
 
-            const tokens = await tokenRepo.find({
-              where: { account: { id: result.account.id } },
-            })
+            const tokens = await tokenRepo
+              .createQueryBuilder("oauth_token")
+              .where("oauth_token.accountId = :accountId", {
+                accountId: result.account.id,
+              })
+              .addSelect("oauth_token.refreshToken")
+              .getMany()
             expect(tokens).toHaveLength(1)
             const stored = tokens[0]
             expect(stored.provider).toBe("google")
@@ -871,6 +875,31 @@ registrations.forEach(([name, register]) => {
           })
         })
 
+        describe("Given a persisted OAuthToken is loaded via the default repository query", () => {
+          it("refreshToken should be undefined (select: false)", async () => {
+            const code = faker.string.alphanumeric(20)
+            const email = faker.internet.email()
+            const refreshToken = faker.string.alphanumeric(40)
+            await googleOAuthClient.mockCodeExchange({
+              code,
+              clientId: googleAuth.clientId,
+              clientSecret: googleAuth.clientSecret,
+              redirectUri: googleAuth.redirectUri,
+              idToken: googleFakes.idToken({ email }),
+              refreshToken,
+            })
+
+            const result = await service.authenticate(code)
+
+            const token = await tokenRepo.findOne({
+              where: { account: { id: result.account.id }, provider: "google" },
+            })
+
+            expect(token).not.toBeNull()
+            expect(token!.refreshToken).toBeUndefined()
+          })
+        })
+
         describe("on subsequent sign-in where Google omits refresh_token", () => {
           it("should preserve the existing refreshToken and replace the rest", async () => {
             const email = faker.internet.email().toLowerCase()
@@ -898,9 +927,13 @@ registrations.forEach(([name, register]) => {
 
             const result = await service.authenticate(secondCode)
 
-            const tokens = await tokenRepo.find({
-              where: { account: { id: result.account.id } },
-            })
+            const tokens = await tokenRepo
+              .createQueryBuilder("oauth_token")
+              .where("oauth_token.accountId = :accountId", {
+                accountId: result.account.id,
+              })
+              .addSelect("oauth_token.refreshToken")
+              .getMany()
             expect(tokens).toHaveLength(1)
             expect(tokens[0].accessToken).toBe(secondResponse.access_token)
             expect(tokens[0].refreshToken).toBe(originalRefreshToken)
@@ -934,9 +967,13 @@ registrations.forEach(([name, register]) => {
             })
 
             const result = await service.authenticate(secondCode)
-            const tokens = await tokenRepo.find({
-              where: { account: { id: result.account.id } },
-            })
+            const tokens = await tokenRepo
+              .createQueryBuilder("oauth_token")
+              .where("oauth_token.accountId = :accountId", {
+                accountId: result.account.id,
+              })
+              .addSelect("oauth_token.refreshToken")
+              .getMany()
 
             expect(tokens[0].refreshToken).toBe(newRefreshToken)
           })

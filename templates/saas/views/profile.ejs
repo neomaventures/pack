@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Profile - <%= npmPackageName %></title>
     <link rel="stylesheet" href="/stylesheets/main.css" />
+    <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
   </head>
   <body class="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-800">
     <%- include("partials/nav") %>
@@ -28,7 +29,8 @@
           method="post"
           enctype="multipart/form-data"
         >
-          <% if (typeof exception !== "undefined" && exception.message) { %>
+          <% const avatarExceptionErrors = ["Payload Too Large", "Unsupported Media Type", "Bad Request"]; %>
+          <% if (typeof exception !== "undefined" && exception.message && avatarExceptionErrors.includes(exception.error)) { %>
           <p
             class="w-full rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
             role="alert"
@@ -54,52 +56,67 @@
         </form>
       </section>
 
-      <section class="mt-12 w-full max-w-md">
+      <% if (typeof account !== "undefined" && account) { %>
+      <section class="mt-12 w-full max-w-2xl">
         <h2 class="text-lg font-semibold text-slate-800">Connected accounts</h2>
-        <% if (typeof connectedAccounts === "undefined" ||
-        connectedAccounts.length === 0) { %>
+        <% const oauthTokens = account.oauthTokens || []; %>
+        <% if (oauthTokens.length === 0) { %>
         <p class="mt-2 text-sm text-slate-500">
           No third-party accounts connected.
         </p>
         <% } else { %>
-        <ul class="mt-3 space-y-3">
-          <% (connectedAccounts || []).forEach((account) => { %>
-          <li
-            class="rounded-md border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700"
-            data-provider="<%= account.provider %>"
-          >
-            <div class="flex items-center justify-between">
-              <span class="font-medium capitalize"
-                ><%= account.provider %></span
-              >
-              <% if (account.active) { %>
-              <span
-                class="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700"
-              >
-                Active
-              </span>
-              <% } else { %>
-              <span
-                class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600"
-              >
-                Expired
-              </span>
-              <% } %>
-            </div>
-            <p class="mt-1 text-xs text-slate-500">
-              Scopes: <%= account.scopes.join(", ") %>
-            </p>
-            <p class="mt-1 text-xs text-slate-500">
-              Expires:
-              <time datetime="<%= new Date(account.expiresAt).toISOString() %>">
-                <%= new Date(account.expiresAt).toISOString() %>
-              </time>
-            </p>
-          </li>
-          <% }) %>
-        </ul>
+        <table
+          class="mt-3 w-full border-collapse text-left text-sm text-slate-700"
+        >
+          <thead>
+            <tr class="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+              <th scope="col" class="py-2 pr-4 font-medium">Account</th>
+              <th scope="col" class="py-2 pr-4 font-medium">Provider</th>
+              <th scope="col" class="py-2 pr-4 font-medium">Status</th>
+              <th scope="col" class="py-2 text-right font-medium">Stats</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% oauthTokens.forEach((token) => { %>
+            <% const active = new Date(token.expiresAt).getTime() > Date.now(); %>
+            <tr class="border-b border-slate-100 last:border-b-0">
+              <td class="py-2 pr-4"><%= account.email %></td>
+              <td class="py-2 pr-4 capitalize"><%= token.provider %></td>
+              <td class="py-2 pr-4">
+                <% if (active) { %>
+                <span
+                  class="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700"
+                >
+                  Active
+                </span>
+                <% } else { %>
+                <span
+                  class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600"
+                >
+                  Expired
+                </span>
+                <% } %>
+              </td>
+              <td class="py-2 text-right">
+                <% if (active) { %>
+                <div
+                  hx-get="/profile/mailbox-stats"
+                  hx-trigger="load"
+                  class="text-sm text-slate-500"
+                >
+                  Loading…
+                </div>
+                <% } else { %>
+                <span class="text-slate-400">—</span>
+                <% } %>
+              </td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
         <% } %>
       </section>
+      <% } %>
     </main>
 
     <footer class="px-8 py-4 text-right text-xs text-slate-500">

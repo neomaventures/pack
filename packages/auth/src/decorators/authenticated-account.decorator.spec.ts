@@ -1,13 +1,11 @@
 import { faker } from "@faker-js/faker"
-import { RequestContextModule } from "@neomaventures/request-context"
+import { runInRequestContext } from "@neomaventures/request-context/testing"
 import { type ExecutionContext } from "@nestjs/common"
 import { ROUTE_ARGS_METADATA } from "@nestjs/common/constants"
 import { CustomParamFactory } from "@nestjs/common/interfaces"
-import { Test } from "@nestjs/testing"
-import { ClsService } from "nestjs-cls"
 
-import { setAccount } from "../account/account.slot"
 import { Account } from "../entities/account.entity"
+import { runInAuthContext } from "../testing"
 
 import { AuthenticatedAccount } from "./authenticated-account.decorator"
 
@@ -20,9 +18,8 @@ type Args = Record<string, { factory: CustomParamFactory }>
 
 describe("AuthenticatedAccountDecorator", () => {
   let factory: CustomParamFactory
-  let cls: ClsService
 
-  beforeAll(async () => {
+  beforeAll(() => {
     class AuthenticatedAccountDecoratorTest {
       // eslint-disable-next-line
       public test(@AuthenticatedAccount() _value: Account): void {}
@@ -37,22 +34,15 @@ describe("AuthenticatedAccountDecorator", () => {
     )
 
     factory = args[Object.keys(args)[0]].factory
-
-    const module = await Test.createTestingModule({
-      imports: [RequestContextModule.forRoot()],
-    }).compile()
-
-    cls = module.get(ClsService)
   })
 
   describe("Given an account has been stored in the CLS context", () => {
-    it("should return the account", () => {
+    it("should return the account", async () => {
       const account = new Account()
       account.id = faker.string.uuid()
       account.email = faker.internet.email()
 
-      cls.run(() => {
-        setAccount(account)
+      await runInAuthContext(account, async () => {
         expect(factory(null, {} as unknown as ExecutionContext)).toEqual(
           account,
         )
@@ -61,8 +51,8 @@ describe("AuthenticatedAccountDecorator", () => {
   })
 
   describe("Given an account hasn't been stored in the CLS context", () => {
-    it("should return undefined", () => {
-      cls.run(() => {
+    it("should return undefined", async () => {
+      await runInRequestContext(async () => {
         expect(factory(null, {} as unknown as ExecutionContext)).toBeUndefined()
       })
     })

@@ -89,7 +89,7 @@ describe("BearerAuthenticationMiddleware", () => {
 
   BEARER_SCHEMES.forEach((bearer) => {
     describe(`When called with a ${bearer} token`, () => {
-      it("should extract the raw token and call service.authenticate", (done) => {
+      it("should extract the raw token and assign the account to req.account and res.locals.account", (done) => {
         const id = v4()
         const token = jwt.sign({ sub: id }, v4())
         const header = `${bearer} ${token}`
@@ -101,14 +101,16 @@ describe("BearerAuthenticationMiddleware", () => {
             authorization: header,
           },
         })
+        const res = express.response()
 
         cls.run(() => {
           void middleware.use(
             req as unknown as Request,
-            express.response() as unknown as Response,
+            res as unknown as Response,
             () => {
               expect(service.authenticate).toHaveBeenCalledWith(token)
               expect(req.account).toBe(account)
+              expect(res.locals.account).toBe(account)
               expect(getAccount()).toBe(account)
               done()
             },
@@ -119,16 +121,18 @@ describe("BearerAuthenticationMiddleware", () => {
   })
 
   describe("When called without an Authorization header", () => {
-    it("should call next without calling service", (done) => {
+    it("should call next without calling service and leave res.locals.account unset", (done) => {
       const req = express.request()
+      const res = express.response()
 
       cls.run(() => {
         void middleware.use(
           req as unknown as Request,
-          express.response() as unknown as Response,
+          res as unknown as Response,
           () => {
             expect(service.authenticate).not.toHaveBeenCalled()
             expect(req.account).toBeUndefined()
+            expect(res.locals.account).toBeUndefined()
             expect(getAccount()).toBeUndefined()
             done()
           },

@@ -1,13 +1,9 @@
 import { faker } from "@faker-js/faker"
-import {
-  type Account,
-  type OAuthToken as AuthOAuthToken,
-} from "@neomaventures/auth"
 import { express } from "@neomaventures/fixtures"
 
 import { ProfileController } from "~auth/profile.controller"
+import { type ProfileService } from "~auth/profile.service"
 import { type Upload } from "~auth/upload.entity"
-import { type ProfileService } from "~profile/profile.service"
 
 describe("ProfileController", () => {
   let controller: ProfileController
@@ -23,67 +19,14 @@ describe("ProfileController", () => {
   })
 
   describe("index()", () => {
-    describe("Given an authenticated account with no oauthTokens", () => {
-      it("should return an empty connectedAccounts list", () => {
-        const account = {
-          id: faker.string.uuid(),
-          email: faker.internet.email(),
-        } as Account
-
-        expect(controller.index(account)).toEqual({ connectedAccounts: [] })
-      })
+    it("should return void — all view data flows through res.locals", () => {
+      expect(controller.index()).toBeUndefined()
     })
+  })
 
-    describe("Given an authenticated account with an active Google token", () => {
-      it("should return a connectedAccounts entry with active: true and no access/refresh tokens", () => {
-        const expiresAt = new Date(Date.now() + 3600 * 1000)
-        const scopes = ["openid", "email", "profile"]
-        const account = {
-          id: faker.string.uuid(),
-          email: faker.internet.email(),
-          oauthTokens: [
-            {
-              provider: "google",
-              accessToken: faker.string.alphanumeric(40),
-              refreshToken: faker.string.alphanumeric(40),
-              expiresAt,
-              scopes,
-            } as AuthOAuthToken,
-          ],
-        } as Account
-
-        const result = controller.index(account)
-
-        expect(result.connectedAccounts).toEqual([
-          { provider: "google", scopes, expiresAt, active: true },
-        ])
-        expect(result.connectedAccounts[0]).not.toHaveProperty("accessToken")
-        expect(result.connectedAccounts[0]).not.toHaveProperty("refreshToken")
-      })
-    })
-
-    describe("Given an authenticated account with an expired Google token", () => {
-      it("should return a connectedAccounts entry with active: false", () => {
-        const expiresAt = new Date(Date.now() - 60 * 1000)
-        const account = {
-          id: faker.string.uuid(),
-          email: faker.internet.email(),
-          oauthTokens: [
-            {
-              provider: "google",
-              accessToken: faker.string.alphanumeric(40),
-              refreshToken: null,
-              expiresAt,
-              scopes: ["openid", "email"],
-            } as AuthOAuthToken,
-          ],
-        } as Account
-
-        const result = controller.index(account)
-
-        expect(result.connectedAccounts).toHaveLength(1)
-        expect(result.connectedAccounts[0]!.active).toBe(false)
-      })
+  describe("mailboxStats()", () => {
+    it("should return void — the mailbox interceptor populates res.locals.mailboxStats", () => {
+      expect(controller.mailboxStats()).toBeUndefined()
     })
   })
 
@@ -91,10 +34,9 @@ describe("ProfileController", () => {
     describe("Given profileService.getAvatar returns an Upload", () => {
       it("should return that Upload", async () => {
         const upload = { id: faker.string.uuid() } as Upload
-        const account = {
-          id: faker.string.uuid(),
-          email: faker.internet.email(),
-        } as Account
+        const account = { id: faker.string.uuid() } as Parameters<
+          ProfileController["avatar"]
+        >[0]
         profileService.getAvatar.mockResolvedValue(upload)
 
         await expect(controller.avatar(account)).resolves.toBe(upload)
@@ -104,10 +46,9 @@ describe("ProfileController", () => {
 
     describe("Given profileService.getAvatar returns null", () => {
       it("should return null", async () => {
-        const account = {
-          id: faker.string.uuid(),
-          email: faker.internet.email(),
-        } as Account
+        const account = { id: faker.string.uuid() } as Parameters<
+          ProfileController["avatar"]
+        >[0]
         profileService.getAvatar.mockResolvedValue(null)
 
         await expect(controller.avatar(account)).resolves.toBeNull()
@@ -118,10 +59,9 @@ describe("ProfileController", () => {
   describe("uploadAvatar()", () => {
     describe("Given an authenticated account and a stored Upload", () => {
       it("should call profileService.setAvatar and redirect to /profile", async () => {
-        const account = {
-          id: faker.string.uuid(),
-          email: faker.internet.email(),
-        } as Account
+        const account = { id: faker.string.uuid() } as Parameters<
+          ProfileController["uploadAvatar"]
+        >[0]
         const upload = { id: faker.string.uuid() } as Upload
         const res = express.response() as unknown as Parameters<
           ProfileController["uploadAvatar"]
