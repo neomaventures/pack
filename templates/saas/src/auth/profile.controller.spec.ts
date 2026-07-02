@@ -1,9 +1,5 @@
 import { faker } from "@faker-js/faker"
 import { express } from "@neomaventures/fixtures"
-import {
-  type MailboxFolderStats,
-  type MailboxService,
-} from "@neomaventures/mailbox"
 
 import { ProfileController } from "~auth/profile.controller"
 import { type ProfileService } from "~auth/profile.service"
@@ -14,59 +10,17 @@ describe("ProfileController", () => {
   let profileService: jest.Mocked<
     Pick<ProfileService, "setAvatar" | "getAvatar">
   >
-  let mailbox: jest.Mocked<Pick<MailboxService, "getStats">>
 
   beforeEach(() => {
     profileService = { setAvatar: jest.fn(), getAvatar: jest.fn() }
-    mailbox = { getStats: jest.fn() }
     controller = new ProfileController(
       profileService as unknown as ProfileService,
-      mailbox as unknown as MailboxService,
     )
   })
 
   describe("index()", () => {
-    describe("Given MailboxService.getStats resolves null", () => {
-      beforeEach(() => {
-        mailbox.getStats.mockResolvedValue(null)
-      })
-
-      it("should return { mailboxStats: null }", async () => {
-        await expect(controller.index()).resolves.toEqual({
-          mailboxStats: null,
-        })
-      })
-
-      it("should call mailbox.getStats exactly once", async () => {
-        await controller.index()
-
-        expect(mailbox.getStats).toHaveBeenCalledTimes(1)
-      })
-    })
-
-    describe("Given MailboxService.getStats resolves a stats object", () => {
-      let stats: MailboxFolderStats
-
-      beforeEach(() => {
-        stats = {
-          folder: faker.string.alphanumeric(10),
-          messageCount: faker.number.int({ min: 1, max: 10000 }),
-          unreadCount: faker.number.int({ min: 0, max: 500 }),
-        }
-        mailbox.getStats.mockResolvedValue(stats)
-      })
-
-      it("should return { mailboxStats: <fixture> }", async () => {
-        await expect(controller.index()).resolves.toEqual({
-          mailboxStats: stats,
-        })
-      })
-
-      it("should call mailbox.getStats exactly once", async () => {
-        await controller.index()
-
-        expect(mailbox.getStats).toHaveBeenCalledTimes(1)
-      })
+    it("should return void — all view data flows through res.locals", () => {
+      expect(controller.index()).toBeUndefined()
     })
   })
 

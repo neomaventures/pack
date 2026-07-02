@@ -55,38 +55,6 @@ describe("MailboxStatsInterceptor", () => {
     })
   })
 
-  describe("Given MailboxService.getStats resolves null", () => {
-    let req: ReturnType<typeof express.request>
-    let res: ReturnType<typeof express.response>
-    let next: ReturnType<typeof callHandler>
-    let handleSpy: jest.SpyInstance
-
-    beforeEach(async () => {
-      mailbox.getStats.mockResolvedValue(null)
-      res = express.response()
-      req = express.request({ res })
-      next = callHandler()
-      handleSpy = jest.spyOn(next, "handle")
-
-      await interceptor.intercept(
-        executionContext(req, res) as ExecutionContext,
-        next,
-      )
-    })
-
-    it("should populate req.mailboxStats with null", () => {
-      expect(req.mailboxStats).toBeNull()
-    })
-
-    it("should mirror null to res.locals.mailboxStats", () => {
-      expect(res.locals.mailboxStats).toBeNull()
-    })
-
-    it("should still invoke next.handle()", () => {
-      expect(handleSpy).toHaveBeenCalledTimes(1)
-    })
-  })
-
   describe("Given MailboxService.getStats rejects", () => {
     it("should re-throw the underlying exception", async () => {
       const error = new Error(faker.lorem.sentence())

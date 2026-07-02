@@ -50,17 +50,9 @@ export class MailboxService {
    * the requested folder. The folder identifier is currently treated as a
    * Gmail label ID under the hood.
    *
-   * If {@link TokenAccessor.getToken} resolves `null` (the consumer's
-   * accessor signalling that no token is available on this request and
-   * that this is a normal, non-exceptional state), the upstream call is
-   * skipped and `null` is returned. See {@link TokenAccessor} for the
-   * three-outcome contract.
-   *
    * @param folder - The folder to fetch stats for. Defaults to
    *   {@link MailboxFolder.Inbox}.
-   * @returns Message + unread counts for the folder, or `null` if the
-   *   consumer's accessor signalled "no token available on this request"
-   *   by resolving `null`.
+   * @returns Message + unread counts for the folder.
    *
    * @throws {MailboxApiException} Surfaced from `GmailService` when Gmail
    *   responds with a non-2xx status.
@@ -71,16 +63,12 @@ export class MailboxService {
    * ```typescript
    * const stats = await mailbox.getStats()
    * // => { folder: "INBOX", messageCount: 1234, unreadCount: 5 }
-   * // or => null when the accessor returned null
    * ```
    */
   public async getStats(
     folder: MailboxFolder | string = MailboxFolder.Inbox,
-  ): Promise<MailboxFolderStats | null> {
+  ): Promise<MailboxFolderStats> {
     const token = await this.tokenAccessor.getToken(GMAIL_READONLY_SCOPE)
-    if (token === null) {
-      return null
-    }
     return this.gmailService.getStats(token, folder)
   }
 }

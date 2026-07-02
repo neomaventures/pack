@@ -4,7 +4,6 @@ import {
   AuthenticatedAccount,
 } from "@neomaventures/auth"
 import { ErrorTemplate } from "@neomaventures/exceptions"
-import { type MailboxFolderStats, MailboxService } from "@neomaventures/mailbox"
 import {
   StoredFile,
   TemporaryLink,
@@ -44,38 +43,25 @@ import { Upload } from "~auth/upload.entity"
  */
 @Controller()
 export class ProfileController {
-  public constructor(
-    private readonly profileService: ProfileService,
-    private readonly mailbox: MailboxService,
-  ) {}
+  public constructor(private readonly profileService: ProfileService) {}
 
   /**
    * Renders the profile page for the authenticated user.
    *
-   * View data:
-   * - `account` — populated on `res.locals` by the auth middleware from
-   *   `req.account`. The template reads `account.email` and iterates
+   * All view data is delivered via `res.locals`:
+   * - `account` — populated by the auth middleware from `req.account`.
+   *   The template reads `account.email` and iterates
    *   `account.oauthTokens` directly (tokens themselves are `select:false`
    *   so `accessToken` / `refreshToken` never reach the render context).
-   * - `mailboxStats` — returned from this handler. When the consumer's
-   *   `GmailTokenAccessor` returns `null` (the user hasn't connected
-   *   Gmail — the common case), `MailboxService.getStats()` resolves
-   *   `null` and the template renders "Unavailable" cells. The template
-   *   branches on `mailboxStats == null`.
    *
-   * On {@link MailboxApiException} / {@link MailboxNetworkException} —
-   * genuine upstream Gmail failure — the `@ErrorTemplate({ default:
-   * "profile" })` mapping re-renders this same page with `exception`
-   * populated. The template's exception banner surfaces the failure and
-   * the stats cells fall back to "Unavailable".
+   * The Connected Accounts section is temporarily hidden pending the
+   * `/profile/mailbox-stats` htmx fragment endpoint — see #309.
    */
   @Get("profile")
   @Authenticated()
   @ErrorTemplate({ default: "profile" })
   @Render("profile")
-  public async index(): Promise<{ mailboxStats: MailboxFolderStats | null }> {
-    return { mailboxStats: await this.mailbox.getStats() }
-  }
+  public index(): void {}
 
   /**
    * Serves the authenticated user's avatar.

@@ -12,7 +12,7 @@ import { MailboxService } from "../services/mailbox.service"
 
 declare module "express" {
   interface Request {
-    mailboxStats?: MailboxFolderStats | null
+    mailboxStats?: MailboxFolderStats
   }
 }
 

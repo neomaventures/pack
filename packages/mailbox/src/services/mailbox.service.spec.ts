@@ -75,21 +75,5 @@ describe("MailboxService", () => {
         expect(gmailService.getStats).toHaveBeenCalledWith(token, customFolder)
       })
     })
-
-    describe("Given tokenAccessor.getToken resolves null", () => {
-      beforeEach(() => {
-        getTokenSpy.mockResolvedValue(null)
-      })
-
-      it("should return null", async () => {
-        await expect(service.getStats()).resolves.toBeNull()
-      })
-
-      it("should not call GmailService.getStats", async () => {
-        await service.getStats()
-
-        expect(gmailService.getStats).not.toHaveBeenCalled()
-      })
-    })
   })
 })

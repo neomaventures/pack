@@ -28,7 +28,8 @@
           method="post"
           enctype="multipart/form-data"
         >
-          <% if (typeof exception !== "undefined" && exception.message) { %>
+          <% const avatarExceptionErrors = ["Payload Too Large", "Unsupported Media Type", "Bad Request"]; %>
+          <% if (typeof exception !== "undefined" && exception.message && avatarExceptionErrors.includes(exception.error)) { %>
           <p
             class="w-full rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
             role="alert"
@@ -54,6 +55,8 @@
         </form>
       </section>
 
+      <%# TODO(#309): restore in slice 2 with htmx fragment for mailbox stats %>
+      <% if (false) { %>
       <% if (typeof account !== "undefined" && account) { %>
       <section class="mt-12 w-full max-w-2xl">
         <h2 class="text-lg font-semibold text-slate-800">Connected accounts</h2>
@@ -80,7 +83,8 @@
             <% const active = new Date(token.expiresAt).getTime() > Date.now(); %>
             <% const statsAvailable = token.provider === "google"
                  && typeof mailboxStats !== "undefined"
-                 && mailboxStats; %>
+                 && mailboxStats
+                 && typeof exception === "undefined"; %>
             <% const statsUnavailable = token.provider === "google" && !statsAvailable; %>
             <tr class="border-b border-slate-100 last:border-b-0">
               <td class="py-2 pr-4"><%= account.email %></td>
@@ -116,6 +120,7 @@
         </table>
         <% } %>
       </section>
+      <% } %>
       <% } %>
     </main>
 

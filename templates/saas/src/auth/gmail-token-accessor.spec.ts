@@ -5,6 +5,7 @@ import { GMAIL_READONLY_SCOPE } from "@neomaventures/mailbox"
 import { runInRequestContext } from "@neomaventures/request-context/testing"
 import { Test, type TestingModule } from "@nestjs/testing"
 
+import { GmailNotConnectedException } from "~auth/gmail-not-connected.exception"
 import { GmailTokenAccessor } from "~auth/gmail-token-accessor"
 
 describe("GmailTokenAccessor", () => {
@@ -44,19 +45,22 @@ describe("GmailTokenAccessor", () => {
     })
 
     describe("Given the account has no google OAuthToken", () => {
-      it("should return null", async () => {
+      it("should throw GmailNotConnectedException", async () => {
         const account = entities.account({ oauthTokens: [] })
 
         await runInAuthContext(account, async () => {
           await expect(
             accessor.getToken(GMAIL_READONLY_SCOPE),
-          ).resolves.toBeNull()
+          ).rejects.toMatchError(GmailNotConnectedException, {
+            message: "Gmail is not connected.",
+            name: "GmailNotConnectedException",
+          })
         })
       })
     })
 
     describe("Given the account's google token has expired", () => {
-      it("should return null", async () => {
+      it("should throw GmailNotConnectedException", async () => {
         const account = entities.account({
           oauthTokens: [
             entities.oauthToken({
@@ -70,13 +74,16 @@ describe("GmailTokenAccessor", () => {
         await runInAuthContext(account, async () => {
           await expect(
             accessor.getToken(GMAIL_READONLY_SCOPE),
-          ).resolves.toBeNull()
+          ).rejects.toMatchError(GmailNotConnectedException, {
+            message: "Gmail is not connected.",
+            name: "GmailNotConnectedException",
+          })
         })
       })
     })
 
     describe("Given the account has a google token without the gmail.readonly scope", () => {
-      it("should return null", async () => {
+      it("should throw GmailNotConnectedException", async () => {
         const account = entities.account({
           oauthTokens: [
             entities.oauthToken({
@@ -89,7 +96,10 @@ describe("GmailTokenAccessor", () => {
         await runInAuthContext(account, async () => {
           await expect(
             accessor.getToken(GMAIL_READONLY_SCOPE),
-          ).resolves.toBeNull()
+          ).rejects.toMatchError(GmailNotConnectedException, {
+            message: "Gmail is not connected.",
+            name: "GmailNotConnectedException",
+          })
         })
       })
     })

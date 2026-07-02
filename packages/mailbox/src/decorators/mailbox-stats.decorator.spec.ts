@@ -23,7 +23,7 @@ class MailboxStatsDecoratorTest {
 
 const buildContext = (
   handler: (...args: any[]) => any,
-  req: { mailboxStats?: MailboxFolderStats | null } = {},
+  req: { mailboxStats?: MailboxFolderStats } = {},
 ): ExecutionContext =>
   ({
     switchToHttp: () => ({ getRequest: () => req }),
@@ -68,20 +68,6 @@ describe("MailboxStatsDecorator", () => {
             "@WithMailboxStats() must be applied to routes using @MailboxStats()",
         },
       )
-    })
-  })
-
-  describe("Given @WithMailboxStats is applied and req.mailboxStats is null", () => {
-    const handler = (): void => {}
-
-    beforeAll(() => {
-      Reflect.defineMetadata(MAILBOX_STATS_METADATA_KEY, true, handler)
-    })
-
-    it("should return null", () => {
-      expect(
-        factory(null, buildContext(handler, { mailboxStats: null })),
-      ).toBeNull()
     })
   })
 
