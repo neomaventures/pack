@@ -24,6 +24,12 @@ describe("ProfileController", () => {
     })
   })
 
+  describe("mailboxStats()", () => {
+    it("should return void — the mailbox interceptor populates res.locals.mailboxStats", () => {
+      expect(controller.mailboxStats()).toBeUndefined()
+    })
+  })
+
   describe("avatar()", () => {
     describe("Given profileService.getAvatar returns an Upload", () => {
       it("should return that Upload", async () => {

@@ -4,6 +4,7 @@ import {
   AuthenticatedAccount,
 } from "@neomaventures/auth"
 import { ErrorTemplate } from "@neomaventures/exceptions"
+import { WithMailboxStats } from "@neomaventures/mailbox"
 import {
   StoredFile,
   TemporaryLink,
@@ -54,14 +55,36 @@ export class ProfileController {
    *   `account.oauthTokens` directly (tokens themselves are `select:false`
    *   so `accessToken` / `refreshToken` never reach the render context).
    *
-   * The Connected Accounts section is temporarily hidden pending the
-   * `/profile/mailbox-stats` htmx fragment endpoint — see #309.
+   * The Connected Accounts section renders the shell (one row per
+   * OAuthToken) and each active-token row emits an htmx fragment target
+   * (`hx-get="/profile/mailbox-stats" hx-trigger="load"`) which the
+   * client swaps in with the {@link mailboxStats} fragment below. This
+   * keeps the initial `/profile` render free of upstream Gmail I/O — the
+   * page paints immediately and stats stream in per row.
    */
   @Get("profile")
   @Authenticated()
   @ErrorTemplate({ default: "profile" })
   @Render("profile")
   public index(): void {}
+
+  /**
+   * Renders the htmx fragment for the authenticated user's mailbox stats.
+   *
+   * Wired via `@WithMailboxStats()`: the mailbox interceptor resolves
+   * stats for the current account's active Google token before the
+   * handler runs and stashes them on `res.locals.mailboxStats`, which the
+   * `views/profile/mailbox-stats.ejs` template reads directly.
+   *
+   * Upstream failures (`MailboxApiException`, `MailboxNetworkException`,
+   * `GmailNotConnectedException`) currently bubble as HTTP errors —
+   * error rendering for the fragment is wired in a follow-up slice.
+   */
+  @Get("profile/mailbox-stats")
+  @Authenticated()
+  @WithMailboxStats()
+  @Render("profile/mailbox-stats")
+  public mailboxStats(): void {}
 
   /**
    * Serves the authenticated user's avatar.

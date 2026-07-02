@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Profile - <%= npmPackageName %></title>
     <link rel="stylesheet" href="/stylesheets/main.css" />
+    <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
   </head>
   <body class="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-800">
     <%- include("partials/nav") %>
@@ -55,8 +56,6 @@
         </form>
       </section>
 
-      <%# TODO(#309): restore in slice 2 with htmx fragment for mailbox stats %>
-      <% if (false) { %>
       <% if (typeof account !== "undefined" && account) { %>
       <section class="mt-12 w-full max-w-2xl">
         <h2 class="text-lg font-semibold text-slate-800">Connected accounts</h2>
@@ -74,18 +73,12 @@
               <th scope="col" class="py-2 pr-4 font-medium">Account</th>
               <th scope="col" class="py-2 pr-4 font-medium">Provider</th>
               <th scope="col" class="py-2 pr-4 font-medium">Status</th>
-              <th scope="col" class="py-2 pr-4 text-right font-medium">Emails</th>
-              <th scope="col" class="py-2 text-right font-medium">Unread</th>
+              <th scope="col" class="py-2 text-right font-medium">Stats</th>
             </tr>
           </thead>
           <tbody>
             <% oauthTokens.forEach((token) => { %>
             <% const active = new Date(token.expiresAt).getTime() > Date.now(); %>
-            <% const statsAvailable = token.provider === "google"
-                 && typeof mailboxStats !== "undefined"
-                 && mailboxStats
-                 && typeof exception === "undefined"; %>
-            <% const statsUnavailable = token.provider === "google" && !statsAvailable; %>
             <tr class="border-b border-slate-100 last:border-b-0">
               <td class="py-2 pr-4"><%= account.email %></td>
               <td class="py-2 pr-4 capitalize"><%= token.provider %></td>
@@ -104,23 +97,25 @@
                 </span>
                 <% } %>
               </td>
-              <% if (statsAvailable) { %>
-              <td class="py-2 pr-4 text-right"><%= mailboxStats.messageCount %></td>
-              <td class="py-2 text-right"><%= mailboxStats.unreadCount %></td>
-              <% } else if (statsUnavailable) { %>
-              <td class="py-2 pr-4 text-right text-slate-400">Unavailable</td>
-              <td class="py-2 text-right text-slate-400">Unavailable</td>
-              <% } else { %>
-              <td class="py-2 pr-4 text-right text-slate-400">—</td>
-              <td class="py-2 text-right text-slate-400">—</td>
-              <% } %>
+              <td class="py-2 text-right">
+                <% if (active) { %>
+                <div
+                  hx-get="/profile/mailbox-stats"
+                  hx-trigger="load"
+                  class="text-sm text-slate-500"
+                >
+                  Loading…
+                </div>
+                <% } else { %>
+                <span class="text-slate-400">—</span>
+                <% } %>
+              </td>
             </tr>
             <% }) %>
           </tbody>
         </table>
         <% } %>
       </section>
-      <% } %>
       <% } %>
     </main>
 
